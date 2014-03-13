@@ -4,7 +4,7 @@ pyinstrument
 A Python profiler that records the call stack of the executing code, instead
 of just the final function in it. 
 
-![Screenshot][screenshot.png]
+![Screenshot](screenshot.png)
 
 **The current version's profiling overhead is too large to trust the results
 from it. I'd like to improve this, and am accepting pull requests.**
