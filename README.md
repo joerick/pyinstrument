@@ -21,6 +21,8 @@ Usage
     
     Add `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES`.
 
+    Then add `?profile` to the end of the request URL to activate the profiler.
+
 -   **Stand-alone**
 
         from pyinstrument import Profiler
