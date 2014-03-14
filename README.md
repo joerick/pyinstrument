@@ -34,7 +34,7 @@ Usage
 
         profiler.stop()
 
-        print(profiler.as_text())
+        print(profiler.output_text())
 
 Why?
 ----
