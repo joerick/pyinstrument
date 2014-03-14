@@ -175,8 +175,7 @@ class Profiler(object):
         return self._root_frame
 
     def _identifier_for_frame(self, frame):
-        frame_info = inspect.getframeinfo(frame)
-        return '%s\t%s:%i' % (frame_info.function, frame_info.filename, frame_info.lineno)
+        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno)
 
     def output_text(self):
         return self.root_frame().as_text()
