@@ -127,31 +127,35 @@ class Profiler(object):
         self.stack_time = {}
         self.current_call_stack = []
         self.current_call_stack_start_times = []
+        self.time_spent_in_profiler = 0
 
     def start(self):
         for frame_record in inspect.stack()[::-1]:
-            self.current_call_stack.append(self._identifier_for_frame(frame_record[0]))
-            self.current_call_stack_start_times.append(time.clock())
+            # call the profile function as if we just entered all the frames on the stack
+            self(frame_record[0], 'call', None)
+
         sys.setprofile(self)
 
     def stop(self):
         sys.setprofile(None)
-        while len(self.current_call_stack) > 0:
-            stack = tuple(self.current_call_stack)
-            start = self.current_call_stack_start_times.pop()
-            self.current_call_stack.pop()
-            self.stack_time[stack] = self.stack_time.get(stack, 0) + time.clock() - start
 
+        while len(self.current_call_stack) > 0:
+            # call the profile function as if we just left all the frames on the stack
+            self(None, 'return', None)
 
     def __call__(self, frame, event, arg):
+        method_start = time.clock()
+
         if event == 'call':
             self.current_call_stack.append(self._identifier_for_frame(frame))
-            self.current_call_stack_start_times.append(time.clock())
+            self.current_call_stack_start_times.append(method_start - self.time_spent_in_profiler)
         elif event == 'return':
             stack = tuple(self.current_call_stack)
-            start = self.current_call_stack_start_times.pop()
+            frame_start = self.current_call_stack_start_times.pop()
             self.current_call_stack.pop()
-            self.stack_time[stack] = self.stack_time.get(stack, 0) + time.clock() - start
+            self.stack_time[stack] = self.stack_time.get(stack, 0) + method_start - frame_start - self.time_spent_in_profiler
+
+        self.time_spent_in_profiler += time.clock() - method_start
 
     def root_frame(self):
         if not hasattr(self, '_root_frame'):
