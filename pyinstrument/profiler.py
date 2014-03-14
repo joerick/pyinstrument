@@ -173,8 +173,9 @@ class Profiler(object):
             for stack_frame in self.stack_time.iteritems():
                 frame_for_stack(stack_frame[0]).time = stack_frame[1]
 
-        for child_frame in self._root_frame.children.values():
-            self._root_frame.time += child_frame.time
+            # fix up root_frames's time so Frame's proportion_of_total works correctly
+            for child_frame in self._root_frame.children.values():
+                self._root_frame.time += child_frame.time
 
         return self._root_frame
 
