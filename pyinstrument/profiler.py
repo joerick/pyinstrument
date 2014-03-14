@@ -164,10 +164,13 @@ class Profiler(object):
             def frame_for_stack(stack):
                 if len(stack) == 0:
                     return self._root_frame
+
                 parent = frame_for_stack(stack[:-1])
                 frame_name = stack[-1]
 
-                parent.children[frame_name] = parent.children.get(frame_name, Frame(frame_name, parent))
+                if not frame_name in parent.children:
+                    parent.children[frame_name] = Frame(frame_name, parent)
+
                 return parent.children[frame_name]
 
             for stack_frame in self.stack_time.iteritems():
