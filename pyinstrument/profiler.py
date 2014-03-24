@@ -6,6 +6,9 @@ from operator import attrgetter
 
 
 class Frame(object):
+    """
+    Object that represents a frame in the parsed trace
+    """
     def __init__(self, description="", parent=None, time=None, children=None):
         self.description = description
         self.time = time or 0
@@ -132,35 +135,38 @@ class Profiler(object):
     def start(self):
         for frame_record in inspect.stack()[::-1]:
             # call the profile function as if we just entered all the frames on the stack
-            self(frame_record[0], 'call', None)
+            self._profile(frame_record[0], 'call', None)
 
-        sys.setprofile(self)
+        sys.setprofile(self._profile)
 
     def stop(self):
         sys.setprofile(None)
 
         while len(self.current_call_stack) > 0:
             # call the profile function as if we just left all the frames on the stack
-            self(None, 'return', None)
+            self._profile(None, 'return', None)
 
-    def __call__(self, frame, event, arg):
-        method_start = time.clock()
+    def _profile(self, frame, event, arg):
+        method_time = time.clock()
 
         if event == 'call':
             self.current_call_stack.append(self._identifier_for_frame(frame))
-            self.current_call_stack_start_times.append(method_start - self.time_spent_in_profiler)
+            self.current_call_stack_start_times.append(method_time - self.time_spent_in_profiler)
         elif event == 'return':
             stack = tuple(self.current_call_stack)
-            frame_start = self.current_call_stack_start_times.pop()
             self.current_call_stack.pop()
-            self.stack_time[stack] = self.stack_time.get(stack, 0) + method_start - frame_start - self.time_spent_in_profiler
+            frame_start = self.current_call_stack_start_times.pop()
+            frame_duration = method_time - (frame_start + self.time_spent_in_profiler)
+            self.stack_time[stack] = self.stack_time.get(stack, 0) + 
 
-        self.time_spent_in_profiler += time.clock() - method_start
+        self.time_spent_in_profiler += time.clock() - method_time
 
     def root_frame(self):
         if not hasattr(self, '_root_frame'):
             self._root_frame = Frame()
 
+            # define a recursive function that builds the heirarchy of frames given the
+            # stack of frame identifiers
             def frame_for_stack(stack):
                 if len(stack) == 0:
                     return self._root_frame
