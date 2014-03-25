@@ -155,9 +155,11 @@ class Profiler(object):
         elif event == 'return':
             stack = tuple(self.current_call_stack)
             self.current_call_stack.pop()
+
             frame_start = self.current_call_stack_start_times.pop()
-            frame_duration = method_time - (frame_start + self.time_spent_in_profiler)
-            self.stack_time[stack] = self.stack_time.get(stack, 0) + 
+            frame_duration = method_time - frame_start - self.time_spent_in_profiler
+            
+            self.stack_time[stack] = self.stack_time.get(stack, 0) + frame_duration
 
         self.time_spent_in_profiler += time.clock() - method_time
 
