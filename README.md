@@ -42,7 +42,8 @@ Usage
 Known issues
 ------------
 
--   Overhead is still quite high.
+-   Overhead is still quite high. Timings will be artificially high for code
+    that makes a lot of calls, such as Django template rendering. 
 
 -   I'd recommend disabling django-debug-toolbar, django-devserver etc. when
     profiling, as their instrumentation distort timings.
