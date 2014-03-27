@@ -163,6 +163,9 @@ class Profiler(object):
 
         self.time_spent_in_profiler += time.clock() - method_time
 
+    def _identifier_for_frame(self, frame):
+        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno)
+
     def root_frame(self):
         if not hasattr(self, '_root_frame'):
             self._root_frame = Frame()
@@ -190,11 +193,25 @@ class Profiler(object):
 
         return self._root_frame
 
-    def _identifier_for_frame(self, frame):
-        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno)
+    def first_interesting_frame(self):
+        """ 
+        Traverse down the frame heirarchy until a frame is found with more than one child
+        """
+        frame = self.root_frame()
 
-    def output_text(self):
-        return self.root_frame().as_text()
+        while len(frame.children.values()) <= 1:
+            frame = frame.children.values()[0]
 
-    def output_html(self):
-        return self.root_frame().as_html()
+        return frame
+
+    def starting_frame(self, root=False):
+        if root:
+            return self.root_frame()
+        else:
+            return self.first_interesting_frame()
+
+    def output_text(self, root=False):
+        return self.starting_frame(root).as_text()
+
+    def output_html(self, root=False):
+        return self.starting_frame(root).as_html()
