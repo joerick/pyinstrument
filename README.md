@@ -2,12 +2,12 @@ pyinstrument
 ============
 
 A Python profiler that records the call stack of the executing code, instead
-of just the final function in it. 
+of just the final function in it.
 
 ![Screenshot](screenshot.png)
 
-**The current version's profiling overhead is too large to trust the results
-from it. I'd like to improve this, so I'd love any advice or pull requests.**
+This module is still very young, so I'd love any feedback/bug reports/pull
+requests!
 
 Installation
 ------------
@@ -20,8 +20,11 @@ Usage
 -   **Django**
     
     Add `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES`.
+    If you want to profile your middleware as well as your view (you probably
+    do) then put it at the start of the list.
 
-    Then add `?profile` to the end of the request URL to activate the profiler.
+    Then add `?profile` to the end of the request URL to activate the
+    profiler.
 
 -   **Stand-alone**
 
@@ -35,6 +38,14 @@ Usage
         profiler.stop()
 
         print(profiler.output_text())
+
+Known issues
+------------
+
+-   Overhead is still quite high.
+
+-   I'd recommend disabling django-debug-toolbar, django-devserver etc. when
+    profiling, as their instrumentation distort timings.
 
 Why?
 ----
