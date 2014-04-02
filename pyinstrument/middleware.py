@@ -25,6 +25,11 @@ class ProfilerMiddleware(object):
                 with open(os.path.join(location, 'profile.js')) as f:
                     js = f.read()
 
+                with open(os.path.join(location, 'jquery-1.11.0.min.js')) as f:
+                    jquery_js = f.read()
+
+                body = self.profiler.output_html()
+
                 response = '''
                     <html>
                     <head>
@@ -35,7 +40,7 @@ class ProfilerMiddleware(object):
                         {body}
                         <script>{js}</script>
                     </body>
-                    </html>'''.format(css=css, js=js, body=self.profiler.output_html())
+                    </html>'''.format(css=css, js=js, jquery_js=jquery_js, body=body)
 
                 return HttpResponse(response)
             finally:
