@@ -17,32 +17,7 @@ class ProfilerMiddleware(object):
             try:
                 self.profiler.stop()
 
-                location = os.path.dirname(os.path.abspath(__file__))
-
-                with open(os.path.join(location, 'style.css')) as f:
-                    css = f.read()
-
-                with open(os.path.join(location, 'profile.js')) as f:
-                    js = f.read()
-
-                with open(os.path.join(location, 'jquery-1.11.0.min.js')) as f:
-                    jquery_js = f.read()
-
-                body = self.profiler.output_html()
-
-                response = '''
-                    <html>
-                    <head>
-                        <style>{css}</style>
-                        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-                    </head>
-                    <body>
-                        {body}
-                        <script>{js}</script>
-                    </body>
-                    </html>'''.format(css=css, js=js, jquery_js=jquery_js, body=body)
-
-                return HttpResponse(response)
+                return HttpResponse(self.profiler.output_html())
             finally:
                 self.profiler = None
         else:

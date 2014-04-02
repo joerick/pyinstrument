@@ -97,7 +97,32 @@ class Profiler(object):
         return self.starting_frame(root).as_text()
 
     def output_html(self, root=False):
-        return self.starting_frame(root).as_html()
+        location = os.path.dirname(os.path.abspath(__file__))
+
+        with open(os.path.join(location, 'style.css')) as f:
+            css = f.read()
+
+        with open(os.path.join(location, 'profile.js')) as f:
+            js = f.read()
+
+        with open(os.path.join(location, 'jquery-1.11.0.min.js')) as f:
+            jquery_js = f.read()
+
+        body = self.starting_frame(root).as_html()
+
+        page = '''
+            <html>
+            <head>
+                <style>{css}</style>
+                <script>{jquery_js}</script>
+            </head>
+            <body>
+                {body}
+                <script>{js}</script>
+            </body>
+            </html>'''.format(css=css, js=js, jquery_js=jquery_js, body=body)
+
+        return page
 
 
 class Frame(object):
