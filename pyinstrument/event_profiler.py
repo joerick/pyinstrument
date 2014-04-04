@@ -3,7 +3,7 @@ import os
 import time
 import inspect
 from operator import attrgetter
-from pyinstrument.profiler import BaseProfiler, Frame
+from pyinstrument.base import BaseProfiler, Frame
 
 class EventProfiler(BaseProfiler):
     def __init__(self):

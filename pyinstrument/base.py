@@ -30,15 +30,15 @@ class BaseProfiler(object):
         return self.starting_frame(root).as_text()
 
     def output_html(self, root=False):
-        location = os.path.dirname(os.path.abspath(__file__))
+        resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
 
-        with open(os.path.join(location, 'style.css')) as f:
+        with open(os.path.join(resources_dir, 'style.css')) as f:
             css = f.read()
 
-        with open(os.path.join(location, 'profile.js')) as f:
+        with open(os.path.join(resources_dir, 'profile.js')) as f:
             js = f.read()
 
-        with open(os.path.join(location, 'jquery-1.11.0.min.js')) as f:
+        with open(os.path.join(resources_dir, 'jquery-1.11.0.min.js')) as f:
             jquery_js = f.read()
 
         body = self.starting_frame(root).as_html()

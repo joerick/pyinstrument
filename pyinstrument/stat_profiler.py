@@ -1,7 +1,7 @@
 import time
 import signal
 from collections import deque
-from pyinstrument.profiler import BaseProfiler, Frame
+from pyinstrument.base import BaseProfiler, Frame
 
 
 class StatProfiler(BaseProfiler):
