@@ -7,7 +7,7 @@ from operator import attrgetter
 
 class BaseProfiler(object):
     def _identifier_for_frame(self, frame):
-        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno)
+        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
 
     def first_interesting_frame(self):
         """ 
