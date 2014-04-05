@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import os
 import time
@@ -26,8 +27,8 @@ class BaseProfiler(object):
         else:
             return self.first_interesting_frame()
 
-    def output_text(self, root=False):
-        return self.starting_frame(root).as_text()
+    def output_text(self, root=False, unicode=False):
+        return self.starting_frame(root=root).as_text(unicode=unicode)
 
     def output_html(self, root=False):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
@@ -128,11 +129,20 @@ class Frame(object):
     def sorted_children(self):
         return sorted(self.children.values(), key=attrgetter('time'), reverse=True)
 
-    def as_text(self, depth=0):
-        result = '%s%.3f %s\n' % ('| ' * depth, self.time, self.description)
+    def as_text(self, indent=u'', child_indent=u'', unicode=False):
+        result = u'%s%.3f %s \t%s\n' % (indent, self.time, self.function(), self.code_position_short())
 
-        for child in self.sorted_children():
-            result += child.as_text(depth+1)
+        sorted_children = self.sorted_children()
+        last_child = sorted_children[-1] if sorted_children else None
+
+        for child in sorted_children:
+            if child is not last_child:
+                c_indent = child_indent + (u'├─ ' if unicode else '|- ')
+                cc_indent = child_indent + (u'│   ' if unicode else '|  ')
+            else:
+                c_indent = child_indent + (u'└─ ' if unicode else '`- ')
+                cc_indent = child_indent + u'   '
+            result += child.as_text(indent=c_indent, child_indent=cc_indent, unicode=unicode)
 
         return result
 
