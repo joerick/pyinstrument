@@ -2,8 +2,12 @@ import sys
 import os
 import time
 import inspect
+import timeit
 from operator import attrgetter
 from pyinstrument.base import BaseProfiler, Frame
+
+timer = timeit.default_timer
+
 
 class EventProfiler(BaseProfiler):
     def __init__(self):
@@ -27,7 +31,7 @@ class EventProfiler(BaseProfiler):
             self._profile(None, 'return', None)
 
     def _profile(self, frame, event, arg):
-        method_time = time.clock()
+        method_time = timer()
 
         if event == 'call':
             self.current_call_stack.append(self._identifier_for_frame(frame))
@@ -41,7 +45,7 @@ class EventProfiler(BaseProfiler):
             
             self.stack_time[stack] = self.stack_time.get(stack, 0) + frame_duration
 
-        self.time_spent_in_profiler += time.clock() - method_time
+        self.time_spent_in_profiler += timer() - method_time
 
     def root_frame(self):
         """

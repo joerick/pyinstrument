@@ -2,30 +2,39 @@ import time
 import signal
 from collections import deque
 from pyinstrument.base import BaseProfiler, Frame
+import timeit
+
+timer = timeit.default_timer
 
 
 class StatProfiler(BaseProfiler):
     def __init__(self, *args, **kwargs):
         self.next_profile_time = 0
         self.interval = 0.001
+        self.last_signal_time = 0
         self.stack_self_time = {}
         super(StatProfiler, self).__init__(*args, **kwargs)
 
     def start(self):
-        signal.signal(signal.SIGPROF, self.signal)
-        signal.setitimer(signal.ITIMER_PROF, self.interval, 0.0)
+        signal.signal(signal.SIGALRM, self.signal)
+        signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
+        self.last_signal_time = timer()
 
     def stop(self):
-        signal.setitimer(signal.ITIMER_PROF, 0.0, 0.0)
-        signal.signal(signal.SIGPROF, signal.SIG_IGN)
+        signal.setitimer(signal.ITIMER_REAL, 0.0, 0.0)
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
 
     def signal(self, signum, frame):
-        stack = self.call_stack_for_frame(frame)
-        self.stack_self_time[stack] = self.stack_self_time.get(stack, 0) + self.interval
+        now = timer()
+        time_since_last_signal = now - self.last_signal_time
 
-        signal.setitimer(signal.ITIMER_PROF, self.interval, 0.0)
+        stack = self._call_stack_for_frame(frame)
+        self.stack_self_time[stack] = self.stack_self_time.get(stack, 0) + time_since_last_signal
 
-    def call_stack_for_frame(self, frame):
+        signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
+        self.last_signal_time = now
+
+    def _call_stack_for_frame(self, frame):
         result_list = deque()
 
         while frame is not None:
