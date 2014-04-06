@@ -6,6 +6,11 @@ import timeit
 
 timer = timeit.default_timer
 
+class NotMainThreadError(Exception):
+    """pyinstrument.StatProfiler must be used on the main thread"""
+    def __init__(self, message=''):
+        super(NotMainThreadError, self).__init__(message or NotMainThreadError.__doc__)
+
 
 class StatProfiler(BaseProfiler):
     def __init__(self, *args, **kwargs):
@@ -16,13 +21,21 @@ class StatProfiler(BaseProfiler):
         super(StatProfiler, self).__init__(*args, **kwargs)
 
     def start(self):
-        signal.signal(signal.SIGALRM, self.signal)
+        try:
+            signal.signal(signal.SIGALRM, self.signal)
+        except ValueError:
+            raise NotMainThreadError()
+
         signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
         self.last_signal_time = timer()
 
     def stop(self):
         signal.setitimer(signal.ITIMER_REAL, 0.0, 0.0)
-        signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+        try:
+            signal.signal(signal.SIGALRM, signal.SIG_IGN)
+        except ValueError:
+            raise NotMainThreadError()
 
     def signal(self, signum, frame):
         now = timer()
