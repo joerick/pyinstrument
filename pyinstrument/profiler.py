@@ -5,6 +5,7 @@ import timeit
 import signal
 from collections import deque
 from operator import attrgetter
+from pyinstrument.utils import cached_property, clear_property_cache
 
 timer = timeit.default_timer
 
@@ -35,7 +36,7 @@ class Profiler(object):
 
     def start(self):
         try:
-            signal.signal(signal.SIGALRM, self.signal)
+            signal.signal(signal.SIGALRM, self._signal)
         except ValueError:
             raise NotMainThreadError()
 
@@ -50,7 +51,7 @@ class Profiler(object):
         except ValueError:
             raise NotMainThreadError()
 
-    def signal(self, signum, frame):
+    def _signal(self, signum, frame):
         now = timer()
         time_since_last_signal = now - self.last_signal_time
 
@@ -69,6 +70,9 @@ class Profiler(object):
 
         return tuple(result_list)
 
+    def _identifier_for_frame(self, frame):
+        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+
     def root_frame(self):
         """
         Returns the parsed results in the form of a tree of Frame objects
@@ -85,18 +89,15 @@ class Profiler(object):
                 parent = frame_for_stack(stack[:-1])
                 frame_name = stack[-1]
 
-                if not frame_name in parent.children:
-                    parent.children[frame_name] = Frame(frame_name, parent)
+                if not frame_name in parent.children_dict:
+                    parent.add_child(Frame(frame_name, parent))
 
-                return parent.children[frame_name]
+                return parent.children_dict[frame_name]
 
             for stack, self_time in self.stack_self_time.iteritems():
                 frame_for_stack(stack).self_time = self_time
 
         return self._root_frame
-
-    def _identifier_for_frame(self, frame):
-        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
 
     def first_interesting_frame(self):
         """ 
@@ -104,8 +105,8 @@ class Profiler(object):
         """
         frame = self.root_frame()
 
-        while len(frame.children.values()) <= 1:
-            frame = frame.children.values()[0]
+        while len(frame.children) <= 1:
+            frame = frame.children[0]
 
         return frame
 
@@ -151,57 +152,57 @@ class Frame(object):
     """
     Object that represents a stack frame in the parsed tree
     """
-    def __init__(self, description="", parent=None):
-        self.description = description
+    def __init__(self, identifier='', parent=None):
+        self.identifier = identifier
         self.parent = parent
-        self.children = {}
+        self.children_dict = {}
         self.self_time = 0
 
+    @property
     def function(self):
-        if self.description:
-            return self.description.split('\t')[0]
+        if self.identifier:
+            return self.identifier.split('\t')[0]
 
+    @property
     def code_position(self):
-        if self.description:
-            return self.description.split('\t')[1]
+        if self.identifier:
+            return self.identifier.split('\t')[1]
 
+    @property
     def file_path(self):
-        if self.description:
-            return self.code_position().split(':')[0]
+        if self.identifier:
+            return self.code_position.split(':')[0]
 
+    @property
     def line_no(self):
-        if self.description:
-            return int(self.code_position().split(':')[1])
+        if self.identifier:
+            return int(self.code_position.split(':')[1])
 
+    @cached_property
     def file_path_short(self):
         """ Return the path resolved against the closest entry in sys.path """
-        file_path = self.file_path()
-
-        if not file_path:
+        if not self.file_path:
             return None
 
         result = None
 
         for path in sys.path:
-            candidate = os.path.relpath(file_path, path)
+            candidate = os.path.relpath(self.file_path, path)
             if not result or (len(candidate.split('/')) < len(result.split('/'))):
                 result = candidate
 
         return result
 
-    def code_position_short(self):
-        if self.description:
-            return '%s:%i' % (self.file_path_short(), self.line_no())
-
-    def __repr__(self):
-        return 'Frame(description=%s, time=%f, children=%r)' % (self.description, self.time, self.children)
-
     @property
-    def time(self):
-        if not hasattr(self, '_time'):
-            self._time = sum(child.time for child in self.children.values()) + self.self_time
-        return self._time
+    def code_position_short(self):
+        if self.identifier:
+            return '%s:%i' % (self.file_path_short, self.line_no)
 
+    @cached_property
+    def time(self):
+        return sum(child.time for child in self.children) + self.self_time
+
+    @cached_property
     def proportion_of_parent(self):
         if self.parent and self.time:
             try:
@@ -211,25 +212,28 @@ class Frame(object):
         else:
             return 1.0
 
+    @cached_property
     def proportion_of_total(self):
-        if not hasattr(self, '_proportion_of_total'):
-            if not self.parent:
-                return 1.0
+        if not self.parent:
+            return 1.0
 
-            self._proportion_of_total = self.parent.proportion_of_total() * self.proportion_of_parent()
+        return self.parent.proportion_of_total * self.proportion_of_parent
 
-        return self._proportion_of_total
+    @cached_property
+    def children(self):
+        return sorted(self.children_dict.values(), key=attrgetter('time'), reverse=True)
 
-    def sorted_children(self):
-        return sorted(self.children.values(), key=attrgetter('time'), reverse=True)
+    def add_child(self, child):
+        self.children_dict[child.identifier] = child
+        clear_property_cache(self)
 
     def as_text(self, indent=u'', child_indent=u'', unicode=False):
-        result = u'%s%.3f %s \t%s\n' % (indent, self.time, self.function(), self.code_position_short())
+        result = u'%s%.3f %s \t%s\n' % (indent, self.time, self.function, self.code_position_short)
 
-        sorted_children = self.sorted_children()
-        last_child = sorted_children[-1] if sorted_children else None
+        if self.children:
+            last_child = self.children[-1]
 
-        for child in sorted_children:
+        for child in self.children:
             if child is not last_child:
                 c_indent = child_indent + (u'├─ ' if unicode else '|- ')
                 cc_indent = child_indent + (u'│  ' if unicode else '|  ')
@@ -241,41 +245,35 @@ class Frame(object):
         return result
 
     def as_html(self):
-        parent_proportion = self.proportion_of_parent()
-        total_proportion = self.proportion_of_total()
-        start_collapsed = True;
-        sorted_children = self.sorted_children()
-        has_children = len(sorted_children) > 0
-
-        for child in sorted_children:
-            if child.proportion_of_total() > 0.1:
-                start_collapsed = False
+        start_collapsed = all(child.proportion_of_total < 0.1 for child in self.children)
 
         extra_class = ''
         extra_class += 'collapse ' if start_collapsed else ''
-        extra_class += 'no_children ' if not has_children else ''
+        extra_class += 'no_children ' if not self.children else ''
 
-        result = '''<div class="frame {extra_class}" data-time="{time}" date-parent-time="{parent_time}">
+        result = '''<div class="frame {extra_class}" data-time="{time}" date-parent-time="{parent_proportion}">
             <div class="frame-info">
                 <span class="time">{time:.3f}s</span>
-                <span class="total-percent">{total_percent:.1f}%</span>
-                <!--<span class="parent-percent">{parent_percent:.1f}%</span>-->
+                <span class="total-percent">{total_proportion:.1%}</span>
+                <!--<span class="parent-percent">{parent_proportion:.1%}</span>-->
                 <span class="function">{function}</span>
                 <span class="code-position">{code_position}</span>
             </div>'''.format(
                 time=self.time,
-                function=self.function(),
-                code_position=self.code_position_short(),
-                parent_time=parent_proportion, 
-                parent_percent=parent_proportion * 100,
-                total_percent=total_proportion * 100,
+                function=self.function,
+                code_position=self.code_position_short,
+                parent_proportion=self.proportion_of_parent, 
+                total_proportion=self.proportion_of_total,
                 extra_class=extra_class)
 
         result += '<div class="frame-children">'
 
-        for child in sorted_children:
+        for child in self.children:
             result += child.as_html()
 
         result += '</div></div>'
 
         return result
+
+    def __repr__(self):
+        return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time, self.children)
