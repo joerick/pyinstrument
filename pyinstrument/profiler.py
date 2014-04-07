@@ -106,7 +106,11 @@ class Profiler(object):
         frame = self.root_frame()
 
         while len(frame.children) <= 1:
-            frame = frame.children[0]
+            if frame.children:
+                frame = frame.children[0]
+            else:
+                # there are no branches
+                return self.root_frame()
 
         return frame
 
