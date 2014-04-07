@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.conf import settings
-from pyinstrument import StatProfiler, EventProfiler
-from pyinstrument.stat_profiler import NotMainThreadError, SignalUnavailableError
+from pyinstrument import Profiler
+from pyinstrument.profiler import NotMainThreadError
 
 not_main_thread_message = (
     'pyinstrument can only be used on the main thread. Run your server process in single-threaded '
@@ -15,11 +15,7 @@ class ProfilerMiddleware(object):
 
     def process_request(self, request):
         if getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET:
-            try:
-                self.profiler = StatProfiler()
-            except SignalUnavailableError:
-                self.profiler = EventProfiler()
-
+            self.profiler = Profiler()
             try:
                 self.profiler.start()
             except NotMainThreadError:
