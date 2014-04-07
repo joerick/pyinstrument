@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
  
 setup(
     name="pyinstrument",
-    version="0.5",
+    version="0.6",
     description="A call stack profiler for Python. Inspired by Apple's Instruments.app",
     long_description=open('README.md').read(),
     packages=['pyinstrument'],
