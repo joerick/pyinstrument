@@ -1,10 +1,10 @@
-import time
 import signal
 from collections import deque
-from pyinstrument.base import BaseProfiler, Frame
 import timeit
+from pyinstrument.base import BaseProfiler, Frame
 
 timer = timeit.default_timer
+
 
 class NotMainThreadError(Exception):
     """pyinstrument.StatProfiler must be used on the main thread"""
@@ -14,6 +14,11 @@ class NotMainThreadError(Exception):
 
 class StatProfiler(BaseProfiler):
     def __init__(self, *args, **kwargs):
+        try:
+            signal.SIGALRM
+        except AttributeError:
+            raise AttributeError('pyinstrument.StatProfiler uses signal.SIGALRM, which is not available on your system. Consider using pyinstrument.EventProfiler instead.')
+
         self.next_profile_time = 0
         self.interval = 0.001
         self.last_signal_time = 0
@@ -93,4 +98,3 @@ class StatFrame(Frame):
         if not hasattr(self, '_time'):
             self._time = sum(child.time for child in self.children.values()) + self.self_time
         return self._time
-
