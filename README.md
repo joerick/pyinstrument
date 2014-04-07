@@ -6,6 +6,39 @@ of just the final function in it.
 
 ![Screenshot](screenshot.png)
 
+Sample console output
+
+    0.098 _render     django/template/base.py:133
+    └─ 0.096 render   django/template/base.py:836
+       ├─ 0.085 render_node   django/template/base.py:853
+       │  └─ 0.085 render     django/template/loader_tags.py:48
+       │     ├─ 0.068 render  django/template/base.py:836
+       │     │  ├─ 0.053 render_node  django/template/base.py:853
+       │     │  │  └─ 0.052 render    django/template/defaulttags.py:387
+       │     │  │     ├─ 0.013 wrapper    django/utils/functional.py:197
+       │     │  │     │  └─ 0.007 strip_spaces_between_tags   django/utils/html.py:153
+       │     │  │     │     └─ 0.006 sub  re.py:144
+       │     │  │     │        └─ 0.004 _compile  re.py:226
+       │     │  │     └─ 0.011 render     django/template/base.py:836
+       │     │  │        ├─ 0.005 mark_safe   django/utils/safestring.py:104
+       │     │  │        ├─ 0.001 render_node     django/template/base.py:853
+       │     │  │        └─ 0.001 force_text  django/utils/encoding.py:84
+       │     │  ├─ 0.002 force_text   django/utils/encoding.py:84
+       │     │  └─ 0.002 mark_safe    django/utils/safestring.py:104
+       │     ├─ 0.004 push    django/template/context.py:37
+       │     ├─ 0.002 __init__    django/template/loader_tags.py:42
+       │     ├─ 0.001 pop     django/template/context.py:42
+       │     ├─ 0.001 pop     django/template/loader_tags.py:26
+       │     ├─ 0.001 __setitem__     django/template/context.py:47
+       │     └─ 0.001 push    django/template/loader_tags.py:32
+       └─ 0.004 force_text    django/utils/encoding.py:84
+
+It uses a **statistical profiler**, meaning the code samples the stack
+periodically (by default, every 1 ms). This is lower overhead than event-
+based profiling (as done by `profile` and `cProfile`), but does not currently
+work on Windows due to the lack of `signal.setitimer`. In these cases, you can
+still use the old event-based profiler `pyinstrument.EventProfiler`.
+
 This module is still very young, so I'd love any feedback/bug reports/pull
 requests!
 
@@ -37,16 +70,19 @@ Usage
 
         profiler.stop()
 
-        print(profiler.output_text())
+        print(profiler.output_text(unicode=True))
+
+    If your terminal doesn't support unicode, you can omit the `unicode=True`
+    flag.
 
 Known issues
 ------------
 
--   Overhead is still quite high. Timings will be artificially high for code
-    that makes a lot of calls, such as Django template rendering. 
+-   Statistical profiling doesn't work under Windows. Use
+    `pyinstrument.EventProfiler` instead.
 
--   I'd recommend disabling django-debug-toolbar, django-devserver etc. when
-    profiling, as their instrumentation distort timings.
+-   When profiling Django, I'd recommend disabling django-debug-toolbar,
+    django-devserver etc., as their instrumentation distort timings.
 
 Why?
 ----
