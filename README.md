@@ -8,9 +8,8 @@ of just the final function in it.
 
 It uses a **statistical profiler**, meaning the code samples the stack
 periodically (by default, every 1 ms). This is lower overhead than event-
-based profiling (as done by `profile` and `cProfile`), but does not currently
-work on Windows due to the lack of `signal.setitimer`. In these cases, you can
-still use the old event-based profiler `pyinstrument.EventProfiler`.
+based profiling (as done by `profile` and `cProfile`), but does **not currently
+work on Windows** due to the lack of `signal.setitimer`.
 
 This module is still very young, so I'd love any feedback/bug reports/pull
 requests!
