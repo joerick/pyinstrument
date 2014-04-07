@@ -12,12 +12,19 @@ class NotMainThreadError(Exception):
         super(NotMainThreadError, self).__init__(message or NotMainThreadError.__doc__)
 
 
+class SignalUnavailableError(Exception):
+    '''pyinstrument.StatProfiler uses signal.SIGALRM, which is not available on your system.
+    Consider using pyinstrument.EventProfiler instead.'''
+    def __init__(self, message=''):
+        super(SignalUnavailableError, self).__init__(message or SignalUnavailableError.__doc__)
+
+
 class StatProfiler(BaseProfiler):
     def __init__(self, *args, **kwargs):
         try:
             signal.SIGALRM
         except AttributeError:
-            raise AttributeError('pyinstrument.StatProfiler uses signal.SIGALRM, which is not available on your system. Consider using pyinstrument.EventProfiler instead.')
+            raise SignalUnavailableError()
 
         self.next_profile_time = 0
         self.interval = 0.001
