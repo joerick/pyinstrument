@@ -77,8 +77,10 @@ Usage
 Known issues
 ------------
 
--   Statistical profiling doesn't work under Windows. Use
-    `pyinstrument.EventProfiler` instead.
+-   pyinstrument doesn't work under Windows. See [this commit][0] 
+    for more information.
+
+[0]: https://github.com/joerick/pyinstrument/commit/656a1a4c7996e416db686d06b91ad81b114ec1a9
 
 -   When profiling Django, I'd recommend disabling django-debug-toolbar,
     django-devserver etc., as their instrumentation distort timings.
