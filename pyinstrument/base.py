@@ -138,7 +138,7 @@ class Frame(object):
         for child in sorted_children:
             if child is not last_child:
                 c_indent = child_indent + (u'├─ ' if unicode else '|- ')
-                cc_indent = child_indent + (u'│   ' if unicode else '|  ')
+                cc_indent = child_indent + (u'│  ' if unicode else '|  ')
             else:
                 c_indent = child_indent + (u'└─ ' if unicode else '`- ')
                 cc_indent = child_indent + u'   '
