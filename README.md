@@ -22,6 +22,15 @@ Installation
 Usage
 -----
 
+-   **Command-line**
+
+    You can call pyinstrument directly from the command line.
+
+        python -m pyinstrument myscript.py [args]
+
+    This will run `myscript.py` to completion or until you interrupt it, and 
+    then output the call tree.
+
 -   **Django**
     
     Add `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES`.
@@ -31,7 +40,7 @@ Usage
     Then add `?profile` to the end of the request URL to activate the
     profiler.
 
--   **Stand-alone**
+-   **Python**
 
         from pyinstrument import Profiler
 
@@ -44,7 +53,7 @@ Usage
 
         print(profiler.output_text(unicode=True))
 
-    Sample output:
+    Sample text output:
 
         0.098 _render     django/template/base.py:133
         └─ 0.096 render   django/template/base.py:836
