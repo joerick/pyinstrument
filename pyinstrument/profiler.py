@@ -11,13 +11,13 @@ timer = timeit.default_timer
 
 
 class NotMainThreadError(Exception):
-    """pyinstrument.StatProfiler must be used on the main thread"""
+    '''pyinstrument must be used on the main thread in signal mode'''
     def __init__(self, message=''):
         super(NotMainThreadError, self).__init__(message or NotMainThreadError.__doc__)
 
 
 class SignalUnavailableError(Exception):
-    '''pyinstrument.StatProfiler uses signal.SIGALRM, which is not available on your system.'''
+    '''pyinstrument uses signal.SIGALRM in signal mode, which is not available on your system.'''
     def __init__(self, message=''):
         super(SignalUnavailableError, self).__init__(message or SignalUnavailableError.__doc__)
 
@@ -29,37 +29,60 @@ class Profiler(object):
         except AttributeError:
             raise SignalUnavailableError()
 
-        self.next_profile_time = 0
         self.interval = 0.001
-        self.last_signal_time = 0
+        self.last_profile_time = 0
         self.stack_self_time = {}
 
-    def start(self):
-        try:
-            signal.signal(signal.SIGALRM, self._signal)
-        except ValueError:
-            raise NotMainThreadError()
+    def start(self, use_signal=True):
+        if not use_signal:
+            sys.setprofile(self._profile)
+        else:
+            try:
+                signal.signal(signal.SIGALRM, self._signal)
+            except ValueError:
+                raise NotMainThreadError()
 
-        signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
-        self.last_signal_time = timer()
+            signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
+
+        self.last_profile_time = timer()
 
     def stop(self):
-        signal.setitimer(signal.ITIMER_REAL, 0.0, 0.0)
+        if sys.getprofile() == self._profile:
+            sys.setprofile(None)
+        else:
+            signal.setitimer(signal.ITIMER_REAL, 0.0, 0.0)
 
-        try:
-            signal.signal(signal.SIGALRM, signal.SIG_IGN)
-        except ValueError:
-            raise NotMainThreadError()
+            try:
+                signal.signal(signal.SIGALRM, signal.SIG_IGN)
+            except ValueError:
+                raise NotMainThreadError()
 
     def _signal(self, signum, frame):
         now = timer()
-        time_since_last_signal = now - self.last_signal_time
+        time_since_last_signal = now - self.last_profile_time
 
-        stack = self._call_stack_for_frame(frame)
-        self.stack_self_time[stack] = self.stack_self_time.get(stack, 0) + time_since_last_signal
+        self._record(frame, time_since_last_signal)
 
         signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
-        self.last_signal_time = now
+        self.last_profile_time = now
+
+    def _profile(self, frame, event, arg):
+        now = timer()
+        time_since_last_signal = now - self.last_profile_time
+
+        if time_since_last_signal < self.interval:
+            return
+
+        if event == 'call':
+            frame = frame.f_back
+
+        self._record(frame, time_since_last_signal)
+
+        self.last_profile_time = now
+
+    def _record(self, frame, time):
+        stack = self._call_stack_for_frame(frame)
+        self.stack_self_time[stack] = self.stack_self_time.get(stack, 0) + time
 
     def _call_stack_for_frame(self, frame):
         result_list = deque()
