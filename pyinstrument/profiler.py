@@ -34,6 +34,8 @@ class Profiler(object):
         self.stack_self_time = {}
 
     def start(self, use_signal=True):
+        self.last_profile_time = timer()
+
         if not use_signal:
             sys.setprofile(self._profile)
         else:
@@ -43,8 +45,6 @@ class Profiler(object):
                 raise NotMainThreadError()
 
             signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
-
-        self.last_profile_time = timer()
 
     def stop(self):
         if sys.getprofile() == self._profile:
