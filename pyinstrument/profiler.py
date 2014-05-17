@@ -143,8 +143,8 @@ class Profiler(object):
         else:
             return self.first_interesting_frame()
 
-    def output_text(self, root=False, unicode=False):
-        return self.starting_frame(root=root).as_text(unicode=unicode)
+    def output_text(self, root=False, unicode=False, colors=False):
+        return self.starting_frame(root=root).as_text(unicode=unicode, colors=colors)
 
     def output_html(self, root=False):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
@@ -254,8 +254,13 @@ class Frame(object):
         self.children_dict[child.identifier] = child
         clear_property_cache(self)
 
-    def as_text(self, indent=u'', child_indent=u'', unicode=False):
-        result = u'%s%.3f %s \t%s\n' % (indent, self.time, self.function, self.code_position_short)
+    def as_text(self, indent=u'', child_indent=u'', unicode=False, colors=False):
+        result = u'{indent}{time:.3} {function}  {c.faint}{code_position}{c.end}\n'.format(
+            indent=indent,
+            time=float(self.time),
+            function=self.function,
+            code_position=self.code_position_short,
+            c=colors_enabled if colors else colors_disabled)
 
         if self.children:
             last_child = self.children[-1]
@@ -304,3 +309,21 @@ class Frame(object):
 
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time, self.children)
+
+
+class colors_enabled:
+    red = '\033[31m'
+    green = '\033[32m'
+    yellow = '\033[33m'
+    blue = '\033[34m'
+    cyan = '\033[36m'
+
+    bold = '\033[1m'
+    faint = '\033[2m'
+
+    end = '\033[0m'
+
+
+class colors_disabled:
+    def __getattr__(self, key):
+        return ''
