@@ -4,8 +4,7 @@ import os
 import timeit
 import signal
 from collections import deque
-from operator import attrgetter
-from pyinstrument.utils import cached_property, clear_property_cache
+from operator import methodcaller
 
 timer = timeit.default_timer
 
@@ -143,8 +142,8 @@ class Profiler(object):
         else:
             return self.first_interesting_frame()
 
-    def output_text(self, root=False, unicode=False, colors=False):
-        return self.starting_frame(root=root).as_text(unicode=unicode, colors=colors)
+    def output_text(self, root=False, unicode=False, color=False):
+        return self.starting_frame(root=root).as_text(unicode=unicode, color=color)
 
     def output_html(self, root=False):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
@@ -205,74 +204,103 @@ class Frame(object):
         if self.identifier:
             return int(self.code_position.split(':')[1])
 
-    @cached_property
+    @property
     def file_path_short(self):
         """ Return the path resolved against the closest entry in sys.path """
-        if not self.file_path:
-            return None
+        if not hasattr(self, '_file_path_short'):
+            if self.file_path:
+                result = None
 
-        result = None
+                for path in sys.path:
+                    candidate = os.path.relpath(self.file_path, path)
+                    if not result or (len(candidate.split('/')) < len(result.split('/'))):
+                        result = candidate
 
-        for path in sys.path:
-            candidate = os.path.relpath(self.file_path, path)
-            if not result or (len(candidate.split('/')) < len(result.split('/'))):
-                result = candidate
+                self._file_path_short = result
+            else: 
+                self._file_path_short = None
 
-        return result
+        return self._file_path_short
 
     @property
     def code_position_short(self):
         if self.identifier:
             return '%s:%i' % (self.file_path_short, self.line_no)
 
-    @cached_property
+    # stylistically I'd rather this was a property, but using @property appears to use twice
+    # as many stack frames, so I'm forced into using a function since this method is recursive
+    # down the call tree.
     def time(self):
-        return sum(child.time for child in self.children) + self.self_time
+        if not hasattr(self, '_time'):
+            # can't use a sum(<generator>) expression here sadly, because this method
+            # recurses down the call tree, and the generator uses an extra stack frame,
+            # meaning we hit the stack limit when the profiled code is 500 frames deep.
+            self._time = self.self_time
 
-    @cached_property
+            for child in self.children:
+                self._time += child.time()
+
+        return self._time
+
+    @property
     def proportion_of_parent(self):
-        if self.parent and self.time:
-            try:
-                return self.time / self.parent.time
-            except ZeroDivisionError:
-                return float('nan')
-        else:
-            return 1.0
+        if not hasattr(self, '_proportion_of_parent'):
+            if self.parent and self.time():
+                try:
+                    self._proportion_of_parent = self.time() / self.parent.time()
+                except ZeroDivisionError:
+                    self._proportion_of_parent = float('nan')
+            else:
+                self._proportion_of_parent = 1.0
 
-    @cached_property
+        return self._proportion_of_parent
+
+    @property
     def proportion_of_total(self):
-        if not self.parent:
-            return 1.0
+        if not hasattr(self, '_proportion_of_total'):
+            if not self.parent:
+                self._proportion_of_total = 1.0
+            else:
+                self._proportion_of_total = self.parent.proportion_of_total * self.proportion_of_parent
 
-        return self.parent.proportion_of_total * self.proportion_of_parent
+        return self._proportion_of_total
 
-    @cached_property
+    @property
     def children(self):
-        return sorted(self.children_dict.values(), key=attrgetter('time'), reverse=True)
+        return self.children_dict.values()
+
+    @property
+    def sorted_children(self):
+        if not hasattr(self, '_sorted_children'):
+            self._sorted_children = sorted(self.children, key=methodcaller('time'), reverse=True)
+
+        return self._sorted_children
 
     def add_child(self, child):
         self.children_dict[child.identifier] = child
-        clear_property_cache(self)
 
-    def as_text(self, indent=u'', child_indent=u'', unicode=False, colors=False):
-        result = u'{indent}{time:.3} {function}  {c.faint}{code_position}{c.end}\n'.format(
+    def as_text(self, indent=u'', child_indent=u'', unicode=False, color=False):
+        result = u'{indent}{time:.3f} {function}  {c.faint}{code_position}{c.end}\n'.format(
             indent=indent,
-            time=float(self.time),
+            time=float(self.time()),
             function=self.function,
             code_position=self.code_position_short,
-            c=colors_enabled if colors else colors_disabled)
+            c=colors_enabled if color else colors_disabled)
 
-        if self.children:
-            last_child = self.children[-1]
+        if self.sorted_children:
+            last_child = self.sorted_children[-1]
 
-        for child in self.children:
+        for child in self.sorted_children:
             if child is not last_child:
                 c_indent = child_indent + (u'├─ ' if unicode else '|- ')
                 cc_indent = child_indent + (u'│  ' if unicode else '|  ')
             else:
                 c_indent = child_indent + (u'└─ ' if unicode else '`- ')
                 cc_indent = child_indent + u'   '
-            result += child.as_text(indent=c_indent, child_indent=cc_indent, unicode=unicode)
+            result += child.as_text(indent=c_indent,
+                                    child_indent=cc_indent,
+                                    unicode=unicode,
+                                    color=color)
 
         return result
 
@@ -291,7 +319,7 @@ class Frame(object):
                 <span class="function">{function}</span>
                 <span class="code-position">{code_position}</span>
             </div>'''.format(
-                time=self.time,
+                time=self.time(),
                 function=self.function,
                 code_position=self.code_position_short,
                 parent_proportion=self.proportion_of_parent, 
@@ -300,7 +328,7 @@ class Frame(object):
 
         result += '<div class="frame-children">'
 
-        for child in self.children:
+        for child in self.sorted_children:
             result += child.as_html()
 
         result += '</div></div>'
@@ -308,7 +336,7 @@ class Frame(object):
         return result
 
     def __repr__(self):
-        return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time, self.children)
+        return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time(), self.children)
 
 
 class colors_enabled:
@@ -327,3 +355,5 @@ class colors_enabled:
 class colors_disabled:
     def __getattr__(self, key):
         return ''
+
+colors_disabled = colors_disabled()
