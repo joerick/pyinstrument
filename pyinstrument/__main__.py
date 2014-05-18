@@ -47,19 +47,44 @@ def main():
         if options.outfile:
             f = codecs.open(options.outfile, 'w', 'utf-8')
             unicode = True
+            color = False
         else:
             f = sys.stdout
-            unicode = 'utf' in os.environ.get('LC_CTYPE', '').lower()
+            unicode = stdout_supports_unicode()
+            color = stdout_supports_color()
 
         if options.output_html:
             f.write(profiler.output_html())
         else:
-            f.write(profiler.output_text(unicode=unicode))
+            f.write(profiler.output_text(unicode=unicode, color=color))
 
         f.close()
     else:
         parser.print_usage()
     return parser
+
+def stdout_supports_color():
+    """
+    Returns True if the running system's terminal supports color, and False
+    otherwise.
+
+    Borrowed from Django
+    https://github.com/django/django/blob/master/django/core/management/color.py
+    """
+    plat = sys.platform
+    supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
+                                                  'ANSICON' in os.environ)
+
+    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    if not supported_platform or not is_a_tty:
+        return False
+    return True
+
+def stdout_supports_unicode():
+    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    utf_in_locale = 'utf' in os.environ.get('LC_CTYPE', '').lower()
+
+    return is_a_tty and utf_in_locale
 
 if __name__ == '__main__':
     main()
