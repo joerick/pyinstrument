@@ -16,45 +16,49 @@ class NotMainThreadError(Exception):
 
 
 class SignalUnavailableError(Exception):
-    '''pyinstrument uses signal.SIGALRM in signal mode, which is not available on your system.'''
+    '''pyinstrument uses signal.SIGALRM in signal mode, which is not available on your system.
+
+    You can pass the argument 'use_signal=False' to run in setprofile mode.'''
     def __init__(self, message=''):
         super(SignalUnavailableError, self).__init__(message or SignalUnavailableError.__doc__)
 
 
 class Profiler(object):
-    def __init__(self, *args, **kwargs):
-        try:
-            signal.SIGALRM
-        except AttributeError:
-            raise SignalUnavailableError()
+    def __init__(self, use_signal=True):
+        if use_signal:
+            try:
+                signal.SIGALRM
+            except AttributeError:
+                raise SignalUnavailableError()
 
         self.interval = 0.001
         self.last_profile_time = 0
         self.stack_self_time = {}
+        self.use_signal = use_signal
 
-    def start(self, use_signal=True):
+    def start(self):
         self.last_profile_time = timer()
 
-        if not use_signal:
-            sys.setprofile(self._profile)
-        else:
+        if self.use_signal:
             try:
                 signal.signal(signal.SIGALRM, self._signal)
             except ValueError:
                 raise NotMainThreadError()
 
             signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
+        else:
+            sys.setprofile(self._profile)
 
     def stop(self):
-        if sys.getprofile() == self._profile:
-            sys.setprofile(None)
-        else:
+        if self.use_signal:
             signal.setitimer(signal.ITIMER_REAL, 0.0, 0.0)
 
             try:
                 signal.signal(signal.SIGALRM, signal.SIG_IGN)
             except ValueError:
                 raise NotMainThreadError()
+        else:
+            sys.setprofile(None)
 
     def _signal(self, signum, frame):
         now = timer()
