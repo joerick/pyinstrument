@@ -102,7 +102,7 @@ class Profiler(object):
         if not hasattr(self, '_root_frame'):
             self._root_frame = Frame()
 
-            # define a recursive function that builds the heirarchy of frames given the
+            # define a recursive function that builds the hierarchy of frames given the
             # stack of frame identifiers
             def frame_for_stack(stack):
                 if len(stack) == 0:
@@ -123,7 +123,7 @@ class Profiler(object):
 
     def first_interesting_frame(self):
         """ 
-        Traverse down the frame heirarchy until a frame is found with more than one child
+        Traverse down the frame hierarchy until a frame is found with more than one child
         """
         frame = self.root_frame()
 
