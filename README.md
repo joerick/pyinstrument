@@ -60,9 +60,9 @@ Usage
 Signal or setprofile mode?
 --------------------------
 
-On Mac/Linux/Unix, pyinstrument can run in 'signal' mode. This uses OS-
-provided signals to interrupt the process every 1ms and record the stack. This
-gives much lower overhead (and thus accurate) readings than the standard
+On Mac/Linux/Unix, pyinstrument can run in 'signal' mode. This uses 
+OS-provided signals to interrupt the process every 1ms and record the stack. 
+It gives much lower overhead (and thus accurate) readings than the standard
 Python [`sys.setprofile`][setprofile] style profilers. **However, this can
 only profile the main thread**.
 
@@ -90,8 +90,8 @@ Known issues
     django-devserver etc., as their instrumentation distort timings.
     
 -   In signal mode, any calls to [`time.sleep`][pysleep] will return
-    immediately. This is because of an implementation detail of `time.sleep`
-    and the underlying C function [`sleep`][csleep].
+    immediately. This is because of an implementation detail of `time.sleep`,
+    but matches the behaviour of the C function [`sleep`][csleep].
 
 [pysleep]: https://docs.python.org/2/library/time.html#time.sleep
 [csleep]: http://pubs.opengroup.org/onlinepubs/009695399/functions/sleep.html
