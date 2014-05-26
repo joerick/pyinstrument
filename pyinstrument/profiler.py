@@ -291,10 +291,12 @@ class Frame(object):
             code_position=self.code_position_short,
             c=colors_enabled if color else colors_disabled)
 
-        if self.sorted_children:
-            last_child = self.sorted_children[-1]
+        children = filter(lambda f: f.proportion_of_total > 0.01, self.sorted_children)
 
-        for child in self.sorted_children:
+        if children:
+            last_child = children[-1]
+
+        for child in children:
             if child is not last_child:
                 c_indent = child_indent + (u'├─ ' if unicode else '|- ')
                 cc_indent = child_indent + (u'│  ' if unicode else '|  ')
