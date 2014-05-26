@@ -4,7 +4,7 @@ pyinstrument
 A Python profiler that records the call stack of the executing code, instead
 of just the final function in it.
 
-![Screenshot](screenshot.jpg)
+[![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
 
 It uses a **statistical profiler**, meaning the code samples the stack
 periodically (every 1 ms). This is lower overhead than event-
