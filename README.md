@@ -4,12 +4,11 @@ pyinstrument
 A Python profiler that records the call stack of the executing code, instead
 of just the final function in it.
 
-![Screenshot](screenshot.png)
+![Screenshot](screenshot.jpg)
 
 It uses a **statistical profiler**, meaning the code samples the stack
-periodically (by default, every 1 ms). This is lower overhead than event-
-based profiling (as done by `profile` and `cProfile`), but does **not currently
-work on Windows** due to the lack of `signal.setitimer`.
+periodically (every 1 ms). This is lower overhead than event-
+based profiling (as done by `profile` and `cProfile`).
 
 This module is still very young, so I'd love any feedback/bug reports/pull
 requests!
@@ -26,7 +25,7 @@ Usage
 
     You can call pyinstrument directly from the command line.
 
-        python -m pyinstrument myscript.py [args]
+        python -m pyinstrument myscript.py [args...]
 
     This will run `myscript.py` to completion or until you interrupt it, and 
     then output the call tree.
@@ -44,58 +43,62 @@ Usage
 
         from pyinstrument import Profiler
 
-        profiler = Profiler()
+        profiler = Profiler() # or Profiler(use_signal=False), see below
         profiler.start()
 
         # code you want to profile
 
         profiler.stop()
 
-        print(profiler.output_text(unicode=True))
+        print(profiler.output_text(unicode=True, color=True))
 
-    Sample text output:
+    You can omit the `unicode` and `color` flags if your output/terminal does
+    not support them.
 
-        0.098 _render     django/template/base.py:133
-        └─ 0.096 render   django/template/base.py:836
-           ├─ 0.085 render_node   django/template/base.py:853
-           │  └─ 0.085 render     django/template/loader_tags.py:48
-           │     ├─ 0.068 render  django/template/base.py:836
-           │     │  ├─ 0.053 render_node  django/template/base.py:853
-           │     │  │  └─ 0.052 render    django/template/defaulttags.py:387
-           │     │  │     ├─ 0.013 wrapper    django/utils/functional.py:197
-           │     │  │     │  └─ 0.007 strip_spaces_between_tags   django/utils/html.py:153
-           │     │  │     │     └─ 0.006 sub  re.py:144
-           │     │  │     │        └─ 0.004 _compile  re.py:226
-           │     │  │     └─ 0.011 render     django/template/base.py:836
-           │     │  │        ├─ 0.005 mark_safe   django/utils/safestring.py:104
-           │     │  │        ├─ 0.001 render_node     django/template/base.py:853
-           │     │  │        └─ 0.001 force_text  django/utils/encoding.py:84
-           │     │  ├─ 0.002 force_text   django/utils/encoding.py:84
-           │     │  └─ 0.002 mark_safe    django/utils/safestring.py:104
-           │     ├─ 0.004 push    django/template/context.py:37
-           │     ├─ 0.002 __init__    django/template/loader_tags.py:42
-           │     ├─ 0.001 pop     django/template/context.py:42
-           │     ├─ 0.001 pop     django/template/loader_tags.py:26
-           │     ├─ 0.001 __setitem__     django/template/context.py:47
-           │     └─ 0.001 push    django/template/loader_tags.py:32
-           └─ 0.004 force_text    django/utils/encoding.py:84
+Signal or setprofile mode?
+--------------------------
 
-    If your terminal doesn't support unicode, you can omit the `unicode=True`
-    flag.
+On Mac/Linux/Unix, pyinstrument can run in 'signal' mode. This uses OS-
+provided signals to interrupt the process every 1ms and record the stack. This
+gives much lower overhead (and thus accurate) readings than the standard
+Python [`sys.setprofile`][setprofile] style profilers. **However, this can
+only profile the main thread**.
+
+On Windows and on multi-threaded applications, a `setprofile` mode is
+available by passing `use_signal=False` to the Profiler constructor. It works
+exactly the same as the signal mode, but has higher overhead. See the below
+table for an example of the amount of overhead.
+
+[setprofile]: https://docs.python.org/2/library/sys.html#sys.setprofile
+
+                           | Django template render × 4000 | Overhead
+---------------------------|------------------------------:|---------:
+Base                       |                         1.46s | 
+                           |                               |
+pyinstrument (signal)      |                         1.84s |      26%
+cProfile                   |                         2.18s |      49%
+pyinstrument (setprofile)  |                         5.33s |     365%
+profile                    |                        25.39s |    1739%
+
 
 Known issues
 ------------
 
--   pyinstrument doesn't work under Windows. See [this commit][0] 
-    for more information.
-
-[0]: https://github.com/joerick/pyinstrument/commit/656a1a4c7996e416db686d06b91ad81b114ec1a9
-
 -   When profiling Django, I'd recommend disabling django-debug-toolbar,
     django-devserver etc., as their instrumentation distort timings.
+    
+-   In signal mode, any calls to [`time.sleep`][pysleep] will return
+    immediately. This is because of an implementation detail of `time.sleep`
+    and the underlying C function [`sleep`][csleep].
 
-Why?
-----
+[pysleep]: https://docs.python.org/2/library/time.html#time.sleep
+[csleep]: http://pubs.opengroup.org/onlinepubs/009695399/functions/sleep.html
+
+Further information
+===================
+
+Call stack profiling?
+---------------------
 
 The standard Python profilers [`profile`][1] and [`cProfile`][2] produce
 output where time is totalled according to the time spent in each function.
@@ -131,5 +134,5 @@ Here's an example of profile output when using Django.
 When you're using big frameworks like Django, it's very hard to understand how
 your own code relates to these traces.
 
-Pyinstrument records the entire stack each time a function is called, so
-tracking expensive calls is much easier.
+Pyinstrument records the entire stack, so tracking expensive calls is much
+easier.
