@@ -41,16 +41,18 @@ Usage
 
 -   **Python**
 
-        from pyinstrument import Profiler
+    ```python
+    from pyinstrument import Profiler
 
-        profiler = Profiler() # or Profiler(use_signal=False), see below
-        profiler.start()
+    profiler = Profiler() # or Profiler(use_signal=False), see below
+    profiler.start()
 
-        # code you want to profile
+    # code you want to profile
 
-        profiler.stop()
+    profiler.stop()
 
-        print(profiler.output_text(unicode=True, color=True))
+    print(profiler.output_text(unicode=True, color=True))
+    ```
 
     You can omit the `unicode` and `color` flags if your output/terminal does
     not support them.
