@@ -284,9 +284,15 @@ class Frame(object):
         self.children_dict[child.identifier] = child
 
     def as_text(self, indent=u'', child_indent=u'', unicode=False, color=False):
-        result = u'{indent}{time:.3f} {function}  {c.faint}{code_position}{c.end}\n'.format(
+        colors = colors_enabled if color else colors_disabled
+        time_str = '{:.3f}'.format(self.time())
+
+        if color:
+            time_str = self._ansi_color_for_time() + time_str + colors.end
+
+        result = u'{indent}{time_str} {function}  {c.faint}{code_position}{c.end}\n'.format(
             indent=indent,
-            time=float(self.time()),
+            time_str=time_str,
             function=self.function,
             code_position=self.code_position_short,
             c=colors_enabled if color else colors_disabled)
@@ -341,6 +347,17 @@ class Frame(object):
 
         return result
 
+    def _ansi_color_for_time(self):
+        colors = colors_enabled
+        if self.proportion_of_total > 0.6:
+            return colors.red
+        elif self.proportion_of_total > 0.2:
+            return colors.yellow
+        elif self.proportion_of_total > 0.05:
+            return colors.green
+        else:
+            return colors.bright_green + colors.faint
+
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time(), self.children)
 
@@ -351,6 +368,7 @@ class colors_enabled:
     yellow = '\033[33m'
     blue = '\033[34m'
     cyan = '\033[36m'
+    bright_green = '\033[92m'
 
     bold = '\033[1m'
     faint = '\033[2m'
