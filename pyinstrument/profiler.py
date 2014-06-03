@@ -120,13 +120,13 @@ class Profiler(object):
 
                 return parent.children_dict[frame_name]
 
-            for stack, self_time in self.stack_self_time.iteritems():
+            for stack, self_time in self.stack_self_time.items():
                 frame_for_stack(stack).self_time = self_time
 
         return self._root_frame
 
     def first_interesting_frame(self):
-        """ 
+        """
         Traverse down the frame hierarchy until a frame is found with more than one child
         """
         frame = self.root_frame()
@@ -221,7 +221,7 @@ class Frame(object):
                         result = candidate
 
                 self._file_path_short = result
-            else: 
+            else:
                 self._file_path_short = None
 
         return self._file_path_short
@@ -271,7 +271,7 @@ class Frame(object):
 
     @property
     def children(self):
-        return self.children_dict.values()
+        return list(self.children_dict.values())
 
     @property
     def sorted_children(self):
@@ -297,7 +297,7 @@ class Frame(object):
             code_position=self.code_position_short,
             c=colors_enabled if color else colors_disabled)
 
-        children = filter(lambda f: f.proportion_of_total > 0.01, self.sorted_children)
+        children = [f for f in self.sorted_children if f.proportion_of_total > 0.01]
 
         if children:
             last_child = children[-1]
@@ -334,7 +334,7 @@ class Frame(object):
                 time=self.time(),
                 function=self.function,
                 code_position=self.code_position_short,
-                parent_proportion=self.proportion_of_parent, 
+                parent_proportion=self.proportion_of_parent,
                 total_proportion=self.proportion_of_total,
                 extra_class=extra_class)
 
