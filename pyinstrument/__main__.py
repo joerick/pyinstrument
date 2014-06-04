@@ -4,6 +4,25 @@ import os
 import codecs
 from pyinstrument import Profiler
 
+# Python 3 compatibility. Mostly borrowed from SymPy
+PY3 = sys.version_info[0] > 2
+
+if PY3:
+    import builtins
+    exec_ = getattr(builtins, "exec")
+else:
+    def exec_(_code_, _globs_=None, _locs_=None):
+        """Execute code in a namespace."""
+        if _globs_ is None:
+            frame = sys._getframe(1)
+            _globs_ = frame.f_globals
+            if _locs_ is None:
+                _locs_ = frame.f_locals
+            del frame
+        elif _locs_ is None:
+            _locs_ = _globs_
+        exec("exec _code_ in _globs_, _locs_")
+
 def main():
     usage = "usage: %prog [-h] [-o output_file_path] scriptfile [arg] ..."
     parser = OptionParser(usage=usage)
@@ -12,7 +31,7 @@ def main():
         dest="output_html", action='store_true',
         help="output HTML instead of text", default=False)
     parser.add_option('-o', '--outfile',
-        dest="outfile", action='store', 
+        dest="outfile", action='store',
         help="save stats to <outfile>", default=None)
 
     if not sys.argv[1:]:
@@ -38,8 +57,8 @@ def main():
         profiler.start()
 
         try:
-            exec code in globs, None
-        except SystemExit, KeyboardInterrupt:
+            exec_(code, globs, None)
+        except (SystemExit, KeyboardInterrupt):
             pass
 
         profiler.stop()
