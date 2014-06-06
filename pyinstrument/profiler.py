@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import platform
 import timeit
 import signal
 from collections import deque
@@ -201,12 +202,18 @@ class Frame(object):
     @property
     def file_path(self):
         if self.identifier:
-            return self.code_position.split(':')[0]
+            if platform.system() == 'Windows':
+                return ':'.join(self.code_position.split(':')[:2])
+            else:
+                return self.code_position.split(':')[0]
 
     @property
     def line_no(self):
         if self.identifier:
-            return int(self.code_position.split(':')[1])
+            if platform.system() == "Windows":
+                return int(self.code_position.split(':')[2])
+            else:
+                return int(self.code_position.split(':')[1])
 
     @property
     def file_path_short(self):
@@ -216,10 +223,16 @@ class Frame(object):
                 result = None
 
                 for path in sys.path:
-                    candidate = os.path.relpath(self.file_path, path)
-                    if not result or (len(candidate.split('/')) < len(result.split('/'))):
-                        result = candidate
-
+                    try:
+                        candidate = os.path.relpath(self.file_path, path)
+                    except ValueError:
+                        candidate = self.file_path
+                    if platform.system() == 'Windows':
+                        if not result or (len(candidate.split('\\')) < len(result.split('\\'))):
+                            result = candidate
+                    else:
+                        if not result or (len(candidate.split('/')) < len(result.split('/'))):
+                            result = candidate
                 self._file_path_short = result
             else: 
                 self._file_path_short = None
@@ -381,3 +394,4 @@ class colors_disabled:
         return ''
 
 colors_disabled = colors_disabled()
+
