@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-import platform
 import timeit
 import signal
 from collections import deque
@@ -219,12 +218,10 @@ class Frame(object):
                         candidate = os.path.relpath(self.file_path, path)
                     except ValueError:
                         continue
-                    if platform.system() == 'Windows':
-                        if not result or (len(candidate.split('\\')) < len(result.split('\\'))):
-                            result = candidate
-                    else:
-                        if not result or (len(candidate.split('/')) < len(result.split('/'))):
-                            result = candidate
+
+                    if not result or (len(candidate.split(os.sep)) < len(result.split(os.sep))):
+                        result = candidate
+
                 self._file_path_short = result
             else: 
                 self._file_path_short = None
