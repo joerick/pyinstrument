@@ -7,3 +7,8 @@
 
 # python
 *.pyc
+__pycache__/
+
+# distribution
+dist/
+*.egg-info/
