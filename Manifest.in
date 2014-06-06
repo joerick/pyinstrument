@@ -1,3 +1,2 @@
 include README.md
-global-include *.js
-global-include *.css
+recursive-include pyinstrument *.js *.css
