@@ -214,6 +214,9 @@ class Frame(object):
                 result = None
 
                 for path in sys.path:
+                    # On Windows, if self.file_path and path are on different drives, relpath
+                    # will result in exception, because it cannot compute a relpath in this case.
+                    # The root cause is that on Windows, there is no root dir like '/' on Linux.
                     try:
                         candidate = os.path.relpath(self.file_path, path)
                     except ValueError:
