@@ -226,7 +226,7 @@ class Frame(object):
                     try:
                         candidate = os.path.relpath(self.file_path, path)
                     except ValueError:
-                        candidate = self.file_path
+                        continue
                     if platform.system() == 'Windows':
                         if not result or (len(candidate.split('\\')) < len(result.split('\\'))):
                             result = candidate
