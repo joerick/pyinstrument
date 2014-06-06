@@ -3,6 +3,7 @@ import sys
 import os
 import codecs
 from pyinstrument import Profiler
+from pyinstrument.profiler import SignalUnavailableError
 
 # Python 3 compatibility. Mostly borrowed from SymPy
 PY3 = sys.version_info[0] > 2
@@ -24,7 +25,7 @@ else:
         exec("exec _code_ in _globs_, _locs_")
 
 def main():
-    usage = "usage: %prog [-h] [-o output_file_path] scriptfile [arg] ..."
+    usage = ("usage: python -m pyinstrument [options] scriptfile [arg] ...")
     parser = OptionParser(usage=usage)
     parser.allow_interspersed_args = False
     parser.add_option('', '--html',
@@ -32,10 +33,24 @@ def main():
         help="output HTML instead of text", default=False)
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
-        help="save stats to <outfile>", default=None)
+        help="save report to <outfile>", default=None)
+
+    parser.add_option('', '--unicode',
+        dest='unicode', action='store_true',
+        help='force unicode text output')
+    parser.add_option('', '--no-unicode',
+        dest='unicode', action='store_false',
+        help='force ascii text output')
+
+    parser.add_option('', '--color',
+        dest='color', action='store_true',
+        help='force ansi color text output')
+    parser.add_option('', '--no-color',
+        dest='color', action='store_false',
+        help='force no color text output')
 
     if not sys.argv[1:]:
-        parser.print_usage()
+        parser.print_help()
         sys.exit(2)
 
     (options, args) = parser.parse_args()
@@ -53,7 +68,11 @@ def main():
             '__package__': None,
         }
 
-        profiler = Profiler()
+        try:
+            profiler = Profiler()
+        except SignalUnavailableError:
+            profiler = Profiler(use_signal=False)
+
         profiler.start()
 
         try:
@@ -65,12 +84,14 @@ def main():
 
         if options.outfile:
             f = codecs.open(options.outfile, 'w', 'utf-8')
-            unicode = True
-            color = False
         else:
             f = sys.stdout
-            unicode = stdout_supports_unicode()
-            color = stdout_supports_color()
+
+        unicode_override = options.unicode != None
+        color_override = options.color != None
+
+        unicode = options.unicode if unicode_override else file_supports_unicode(f)
+        color = options.color if color_override else file_supports_color(f)
 
         if options.output_html:
             f.write(profiler.output_html())
@@ -82,7 +103,7 @@ def main():
         parser.print_usage()
     return parser
 
-def stdout_supports_color():
+def file_supports_color(file_obj):
     """
     Returns True if the running system's terminal supports color, and False
     otherwise.
@@ -94,16 +115,21 @@ def stdout_supports_color():
     supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
                                                   'ANSICON' in os.environ)
 
-    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    is_a_tty = hasattr(file_obj, 'isatty') and file_obj.isatty()
     if not supported_platform or not is_a_tty:
         return False
     return True
 
-def stdout_supports_unicode():
-    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
-    utf_in_locale = 'utf' in os.environ.get('LC_CTYPE', '').lower()
+def file_supports_unicode(file_obj):
+    encoding = getattr(file_obj, 'encoding', None)
+    if not encoding:
+        return False
 
-    return is_a_tty and utf_in_locale
+    codec_info = codecs.lookup(encoding)
+
+    if 'utf' in codec_info.name:
+        return True
+    return False
 
 if __name__ == '__main__':
     main()
