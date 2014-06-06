@@ -394,4 +394,3 @@ class colors_disabled:
         return ''
 
 colors_disabled = colors_disabled()
-
