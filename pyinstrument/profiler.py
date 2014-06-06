@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-import platform
 import timeit
 import signal
 from collections import deque
@@ -98,7 +97,10 @@ class Profiler(object):
         return tuple(result_list)
 
     def _identifier_for_frame(self, frame):
-        return '%s\t%s:%i' % (frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+        # we use a string here as a tuple hashes slower and this is used as a key in a dictionary
+        return '%s\x00%s\x00%i' % (
+            frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno
+        )
 
     def root_frame(self):
         """
@@ -192,28 +194,17 @@ class Frame(object):
     @property
     def function(self):
         if self.identifier:
-            return self.identifier.split('\t')[0]
-
-    @property
-    def code_position(self):
-        if self.identifier:
-            return self.identifier.split('\t')[1]
+            return self.identifier.split('\x00')[0]
 
     @property
     def file_path(self):
         if self.identifier:
-            if platform.system() == 'Windows':
-                return ':'.join(self.code_position.split(':')[:2])
-            else:
-                return self.code_position.split(':')[0]
+            return self.identifier.split('\x00')[1]
 
     @property
     def line_no(self):
         if self.identifier:
-            if platform.system() == "Windows":
-                return int(self.code_position.split(':')[2])
-            else:
-                return int(self.code_position.split(':')[1])
+            return int(self.identifier.split('\x00')[2])
 
     @property
     def file_path_short(self):
