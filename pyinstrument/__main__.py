@@ -98,7 +98,7 @@ def main():
         parser.print_usage()
     return parser
 
-def file_supports_color(file):
+def file_supports_color(file_obj):
     """
     Returns True if the running system's terminal supports color, and False
     otherwise.
@@ -110,13 +110,13 @@ def file_supports_color(file):
     supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
                                                   'ANSICON' in os.environ)
 
-    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    is_a_tty = hasattr(file_obj, 'isatty') and file_obj.isatty()
     if not supported_platform or not is_a_tty:
         return False
     return True
 
-def file_supports_unicode(file):
-    encoding = getattr(sys.stdout, 'encoding', None)
+def file_supports_unicode(file_obj):
+    encoding = getattr(file_obj, 'encoding', None)
     if not encoding:
         return False
 
