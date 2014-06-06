@@ -3,6 +3,7 @@ import sys
 import os
 import codecs
 from pyinstrument import Profiler
+from pyinstrument.profiler import SignalUnavailableError
 
 # Python 3 compatibility. Mostly borrowed from SymPy
 PY3 = sys.version_info[0] > 2
@@ -67,7 +68,11 @@ def main():
             '__package__': None,
         }
 
-        profiler = Profiler()
+        try:
+            profiler = Profiler()
+        except SignalUnavailableError:
+            profiler = Profiler(use_signal=False)
+
         profiler.start()
 
         try:
