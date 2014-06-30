@@ -42,6 +42,10 @@ class Profiler(object):
         if self.use_signal:
             try:
                 signal.signal(signal.SIGALRM, self._signal)
+                # the following tells the system to restart interrupted system calls if they are
+                # interrupted before any data has been transferred. This avoids many of the problems
+                # related to signals interrupting system calls, see issue #16
+                signal.siginterrupt(signal.SIGALRM, False)
             except ValueError:
                 raise NotMainThreadError()
 
