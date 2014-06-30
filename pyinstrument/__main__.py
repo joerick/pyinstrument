@@ -28,6 +28,11 @@ def main():
     usage = ("usage: python -m pyinstrument [options] scriptfile [arg] ...")
     parser = OptionParser(usage=usage)
     parser.allow_interspersed_args = False
+
+    parser.add_option('', '--setprofile',
+        dest='setprofile', action='store_true',
+        help='run in setprofile mode, instead of signal mode', default=False)
+
     parser.add_option('', '--html',
         dest="output_html", action='store_true',
         help="output HTML instead of text", default=False)
@@ -69,7 +74,7 @@ def main():
         }
 
         try:
-            profiler = Profiler()
+            profiler = Profiler(use_signal=not options.setprofile)
         except SignalUnavailableError:
             profiler = Profiler(use_signal=False)
 
