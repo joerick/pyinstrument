@@ -77,6 +77,24 @@ def main():
 
         try:
             exec_(code, globs, None)
+        except IOError as e:
+            import errno
+
+            if e.errno == errno.EINTR:
+                print(
+                    'Failed to run program due to interrupted system system call.\n'
+                    'This happens because pyinstrument is sending OS signals to the running\n'
+                    'process to interrupt it. If your program has long-running syscalls this\n'
+                    'can cause a problem.\n'
+                    '\n'
+                    'You can avoid this error by running in \'setprofile\' mode. Do this by\n'
+                    'passing \'--setprofile\' when calling pyinstrument at the command-line.\n'
+                    '\n'
+                    'For more information, see\n'
+                    'https://github.com/joerick/pyinstrument/issues/16\n'
+                )
+
+            raise
         except (SystemExit, KeyboardInterrupt):
             pass
 
