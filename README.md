@@ -27,7 +27,19 @@ Usage
 
     You can call pyinstrument directly from the command line.
 
-        python -m pyinstrument myscript.py [args...]
+        python -m pyinstrument [options] myscript.py [args...]
+        
+        Options:
+          -h, --help            show this help message and exit
+          --setprofile          run in setprofile mode, instead of signal mode
+          --html                output HTML instead of text
+          -o OUTFILE, --outfile=OUTFILE
+                                save report to <outfile>
+          --unicode             force unicode text output
+          --no-unicode          force ascii text output
+          --color               force ansi color text output
+          --no-color            force no color text output
+
 
     This will run `myscript.py` to completion or until you interrupt it, and 
     then output the call tree.
@@ -94,6 +106,11 @@ Known issues
 -   In signal mode, any calls to [`time.sleep`][pysleep] will return
     immediately. This is because of an implementation detail of `time.sleep`,
     but matches the behaviour of the C function [`sleep`][csleep].
+
+-   Some system calls can fail with `IOError` when being profiled in signal
+    mode. If this happens to you, your only option is to run in setprofile 
+    mode, by passing `--setprofile` to the command-line interface or
+    use_signal=False to the Python API.
 
 [pysleep]: https://docs.python.org/2/library/time.html#time.sleep
 [csleep]: http://pubs.opengroup.org/onlinepubs/009695399/functions/sleep.html
