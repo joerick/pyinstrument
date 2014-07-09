@@ -236,6 +236,11 @@ class Frame(object):
         return self._file_path_short
 
     @property
+    def is_application_code(self):
+        if self.identifier:
+            return ('%slib%s' % (os.sep, os.sep)) not in self.file_path
+
+    @property
     def code_position_short(self):
         if self.identifier:
             return '%s:%i' % (self.file_path_short, self.line_no)
@@ -331,6 +336,7 @@ class Frame(object):
         extra_class = ''
         extra_class += 'collapse ' if start_collapsed else ''
         extra_class += 'no_children ' if not self.children else ''
+        extra_class += 'application ' if self.is_application_code else ''
 
         result = '''<div class="frame {extra_class}" data-time="{time}" date-parent-time="{parent_proportion}">
             <div class="frame-info">

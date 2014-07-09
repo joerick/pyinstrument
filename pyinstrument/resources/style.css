@@ -19,6 +19,10 @@
     background-image: none !important;
 }
 
+.frame.application > .frame-info > .function {
+    background-color: rgba(40, 255, 66, 0.14);
+}
+
 .frame:hover .frame {
     color: #888;
 }
