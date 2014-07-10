@@ -6,13 +6,13 @@ import time
 import os
 
 not_main_thread_message = (
-    'pyinstrument can only be used on the main thread in signal mode. Run your server process in '
-    'single-threaded mode. \n\n'
-    'With the built-in server, you can do this with\n'
-    './manage.py runserver --nothreading --noreload\n\n'
+    "pyinstrument can only be used on the main thread in signal mode. Run your server process in "
+    "single-threaded mode. \n\n"
+    "With the built-in server, you can do this with\n"
+    "./manage.py runserver --nothreading --noreload\n\n"
     "Alternatively, you can set 'PYINSTRUMENT_USE_SIGNAL = False' in your settings.py to run in"
     "'setprofile' mode. For more information, see\n"
-    'https://github.com/joerick/pyinstrument#signal-or-setprofile-mode')
+    "https://github.com/joerick/pyinstrument#signal-or-setprofile-mode")
 
 
 class ProfilerMiddleware(object):
