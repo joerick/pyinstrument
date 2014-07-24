@@ -355,7 +355,10 @@ class Frame(object):
 
         result += '<div class="frame-children">'
 
-        for child in self.sorted_children:
+        # add this filter to prevent the output file getting too large
+        children = [f for f in self.sorted_children if f.proportion_of_total > 0.005]
+
+        for child in children:
             result += child.as_html()
 
         result += '</div></div>'
