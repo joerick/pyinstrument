@@ -13,6 +13,19 @@ based profiling (as done by `profile` and `cProfile`).
 This module is still very young, so I'd love any feedback/bug reports/pull
 requests!
 
+Documentation
+-------------
+
+* [Installation](#installation)
+* [Usage](#usage)
+  * [Command-line](#command-line)
+  * [Django](#django)
+  * [Python](#python)
+* [Signal or setprofile mode?](#signal-or-setprofile-mode)
+* [Known issues](#known-issues)
+* [Further information](#further-information)
+  * [Call stack profiling?](#call-stack-profiling)
+
 Installation
 ------------
 
@@ -23,53 +36,64 @@ pyinstrument supports Python 2.7 and 3.3+.
 Usage
 -----
 
--   **Command-line**
+#### Command-line ####
 
-    You can call pyinstrument directly from the command line.
+You can call pyinstrument directly from the command line.
 
-        python -m pyinstrument [options] myscript.py [args...]
-        
-        Options:
-          -h, --help            show this help message and exit
-          --setprofile          run in setprofile mode, instead of signal mode
-          --html                output HTML instead of text
-          -o OUTFILE, --outfile=OUTFILE
-                                save report to <outfile>
-          --unicode             force unicode text output
-          --no-unicode          force ascii text output
-          --color               force ansi color text output
-          --no-color            force no color text output
-
-
-    This will run `myscript.py` to completion or until you interrupt it, and 
-    then output the call tree.
-
--   **Django**
+    python -m pyinstrument [options] myscript.py [args...]
     
-    Add `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES`.
-    If you want to profile your middleware as well as your view (you probably
-    do) then put it at the start of the list.
+    Options:
+      -h, --help            show this help message and exit
+      --setprofile          run in setprofile mode, instead of signal mode
+      --html                output HTML instead of text
+      -o OUTFILE, --outfile=OUTFILE
+                            save report to <outfile>
+      --unicode             force unicode text output
+      --no-unicode          force ascii text output
+      --color               force ansi color text output
+      --no-color            force no color text output
 
-    Then add `?profile` to the end of the request URL to activate the
-    profiler.
 
--   **Python**
+This will run `myscript.py` to completion or until you interrupt it, and 
+then output the call tree.
 
-    ```python
-    from pyinstrument import Profiler
+#### Django ####
+    
+Add `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES`.
+If you want to profile your middleware as well as your view (you probably
+do) then put it at the start of the list.
 
-    profiler = Profiler() # or Profiler(use_signal=False), see below
-    profiler.start()
+##### Per-request profiling #####
 
-    # code you want to profile
+Add `?profile` to the end of the request URL to activate the profiler. 
+Instead of seeing the output of your view, pyinstrument renders an HTML
+call tree for the view (as in the screenshot above).
 
-    profiler.stop()
+##### Using `PYINSTRUMENT_PROFILE_DIR` #####
 
-    print(profiler.output_text(unicode=True, color=True))
-    ```
+If you're writing an API, it's not easy to change the URL when you want
+to profile something. In this case, add 
+`PYINSTRUMENT_PROFILE_DIR = 'profiles'` to your settings.py.
+pyinstrument will profile every request and save the HTML output to the
+folder `profiles` in your working directory.
 
-    You can omit the `unicode` and `color` flags if your output/terminal does
-    not support them.
+#### Python ####
+
+```python
+from pyinstrument import Profiler
+
+profiler = Profiler() # or Profiler(use_signal=False), see below
+profiler.start()
+
+# code you want to profile
+
+profiler.stop()
+
+print(profiler.output_text(unicode=True, color=True))
+```
+
+You can omit the `unicode` and `color` flags if your output/terminal does
+not support them.
 
 Signal or setprofile mode?
 --------------------------
@@ -77,8 +101,8 @@ Signal or setprofile mode?
 On Mac/Linux/Unix, pyinstrument can run in 'signal' mode. This uses 
 OS-provided signals to interrupt the process every 1ms and record the stack. 
 It gives much lower overhead (and thus accurate) readings than the standard
-Python [`sys.setprofile`][setprofile] style profilers. **However, this can
-only profile the main thread**.
+Python [`sys.setprofile`][setprofile] style profilers. However, this can
+only profile the main thread.
 
 On Windows and on multi-threaded applications, a `setprofile` mode is
 available by passing `use_signal=False` to the Profiler constructor. It works
@@ -86,6 +110,9 @@ exactly the same as the signal mode, but has higher overhead. See the below
 table for an example of the amount of overhead.
 
 [setprofile]: https://docs.python.org/2/library/sys.html#sys.setprofile
+
+This overhead is important because code that makes a lot of Python function
+calls will appear to take longer than code that does not.
 
                            | Django template render × 4000 | Overhead
 ---------------------------|------------------------------:|---------:
@@ -96,6 +123,11 @@ cProfile                   |                         2.18s |      49%
 pyinstrument (setprofile)  |                         5.33s |     365%
 profile                    |                        25.39s |    1739%
 
+To disable signal mode:
+
+* Use flag `--setprofile` if using the command-line interface
+* Use setting `PYINSTRUMENT_USE_SIGNAL = False` in Django
+* Use argument `use_signal=False` in the constructor for the Python API
 
 Known issues
 ------------
