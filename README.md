@@ -23,6 +23,8 @@ Documentation
   * [Python](#python)
 * [Signal or setprofile mode?](#signal-or-setprofile-mode)
 * [Known issues](#known-issues)
+* [Changelog](#changelog)
+  * [What's new in v0.12](#whats-new-in-v0.12)
 * [Further information](#further-information)
   * [Call stack profiling?](#call-stack-profiling)
 
@@ -123,7 +125,7 @@ cProfile                   |                         2.18s |      49%
 pyinstrument (setprofile)  |                         5.33s |     365%
 profile                    |                        25.39s |    1739%
 
-To disable signal mode:
+To run in setprofile mode:
 
 * Use flag `--setprofile` if using the command-line interface
 * Use setting `PYINSTRUMENT_USE_SIGNAL = False` in Django
@@ -141,11 +143,24 @@ Known issues
 
 -   Some system calls can fail with `IOError` when being profiled in signal
     mode. If this happens to you, your only option is to run in setprofile 
-    mode, by passing `--setprofile` to the command-line interface or
-    use_signal=False to the Python API.
+    mode.
 
 [pysleep]: https://docs.python.org/2/library/time.html#time.sleep
 [csleep]: http://pubs.opengroup.org/onlinepubs/009695399/functions/sleep.html
+
+Changelog
+---------
+
+### What's new in v0.12 ###
+
+-   Application code is highlighted in HTML traces to make it easier to spot
+
+-   Added `PYINSTRUMENT_PROFILE_DIR` option to the Django interface, which 
+    will log profiles of all requests to a file the specified folder. Useful
+    for profiling API calls.
+    
+-   Added `PYINSTRUMENT_USE_SIGNAL` option to the Django interface, for use
+    when signal mode presents problems.
 
 Further information
 ===================
