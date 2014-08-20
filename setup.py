@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="pyinstrument",
     packages=['pyinstrument'],
-    version="0.12",
+    version="0.13",
     description="A call stack profiler for Python. Inspired by Apple's Instruments.app",
     author='Joe Rickerby',
     author_email='joerick@mac.com',
