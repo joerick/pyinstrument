@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
- 
+
 setup(
     name="pyinstrument",
     packages=['pyinstrument'],
@@ -10,6 +10,7 @@ setup(
     url='https://github.com/joerick/pyinstrument',
     keywords=['profiling', 'profile', 'profiler', 'cpu', 'time'],
     include_package_data=True,
+    entry_points={'console_scripts': ['pyinstrument = pyinstrument.__main__:main']},
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
