@@ -24,8 +24,8 @@ Documentation
 * [Signal or setprofile mode?](#signal-or-setprofile-mode)
 * [Known issues](#known-issues)
 * [Changelog](#changelog)
-  * [What's new in v0.13](#whats-new-in-v0.13)
-  * [What's new in v0.12](#whats-new-in-v0.12)
+  * [What's new in v0.13](#whats-new-in-v013)
+  * [What's new in v0.12](#whats-new-in-v012)
 * [Further information](#further-information)
   * [Call stack profiling?](#call-stack-profiling)
 
