@@ -24,6 +24,7 @@ Documentation
 * [Signal or setprofile mode?](#signal-or-setprofile-mode)
 * [Known issues](#known-issues)
 * [Changelog](#changelog)
+  * [What's new in v0.13](#whats-new-in-v0.13)
   * [What's new in v0.12](#whats-new-in-v0.12)
 * [Further information](#further-information)
   * [Call stack profiling?](#call-stack-profiling)
@@ -150,6 +151,12 @@ Known issues
 
 Changelog
 ---------
+
+### What's new in v0.13 ###
+
+-   `pyinstrument` command. You can now profile python scripts from the shell
+    by running `$ pyinstrument script.py`. This is now equivalent to 
+    `python -m pyinstrument`. Thanks @asmeurer!
 
 ### What's new in v0.12 ###
 
