@@ -25,7 +25,7 @@ else:
         exec("exec _code_ in _globs_, _locs_")
 
 def main():
-    usage = ("usage: python -m pyinstrument [options] scriptfile [arg] ...")
+    usage = ("usage: pyinstrument [options] scriptfile [arg] ..." % invocation)
     parser = OptionParser(usage=usage)
     parser.allow_interspersed_args = False
 
