@@ -24,7 +24,7 @@ class SignalUnavailableError(Exception):
 
 
 class Profiler(object):
-    def __init__(self, use_signal=True):
+    def __init__(self, use_signal=True, collect_args=False):
         if use_signal:
             try:
                 signal.SIGALRM
@@ -35,6 +35,7 @@ class Profiler(object):
         self.last_profile_time = 0
         self.stack_self_time = {}
         self.use_signal = use_signal
+        self.collect_args = collect_args
 
     def start(self):
         self.last_profile_time = timer()
@@ -102,6 +103,19 @@ class Profiler(object):
 
     def _identifier_for_frame(self, frame):
         # we use a string here as a tuple hashes slower and this is used as a key in a dictionary
+
+        if self.collect_args:
+            # ref: https://docs.python.org/2/reference/datamodel.html
+            # look for 'frame objects' and 'code objects'
+            return '%s(%s)\x00%s\x00%i' % (
+                frame.f_code.co_name,
+                ', '.join('{0}={1}'.format(
+                    arg, frame.f_locals.get(arg).__repr__()
+                ) for arg in frame.f_code.co_varnames[:frame.f_code.co_argcount]),
+                frame.f_code.co_filename,
+                frame.f_code.co_firstlineno
+            )
+
         return '%s\x00%s\x00%i' % (
             frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno
         )
