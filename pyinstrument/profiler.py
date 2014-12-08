@@ -3,6 +3,7 @@ import sys
 import os
 import timeit
 import signal
+import inspect
 from collections import deque
 from operator import methodcaller
 
@@ -103,22 +104,18 @@ class Profiler(object):
 
     def _identifier_for_frame(self, frame):
         # we use a string here as a tuple hashes slower and this is used as a key in a dictionary
-
-        if self.collect_args:
-            # ref: https://docs.python.org/2/reference/datamodel.html
-            # look for 'frame objects' and 'code objects'
-            return '%s(%s)\x00%s\x00%i' % (
-                frame.f_code.co_name,
-                ', '.join('{0}={1}'.format(
-                    arg, frame.f_locals.get(arg).__repr__()
-                ) for arg in frame.f_code.co_varnames[:frame.f_code.co_argcount]),
-                frame.f_code.co_filename,
-                frame.f_code.co_firstlineno
-            )
-
-        return '%s\x00%s\x00%i' % (
+        frame_id = '%s\x00%s\x00%i' % (
             frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno
         )
+
+        if self.collect_args:
+            arg_info = inspect.getargvalues(frame)
+            frame_id += ''.join(
+                '\x00%s\x00%s' % (name, arg_info.locals[name])
+                for name in arg_info.args
+            )
+
+        return frame_id
 
     def root_frame(self):
         """
@@ -137,7 +134,9 @@ class Profiler(object):
                 frame_name = stack[-1]
 
                 if not frame_name in parent.children_dict:
-                    parent.add_child(Frame(frame_name, parent))
+                    parent.add_child(
+                        Frame(frame_name, parent, with_args=self.collect_args)
+                    )
 
                 return parent.children_dict[frame_name]
 
@@ -203,11 +202,12 @@ class Frame(object):
     """
     Object that represents a stack frame in the parsed tree
     """
-    def __init__(self, identifier='', parent=None):
+    def __init__(self, identifier='', parent=None, with_args=False):
         self.identifier = identifier
         self.parent = parent
         self.children_dict = {}
         self.self_time = 0
+        self.with_args = with_args
 
     @property
     def function(self):
@@ -223,6 +223,16 @@ class Frame(object):
     def line_no(self):
         if self.identifier:
             return int(self.identifier.split('\x00')[2])
+
+    @property
+    def arguments(self):
+        if self.identifier:
+            arg_list = self.identifier.split('\x00')[3:]
+            args = {arg_list[idx]: arg_list[idx+1]
+                for idx in range(0, len(arg_list), 2)
+            }
+            return args
+        return {}
 
     @property
     def file_path_short(self):
@@ -318,10 +328,18 @@ class Frame(object):
         if color:
             time_str = self._ansi_color_for_time() + time_str + colors.end
 
-        result = u'{indent}{time_str} {function}  {c.faint}{code_position}{c.end}\n'.format(
+        text_string = u'{indent}{time_str} {function}  {c.faint}{code_position}{c.end}\n'
+        if self.with_args:
+            text_string = u'{indent}{time_str} {function}({arguments})  {c.faint}{code_position}{c.end}\n'
+
+        result = text_string.format(
             indent=indent,
             time_str=time_str,
             function=self.function,
+            arguments=', '.join(
+                '{name}={value}'.format(name=k, value=v)
+                for k, v in self.arguments.items()
+            ),
             code_position=self.code_position_short,
             c=colors_enabled if color else colors_disabled)
 
