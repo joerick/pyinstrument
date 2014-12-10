@@ -341,8 +341,6 @@ class Frame(object):
 
         ind = child_indent + (u'│  ' if unicode else '|  ')
 
-        if self.arguments:
-            result += ind + 'call args:\n'
         for k, v in self.arguments.items():
             result += ind + '{name}={value}\n'.format(name=k, value=v)
 
