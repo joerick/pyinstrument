@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import abc
+import json
 import os
 from . import six
 
@@ -8,7 +9,7 @@ class Renderer(object):
 
     @abc.abstractmethod
     def render(self, frame):
-        ''' 
+        '''
         Return a string that contains the rendered form of `frame`
         '''
         pass
@@ -125,6 +126,46 @@ class HTMLRenderer(Renderer):
         result += '</div></div>'
 
         return result
+
+
+class FlameRenderer(Renderer):
+    def render(self, frame):
+        resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
+
+        with open(os.path.join(resources_dir, 'flame-profile.js')) as f:
+            js = f.read()
+
+        with open(os.path.join(resources_dir, 'd3-3.5.3.min.js')) as f:
+            d3_js = f.read()
+
+        data = json.dumps(
+            self.to_json(frame),
+            separators=(',', ':')
+        )
+
+        page = '''
+            <html>
+            <head>
+                <script>{d3_js}</script>
+                <script type='application/json' id='data'>{data}</script>
+            </head>
+            <body>
+                <svg class='flamechart'></svg>
+                <script>{js}</script>
+            </body>
+            </html>'''.format(js=js, d3_js=d3_js, data=data)
+
+        return page
+
+    def to_json(self, frame):
+        return {
+            'function': frame.function,
+            'code_position': frame.code_position_short,
+            'parent_proportion': frame.proportion_of_parent,
+            'total_proportion': frame.proportion_of_total,
+            'time': frame.time(),
+            'children': [self.to_json(child) for child in frame.sorted_children],
+        }
 
 
 class colors_enabled:
