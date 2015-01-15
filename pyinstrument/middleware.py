@@ -34,7 +34,10 @@ class ProfilerMiddleware(object):
             try:
                 request.profiler.stop()
 
-                output_html = request.profiler.output_html()
+                if getattr(settings, 'PYINSTRUMENT_USE_FLAME', False):
+                    output_html = request.profiler.output_flame()
+                else:
+                    output_html = request.profiler.output_html()
 
                 profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
 

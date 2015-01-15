@@ -44,11 +44,12 @@ Usage
 You can call pyinstrument directly from the command line.
 
     python -m pyinstrument [options] myscript.py [args...]
-    
+
     Options:
       -h, --help            show this help message and exit
       --setprofile          run in setprofile mode, instead of signal mode
       --html                output HTML instead of text
+      --flame               output FlameGraph html instead of text (mutually exclusive with --html)
       -o OUTFILE, --outfile=OUTFILE
                             save report to <outfile>
       --unicode             force unicode text output
@@ -79,6 +80,13 @@ to profile something. In this case, add
 `PYINSTRUMENT_PROFILE_DIR = 'profiles'` to your settings.py.
 pyinstrument will profile every request and save the HTML output to the
 folder `profiles` in your working directory.
+
+##### Using FlameGraphs #####
+
+If you want the FlameGraph html output instead of the nested call stack
+output, set `PYINSTRUMENT_USE_FLAME = True` to your settings.py. pyinstrument
+will render the FlameGraph output for individual requests, and record those
+to the profile directory, if that's enabled.
 
 #### Python ####
 

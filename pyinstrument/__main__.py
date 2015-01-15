@@ -39,7 +39,6 @@ def main():
     parser.add_option('', '--flame',
         dest='output_flame', action='store_true',
         help='output an HTML flame chart', default=False)
-
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
         help="save report to <outfile>", default=None)
@@ -63,6 +62,10 @@ def main():
         sys.exit(2)
 
     (options, args) = parser.parse_args()
+
+    if options.output_html and options.output_flame:
+        parser.error("--flame and --html are mutually exclusive.")
+
     sys.argv[:] = args
 
     if len(args) > 0:
