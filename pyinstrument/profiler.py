@@ -111,7 +111,7 @@ class Profiler(object):
         if self.collect_args:
             arg_info = inspect.getargvalues(frame)
             frame_id += ''.join(
-                '\x00%s\x00%s' % (name, arg_info.locals[name].__repr__())
+                '\x00%s\x00%s' % (name, repr(arg_info.locals[name]))
                 for name in arg_info.args
             )
 
