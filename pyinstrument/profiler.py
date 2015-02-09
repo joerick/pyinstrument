@@ -130,3 +130,6 @@ class Profiler(object):
         renderer = renderers.HTMLRenderer()
         return renderer.render(self.starting_frame(root=root))
 
+    def output_flame(self, root=False):
+        renderer = renderers.FlameRenderer()
+        return renderer.render(self.starting_frame(root=root))
