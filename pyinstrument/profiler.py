@@ -7,6 +7,8 @@ import signal
 from . import recorders
 from . import renderers
 
+from rate_limiter import RateLimiter
+
 timer = timeit.default_timer
 
 
@@ -56,7 +58,8 @@ class Profiler(object):
 
             signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
         else:
-            sys.setprofile(self._profile)
+            print 'using rate_limiter'
+            sys.setprofile(RateLimiter(self._profile, self.interval))
 
     def stop(self):
         if self.use_signal:

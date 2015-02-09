@@ -1,8 +1,9 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 setup(
     name="pyinstrument",
     packages=['pyinstrument'],
+    ext_modules=[Extension('rate_limiter', sources=['rate_limiter.c'])],
     version="0.13.1",
     description="A call stack profiler for Python. Inspired by Apple's Instruments.app",
     author='Joe Rickerby',

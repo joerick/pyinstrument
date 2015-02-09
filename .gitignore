@@ -12,3 +12,4 @@ __pycache__/
 # distribution
 dist/
 *.egg-info/
+build
