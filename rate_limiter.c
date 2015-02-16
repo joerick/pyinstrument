@@ -39,11 +39,9 @@ floatclock(void)
     return diff / divisor;
 }
 
-#else /* Not Windows */
+#else  /* !MS_WINDOWS */
 
 #include <sys/time.h>
-
-/* use gettimeofday */
 
 static double
 floatclock(void)
@@ -54,7 +52,7 @@ floatclock(void)
     return (double)t.tv_sec + t.tv_usec*0.000001;
 }
 
-#endif
+#endif  /* MS_WINDOWS */
 
 static PyObject *whatstrings[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
