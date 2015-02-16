@@ -1,8 +1,6 @@
-
 # virtualenv
-/bin
-/include
-/lib
+env/
+env3/
 .Python
 
 # python
