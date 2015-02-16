@@ -2,8 +2,11 @@
 #include <structmember.h>
 #include <frameobject.h>
 
+/* Python 3 shims */
 #if PY_MAJOR_VERSION >= 3
-#define IS_PY3K
+
+#define PyString_InternFromString PyUnicode_InternFromString
+
 #endif
 
 /*
@@ -85,7 +88,7 @@ static void
 RateLimiter_dealloc(RateLimiter* self)
 {
     Py_XDECREF(self->target);
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static int
@@ -214,8 +217,7 @@ static PyMethodDef RateLimiter_methods[] = {
 };
 
 static PyTypeObject RateLimiterType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                      /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "rate_limiter.RateLimiter",             /* tp_name */
     sizeof(RateLimiter),                    /* tp_basicsize */
     0,                                      /* tp_itemsize */
@@ -256,25 +258,44 @@ static PyTypeObject RateLimiterType = {
 
 };
 
+/*
+    Module initialization
+*/
+
+#if PY_MAJOR_VERSION >= 3
+    #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+    #define MOD_DEF(m, name, doc, methods) \
+        static struct PyModuleDef moduledef = { \
+            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+        m = PyModule_Create(&moduledef);
+    #define MOD_RETURN(m) return m;
+#else
+    #define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
+    #define MOD_DEF(m, name, doc, methods) \
+        m = Py_InitModule3(name, methods, doc);
+    #define MOD_RETURN(m) return;
+#endif
+
 static PyMethodDef rate_limiter_methods[] = {
     {NULL}  /* Sentinel */
 };
 
-#ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
-#endif
-PyMODINIT_FUNC
-initrate_limiter(void) 
+MOD_INIT(rate_limiter)
 {
     PyObject* m;
 
     RateLimiterType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&RateLimiterType) < 0)
-        return;
 
-    m = Py_InitModule3("rate_limiter", rate_limiter_methods,
-                       "Example module that creates an extension type.");
+    if (PyType_Ready(&RateLimiterType) < 0)
+        MOD_RETURN(NULL)
+
+    MOD_DEF(m, 
+            "rate_limiter", 
+            "Module that implements the frontend to a statistical profiler", 
+            rate_limiter_methods)
 
     Py_INCREF(&RateLimiterType);
     PyModule_AddObject(m, "RateLimiter", (PyObject *)&RateLimiterType);
+
+    MOD_RETURN(m)
 }
