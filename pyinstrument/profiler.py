@@ -58,8 +58,8 @@ class Profiler(object):
 
             signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
         else:
-            print 'using rate_limiter'
-            sys.setprofile(RateLimiter(self._profile, self.interval))
+            self.rate_limiter = RateLimiter(self._profile, self.interval)
+            self.rate_limiter.enable()
 
     def stop(self):
         if self.use_signal:
@@ -70,7 +70,8 @@ class Profiler(object):
             except ValueError:
                 raise NotMainThreadError()
         else:
-            sys.setprofile(None)
+            self.rate_limiter.disable()
+            self.rate_limiter = None
 
     def _signal(self, signum, frame):
         now = timer()

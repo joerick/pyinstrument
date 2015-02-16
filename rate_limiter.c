@@ -1,5 +1,10 @@
 #include <Python.h>
 #include <structmember.h>
+#include <frameobject.h>
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
 
 /*
 These timer functions are mostly stolen from timemodule.c
@@ -51,13 +56,32 @@ floatclock(void)
 
 #endif
 
+static PyObject *whatstrings[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
+static int
+trace_init(void)
+{
+    static char *whatnames[7] = {"call", "exception", "line", "return",
+                                    "c_call", "c_exception", "c_return"};
+    PyObject *name;
+    int i;
+    for (i = 0; i < 7; ++i) {
+        if (whatstrings[i] == NULL) {
+            name = PyString_InternFromString(whatnames[i]);
+            if (name == NULL)
+                return -1;
+            whatstrings[i] = name;
+        }
+    }
+    return 0;
+}
+
 typedef struct {
     PyObject_HEAD
     PyObject *target;
     double interval;
     double last_invocation;
 } RateLimiter;
-
 
 static void
 RateLimiter_dealloc(RateLimiter* self)
@@ -94,7 +118,6 @@ RateLimiter_init(RateLimiter *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
-
 static PyMemberDef RateLimiter_members[] = {
     {"target", T_OBJECT_EX, offsetof(RateLimiter, target), 0,
      "target function"},
@@ -106,22 +129,89 @@ static PyMemberDef RateLimiter_members[] = {
 };
 
 static PyObject *
-RateLimiter_call(RateLimiter* self, PyObject *args, PyObject *kwds)
+RateLimiter_call_target(RateLimiter* self,
+                        PyFrameObject *frame, int what, PyObject *arg)
+{
+    PyObject *args;
+    PyObject *whatstr;
+    PyObject *result;
+
+    if (arg == NULL)
+        arg = Py_None;
+
+    args = PyTuple_New(3);
+    if (args == NULL)
+        return NULL;
+
+    PyFrame_FastToLocals(frame);
+
+    Py_INCREF(frame);
+    whatstr = whatstrings[what];
+    Py_INCREF(whatstr);
+    if (arg == NULL)
+        arg = Py_None;
+    Py_INCREF(arg);
+    PyTuple_SET_ITEM(args, 0, (PyObject *)frame);
+    PyTuple_SET_ITEM(args, 1, whatstr);
+    PyTuple_SET_ITEM(args, 2, arg);
+
+    /* call the Python-level target function */
+    result = PyEval_CallObject(self->target, args);
+
+    PyFrame_LocalsToFast(frame, 1);
+    if (result == NULL)
+        PyTraceBack_Here(frame);
+
+    /* cleanup */
+    Py_DECREF(args);
+    return result;
+}
+
+static int
+RateLimiter_profile(RateLimiter *self, PyFrameObject *frame,
+                    int what, PyObject *arg)
 {
     double now = floatclock();
 
-    if (now > self->last_invocation + self->interval) {
-        PyObject *result = PyEval_CallObjectWithKeywords(self->target, args, kwds);
-
+    if (now < self->last_invocation + self->interval) {
+        return 0;
+    } else {
         self->last_invocation = now;
+    }
 
-        return result;
-    } 
+    PyObject *result = RateLimiter_call_target(self, frame, what, arg);
+
+    if (result == NULL) {
+        PyEval_SetProfile(NULL, NULL);
+        return -1;
+    }
+
+    Py_DECREF(result);
+    return 0;
+}
+
+static PyObject*
+RateLimiter_enable(RateLimiter *self, PyObject* noarg)
+{
+    if (trace_init() == -1)
+        return NULL;
+
+    PyEval_SetProfile((Py_tracefunc)RateLimiter_profile, (PyObject*)self);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject*
+RateLimiter_disable(RateLimiter *self, PyObject* noarg)
+{
+    PyEval_SetProfile(NULL, NULL);
 
     Py_RETURN_NONE;
 }
 
 static PyMethodDef RateLimiter_methods[] = {
+    {"enable", (PyCFunction)RateLimiter_enable, METH_NOARGS, "start profiling"},
+    {"disable", (PyCFunction)RateLimiter_disable, METH_NOARGS, "stop profiling"},
     {NULL}  /* Sentinel */
 };
 
@@ -141,7 +231,7 @@ static PyTypeObject RateLimiterType = {
     0,                                      /* tp_as_sequence */
     0,                                      /* tp_as_mapping */
     0,                                      /* tp_hash  */
-    (ternaryfunc)RateLimiter_call,          /* tp_call */
+    0,                                      /* tp_call */
     0,                                      /* tp_str */
     0,                                      /* tp_getattro */
     0,                                      /* tp_setattro */
