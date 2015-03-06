@@ -4,6 +4,7 @@ import os
 import timeit
 import signal
 import inspect
+import cgi
 from collections import deque
 from operator import methodcaller
 
@@ -332,10 +333,6 @@ class Frame(object):
             indent=indent,
             time_str=time_str,
             function=self.function,
-            arguments=', '.join(
-                '{name}={value}'.format(name=k, value=v)
-                for k, v in self.arguments.items()
-            ),
             code_position=self.code_position_short,
             c=colors_enabled if color else colors_disabled)
 
@@ -378,13 +375,19 @@ class Frame(object):
                 <!--<span class="parent-percent">{parent_proportion:.1%}</span>-->
                 <span class="function">{function}</span>
                 <span class="code-position">{code_position}</span>
-            </div>'''.format(
+            '''.format(
                 time=self.time(),
                 function=self.function,
                 code_position=self.code_position_short,
                 parent_proportion=self.proportion_of_parent,
                 total_proportion=self.proportion_of_total,
                 extra_class=extra_class)
+
+        result += '<br/><span class="arguments">'
+        result += '<br/>'.join('{name}={value},'.format(
+            name=cgi.escape(k), value=cgi.escape(v)
+        ) for k, v in self.arguments.items())
+        result += '</span></div>'
 
         result += '<div class="frame-children">'
 

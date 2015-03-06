@@ -19,9 +19,15 @@ class ProfilerMiddleware(object):
     def process_request(self, request):
         profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
         use_signal = getattr(settings, 'PYINSTRUMENT_USE_SIGNAL', True)
+        collect_args = getattr(settings, 'PYINSTRUMENT_COLLECT_ARGS', False)
 
-        if getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET or profile_dir:
-            profiler = Profiler(use_signal=use_signal)
+        profiler = None
+        if getattr(settings, 'PYINSTRUMENT_URL_COLLECT_ARGS_ARGUMENT', 'profile_collect_args') in request.GET:
+            profiler = Profiler(use_signal=use_signal, collect_args=True)
+        elif getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET or profile_dir:
+            profiler = Profiler(use_signal=use_signal, collect_args=collect_args)
+
+        if profiler:
             try:
                 profiler.start()
                 request.profiler = profiler
@@ -52,8 +58,7 @@ class ProfilerMiddleware(object):
 
                     with open(file_path, 'w') as f:
                         f.write(output_html)
-
-                if getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET:
+                if any((trig in request.GET for trig in [getattr(settings, 'PYINSTRUMENT_URL_COLLECT_ARGS_ARGUMENT', 'profile_collect_args'), getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile')])):
                     return HttpResponse(output_html)
                 else:
                     return response
