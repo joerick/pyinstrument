@@ -1,1 +1,2 @@
+from _statistical_profiler import setstatprofile
 from pyinstrument.profiler import Profiler

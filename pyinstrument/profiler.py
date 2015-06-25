@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
-import sys
-import os
 import timeit
-import signal
+import warnings
 
 from . import recorders
 from . import renderers
-
-from _statistical_profiler import setstatprofile
+from . import setstatprofile
 
 timer = timeit.default_timer
 
