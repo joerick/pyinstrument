@@ -13,29 +13,21 @@ timer = timeit.default_timer
 
 
 class NotMainThreadError(Exception):
-    '''pyinstrument must be used on the main thread in signal mode'''
-    def __init__(self, message=''):
-        super(NotMainThreadError, self).__init__(message or NotMainThreadError.__doc__)
+    '''deprecated as of 0.14'''
+    pass
 
 
 class SignalUnavailableError(Exception):
-    '''pyinstrument uses signal.SIGALRM in signal mode, which is not available on your system.
-
-    You can pass the argument 'use_signal=False' to run in setprofile mode.'''
-    def __init__(self, message=''):
-        super(SignalUnavailableError, self).__init__(message or SignalUnavailableError.__doc__)
+    '''deprecated as of 0.14'''
+    pass
 
 
 class Profiler(object):
-    def __init__(self, use_signal=True, timeline=True):
-        if use_signal:
-            try:
-                signal.SIGALRM
-            except AttributeError:
-                raise SignalUnavailableError()
+    def __init__(self, use_signal=None, timeline=True):
+        if use_signal is not None:
+            warnings.warn('use_signal is deprecated and should no longer be used.', DeprecationWarning, stacklevel=2)
 
         self.interval = 0.001
-        self.use_signal = use_signal
         self.last_profile_time = 0
 
         if timeline:
@@ -45,40 +37,10 @@ class Profiler(object):
 
     def start(self):
         self.last_profile_time = timer()
-
-        if self.use_signal:
-            try:
-                signal.signal(signal.SIGALRM, self._signal)
-                # the following tells the system to restart interrupted system calls if they are
-                # interrupted before any data has been transferred. This avoids many of the problems
-                # related to signals interrupting system calls, see issue #16
-                signal.siginterrupt(signal.SIGALRM, False)
-            except ValueError:
-                raise NotMainThreadError()
-
-            signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
-        else:
-            setstatprofile(self._profile, self.interval)
+        setstatprofile(self._profile, self.interval)
 
     def stop(self):
-        if self.use_signal:
-            signal.setitimer(signal.ITIMER_REAL, 0.0, 0.0)
-
-            try:
-                signal.signal(signal.SIGALRM, signal.SIG_IGN)
-            except ValueError:
-                raise NotMainThreadError()
-        else:
-            setstatprofile(None)
-
-    def _signal(self, signum, frame):
-        now = timer()
-        time_since_last_signal = now - self.last_profile_time
-
-        self.recorder.record_frame(frame, time_since_last_signal)
-
-        signal.setitimer(signal.ITIMER_REAL, self.interval, 0.0)
-        self.last_profile_time = now
+        setstatprofile(None)
 
     def _profile(self, frame, event, arg):
         now = timer()
