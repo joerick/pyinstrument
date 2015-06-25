@@ -26,7 +26,7 @@ class Recorder(object):
 
 
 class TimeAggregateRecorder(Recorder):
-    ''' 
+    '''
     Records each frame according to the frame identifiers of the call stack. Does not preserve
     the order in which frames are visited.
     '''
@@ -77,7 +77,7 @@ class TimeAggregateRecorder(Recorder):
 
 
 class TimelineRecorder(Recorder):
-    ''' 
+    '''
     Records every frame separately so that the order that frames are visited is preserved.
     '''
     def __init__(self):
