@@ -10,13 +10,13 @@ import cProfile, profile
 
 sys.path.append('django_test')
 
-django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATE_DIRS=('.'))
+django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATE_DIRS=('./examples',))
 
 def test_func_re():
     re.compile("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
 
 def test_func_template():
-    django.template.loader.render_to_string('test_template.html')
+    django.template.loader.render_to_string('template.html')
 
 # heat caches
 test_func_template()
