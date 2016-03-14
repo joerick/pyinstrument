@@ -10,9 +10,6 @@ It uses a **statistical profiler**, meaning the code samples the stack
 periodically (every 1 ms). This is lower overhead than event-
 based profiling (as done by `profile` and `cProfile`).
 
-This module is still very young, so I'd love any feedback/bug reports/pull
-requests!
-
 Documentation
 -------------
 
