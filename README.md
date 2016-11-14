@@ -29,7 +29,7 @@ Documentation
 Installation
 ------------
 
-    pip install -e git+https://github.com/joerick/pyinstrument.git#egg=pyinstrument
+    pip install pyinstrument
 
 pyinstrument supports Python 2.7 and 3.3+.
 
