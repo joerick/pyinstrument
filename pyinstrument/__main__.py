@@ -36,6 +36,9 @@ def main():
     parser.add_option('', '--html',
         dest="output_html", action='store_true',
         help="output HTML instead of text", default=False)
+    parser.add_option('', '--flame',
+        dest='output_flame', action='store_true',
+        help='output an HTML flame chart', default=False)
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
         help="save report to <outfile>", default=None)
@@ -59,6 +62,10 @@ def main():
         sys.exit(2)
 
     (options, args) = parser.parse_args()
+
+    if options.output_html and options.output_flame:
+        parser.error("--flame and --html are mutually exclusive.")
+
     sys.argv[:] = args
 
     if len(args) > 0:
@@ -74,7 +81,7 @@ def main():
         }
 
         try:
-            profiler = Profiler(use_signal=not options.setprofile)
+            profiler = Profiler(use_signal=not options.setprofile, timeline=options.output_flame)
         except SignalUnavailableError:
             profiler = Profiler(use_signal=False)
 
@@ -118,13 +125,14 @@ def main():
 
         if options.output_html:
             f.write(profiler.output_html())
+        elif options.output_flame:
+            f.write(profiler.output_flame())
         else:
             f.write(profiler.output_text(unicode=unicode, color=color))
 
         f.close()
     else:
         parser.print_usage()
-    return parser
 
 def file_supports_color(file_obj):
     """
