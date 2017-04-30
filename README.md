@@ -117,14 +117,14 @@ table for an example of the amount of overhead.
 This overhead is important because code that makes a lot of Python function
 calls will appear to take longer than code that does not.
 
-                           | Django template render × 4000 | Overhead
----------------------------|------------------------------:|---------:
-Base                       |                         1.46s | 
-                           |                               |
-pyinstrument (signal)      |                         1.84s |      26%
-cProfile                   |                         2.18s |      49%
-pyinstrument (setprofile)  |                         5.33s |     365%
-profile                    |                        25.39s |    1739%
+|                            | Django template render × 4000 | Overhead
+| ---------------------------|------------------------------:|---------:
+| Base                       |                         1.46s | 
+|                            |                               |
+| pyinstrument (signal)      |                         1.84s |      26%
+| cProfile                   |                         2.18s |      49%
+| pyinstrument (setprofile)  |                         5.33s |     365%
+| profile                    |                        25.39s |    1739%
 
 To run in setprofile mode:
 
