@@ -7,7 +7,11 @@ import cProfile
 import pyinstrument
 
 sys.path.append('django_test')
-django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATE_DIRS=('./examples',))
+django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATES=[{
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS':['./examples'],
+}])
+django.setup()
 
 def test_func_template():
     django.template.loader.render_to_string('template.html')
