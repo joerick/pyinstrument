@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
-import timeit
 import signal
+import sys
+import timeit
 from collections import deque
+from contextlib import contextmanager
+from io import StringIO
 from operator import methodcaller
+
+from IPython.core.magic import (Magics, magics_class, line_cell_magic)
+from IPython.core.page import page
+
+from pyinstrument import Profiler
 
 timer = timeit.default_timer
 
@@ -378,6 +385,40 @@ class Frame(object):
 
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, children=%r)' % (self.identifier, self.time(), self.children)
+
+
+@contextmanager
+def instrument_profile(*args, **kwargs):
+
+    stream = kwargs.pop('stream', None) or sys.stdout
+    profiler = Profiler(*args, **kwargs) # or Profiler(use_signal=False), see below
+    try:
+        profiler.start()
+        yield
+        profiler.stop()
+    except Exception as e:
+        profiler.stop()
+        raise
+    else:
+        stream.write(profiler.output_text(unicode=False, color=True))
+
+
+@magics_class
+class PyInstrumentMagic(Magics):
+
+    @line_cell_magic
+    def iprun(self, line, cell=None):
+        # need to get the namespaces from the shell
+        global_namespace = self.shell.user_global_ns
+        local_namespace = self.shell.user_ns
+
+        stdout_sink = StringIO()
+        with instrument_profile(stream=stdout_sink):
+            exec(cell or line, global_namespace, local_namespace)
+
+        # put the output on the IPython sub-page-thing
+        page(stdout_sink.getvalue())
+
 
 
 class colors_enabled:
