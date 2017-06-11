@@ -4,6 +4,7 @@
 /include
 /lib
 .Python
+/env
 
 # python
 *.pyc
