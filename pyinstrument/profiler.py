@@ -4,7 +4,7 @@ import warnings
 
 from . import recorders
 from . import renderers
-from . import setstatprofile
+from pyinstrument_cext import setstatprofile
 
 timer = timeit.default_timer
 
