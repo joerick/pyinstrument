@@ -109,6 +109,10 @@ class Frame(object):
     def add_child(self, child):
         self.children.append(child)
 
+    @property
+    def children(self):
+        raise NotImplementedError()
+
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, len(children)=%d)' % (self.identifier, self.time(), len(self.children))
 
