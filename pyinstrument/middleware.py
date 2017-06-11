@@ -4,6 +4,7 @@ from pyinstrument import Profiler
 from pyinstrument.profiler import NotMainThreadError
 import time
 import os
+from django.utils.deprecation import MiddlewareMixin
 
 not_main_thread_message = (
     "pyinstrument can only be used on the main thread in signal mode. Run your server process in "
@@ -15,7 +16,7 @@ not_main_thread_message = (
     "https://github.com/joerick/pyinstrument#signal-or-setprofile-mode")
 
 
-class ProfilerMiddleware(object):
+class ProfilerMiddleware(MiddlewareMixin):
     def process_request(self, request):
         profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
         use_signal = getattr(settings, 'PYINSTRUMENT_USE_SIGNAL', True)
