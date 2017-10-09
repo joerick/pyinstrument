@@ -3,15 +3,12 @@ import abc
 import os
 from . import six
 
-@six.add_metaclass(abc.ABCMeta)
 class Renderer(object):
-
-    @abc.abstractmethod
     def render(self, frame):
         ''' 
         Return a string that contains the rendered form of `frame`
         '''
-        pass
+        raise NotImplementedError()
 
 
 class ConsoleRenderer(Renderer):

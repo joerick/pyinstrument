@@ -4,25 +4,22 @@ from .frame import TimeAggregatingFrame, TimelineFrame
 from . import six
 
 
-@six.add_metaclass(abc.ABCMeta)
 class Recorder(object):
     '''
     An object that can record frames and return a tree structure of Frame objects
     '''
 
-    @abc.abstractmethod
     def record_frame(self, frame, time):
         '''
         Record that `time` seconds was spent in `frame`. `frame` is an interpreter frame.
         '''
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def root_frame(self):
         '''
         Output a Frame object that represents the parsed tree of frames
         '''
-        pass
+        raise NotImplementedError()
 
 
 class TimeAggregateRecorder(Recorder):
