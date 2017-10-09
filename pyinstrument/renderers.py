@@ -34,7 +34,7 @@ class ConsoleRenderer(Renderer):
             code_position=frame.code_position_short,
             c=colors)
 
-        children = [f for f in frame.sorted_children if f.proportion_of_total > 0.01]
+        children = [f for f in frame.children if f.proportion_of_total > 0.01]
 
         if children:
             last_child = children[-1]
@@ -117,7 +117,7 @@ class HTMLRenderer(Renderer):
         result += '<div class="frame-children">'
 
         # add this filter to prevent the output file getting too large
-        children = [f for f in frame.sorted_children if f.proportion_of_total > 0.005]
+        children = [f for f in frame.children if f.proportion_of_total > 0.005]
 
         for child in children:
             result += self.render_frame(child)

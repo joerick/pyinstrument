@@ -99,13 +99,6 @@ class Frame(object):
 
         return self._proportion_of_total
 
-    @property
-    def sorted_children(self):
-        if not hasattr(self, '_sorted_children'):
-            self._sorted_children = sorted(self.children, key=methodcaller('time'), reverse=True)
-
-        return self._sorted_children
-
     def add_child(self, child):
         self.children.append(child)
 
