@@ -20,7 +20,7 @@ class SignalUnavailableError(Exception):
 
 
 class Profiler(object):
-    def __init__(self, use_signal=None, timeline=True):
+    def __init__(self, use_signal=None, timeline=False):
         if use_signal is not None:
             warnings.warn('use_signal is deprecated and should no longer be used.', DeprecationWarning, stacklevel=2)
 
