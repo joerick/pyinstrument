@@ -17,7 +17,7 @@ def test_func_template():
     django.template.loader.render_to_string('template.html')
 
 t = Timer(stmt=test_func_template)
-test_func = lambda: t.repeat(number=200)
+test_func = lambda: t.repeat(number=2000)
 
 # base
 base_timings = test_func()
@@ -30,17 +30,17 @@ base_timings = test_func()
 cp = cProfile.Profile()
 cProfile_timings = cp.runcall(test_func)
 
-# pyinstrument stat
+# pyinstrument 
 profiler = pyinstrument.Profiler()
 profiler.start()
 pyinstrument_timings = test_func()
 profiler.stop()
 
-# pyinstrument stat
-profiler = pyinstrument.Profiler(timeline=True)
-profiler.start()
-pyinstrument_timeline_timings = test_func()
-profiler.stop()
+# pyinstrument timeline
+# profiler = pyinstrument.Profiler(timeline=True)
+# profiler.start()
+# pyinstrument_timeline_timings = test_func()
+# profiler.stop()
 
 with open('out.html', 'w') as f:
     f.write(profiler.output_html())
@@ -52,11 +52,11 @@ graph_data = (
     # ('profile', min(profile_timings)),
     ('cProfile', min(cProfile_timings)),
     ('pyinstrument', min(pyinstrument_timings)),
-    ('pyinstrument timeline', min(pyinstrument_timeline_timings)),
+    # ('pyinstrument timeline', min(pyinstrument_timeline_timings)),
 )
 
 from ascii_graph import Pyasciigraph
 
-graph = Pyasciigraph()
+graph = Pyasciigraph(float_format='{0:.3f}')
 for line in graph.graph('Profiler overhead', graph_data):
     print(line)

@@ -1,5 +1,6 @@
 # virtualenv
 env/
+env2/
 env3/
 .Python
 
@@ -11,3 +12,8 @@ __pycache__/
 dist/
 *.egg-info/
 build
+.eggs
+
+# testing
+.cache
+
