@@ -6,10 +6,6 @@ of just the final function in it.
 
 [![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
 
-It uses a **statistical profiler**, meaning the code samples the stack
-periodically (every 1 ms). This is lower overhead than event-
-based profiling (as done by `profile` and `cProfile`).
-
 Documentation
 -------------
 
@@ -18,7 +14,6 @@ Documentation
   * [Command-line](#command-line)
   * [Django](#django)
   * [Python](#python)
-* [Signal or setprofile mode?](#signal-or-setprofile-mode)
 * [Known issues](#known-issues)
 * [Changelog](#changelog)
   * [What's new in v0.13](#whats-new-in-v013)
@@ -31,7 +26,7 @@ Installation
 
     pip install pyinstrument
 
-pyinstrument supports Python 2.7 and 3.3+.
+Pyinstrument supports Python 2.7 and 3.3+.
 
 Usage
 -----
@@ -44,7 +39,6 @@ You can call pyinstrument directly from the command line.
     
     Options:
       -h, --help            show this help message and exit
-      --setprofile          run in setprofile mode, instead of signal mode
       --html                output HTML instead of text
       -o OUTFILE, --outfile=OUTFILE
                             save report to <outfile>
@@ -82,7 +76,7 @@ folder `profiles` in your working directory.
 ```python
 from pyinstrument import Profiler
 
-profiler = Profiler() # or Profiler(use_signal=False), see below
+profiler = Profiler()
 profiler.start()
 
 # code you want to profile
@@ -95,56 +89,39 @@ print(profiler.output_text(unicode=True, color=True))
 You can omit the `unicode` and `color` flags if your output/terminal does
 not support them.
 
-Signal or setprofile mode?
---------------------------
+How does it work?
+-----------------
 
-On Mac/Linux/Unix, pyinstrument can run in 'signal' mode. This uses 
-OS-provided signals to interrupt the process every 1ms and record the stack. 
-It gives much lower overhead (and thus accurate) readings than the standard
-Python [`sys.setprofile`][setprofile] style profilers. However, this can
-only profile the main thread.
+### 'Wall-clock' time (not CPU time)
 
-On Windows and on multi-threaded applications, a `setprofile` mode is
-available by passing `use_signal=False` to the Profiler constructor. It works
-exactly the same as the signal mode, but has higher overhead. See the below
-table for an example of the amount of overhead.
+Pyinstrument records duration using 'wall-clock' time. That means that when
+you're writing a program that downloads data, reads files, and talks to
+databases, that time is included in the tracked time by pyinstrument.
 
-[setprofile]: https://docs.python.org/2/library/sys.html#sys.setprofile
+That's really important when debugging performance problems, since Python is
+often used as a 'glue' language between other services. The problem might not
+be in my program, but I still want to know why it's slow.
 
-This overhead is important because code that makes a lot of Python function
-calls will appear to take longer than code that does not.
+### Statistical profiling (not tracing)
 
-|                            | Django template render × 4000 | Overhead
-| ---------------------------|------------------------------:|---------:
-| Base                       |                         1.46s | 
-|                            |                               |
-| pyinstrument (signal)      |                         1.84s |      26%
-| cProfile                   |                         2.18s |      49%
-| pyinstrument (setprofile)  |                         5.33s |     365%
-| profile                    |                        25.39s |    1739%
+Pyinstrument is a statistical profiler. That means it does not track every
+single function call that your program makes. Instead, it's 'sampling' the
+process every 1ms and recording the call stack at that point.
 
-To run in setprofile mode:
+That gives some clear advantages over other profilers. Statistical profilers
+are much lower-overhead (and thus accurate) than tracing profilers.
 
-* Use flag `--setprofile` if using the command-line interface
-* Use setting `PYINSTRUMENT_USE_SIGNAL = False` in Django
-* Use argument `use_signal=False` in the constructor for the Python API
+|              | Django template render × 4000                   | Overhead
+| -------------|:------------------------------------------------|---------:
+| Base         | `████████████████                    `  0.33s   | 
+|              |                                                 |
+| pyinstrument | `████████████████████                `  0.43s   |      30%
+| cProfile     | `█████████████████████████████       `  0.61s   |      84%
+| profile      | `███████████████████████████████...██`  6.79s   |    2057%
 
-Known issues
-------------
-
--   When profiling Django, I'd recommend disabling django-debug-toolbar,
-    django-devserver etc., as their instrumentation distort timings.
-    
--   In signal mode, any calls to [`time.sleep`][pysleep] will return
-    immediately. This is because of an implementation detail of `time.sleep`,
-    but matches the behaviour of the C function [`sleep`][csleep].
-
--   Some system calls can fail with `IOError` when being profiled in signal
-    mode. If this happens to you, your only option is to run in setprofile 
-    mode.
-
-[pysleep]: https://docs.python.org/2/library/time.html#time.sleep
-[csleep]: http://pubs.opengroup.org/onlinepubs/009695399/functions/sleep.html
+This overhead is important a lot can distort your timings. When using a tracing
+profiler, code that makes a lot of Python function calls could appear to take
+longer than code that does not.
 
 Changelog
 ---------
