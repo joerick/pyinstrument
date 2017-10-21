@@ -4,9 +4,10 @@ from pyinstrument import Profiler
 from pyinstrument.profiler import NotMainThreadError
 import time
 import os
+from django.utils.deprecation import MiddlewareMixin
 
 
-class ProfilerMiddleware(object):
+class ProfilerMiddleware(MiddlewareMixin):
     def process_request(self, request):
         profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
 

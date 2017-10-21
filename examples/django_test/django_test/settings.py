@@ -15,7 +15,12 @@ TEMPLATE_DEBUG = True
 SECRET_KEY = 'qg7_r+b@)(--as*(4ls$j$$(9i(pl_@y$g0j0r+!=@&$he(+o%'
 
 ROOT_URLCONF = 'django_test.urls'
-WSGI_APPLICATION = 'django_test.wsgi.application'
+
+INSTALLED_APPS = (
+    'django_test',
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
+)
 
 MIDDLEWARE_CLASSES = (
     'pyinstrument.middleware.ProfilerMiddleware',

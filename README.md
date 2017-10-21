@@ -10,9 +10,6 @@ It uses a **statistical profiler**, meaning the code samples the stack
 periodically (every 1 ms). This is lower overhead than event-
 based profiling (as done by `profile` and `cProfile`).
 
-This module is still very young, so I'd love any feedback/bug reports/pull
-requests!
-
 Documentation
 -------------
 
@@ -32,7 +29,7 @@ Documentation
 Installation
 ------------
 
-    pip install -e git+https://github.com/joerick/pyinstrument.git#egg=pyinstrument
+    pip install pyinstrument
 
 pyinstrument supports Python 2.7 and 3.3+.
 
