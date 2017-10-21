@@ -17,7 +17,7 @@ def test_func_template():
     django.template.loader.render_to_string('template.html')
 
 t = Timer(stmt=test_func_template)
-test_func = lambda: t.repeat(number=2000)
+test_func = lambda: t.repeat(number=4000)
 
 # base
 base_timings = test_func()
