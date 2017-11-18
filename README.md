@@ -55,7 +55,7 @@ then output the call tree.
     
 Add `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES`.
 If you want to profile your middleware as well as your view (you probably
-do) then put it at the start of the list.
+do), put it at the start of the list.
 
 ##### Per-request profiling #####
 
@@ -100,7 +100,7 @@ databases, that time is included in the tracked time by pyinstrument.
 
 That's really important when debugging performance problems, since Python is
 often used as a 'glue' language between other services. The problem might not
-be in my program, but I still want to know why it's slow.
+be in your program, but you should still be able to find why it's slow.
 
 ### Statistical profiling (not tracing)
 
@@ -125,6 +125,22 @@ longer than code that does not.
 
 Changelog
 ---------
+
+### What's new in v1.0 ###
+
+-   Pyinstrument refactored to use a new profiling mode. Rather than using
+    signals, pyintrument uses a new statistical profiler built on
+    PyEval_SetProfile. This means no more main thread restriction, no more 
+    IO errors when using Pyinstrument, and no more 'setprofile' mode!
+
+-   Renderers. Users can customize Pyinstrument to use alternative renderers
+    with the `renderer` argument on `Profiler.output()`, or using the `--renderer`
+    argument on the command line.
+
+-   Recorders. To support other use cases of Pyinstrument (e.g. flame charts),
+    pyinstrument now has a 'timeline' recorder mode. This mode records captured
+    frames in a linear way, so the program execution can be viewed on a
+    timeline.
 
 ### What's new in v0.13 ###
 
