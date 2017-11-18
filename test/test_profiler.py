@@ -40,7 +40,7 @@ def test_aggregator_collapses_multiple_calls():
     assert len(frame.children) == 2
 
 def test_timeline_retains_multiple_calls():
-    profiler = Profiler(timeline=True)
+    profiler = Profiler(recorder='timeline')
     profiler.start()
 
     long_function_a()
