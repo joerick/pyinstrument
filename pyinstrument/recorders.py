@@ -22,7 +22,7 @@ class Recorder(object):
         raise NotImplementedError()
 
 
-class TimeAggregateRecorder(Recorder):
+class TimeAggregatingRecorder(Recorder):
     '''
     Records each frame according to the frame identifiers of the call stack. Does not preserve
     the order in which frames are visited.

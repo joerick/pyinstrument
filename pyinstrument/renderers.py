@@ -4,6 +4,8 @@ import os
 from . import six
 
 class Renderer(object):
+    preferred_recorder = ''
+
     def render(self, frame):
         ''' 
         Return a string that contains the rendered form of `frame`
@@ -12,6 +14,8 @@ class Renderer(object):
 
 
 class ConsoleRenderer(Renderer):
+    preferred_recorder = 'time_aggregating'
+
     def __init__(self, unicode=False, color=False, **kwargs):
         self.unicode = unicode
         self.color = color
@@ -60,6 +64,8 @@ class ConsoleRenderer(Renderer):
 
 
 class HTMLRenderer(Renderer):
+    preferred_recorder = 'time_aggregating'
+
     def render(self, frame):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
 

@@ -4,6 +4,7 @@ import warnings
 
 from . import recorders
 from . import renderers
+from .util import object_with_import_path
 from pyinstrument_cext import setstatprofile
 
 timer = timeit.default_timer
@@ -20,17 +21,14 @@ class SignalUnavailableError(Exception):
 
 
 class Profiler(object):
-    def __init__(self, use_signal=None, timeline=False):
+    def __init__(self, use_signal=None, recorder='time_aggregating'):
         if use_signal is not None:
             warnings.warn('use_signal is deprecated and should no longer be used.', DeprecationWarning, stacklevel=2)
 
         self.interval = 0.001
         self.last_profile_time = 0
 
-        if timeline:
-            self.recorder = recorders.TimelineRecorder()
-        else:
-            self.recorder = recorders.TimeAggregateRecorder()
+        self.recorder = get_recorder_class(recorder)()
 
     def start(self):
         self.last_profile_time = timer()
@@ -84,13 +82,30 @@ class Profiler(object):
             return self.first_interesting_frame()
 
     def output_text(self, root=False, unicode=False, color=False):
-        renderer = renderers.ConsoleRenderer(unicode=unicode, color=color)
-        return renderer.render(self.starting_frame(root=root))
+        return self.output(renderer='text', root=root, unicode=unicode, color=color)
 
     def output_html(self, root=False):
-        renderer = renderers.HTMLRenderer()
+        return self.output(renderer='html', root=root)
+
+    def output(self, renderer, root=False, **renderer_kwargs):
+        renderer_class = get_renderer_class(renderer)
+        renderer = renderer_class(**renderer_kwargs)
         return renderer.render(self.starting_frame(root=root))
 
-    def output_flame(self, root=False):
-        renderer = renderers.FlameRenderer()
-        return renderer.render(self.starting_frame(root=root))
+
+def get_recorder_class(name):
+    if name == 'time_aggregating':
+        return recorders.TimeAggregatingRecorder
+    elif name == 'timeline':
+        return recorders.TimelineRecorder
+    else:
+        return object_with_import_path(name)
+
+
+def get_renderer_class(name):
+    if name == 'text':
+        return renderers.ConsoleRenderer
+    elif name == 'html':
+        return renderers.HTMLRenderer
+    else:
+        return object_with_import_path(name)
