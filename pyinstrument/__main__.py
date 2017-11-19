@@ -3,26 +3,9 @@ import sys
 import os
 import codecs
 from pyinstrument import Profiler
-from pyinstrument.profiler import SignalUnavailableError
+from pyinstrument.profiler import get_recorder_class, get_renderer_class
+from .six import exec_
 
-# Python 3 compatibility. Mostly borrowed from SymPy
-PY3 = sys.version_info[0] > 2
-
-if PY3:
-    import builtins
-    exec_ = getattr(builtins, "exec")
-else:
-    def exec_(_code_, _globs_=None, _locs_=None):
-        """Execute code in a namespace."""
-        if _globs_ is None:
-            frame = sys._getframe(1)
-            _globs_ = frame.f_globals
-            if _locs_ is None:
-                _locs_ = frame.f_locals
-            del frame
-        elif _locs_ is None:
-            _locs_ = _globs_
-        exec("exec _code_ in _globs_, _locs_")
 
 def main():
     usage = ("usage: pyinstrument [options] scriptfile [arg] ...")
@@ -36,6 +19,13 @@ def main():
     parser.add_option('', '--html',
         dest="output_html", action='store_true',
         help="output HTML instead of text", default=False)
+    parser.add_option('', '--flame',
+        dest='output_flame', action='store_true',
+        help='output an HTML flame chart', default=False)
+    parser.add_option('-r', '--renderer',
+        dest='output_renderer', action='store', type='string',
+        help='python import path to a renderer class', default=None)
+
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
         help="save report to <outfile>", default=None)
@@ -73,33 +63,21 @@ def main():
             '__package__': None,
         }
 
-        try:
-            profiler = Profiler(use_signal=not options.setprofile)
-        except SignalUnavailableError:
-            profiler = Profiler(use_signal=False)
+        if options.output_renderer:
+            renderer = options.output_renderer
+        elif options.output_html:
+            renderer = 'html'
+        else:
+            renderer = 'text'
+
+        recorder = get_renderer_class(renderer).preferred_recorder
+
+        profiler = Profiler(recorder=recorder)
 
         profiler.start()
 
         try:
             exec_(code, globs, None)
-        except IOError as e:
-            import errno
-
-            if e.errno == errno.EINTR:
-                print(
-                    'Failed to run program due to interrupted system system call.\n'
-                    'This happens because pyinstrument is sending OS signals to the running\n'
-                    'process to interrupt it. If your program has long-running syscalls this\n'
-                    'can cause a problem.\n'
-                    '\n'
-                    'You can avoid this error by running in \'setprofile\' mode. Do this by\n'
-                    'passing \'--setprofile\' when calling pyinstrument at the command-line.\n'
-                    '\n'
-                    'For more information, see\n'
-                    'https://github.com/joerick/pyinstrument/issues/16\n'
-                )
-
-            raise
         except (SystemExit, KeyboardInterrupt):
             pass
 
@@ -110,21 +88,21 @@ def main():
         else:
             f = sys.stdout
 
-        unicode_override = options.unicode != None
-        color_override = options.color != None
+        renderer_kwargs = {}
 
-        unicode = options.unicode if unicode_override else file_supports_unicode(f)
-        color = options.color if color_override else file_supports_color(f)
+        if renderer == 'text':
+            unicode_override = options.unicode != None
+            color_override = options.color != None
+            unicode = options.unicode if unicode_override else file_supports_unicode(f)
+            color = options.color if color_override else file_supports_color(f)
+            
+            renderer_kwargs = {'unicode': unicode, 'color': color}
 
-        if options.output_html:
-            f.write(profiler.output_html())
-        else:
-            f.write(profiler.output_text(unicode=unicode, color=color))
-
+        f.write(profiler.output(renderer=renderer, **renderer_kwargs))
         f.close()
     else:
         parser.print_usage()
-    return parser
+
 
 def file_supports_color(file_obj):
     """
@@ -143,6 +121,7 @@ def file_supports_color(file_obj):
         return False
     return True
 
+
 def file_supports_unicode(file_obj):
     encoding = getattr(file_obj, 'encoding', None)
     if not encoding:
@@ -153,6 +132,7 @@ def file_supports_unicode(file_obj):
     if 'utf' in codec_info.name:
         return True
     return False
+
 
 if __name__ == '__main__':
     main()

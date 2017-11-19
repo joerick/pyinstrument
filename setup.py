@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 setup(
     name="pyinstrument",
@@ -8,7 +8,8 @@ setup(
     author='Joe Rickerby',
     author_email='joerick@mac.com',
     url='https://github.com/joerick/pyinstrument',
-    keywords=['profiling', 'profile', 'profiler', 'cpu', 'time'],
+    keywords=['profiling', 'profile', 'profiler', 'cpu', 'time', 'sampling'],
+    install_requires=['pyinstrument_cext'],
     include_package_data=True,
     entry_points={'console_scripts': ['pyinstrument = pyinstrument.__main__:main']},
     zip_safe=False,

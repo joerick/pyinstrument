@@ -1,8 +1,7 @@
-
 # virtualenv
-/bin
-/include
-/lib
+env/
+env2/
+env3/
 .Python
 /env
 
@@ -13,3 +12,9 @@ __pycache__/
 # distribution
 dist/
 *.egg-info/
+build
+.eggs
+
+# testing
+.cache
+
