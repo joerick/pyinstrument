@@ -125,7 +125,7 @@ longer than code that does not.
 
 Changelog
 ---------
-
+    
 ### What's new in v1.0 ###
 
 -   Pyinstrument refactored to use a new profiling mode. Rather than using
