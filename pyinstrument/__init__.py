@@ -1,3 +1,3 @@
 from pyinstrument.profiler import Profiler
 
-__version__ = '0.13.2'
+__version__ = '2.0.0b1'
