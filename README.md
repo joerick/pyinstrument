@@ -30,7 +30,8 @@ How to use it
 -------------
 
 Pyinstrument tells you which sections of code are making your software slow. It
-does this by recording 
+does this by observing your program's execution and then presenting a report
+that highlights the slow parts.
 
 ### I want to profile a Python script
 
