@@ -145,7 +145,7 @@ Here's an example of profile output when using Django.
             1    0.000    0.000    1.021    1.021 __init__.py:57(_configure_logging)
             2    0.002    0.001    1.011    0.505 log.py:1(<module>)
 
-It's often  hard to understand how your own code relates to these traces.
+It's often hard to understand how your own code relates to these traces.
 
 Pyinstrument records the entire stack, so tracking expensive calls is much
 easier.
@@ -163,7 +163,9 @@ be in your program, but you should still be able to find why it's slow.
 How does it work?
 -----------------
 
-
+Pyinstrument interrupts the program every 1ms and records the entire stack at
+that point. It does this using a C extension and `PyEval_SetProfile`, but only
+taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/2017/12/15/pyinstrument-20/) for more info.
 
 Changelog
 ---------
