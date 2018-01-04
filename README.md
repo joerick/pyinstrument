@@ -171,7 +171,7 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 Changelog
 ---------
     
-### What's new in v1.0 ###
+### What's new in v2.0.0 ###
 
 -   Pyinstrument refactored to use a new profiling mode. Rather than using
     signals, pyintrument uses a new statistical profiler built on
