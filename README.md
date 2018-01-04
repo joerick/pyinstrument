@@ -1,8 +1,10 @@
 pyinstrument
 ============
 
-A Python profiler that records the call stack of the executing code, instead
-of just the final function in it.
+Pyinstrument is a Python profiler. A profiler is a tool to help you 'optimize'
+your code - make it faster. It sounds obvious, but to get the biggest speed
+increase you must [focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
+Pyinstrument helps you find it!
 
 [![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
 
