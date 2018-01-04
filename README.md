@@ -203,10 +203,3 @@ Changelog
     
 -   Added `PYINSTRUMENT_USE_SIGNAL` option to the Django interface, for use
     when signal mode presents problems.
-
-Further information
-===================
-
-Call stack profiling?
----------------------
-
