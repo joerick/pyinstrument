@@ -71,7 +71,7 @@ class Frame(object):
             # meaning we hit the stack limit when the profiled code is 500 frames deep.
             self._time = self.self_time
 
-            for child in self.children:
+            for child in self._unsorted_children():
                 self._time += child.time()
 
         return self._time
@@ -106,6 +106,12 @@ class Frame(object):
     def children(self):
         raise NotImplementedError()
 
+    # the ugly sibling of `children`, this method is only useful because it
+    # doesn't recurse to return its value, to avoid "maximum recursion depth
+    # exceeded" errors.
+    def _unsorted_children(self):
+        raise NotImplementedError()
+
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, len(children)=%d)' % (self.identifier, self.time(), len(self.children))
 
@@ -122,6 +128,9 @@ class TimelineFrame(Frame):
     def children(self):
         return self._children
 
+    def _unsorted_children(self):
+        return self._children
+
 
 class TimeAggregatingFrame(Frame):
     def __init__(self, *args, **kwargs):
@@ -134,7 +143,9 @@ class TimeAggregatingFrame(Frame):
     @property
     def children(self):
         if not hasattr(self, '_children'):
-            unsorted_children = self.children_dict.values()
-            self._children = sorted(unsorted_children, key=methodcaller('time'), reverse=True)
+            self._children = sorted(self._unsorted_children(), key=methodcaller('time'), reverse=True)
 
         return self._children
+
+    def _unsorted_children(self):
+        return self.children_dict.values()
