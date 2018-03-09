@@ -37,6 +37,13 @@ class Profiler(object):
     def stop(self):
         setstatprofile(None)
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, *args):
+        self.stop()
+
     def _profile(self, frame, event, arg):
         now = timer()
         time_since_last_signal = now - self.last_profile_time
