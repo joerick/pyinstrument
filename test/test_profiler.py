@@ -78,3 +78,12 @@ def test_two_functions():
     assert frame_b.function == 'long_function_b'
     assert 0.2 < frame_a.time() < 0.3
     assert 0.45 < frame_b.time() < 0.55
+
+def test_context_manager():
+    with Profiler() as profiler:
+        long_function_a()
+        long_function_b()
+
+    frame = profiler.first_interesting_frame()
+    assert frame.function == 'test_context_manager'
+    assert len(frame.children) == 2
