@@ -4,7 +4,10 @@ from pyinstrument import Profiler
 from pyinstrument.profiler import NotMainThreadError
 import time
 import os
-from django.utils.deprecation import MiddlewareMixin
+try:
+	from django.utils.deprecation import MiddlewareMixin
+except:
+	import object as MiddlewareMixin
 
 
 class ProfilerMiddleware(MiddlewareMixin):
