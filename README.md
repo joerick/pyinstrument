@@ -13,9 +13,9 @@ Documentation
 
 * [Installation](#installation)
 * [How to use it](#how-to-use-it)
-  * [Command-line](#i-want-to-profile-a-python-script)
-  * [Python](#i-want-to-profile-a-specific-chunk-of-code)
-  * [Django](#i-want-to-profile-a-slow-web-request-in-django)
+  * [Python script](#profile-a-python-script)
+  * [Chunk of code](#profile-a-specific-chunk-of-code)
+  * [Django](#profile-a-slow-web-request-in-django)
 * [How does it work?](#how-does-it-work)
 * [Changelog](#changelog)
 * [Further information](#further-information)
@@ -35,7 +35,7 @@ Pyinstrument tells you which sections of code are making your software slow. It
 does this by observing your program's execution and then presenting a report
 that highlights the slow parts.
 
-### I want to profile a Python script
+### Profile a Python script
 
 You can call Pyinstrument directly from the command line. Instead of writing
 `python script.py`, type `pyinstrument script.py`. Your script will run as
@@ -56,7 +56,7 @@ Here are the options you can use:
       --color               force ansi color text output
       --no-color            force no color text output
 
-### I want to profile a specific chunk of code
+### Profile a specific chunk of code
 
 Pyinstrument also has a Python API. Just surround your code with Pyinstrument,
 like this:
@@ -77,7 +77,7 @@ print(profiler.output_text(unicode=True, color=True))
 (You can omit the `unicode` and `color` flags if your output/terminal does
 not support them.)
 
-### I want to profile a slow web request in Django
+### Profile a slow web request in Django
 
 Pyinstrument can also profile web requests in Django. To use it, add
 `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES` in your
@@ -91,6 +91,11 @@ If you're writing an API, it's not easy to change the URL when you want to
 profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
+
+### Profile something else?
+
+I'd love to have more ways to profile using Pyinstrument - e.g. Flask or other
+web frameworks. PRs are encouraged!
 
 How is it different to `profile` or `cProfile`?
 -----------------------------------------------
