@@ -16,6 +16,7 @@ Documentation
   * [Python script](#profile-a-python-script)
   * [Chunk of code](#profile-a-specific-chunk-of-code)
   * [Django](#profile-a-slow-web-request-in-django)
+  * [Flask](#profile-flask)
 * [How does it work?](#how-does-it-work)
 * [Changelog](#changelog)
 * [Further information](#further-information)
