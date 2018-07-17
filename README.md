@@ -15,8 +15,8 @@ Documentation
 * [How to use it](#how-to-use-it)
   * [Python script](#profile-a-python-script)
   * [Chunk of code](#profile-a-specific-chunk-of-code)
-  * [Django](#profile-a-slow-web-request-in-django)
-  * [Flask](#profile-flask)
+  * [Django](#profile-a-web-request-in-django)
+  * [Flask](#profile-a-web-request-in-flask)
 * [How does it work?](#how-does-it-work)
 * [Changelog](#changelog)
 * [Further information](#further-information)
@@ -78,7 +78,7 @@ print(profiler.output_text(unicode=True, color=True))
 (You can omit the `unicode` and `color` flags if your output/terminal does
 not support them.)
 
-### Profile a slow web request in Django
+### Profile a web request in Django
 
 Pyinstrument can also profile web requests in Django. To use it, add
 `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES` in your
@@ -93,9 +93,9 @@ profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
 
-## Profile Flask
+## Profile a web request in Flask
 
-A simple and basic setup to profile a Flask application is the following:
+A simple setup to profile a Flask application is the following:
 
 ```python
 from flask import Flask, g, make_response, request
@@ -121,7 +121,7 @@ This will check for the `?profile` query param on each request and if found, it 
 
 ### Profile something else?
 
-I'd love to have more ways to profile using Pyinstrument - e.g. Flask or other
+I'd love to have more ways to profile using Pyinstrument - e.g. other
 web frameworks. PRs are encouraged!
 
 How is it different to `profile` or `cProfile`?
