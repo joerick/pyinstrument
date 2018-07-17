@@ -93,7 +93,7 @@ profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
 
-## Profile a web request in Flask
+### Profile a web request in Flask
 
 A simple setup to profile a Flask application is the following:
 
