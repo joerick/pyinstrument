@@ -16,6 +16,7 @@ Documentation
   * [Python script](#profile-a-python-script)
   * [Chunk of code](#profile-a-specific-chunk-of-code)
   * [Django](#profile-a-slow-web-request-in-django)
+  * [Flask](#profile-flask)
 * [How does it work?](#how-does-it-work)
 * [Changelog](#changelog)
 * [Further information](#further-information)
@@ -91,6 +92,32 @@ If you're writing an API, it's not easy to change the URL when you want to
 profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
+
+## Profile Flask
+
+A simple and basic setup to profile a Flask application is the following:
+
+```python
+from flask import Flask, g, make_response, request
+app = Flask(__name__)
+
+@app.before_request
+def before_request():
+    if "profile" in request.args:
+        g.profiler = Profiler()
+        g.profiler.start()
+
+
+@app.after_request
+def after_request(response):
+    if not hasattr(g, "profiler"):
+        return response
+    g.profiler.stop()
+    output_html = g.profiler.output_html()
+    return make_response(output_html)
+```
+
+This will check for the `?profile` query param on each request and if found, it starts profiling. After each request where the profiler was running it creates the html output and returns that instead of the actual response.
 
 ### Profile something else?
 
