@@ -5,9 +5,9 @@ from pyinstrument.profiler import NotMainThreadError
 import time
 import os
 try:
-	from django.utils.deprecation import MiddlewareMixin
-except:
-	import object as MiddlewareMixin
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:
+    MiddlewareMixin = object
 
 
 class ProfilerMiddleware(MiddlewareMixin):
