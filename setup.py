@@ -9,7 +9,7 @@ setup(
     author_email='joerick@mac.com',
     url='https://github.com/joerick/pyinstrument',
     keywords=['profiling', 'profile', 'profiler', 'cpu', 'time', 'sampling'],
-    install_requires=['pyinstrument_cext'],
+    install_requires=['pyinstrument_cext>=0.2.0'],
     include_package_data=True,
     entry_points={'console_scripts': ['pyinstrument = pyinstrument.__main__:main']},
     zip_safe=False,
