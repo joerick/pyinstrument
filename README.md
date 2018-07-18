@@ -204,30 +204,56 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 
 Changelog
 ---------
-    
-### What's new in v2.0.0 ###
 
--   Pyinstrument refactored to use a new profiling mode. Rather than using
+### v2.0.4 
+
+-   Fix crashes due to multi-threaded use of pyinstrument. The fix is in the C extension,
+    over at https://github.com/joerick/pyinstrument_cext/pull/3
+
+### v2.0.3
+
+-   Pyinstrument can now be used in a `with` block.
+
+    For example:
+
+		profiler = pyinstrument.Profiler()
+		with profiler:
+		    # do some work here...
+		print(profiler.output_text())
+-   Middleware fix for older versions of Django
+
+### v2.0.2
+
+-   Fix for max recursion error when used to profile programs with a lot of frames on the stack.
+
+### v2.0.1
+
+-   Ensure license is included in the sdist.
+    
+### v2.0.0
+
+-   **Pyinstrument uses a new profiling mode**. Rather than using
     signals, pyintrument uses a new statistical profiler built on
     PyEval_SetProfile. This means no more main thread restriction, no more 
-    IO errors when using Pyinstrument, and no more 'setprofile' mode!
+    IO errors when using Pyinstrument, and no need for a separate more 
+    'setprofile' mode!
 
--   Renderers. Users can customize Pyinstrument to use alternative renderers
+-   **Renderers**. Users can customize Pyinstrument to use alternative renderers
     with the `renderer` argument on `Profiler.output()`, or using the `--renderer`
     argument on the command line.
 
--   Recorders. To support other use cases of Pyinstrument (e.g. flame charts),
+-   **Recorders**. To support other use cases of Pyinstrument (e.g. flame charts),
     pyinstrument now has a 'timeline' recorder mode. This mode records captured
     frames in a linear way, so the program execution can be viewed on a
     timeline.
 
-### What's new in v0.13 ###
+### v0.13
 
 -   `pyinstrument` command. You can now profile python scripts from the shell
     by running `$ pyinstrument script.py`. This is now equivalent to 
     `python -m pyinstrument`. Thanks @asmeurer!
 
-### What's new in v0.12 ###
+### v0.12
 
 -   Application code is highlighted in HTML traces to make it easier to spot
 
