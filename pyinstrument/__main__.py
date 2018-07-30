@@ -4,6 +4,7 @@ import os
 import codecs
 from pyinstrument import Profiler
 from pyinstrument.profiler import get_recorder_class, get_renderer_class
+from importlib.util import find_spec
 from .six import exec_
 
 
@@ -44,64 +45,74 @@ def main():
         dest='color', action='store_false',
         help='force no color text output')
 
+    parser.add_option('-m', '',
+        dest='module_name', action='store',
+        help='searches sys.path for the named module and runs the  corresponding .py file as a script.')
+
     if not sys.argv[1:]:
         parser.print_help()
         sys.exit(2)
 
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
+
+    if args == [] and options.module_name is None:
+        parser.print_help()
+        sys.exit(2)
+
     sys.argv[:] = args
 
-    if len(args) > 0:
-        progname = args[0]
-        sys.path.insert(0, os.path.dirname(progname))
-
-        with open(progname, 'rb') as fp:
-            code = compile(fp.read(), progname, 'exec')
-        globs = {
-            '__file__': progname,
-            '__name__': '__main__',
-            '__package__': None,
-        }
-
-        if options.output_renderer:
-            renderer = options.output_renderer
-        elif options.output_html:
-            renderer = 'html'
-        else:
-            renderer = 'text'
-
-        recorder = get_renderer_class(renderer).preferred_recorder
-
-        profiler = Profiler(recorder=recorder)
-
-        profiler.start()
-
-        try:
-            exec_(code, globs, None)
-        except (SystemExit, KeyboardInterrupt):
-            pass
-
-        profiler.stop()
-
-        if options.outfile:
-            f = codecs.open(options.outfile, 'w', 'utf-8')
-        else:
-            f = sys.stdout
-
-        renderer_kwargs = {}
-
-        if renderer == 'text':
-            unicode_override = options.unicode != None
-            color_override = options.color != None
-            unicode = options.unicode if unicode_override else file_supports_unicode(f)
-            color = options.color if color_override else file_supports_color(f)
-            
-            renderer_kwargs = {'unicode': unicode, 'color': color}
-
-        f.write(profiler.output(renderer=renderer, **renderer_kwargs))
-        f.close()
+    if options.module_name is not None:
+        progname = find_spec(options.module_name).origin
     else:
-        parser.print_usage()
+        progname = args[0]
+        
+    sys.path.insert(0, os.path.dirname(progname))
+
+    with open(progname, 'rb') as fp:
+        code = compile(fp.read(), progname, 'exec')
+    globs = {
+        '__file__': progname,
+        '__name__': '__main__',
+        '__package__': None,
+    }
+
+    if options.output_renderer:
+        renderer = options.output_renderer
+    elif options.output_html:
+        renderer = 'html'
+    else:
+        renderer = 'text'
+
+    recorder = get_renderer_class(renderer).preferred_recorder
+
+    profiler = Profiler(recorder=recorder)
+
+    profiler.start()
+
+    try:
+        exec_(code, globs, None)
+    except (SystemExit, KeyboardInterrupt):
+        pass
+
+    profiler.stop()
+
+    if options.outfile:
+        f = codecs.open(options.outfile, 'w', 'utf-8')
+    else:
+        f = sys.stdout
+
+    renderer_kwargs = {}
+
+    if renderer == 'text':
+        unicode_override = options.unicode != None
+        color_override = options.color != None
+        unicode = options.unicode if unicode_override else file_supports_unicode(f)
+        color = options.color if color_override else file_supports_color(f)
+        
+        renderer_kwargs = {'unicode': unicode, 'color': color}
+
+    f.write(profiler.output(renderer=renderer, **renderer_kwargs))
+    f.close()
 
 
 def file_supports_color(file_obj):
