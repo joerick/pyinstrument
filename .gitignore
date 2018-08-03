@@ -17,4 +17,7 @@ build
 
 # testing
 .cache
+.pytest_cache
 
+# editor
+.vscode
