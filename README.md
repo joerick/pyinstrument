@@ -47,11 +47,13 @@ nice colored summary of where most of the time was spent.
 
 Here are the options you can use:
 
-    python -m pyinstrument [options] myscript.py [args...]
-    
+    Usage: pyinstrument [options] scriptfile [arg] ...
+
     Options:
       -h, --help            show this help message and exit
       --html                output HTML instead of text
+      -r OUTPUT_RENDERER, --renderer=OUTPUT_RENDERER
+                            python import path to a renderer class
       -o OUTFILE, --outfile=OUTFILE
                             save report to <outfile>
       --unicode             force unicode text output
