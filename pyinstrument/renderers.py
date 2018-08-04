@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import abc
 import os
+import json
 from . import six
 
 class Renderer(object):
@@ -128,6 +129,23 @@ class HTMLRenderer(Renderer):
         result += '</div></div>'
 
         return result
+
+def _resolve(_object):
+    try:
+        return { key: _resolve(value) for key, value in vars(_object).items() }
+    except TypeError:
+        if isinstance(_object, list):
+            return [_resolve(item) for item in _object]
+
+        return _object
+            
+
+class JSONRenderer(Renderer):
+    preferred_recorder = 'time_aggregating'
+
+    def render(self, frame):
+        print(_resolve(frame))
+        return json.dumps({})
 
 
 class colors_enabled:
