@@ -2,9 +2,9 @@ from optparse import OptionParser
 import sys
 import os
 import codecs
+import runpy
 from pyinstrument import Profiler
 from pyinstrument.profiler import get_recorder_class, get_renderer_class
-from importlib.util import find_spec
 from .six import exec_
 
 
@@ -62,19 +62,21 @@ def main():
     sys.argv[:] = args
 
     if options.module_name is not None:
-        progname = find_spec(options.module_name).origin
+        code = "run_module(modname, run_name='__main__')"
+        globs = {
+            'run_module': runpy.run_module,
+            'modname': options.module_name
+        }
     else:
         progname = args[0]
-        
-    sys.path.insert(0, os.path.dirname(progname))
-
-    with open(progname, 'rb') as fp:
-        code = compile(fp.read(), progname, 'exec')
-    globs = {
-        '__file__': progname,
-        '__name__': '__main__',
-        '__package__': None,
-    }
+        sys.path.insert(0, os.path.dirname(progname))
+        with open(progname, 'rb') as fp:
+            code = compile(fp.read(), progname, 'exec')
+        globs = {
+            '__file__': progname,
+            '__name__': '__main__',
+            '__package__': None,
+        }
 
     if options.output_renderer:
         renderer = options.output_renderer
