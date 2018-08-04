@@ -138,7 +138,8 @@ class JSONRenderer(Renderer):
     def render_frame(frame):
         return {
             'function': frame.function,
-            'file_path': frame.file_path_short,
+            'file_path_short': frame.file_path_short,
+            'file_path': frame.file_path,
             'line_no': frame.line_no,
             'time': frame.time(),
             'children': [JSONRenderer.render_frame(frame) for frame in frame.children]
