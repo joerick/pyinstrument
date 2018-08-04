@@ -129,21 +129,23 @@ class HTMLRenderer(Renderer):
         result += '</div></div>'
 
         return result
-            
-def _json_frame(frame):
-    return {
-        'function': frame.function,
-        'file_path': frame.file_path_short,
-        'line_no': frame.line_no,
-        'time': frame.time(),
-        'children': [_json_frame(frame) for frame in frame.children]
-    }
+
 
 class JSONRenderer(Renderer):
     preferred_recorder = 'time_aggregating'
 
+    @staticmethod
+    def render_frame(frame):
+        return {
+            'function': frame.function,
+            'file_path': frame.file_path_short,
+            'line_no': frame.line_no,
+            'time': frame.time(),
+            'children': [JSONRenderer.render_frame(frame) for frame in frame.children]
+        }
+
     def render(self, frame):
-        return json.dumps(_json_frame(frame))
+        return json.dumps(JSONRenderer.render_frame(frame))
 
 
 class colors_enabled:
