@@ -60,6 +60,9 @@ Here are the options you can use:
       --no-unicode          force ascii text output
       --color               force ansi color text output
       --no-color            force no color text output
+      -m MODULE_NAME        searches sys.path for the named module and runs the
+                            corresponding .py file as a script.
+
 
 ### Profile a specific chunk of code
 
@@ -208,6 +211,11 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 
 Changelog
 ---------
+
+### v2.1.0
+
+-   Added support for running modules with pyinstrument via the command line. The new syntax
+    is the `-m` flag e.g. `pyinstrument -m module_name`! [PR](https://github.com/joerick/pyinstrument/pull/45#pullrequestreview-143383557) 
 
 ### v2.0.4 
 
