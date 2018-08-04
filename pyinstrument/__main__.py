@@ -59,15 +59,15 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    sys.argv[:] = args
-
     if options.module_name is not None:
+        sys.argv[:] = [options.module_name] + args
         code = "run_module(modname, run_name='__main__')"
         globs = {
             'run_module': runpy.run_module,
             'modname': options.module_name
         }
     else:
+        sys.argv[:] = args
         progname = args[0]
         sys.path.insert(0, os.path.dirname(progname))
         with open(progname, 'rb') as fp:
