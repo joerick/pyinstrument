@@ -129,23 +129,21 @@ class HTMLRenderer(Renderer):
         result += '</div></div>'
 
         return result
-
-def _resolve(_object):
-    try:
-        return { key: _resolve(value) for key, value in vars(_object).items() }
-    except TypeError:
-        if isinstance(_object, list):
-            return [_resolve(item) for item in _object]
-
-        return _object
             
+def _json_frame(frame):
+    return {
+        'function': frame.function,
+        'file_path': frame.file_path_short,
+        'line_no': frame.line_no,
+        'time': frame.time(),
+        'children': [_json_frame(frame) for frame in frame.children]
+    }
 
 class JSONRenderer(Renderer):
     preferred_recorder = 'time_aggregating'
 
     def render(self, frame):
-        print(_resolve(frame))
-        return json.dumps({})
+        return json.dumps(_json_frame(frame))
 
 
 class colors_enabled:
