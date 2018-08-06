@@ -18,8 +18,8 @@ def test_profiler_doesnt_overflow_on_large_call_stacks():
     profiler = Profiler()
     profiler.start()
 
-    # give ourselves 150 frames of leeway to do our work.
-    recursion_depth = sys.getrecursionlimit() - 150
+    # give ourselves 170 frames of leeway to do our work.
+    recursion_depth = sys.getrecursionlimit() - 170
     recurse(recursion_depth)
 
     profiler.stop()
