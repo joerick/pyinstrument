@@ -1,7 +1,5 @@
 from collections import deque
-import abc
 from .frame import TimeAggregatingFrame, TimelineFrame
-from . import six
 
 
 class Recorder(object):

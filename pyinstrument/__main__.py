@@ -4,7 +4,7 @@ import os
 import codecs
 import runpy
 from pyinstrument import Profiler
-from pyinstrument.profiler import get_recorder_class, get_renderer_class
+from pyinstrument.profiler import get_renderer_class
 from .six import exec_
 
 

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import abc
 import os
 import json
-from . import six
 
 class Renderer(object):
     preferred_recorder = ''
@@ -22,7 +20,10 @@ class ConsoleRenderer(Renderer):
         self.color = color
         super(ConsoleRenderer, self).__init__(**kwargs)
 
-    def render(self, frame, indent=u'', child_indent=u''):
+    def render(self, frame):
+        return self.render_frame(frame, indent=u'', child_indent=u'')
+
+    def render_frame(self, frame, indent=u'', child_indent=u''):
         colors = colors_enabled if self.color else colors_disabled
         time_str = '{:.3f}'.format(frame.time())
 
@@ -48,7 +49,7 @@ class ConsoleRenderer(Renderer):
             else:
                 c_indent = child_indent + (u'└─ ' if self.unicode else '`- ')
                 cc_indent = child_indent + u'   '
-            result += self.render(child, indent=c_indent, child_indent=cc_indent)
+            result += self.render_frame(child, indent=c_indent, child_indent=cc_indent)
 
         return result
 

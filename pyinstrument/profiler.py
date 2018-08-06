@@ -44,6 +44,7 @@ class Profiler(object):
     def __exit__(self, *args):
         self.stop()
 
+    # pylint: disable=W0613
     def _profile(self, frame, event, arg):
         now = timer()
         time_since_last_signal = now - self.last_profile_time
