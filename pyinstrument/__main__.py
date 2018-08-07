@@ -119,8 +119,7 @@ def main():
 
 def file_supports_color(file_obj):
     """
-    Returns True if the running system's terminal supports color, and False
-    otherwise.
+    Returns True if the running system's terminal supports color.
 
     Borrowed from Django
     https://github.com/django/django/blob/master/django/core/management/color.py
@@ -130,9 +129,8 @@ def file_supports_color(file_obj):
                                                   'ANSICON' in os.environ)
 
     is_a_tty = hasattr(file_obj, 'isatty') and file_obj.isatty()
-    if not supported_platform or not is_a_tty:
-        return False
-    return True
+
+    return (supported_platform and is_a_tty)
 
 
 def file_supports_unicode(file_obj):
@@ -142,9 +140,7 @@ def file_supports_unicode(file_obj):
 
     codec_info = codecs.lookup(encoding)
 
-    if 'utf' in codec_info.name:
-        return True
-    return False
+    return ('utf' in codec_info.name)
 
 
 if __name__ == '__main__':
