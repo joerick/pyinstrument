@@ -23,6 +23,7 @@ Documentation
 * [Changelog](#changelog)
 * [Further information](#further-information)
   * [Call stack profiling?](#call-stack-profiling)
+* [Contributing](#contributing)
 
 Installation
 ------------
@@ -275,3 +276,20 @@ Changelog
     
 -   Added `PYINSTRUMENT_USE_SIGNAL` option to the Django interface, for use
     when signal mode presents problems.
+
+Contributing
+------------
+
+To setup a dev envronment, do:
+
+    virtualenv --python=python3 env
+    . env/bin/activate
+    pip install -r requirements-dev.txt
+
+To get some sample output:
+
+    pyinstrument examples/wikipedia_article_word_count.py
+
+To run the tests:
+
+    python setup.py test

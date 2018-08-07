@@ -1,6 +1,14 @@
+import sys, os
+
+try:
+    import django
+except ImportError:
+    print('This example requires Django.')
+    print('Install using `pip install Django`.')
+    exit(1)
+
 import django.template.loader
 import django.conf
-import sys, os
 
 os.chdir(os.path.dirname(__file__))
 
