@@ -146,7 +146,7 @@ class JSONRenderer(Renderer):
         }
 
     def render(self, frame):
-        return json.dumps(JSONRenderer.render_frame(frame))
+        return json.dumps(JSONRenderer.render_frame(frame), indent=2)
 
 
 class colors_enabled:
