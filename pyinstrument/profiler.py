@@ -114,5 +114,7 @@ def get_renderer_class(name):
         return renderers.ConsoleRenderer
     elif name == 'html':
         return renderers.HTMLRenderer
+    elif name == 'json':
+        return renderers.JSONRenderer
     else:
         return object_with_import_path(name)

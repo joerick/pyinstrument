@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import abc
 import os
+import json
 from . import six
 
 class Renderer(object):
@@ -128,6 +129,24 @@ class HTMLRenderer(Renderer):
         result += '</div></div>'
 
         return result
+
+
+class JSONRenderer(Renderer):
+    preferred_recorder = 'time_aggregating'
+
+    @staticmethod
+    def render_frame(frame):
+        return {
+            'function': frame.function,
+            'file_path_short': frame.file_path_short,
+            'file_path': frame.file_path,
+            'line_no': frame.line_no,
+            'time': frame.time(),
+            'children': [JSONRenderer.render_frame(frame) for frame in frame.children]
+        }
+
+    def render(self, frame):
+        return json.dumps(JSONRenderer.render_frame(frame), indent=2)
 
 
 class colors_enabled:
