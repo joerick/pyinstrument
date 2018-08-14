@@ -1,8 +1,5 @@
+import sys, os, codecs, runpy, tempfile
 from optparse import OptionParser
-import sys
-import os
-import codecs
-import runpy
 from pyinstrument import Profiler
 from pyinstrument.profiler import get_renderer_class
 from .six import exec_
@@ -98,8 +95,14 @@ def main():
 
     profiler.stop()
 
+    output_to_temp_file = renderer == 'html' and not options.outfile and file_is_a_tty(sys.stdout)
+
     if options.outfile:
         f = codecs.open(options.outfile, 'w', 'utf-8')
+    elif output_to_temp_file:
+        output_file = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+        f = codecs.getwriter('utf-8')(output_file)
+        output_filename = output_file.name
     else:
         f = sys.stdout
 
@@ -116,6 +119,13 @@ def main():
     f.write(profiler.output(renderer=renderer, **renderer_kwargs))
     f.close()
 
+    if output_to_temp_file:
+        print('stdout is a terminal, so saved profile output to %s' % output_filename)
+        import webbrowser, urllib.parse
+        url = urllib.parse.urlunparse(('file', '', output_filename, '', '', ''))
+        webbrowser.open(url)
+
+
 
 def file_supports_color(file_obj):
     """
@@ -128,7 +138,7 @@ def file_supports_color(file_obj):
     supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
                                                   'ANSICON' in os.environ)
 
-    is_a_tty = hasattr(file_obj, 'isatty') and file_obj.isatty()
+    is_a_tty = file_is_a_tty(file_obj)
 
     return (supported_platform and is_a_tty)
 
@@ -141,6 +151,10 @@ def file_supports_unicode(file_obj):
     codec_info = codecs.lookup(encoding)
 
     return ('utf' in codec_info.name)
+
+
+def file_is_a_tty(file_obj):
+    return hasattr(file_obj, 'isatty') and file_obj.isatty()
 
 
 if __name__ == '__main__':
