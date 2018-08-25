@@ -1,5 +1,5 @@
 from collections import deque
-from .frame import TimeAggregatingFrame, TimelineFrame
+from .frame import Frame
 
 
 class Recorder(object):
@@ -48,7 +48,7 @@ class TimeAggregatingRecorder(Recorder):
         )
 
     def root_frame(self):
-        root_frame = TimeAggregatingFrame()
+        root_frame = Frame()
 
         # define a recursive function that builds the hierarchy of frames given the
         # stack of frame identifiers
@@ -57,13 +57,17 @@ class TimeAggregatingRecorder(Recorder):
                 return root_frame
 
             parent = frame_for_stack(stack[:-1])
-            frame_name = stack[-1]
+            frame_identifier = stack[-1]
 
-            if frame_name not in parent.children_dict:
-                child = TimeAggregatingFrame(frame_name, parent)
-                parent.add_child(child)
+            for frame in parent.children:
+                if frame.identifier == frame_identifier:
+                    return frame
 
-            return parent.children_dict[frame_name]
+            # this frame object hasn't been created yet
+            frame = Frame(frame_identifier, parent)
+            parent.children.append(frame)
+
+            return frame
 
         for stack, self_time in self.stack_self_time.items():
             frame_for_stack(stack).self_time = self_time
@@ -98,7 +102,7 @@ class TimelineRecorder(Recorder):
         )
 
     def root_frame(self):
-        root_frame = TimelineFrame()
+        root_frame = Frame()
 
         frame_objects = []
 
@@ -119,8 +123,8 @@ class TimelineRecorder(Recorder):
                     else:
                         parent = frame_objects[stack_depth-1]
 
-                    frame = TimelineFrame(frame_identifier, parent)
-                    parent.add_child(frame)
+                    frame = Frame(frame_identifier, parent)
+                    parent.children.append(frame)
                     frame_objects.append(frame)
 
             # trim any extra frames

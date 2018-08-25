@@ -72,7 +72,7 @@ def test_two_functions():
     assert frame.function == 'test_two_functions'
     assert len(frame.children) == 2
 
-    frame_b, frame_a = frame.children
+    frame_b, frame_a = frame.sorted_children()
 
     assert frame_a.function == 'long_function_a'
     assert frame_b.function == 'long_function_b'

@@ -37,7 +37,7 @@ class ConsoleRenderer(Renderer):
             code_position=frame.code_position_short,
             c=colors)
 
-        children = [f for f in frame.children if f.proportion_of_total > 0.01]
+        children = [f for f in frame.sorted_children() if f.proportion_of_total > 0.01]
 
         if children:
             last_child = children[-1]
@@ -97,7 +97,8 @@ class HTMLRenderer(Renderer):
         return page
 
     def render_frame(self, frame):
-        start_collapsed = all(child.proportion_of_total < 0.1 for child in frame.children)
+        children = frame.sorted_children()
+        start_collapsed = all(child.proportion_of_total < 0.1 for child in children)
 
         extra_class = ''
         extra_class += 'collapse ' if start_collapsed else ''
@@ -122,7 +123,7 @@ class HTMLRenderer(Renderer):
         result += '<div class="frame-children">'
 
         # add this filter to prevent the output file getting too large
-        children = [f for f in frame.children if f.proportion_of_total > 0.005]
+        children = [f for f in children if f.proportion_of_total > 0.005]
 
         for child in children:
             result += self.render_frame(child)
@@ -143,7 +144,7 @@ class JSONRenderer(Renderer):
             'file_path': frame.file_path,
             'line_no': frame.line_no,
             'time': frame.time(),
-            'children': [JSONRenderer.render_frame(frame) for frame in frame.children]
+            'children': [JSONRenderer.render_frame(frame) for frame in frame.sorted_children()]
         }
 
     def render(self, frame):
