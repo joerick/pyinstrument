@@ -216,6 +216,10 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 Changelog
 ---------
 
+### v2.2.1
+
+-   Fix crash when using on the command line.
+
 ### v2.2.0
 
 -   Added support for JSON output. Use `pyinstrument --renderer=json scriptfile.py`. 
