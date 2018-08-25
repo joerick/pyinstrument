@@ -96,8 +96,10 @@ class Profiler(object):
         return self.output(renderer='html', root=root)
 
     def output(self, renderer, root=False, **renderer_kwargs):
-        renderer_class = get_renderer_class(renderer)
-        renderer = renderer_class(**renderer_kwargs)
+        if not isinstance(renderer, renderers.Renderer):
+            renderer_class = get_renderer_class(renderer)
+            renderer = renderer_class(**renderer_kwargs)
+
         return renderer.render(self.starting_frame(root=root))
 
 
@@ -110,12 +112,16 @@ def get_recorder_class(name):
         return object_with_import_path(name)
 
 
-def get_renderer_class(name):
-    if name == 'text':
+def get_renderer_class(renderer):
+    if callable(renderer):
+        # allow just passing the class object itself
+        return renderer
+
+    if renderer == 'text':
         return renderers.ConsoleRenderer
-    elif name == 'html':
+    elif renderer == 'html':
         return renderers.HTMLRenderer
-    elif name == 'json':
+    elif renderer == 'json':
         return renderers.JSONRenderer
     else:
-        return object_with_import_path(name)
+        return object_with_import_path(renderer)

@@ -1,7 +1,7 @@
 from __future__ import print_function
-import time
+import time, json
 
-from pyinstrument import Profiler
+from pyinstrument import Profiler, renderers
 
 # Utilities #
 
@@ -87,3 +87,15 @@ def test_context_manager():
     frame = profiler.first_interesting_frame()
     assert frame.function == 'test_context_manager'
     assert len(frame.children) == 2
+
+def test_json_output():
+    with Profiler() as profiler:
+        long_function_a()
+        long_function_b()
+
+    output_data = profiler.output(renderers.JSONRenderer())
+
+    output = json.loads(output_data)
+
+    assert output['function'] == 'test_json_output'
+    assert len(output['children']) == 2
