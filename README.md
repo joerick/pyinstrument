@@ -41,10 +41,10 @@ that highlights the slow parts.
 
 ### Profile a Python script
 
-You can call Pyinstrument directly from the command line. Instead of writing
+Call Pyinstrument directly from the command line. Instead of writing
 `python script.py`, type `pyinstrument script.py`. Your script will run as
 normal, and at the end (or when you press `^C`), Pyinstrument will output a
-nice colored summary of where most of the time was spent.
+colored summary showing where most of the time was spent.
 
 Here are the options you can use:
 
@@ -52,17 +52,20 @@ Here are the options you can use:
 
     Options:
       -h, --help            show this help message and exit
-      --html                output HTML instead of text
-      -r OUTPUT_RENDERER, --renderer=OUTPUT_RENDERER
-                            python import path to a renderer class
+      -m MODULE_NAME        run library module as a script, like 'python -m
+                            module'
+      -r RENDERER, --renderer=RENDERER
+                            how the report should be rendered. One of: 'text',
+                            'html', 'json', or python import path to a renderer
+                            class
+      --html                Shortcut for '--renderer=html'
       -o OUTFILE, --outfile=OUTFILE
                             save report to <outfile>
-      --unicode             force unicode text output
-      --no-unicode          force ascii text output
-      --color               force ansi color text output
-      --no-color            force no color text output
-      -m MODULE_NAME        searches sys.path for the named module and runs the
-                            corresponding .py file as a script.
+      --unicode             (text renderer only) force unicode text output
+      --no-unicode          (text renderer only) force ascii text output
+      --color               (text renderer only) force ansi color text output
+      --no-color            (text renderer only) force no color text output
+
 
 
 ### Profile a specific chunk of code
