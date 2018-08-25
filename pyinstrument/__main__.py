@@ -10,19 +10,18 @@ def main():
     parser = OptionParser(usage=usage)
     parser.allow_interspersed_args = False
 
-    parser.add_option('', '--setprofile',
-        dest='setprofile', action='store_true',
-        help='run in setprofile mode, instead of signal mode', default=False)
+    parser.add_option('-m', '',
+        dest='module_name', action='store',
+        help="run library module as a script, like 'python -m module'")
+
+    parser.add_option('-r', '--renderer',
+        dest='renderer', action='store', type='string',
+        help="how the report should be rendered. One of: 'text', 'html', 'json', or python import path to a renderer class", 
+        default='text')
 
     parser.add_option('', '--html',
         dest="output_html", action='store_true',
-        help="output HTML instead of text", default=False)
-    parser.add_option('', '--flame',
-        dest='output_flame', action='store_true',
-        help='output an HTML flame chart', default=False)
-    parser.add_option('-r', '--renderer',
-        dest='output_renderer', action='store', type='string',
-        help='python import path to a renderer class', default=None)
+        help="Shortcut for '--renderer=html'", default=False)
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
@@ -30,21 +29,17 @@ def main():
 
     parser.add_option('', '--unicode',
         dest='unicode', action='store_true',
-        help='force unicode text output')
+        help='(text renderer only) force unicode text output')
     parser.add_option('', '--no-unicode',
         dest='unicode', action='store_false',
-        help='force ascii text output')
+        help='(text renderer only) force ascii text output')
 
     parser.add_option('', '--color',
         dest='color', action='store_true',
-        help='force ansi color text output')
+        help='(text renderer only) force ansi color text output')
     parser.add_option('', '--no-color',
         dest='color', action='store_false',
-        help='force no color text output')
-
-    parser.add_option('-m', '',
-        dest='module_name', action='store',
-        help='searches sys.path for the named module and runs the  corresponding .py file as a script.')
+        help='(text renderer only) force no color text output')
 
     if not sys.argv[1:]:
         parser.print_help()
