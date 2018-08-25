@@ -216,6 +216,11 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 Changelog
 ---------
 
+### v2.2.0
+
+-   Added support for JSON output. Use `pyinstrument --renderer=json scriptfile.py`. [@iddan](https://github.com/iddan) has put together an [interactive viewer](https://python-flame-chart.netlify.com/) for these files also! [PR](https://github.com/joerick/pyinstrument/pull/46)
+-   When running `pyinstrument --html` and you don't pipe the output to a file, pyinstrument will write the console output to a temp file and open that in a browser.
+
 ### v2.1.0
 
 -   Added support for running modules with pyinstrument via the command line. The new syntax
