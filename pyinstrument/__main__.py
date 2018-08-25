@@ -70,8 +70,8 @@ def main():
             '__package__': None,
         }
 
-    if options.output_renderer:
-        renderer = options.output_renderer
+    if options.renderer:
+        renderer = options.renderer
     elif options.output_html:
         renderer = 'html'
     else:
