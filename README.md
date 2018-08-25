@@ -218,7 +218,13 @@ Changelog
 
 ### v2.2.0
 
--   Added support for JSON output. Use `pyinstrument --renderer=json scriptfile.py`. [@iddan](https://github.com/iddan) has put together an [interactive viewer](https://python-flame-chart.netlify.com/) for these files also! [PR](https://github.com/joerick/pyinstrument/pull/46)
+-   Added support for JSON output. Use `pyinstrument --renderer=json scriptfile.py`. 
+    [PR](https://github.com/joerick/pyinstrument/pull/46)
+-   [@iddan](https://github.com/iddan) has put together an
+    [interactive viewer](https://python-flame-chart.netlify.com/) using the JSON output!
+
+    ![image](https://user-images.githubusercontent.com/1244307/44622790-3ca9a600-a8b8-11e8-8dc2-f33ce433c03d.png)
+
 -   When running `pyinstrument --html` and you don't pipe the output to a file, pyinstrument will write the console output to a temp file and open that in a browser.
 
 ### v2.1.0
