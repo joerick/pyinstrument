@@ -319,6 +319,12 @@ To setup a dev envronment, do:
     . env/bin/activate
     pip install -r requirements-dev.txt
 
+> Note: if you get an SSL error doing the above, it might be due to setuptools trying
+> to install pytest-runner, since it's listed in setup_requires. The workaround is to 
+> make sure your pip is up-to-date (`curl https://bootstrap.pypa.io/get-pip.py | python`)
+> and then install it first `pip install pytest-runner`. Then try 
+> `pip install -r requirements-dev.txt`.
+
 To get some sample output:
 
     pyinstrument examples/wikipedia_article_word_count.py
