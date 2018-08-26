@@ -1,4 +1,5 @@
-import sys, os
+import os
+from optparse import OptionParser
 
 try:
     import django
@@ -10,16 +11,27 @@ except ImportError:
 import django.template.loader
 import django.conf
 
-os.chdir(os.path.dirname(__file__))
+def main():
+    parser = OptionParser()
+    parser.add_option('-i', '--iterations',
+        dest='iterations', action='store', type='int',
+        help="number of template render calls to make",
+        default=100)
+    options, _ = parser.parse_args()
 
-django.conf.settings.configure(
-    INSTALLED_APPS=(), 
-    TEMPLATES=[{
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ['.']
-    }],
-)
-django.setup()
+    os.chdir(os.path.dirname(__file__))
 
-for x in range(0,100):
-    django.template.loader.render_to_string('template.html')
+    django.conf.settings.configure(
+        INSTALLED_APPS=(), 
+        TEMPLATES=[{
+            "BACKEND": "django.template.backends.django.DjangoTemplates",
+            "DIRS": ['.']
+        }],
+    )
+    django.setup()
+
+    for _ in range(0, options.iterations):
+        django.template.loader.render_to_string('template.html')
+
+if __name__ == '__main__':
+    main()
