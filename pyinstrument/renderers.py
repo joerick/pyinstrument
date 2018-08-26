@@ -3,6 +3,11 @@ import os
 import json
 from pyinstrument import processors
 
+try:
+    from html import escape as html_escape
+except ImportError:
+    from cgi import escape as html_escape
+
 class Renderer(object):
     def __init__(self):
         # processors is defined on the base class to provide a common way for users to
@@ -134,8 +139,8 @@ class HTMLRenderer(Renderer):
                 <span class="code-position">{code_position}</span>
             </div>'''.format(
                 time=frame.time(),
-                function=frame.function,
-                code_position=frame.code_position_short,
+                function=html_escape(frame.function),  # pylint: disable=W1505
+                code_position=html_escape(frame.code_position_short),  # pylint: disable=W1505
                 parent_proportion=frame.proportion_of_parent,
                 total_proportion=frame.proportion_of_total,
                 extra_class=extra_class)
