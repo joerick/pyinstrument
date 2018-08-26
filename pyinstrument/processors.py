@@ -60,3 +60,14 @@ def aggregate_repeated_calls(frame: Frame):
     frame._children.sort(key=methodcaller('time'), reverse=True)  # pylint: disable=W0212
 
     return frame
+
+def default_time_aggregate_processors():
+    return [
+        remove_importlib,
+        aggregate_repeated_calls
+    ]
+
+def default_timeline_processors():
+    return [
+        remove_importlib,
+    ]

@@ -4,7 +4,21 @@ import json
 from pyinstrument import processors
 
 class Renderer(object):
-    preferred_recorder = ''
+    def __init__(self):
+        # processors is defined on the base class to provide a common way for users to
+        # add to and manipulate them before calling render()
+        self.processors = self.default_processors()
+
+    def default_processors(self):
+        ''' 
+        Return a list of processors that this renderer uses by default
+        '''
+        raise NotImplementedError()
+
+    def preprocess(self, frame):
+        for processor in self.processors:
+            frame = processor(frame)
+        return frame
 
     def render(self, frame):
         ''' 
@@ -19,14 +33,10 @@ class ConsoleRenderer(Renderer):
 
         self.unicode = unicode
         self.color = color
-        self.processors = [
-            processors.remove_importlib,
-            processors.aggregate_repeated_calls
-        ]
+        self.processors = processors.default_time_aggregate_processors()
 
     def render(self, frame):
-        for processor in self.processors:
-            processor(frame)
+        frame = self.preprocess(frame)
 
         return self.render_frame(frame, indent=u'', child_indent=u'')
 
@@ -71,19 +81,13 @@ class ConsoleRenderer(Renderer):
         else:
             return colors.bright_green + colors.faint
 
+    def default_processors(self):
+        return processors.default_time_aggregate_processors()
+
 
 class HTMLRenderer(Renderer):
-    def __init__(self, **kwargs):
-        super(HTMLRenderer, self).__init__(**kwargs)
-
-        self.processors = [
-            processors.remove_importlib,
-            processors.aggregate_repeated_calls,
-        ]
-
     def render(self, frame):
-        for processor in self.processors:
-            processor(frame)
+        frame = self.preprocess(frame)
 
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
 
@@ -148,10 +152,11 @@ class HTMLRenderer(Renderer):
 
         return result
 
+    def default_processors(self):
+        return processors.default_time_aggregate_processors()
+
 
 class JSONRenderer(Renderer):
-    preferred_recorder = 'time_aggregating'
-
     @staticmethod
     def render_frame(frame):
         return {
@@ -164,7 +169,11 @@ class JSONRenderer(Renderer):
         }
 
     def render(self, frame):
+        frame = self.preprocess(frame)
         return json.dumps(JSONRenderer.render_frame(frame), indent=2)
+
+    def default_processors(self):
+        return processors.default_time_aggregate_processors()
 
 
 class colors_enabled:
