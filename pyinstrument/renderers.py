@@ -2,11 +2,11 @@
 import os
 import json
 from pyinstrument import processors
-
 try:
     from html import escape as html_escape
 except ImportError:
     from cgi import escape as html_escape
+
 
 class Renderer(object):
     def __init__(self):
@@ -38,6 +38,7 @@ class ConsoleRenderer(Renderer):
 
         self.unicode = unicode
         self.color = color
+        self.colors = self.colors_enabled if color else self.colors_disabled
         self.processors = processors.default_time_aggregate_processors()
 
     def render(self, frame):
@@ -46,18 +47,16 @@ class ConsoleRenderer(Renderer):
         return self.render_frame(frame, indent=u'', child_indent=u'')
 
     def render_frame(self, frame, indent=u'', child_indent=u''):
-        colors = colors_enabled if self.color else colors_disabled
-        time_str = '{:.3f}'.format(frame.time())
-
-        if self.color:
-            time_str = self._ansi_color_for_frame(frame) + time_str + colors.end
+        time_str = (self._ansi_color_for_frame(frame)
+                    + '{:.3f}'.format(frame.time()) 
+                    + self.colors.end)
 
         result = u'{indent}{time_str} {function}  {c.faint}{code_position}{c.end}\n'.format(
             indent=indent,
             time_str=time_str,
             function=frame.function,
             code_position=frame.code_position_short,
-            c=colors)
+            c=self.colors)
 
         children = [f for f in frame.children if f.proportion_of_total > 0.01]
 
@@ -76,18 +75,37 @@ class ConsoleRenderer(Renderer):
         return result
 
     def _ansi_color_for_frame(self, frame):
-        colors = colors_enabled
         if frame.proportion_of_total > 0.6:
-            return colors.red
+            return self.colors.red
         elif frame.proportion_of_total > 0.2:
-            return colors.yellow
+            return self.colors.yellow
         elif frame.proportion_of_total > 0.05:
-            return colors.green
+            return self.colors.green
         else:
-            return colors.bright_green + colors.faint
+            return self.colors.bright_green + self.colors.faint
 
     def default_processors(self):
         return processors.default_time_aggregate_processors()
+     
+    class colors_enabled:
+        red = '\033[31m'
+        green = '\033[32m'
+        yellow = '\033[33m'
+        blue = '\033[34m'
+        cyan = '\033[36m'
+        bright_green = '\033[92m'
+
+        bold = '\033[1m'
+        faint = '\033[2m'
+
+        end = '\033[0m'
+
+
+    class colors_disabled:
+        def __getattr__(self, key):
+            return ''
+
+    colors_disabled = colors_disabled()
 
 
 class HTMLRenderer(Renderer):
@@ -179,24 +197,3 @@ class JSONRenderer(Renderer):
 
     def default_processors(self):
         return processors.default_time_aggregate_processors()
-
-
-class colors_enabled:
-    red = '\033[31m'
-    green = '\033[32m'
-    yellow = '\033[33m'
-    blue = '\033[34m'
-    cyan = '\033[36m'
-    bright_green = '\033[92m'
-
-    bold = '\033[1m'
-    faint = '\033[2m'
-
-    end = '\033[0m'
-
-
-class colors_disabled:
-    def __getattr__(self, key):
-        return ''
-
-colors_disabled = colors_disabled()
