@@ -1,4 +1,3 @@
-from pyinstrument.frame import Frame
 from operator import methodcaller
 
 '''
@@ -10,7 +9,7 @@ called like:
     frame = processor(frame)
 '''
 
-def remove_importlib(frame: Frame):
+def remove_importlib(frame):
     # iterate over a copy of the children since it's going to mutate while we're iterating
     for child in frame.children:
         remove_importlib(child)
@@ -24,7 +23,7 @@ def remove_importlib(frame: Frame):
     return frame
 
 
-def aggregate_repeated_calls(frame: Frame):
+def aggregate_repeated_calls(frame):
     '''
     Converts a timeline into a time-aggregate summary.
 
