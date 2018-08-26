@@ -1,6 +1,6 @@
 from __future__ import print_function
-import time, sys, subprocess, os
-import pytest
+import sys, subprocess, os
+
 
 def test_command_line():
     test_script = os.path.join(os.path.dirname(__file__), 'busywait.py')

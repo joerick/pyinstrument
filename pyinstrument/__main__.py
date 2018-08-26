@@ -1,7 +1,6 @@
 import sys, os, codecs, runpy, tempfile
 from optparse import OptionParser
 from pyinstrument import Profiler
-from pyinstrument.profiler import get_renderer_class
 from .six import exec_
 
 
@@ -70,16 +69,7 @@ def main():
             '__package__': None,
         }
 
-    if options.renderer:
-        renderer = options.renderer
-    elif options.output_html:
-        renderer = 'html'
-    else:
-        renderer = 'text'
-
-    recorder = get_renderer_class(renderer).preferred_recorder
-
-    profiler = Profiler(recorder=recorder)
+    profiler = Profiler()
 
     profiler.start()
 
@@ -90,6 +80,13 @@ def main():
 
     profiler.stop()
 
+    if options.renderer:
+        renderer = options.renderer
+    elif options.output_html:
+        renderer = 'html'
+    else:
+        renderer = 'text'
+    
     output_to_temp_file = renderer == 'html' and not options.outfile and file_is_a_tty(sys.stdout)
 
     if options.outfile:

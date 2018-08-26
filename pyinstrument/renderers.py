@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+from pyinstrument import processors
 
 class Renderer(object):
     preferred_recorder = ''
@@ -13,14 +14,20 @@ class Renderer(object):
 
 
 class ConsoleRenderer(Renderer):
-    preferred_recorder = 'time_aggregating'
-
     def __init__(self, unicode=False, color=False, **kwargs):
-        self.unicode = unicode
-        self.color = color
         super(ConsoleRenderer, self).__init__(**kwargs)
 
+        self.unicode = unicode
+        self.color = color
+        self.processors = [
+            processors.remove_importlib,
+            processors.aggregate_repeated_calls
+        ]
+
     def render(self, frame):
+        for processor in self.processors:
+            processor(frame)
+
         return self.render_frame(frame, indent=u'', child_indent=u'')
 
     def render_frame(self, frame, indent=u'', child_indent=u''):
@@ -37,7 +44,7 @@ class ConsoleRenderer(Renderer):
             code_position=frame.code_position_short,
             c=colors)
 
-        children = [f for f in frame.sorted_children() if f.proportion_of_total > 0.01]
+        children = [f for f in frame.children if f.proportion_of_total > 0.01]
 
         if children:
             last_child = children[-1]
@@ -66,9 +73,18 @@ class ConsoleRenderer(Renderer):
 
 
 class HTMLRenderer(Renderer):
-    preferred_recorder = 'time_aggregating'
+    def __init__(self, **kwargs):
+        super(HTMLRenderer, self).__init__(**kwargs)
+
+        self.processors = [
+            processors.remove_importlib,
+            processors.aggregate_repeated_calls,
+        ]
 
     def render(self, frame):
+        for processor in self.processors:
+            processor(frame)
+
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
 
         with open(os.path.join(resources_dir, 'style.css')) as f:
@@ -97,7 +113,7 @@ class HTMLRenderer(Renderer):
         return page
 
     def render_frame(self, frame):
-        children = frame.sorted_children()
+        children = frame.children
         start_collapsed = all(child.proportion_of_total < 0.1 for child in children)
 
         extra_class = ''
@@ -144,7 +160,7 @@ class JSONRenderer(Renderer):
             'file_path': frame.file_path,
             'line_no': frame.line_no,
             'time': frame.time(),
-            'children': [JSONRenderer.render_frame(frame) for frame in frame.sorted_children()]
+            'children': [JSONRenderer.render_frame(frame) for frame in frame.children]
         }
 
     def render(self, frame):

@@ -22,7 +22,29 @@ def long_function_b():
 
 # Tests #
 
-def test_aggregator_collapses_multiple_calls():
+def test_collapses_multiple_calls_by_default():
+    profiler = Profiler()
+    profiler.start()
+
+    long_function_a()
+    long_function_b()
+    long_function_a()
+    long_function_b()
+
+    profiler.stop()
+
+    text_output = profiler.output_text()
+
+    # output should be something like:
+    # 1.513 test_collapses_multiple_calls_by_default  test/test_profiler.py:25
+    # |- 0.507 long_function_a  test/test_profiler.py:17
+    # |- 0.503 long_function_b  test/test_profiler.py:20
+
+    assert text_output.count('test_collapses_multiple_calls_by_default') == 1
+    assert text_output.count('long_function_a') == 1
+    assert text_output.count('long_function_b') == 1
+
+def test_profiler_retains_multiple_calls():
     profiler = Profiler()
     profiler.start()
 
@@ -36,24 +58,7 @@ def test_aggregator_collapses_multiple_calls():
     print(profiler.output_text())
 
     frame = profiler.first_interesting_frame()
-    assert frame.function == 'test_aggregator_collapses_multiple_calls'
-    assert len(frame.children) == 2
-
-def test_timeline_retains_multiple_calls():
-    profiler = Profiler(recorder='timeline')
-    profiler.start()
-
-    long_function_a()
-    long_function_b()
-    long_function_a()
-    long_function_b()
-
-    profiler.stop()
-
-    print(profiler.output_text())
-
-    frame = profiler.first_interesting_frame()
-    assert frame.function == 'test_timeline_retains_multiple_calls'
+    assert frame.function == 'test_profiler_retains_multiple_calls'
     assert len(frame.children) == 4
 
 def test_two_functions():
@@ -72,7 +77,7 @@ def test_two_functions():
     assert frame.function == 'test_two_functions'
     assert len(frame.children) == 2
 
-    frame_b, frame_a = frame.sorted_children()
+    frame_b, frame_a = sorted(frame.children, key=lambda f: f.time(), reverse=True)
 
     assert frame_a.function == 'long_function_a'
     assert frame_b.function == 'long_function_b'

@@ -216,6 +216,21 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 Changelog
 ---------
 
+### Next version...
+
+-   Big refactor! 
+    -   `Recorders` have been removed. The frame recording is now internal to the `Profiler` object.
+        This means the 'frame' objects are more general-purpose, which paves the way for...
+    -   Processors! These are functions that mutate the tree to sculpt the output.
+        They are used by the renderers to filter the output to the correct form. Now, instead of
+        a time-aggregating recorder, the profiler just uses timeline-style recording (this is 
+        lower-overhead anyway) and the aggregation is done as a processing step.
+    -   The upshot of this is that it's now way easier to alter the tree to filter stuff out, and
+        do more advanced things like combining frames that we don't care about.
+-   Importlib frames are removed - you won't see them at all. Their children are retained, so
+    imports are just transparent.
+
+
 ### v2.2.1
 
 -   Fix crash when using on the command line.
