@@ -80,14 +80,12 @@ def main():
 
     profiler.stop()
 
-    if options.renderer:
-        renderer = options.renderer
-    elif options.output_html:
-        renderer = 'html'
-    else:
-        renderer = 'text'
+    if options.output_html:
+        options.renderer = 'html'
     
-    output_to_temp_file = renderer == 'html' and not options.outfile and file_is_a_tty(sys.stdout)
+    output_to_temp_file = (options.renderer == 'html'
+                           and not options.outfile
+                           and file_is_a_tty(sys.stdout))
 
     if options.outfile:
         f = codecs.open(options.outfile, 'w', 'utf-8')
@@ -100,7 +98,7 @@ def main():
 
     renderer_kwargs = {}
 
-    if renderer == 'text':
+    if options.renderer == 'text':
         unicode_override = options.unicode != None
         color_override = options.color != None
         unicode = options.unicode if unicode_override else file_supports_unicode(f)
@@ -108,7 +106,7 @@ def main():
         
         renderer_kwargs = {'unicode': unicode, 'color': color}
 
-    f.write(profiler.output(renderer=renderer, **renderer_kwargs))
+    f.write(profiler.output(renderer=options.renderer, **renderer_kwargs))
     f.close()
 
     if output_to_temp_file:
