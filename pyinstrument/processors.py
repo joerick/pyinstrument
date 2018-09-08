@@ -63,8 +63,7 @@ def aggregate_repeated_calls(frame):
 
 def group_library_frames_processor(frame):
     def should_be_hidden(frame):
-        return not (frame.is_application_code
-                    or frame.parent.is_application_code)
+        return not (frame.is_application_code)
 
     def add_frames_to_group(frame, group):
         group.add_frame(frame)

@@ -43,18 +43,20 @@ class ConsoleRenderer(Renderer):
         self.profiler = profiler
 
     def render(self, frame):
-        root_frame = frame
+        self.root_frame = frame
         frame = self.preprocess(frame)
 
-        result = self.render_preamble(root_frame)
+        result = self.render_preamble()
         result += self.render_frame(frame, indent=u'', child_indent=u'')
-
+        result += '\n'
+        self.root_frame = None
         return result
 
-    def render_preamble(self, root):
+    # pylint: disable=W1401
+    def render_preamble(self):
         info = {
             'time': time.strftime('%X'),
-            'duration': '{:.3n}s'.format(root.time()),
+            'duration': '{:.3n}s'.format(self.root_frame.time()),
             'version': 'v'+pyinstrument.__version__,
             'program': ' '.join(sys.argv),
         }
@@ -64,6 +66,7 @@ class ConsoleRenderer(Renderer):
                 info['cpu_time'] = '{:.3n}s'.format(self.profiler.cpu_time)
 
         lines = [
+            "",
             "              _          __                          __ ",
             "   ___  __ __(_)__  ___ / /_______ ____ _  ___ ___  / /_",
             "  / _ \/ // / / _ \(_-</ __/ __/ // /  ' \/ -_) _ \/ __/",
@@ -87,17 +90,9 @@ class ConsoleRenderer(Renderer):
         return '\n'.join(lines)
 
     def render_frame(self, frame, indent=u'', child_indent=u''):
-        if frame.group and frame.group.root == frame:
-            result = u'{indent}[{count} frames hidden]  {c.faint}{libraries}{c.end}\n'.format(
-                indent=indent,
-                count=len(frame.group.frames),
-                libraries=truncate(', '.join(frame.group.libraries), 40),
-                c=self.colors)
-            if self.unicode:
-                indent = {'├': u'   ', '│': u'   ', '└': u'   ', ' ': u'   '}
-            else:
-                indent = {'├': u'   ', '│': u'   ', '└': u'   ', ' ': u'   '}
-        elif not frame.group or frame.group and frame in frame.group.exit_frames:
+        if not frame.group or (frame.group.root == frame
+                               or frame.self_time > 0.2*self.root_frame.time()
+                               or frame in frame.group.exit_frames):
             time_str = (self._ansi_color_for_frame(frame)
                         + '{:.3f}'.format(frame.time()) 
                         + self.colors.end)
@@ -110,12 +105,21 @@ class ConsoleRenderer(Renderer):
                 code_position=frame.code_position_short,
                 c=self.colors)
             if self.unicode:
-                indent = {'├': u'├─ ', '│': u'│  ', '└': u'└─ ', ' ': u'   '}
+                indents = {'├': u'├─ ', '│': u'│  ', '└': u'└─ ', ' ': u'   '}
             else:
-                indent = {'├': u'|- ', '│': u'|  ', '└': u'`- ', ' ': u'   '}
+                indents = {'├': u'|- ', '│': u'|  ', '└': u'`- ', ' ': u'   '}
+
+            if frame.group and frame.group.root == frame:
+                result += u'{indent}[{count} frames hidden]  {c.faint}{libraries}{c.end}\n'.format(
+                    indent=child_indent+u'   ',
+                    count=len(frame.group.frames),
+                    libraries=truncate(', '.join(frame.group.libraries), 40),
+                    c=self.colors)
+                for key in indents:
+                    indents[key] = u'      '
         else:
             result = ''
-            indent = {'├': u'', '│': u'', '└': u'', ' ': u''}
+            indents = {'├': u'', '│': u'', '└': u'', ' ': u''}
 
         children = [f for f in frame.children if f.proportion_of_total > 0.01]
 
@@ -124,11 +128,11 @@ class ConsoleRenderer(Renderer):
 
         for child in children:
             if child is not last_child:
-                c_indent = child_indent + indent['├']
-                cc_indent = child_indent + indent['│']
+                c_indent = child_indent + indents['├']
+                cc_indent = child_indent + indents['│']
             else:
-                c_indent = child_indent + indent['└']
-                cc_indent = child_indent + indent[' ']
+                c_indent = child_indent + indents['└']
+                cc_indent = child_indent + indents[' ']
             result += self.render_frame(child, indent=c_indent, child_indent=cc_indent)
 
         return result
