@@ -7,3 +7,8 @@ def object_with_import_path(import_path):
 
     module = importlib.import_module(module_path)
     return getattr(module, object_name)
+
+def truncate(string, max_length):
+    if len(string) > max_length:
+        return string[0:max_length-3]+'...'
+    return string

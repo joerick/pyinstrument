@@ -10,6 +10,7 @@ class Frame(object):
         self.parent = parent
         self.self_time = self_time
         self._children = []
+        self.group = None
 
         self._time = None
         self._proportion_of_parent = None
@@ -110,7 +111,8 @@ class Frame(object):
     @property
     def is_application_code(self):
         if self.identifier:
-            return ('%slib%s' % (os.sep, os.sep)) not in self.file_path
+            return (('%slib%s' % (os.sep, os.sep)) not in self.file_path
+                    and '<frozen importlib._bootstrap' not in self.file_path)
 
     @property
     def code_position_short(self):
@@ -164,6 +166,57 @@ class Frame(object):
         self._proportion_of_total = None
 
     def __repr__(self):
-        return 'Frame(identifier=%s, time=%f, len(children)=%d)' % (
-            self.identifier, self.time(), len(self.children)
+        return 'Frame(identifier=%s, time=%f, len(children)=%d), group=%r' % (
+            self.identifier, self.time(), len(self.children), self.group
         )
+
+
+class FrameGroup(object):
+    def __init__(self, root, **kwargs):
+        super(FrameGroup, self).__init__(**kwargs)
+        self.root = root
+        self._frames = []
+        self._exit_frames = None
+        self._libraries = None
+
+        self.add_frame(root)
+    
+    @property
+    def libraries(self):
+        if self._libraries is None:
+            libraries = []
+            for frame in self.frames:
+                library = frame.file_path_short.split(os.sep)[0]
+                if library not in libraries:
+                    libraries.append(library)
+            self._libraries = libraries      
+
+        return self._libraries
+
+    @property
+    def frames(self):
+        return tuple(self._frames)
+
+    def add_frame(self, frame):
+        if frame.group:
+            frame.group._frames.remove(frame)
+
+        self._frames.append(frame)
+        frame.group = self
+
+    @property
+    def exit_frames(self):
+        '''
+        Returns a list of frames whose children include a frame outside of the group
+        '''
+        if self._exit_frames is None:
+            exit_frames = []
+            for frame in self.frames:
+                if any(c.group != self for c in frame.children):
+                    exit_frames.append(frame)
+            self._exit_frames = exit_frames
+
+        return self._exit_frames
+
+    def __repr__(self):
+        return 'FrameGroup(len(frames)=%d)' % len(self.frames)

@@ -2,6 +2,7 @@ from __future__ import print_function
 import time, sys
 
 from pyinstrument import Profiler
+from pyinstrument.renderers import JSONRenderer, ConsoleRenderer, HTMLRenderer
 
 # Utilities
 
@@ -23,4 +24,12 @@ def test_profiler_doesnt_overflow_on_large_call_stacks():
     recurse(recursion_depth)
 
     profiler.stop()
-    print(profiler.output_text())
+
+    renderers = [
+        ConsoleRenderer,
+        HTMLRenderer,
+        JSONRenderer
+    ]
+
+    for renderer in renderers:
+        print(profiler.output(renderer=renderer, root=True))

@@ -7,8 +7,12 @@ from pyinstrument.frame import Frame
 from .util import object_with_import_path
 from pyinstrument_cext import setstatprofile
 
-timer = timeit.default_timer
+try:
+    from time import process_time
+except ImportError:
+    process_time = None
 
+timer = timeit.default_timer
 
 class NotMainThreadError(Exception):
     '''deprecated as of 0.14'''
@@ -34,13 +38,20 @@ class Profiler(object):
         self.interval = interval
         self.last_profile_time = 0.0
         self.frame_records = []
+        self.cpu_time = 0
+        self.start_process_time = None
 
     def start(self):
         self.last_profile_time = timer()
+        if process_time:
+            self.start_process_time = process_time()
         setstatprofile(self._profile, self.interval)
 
     def stop(self):
         setstatprofile(None)
+        if process_time:
+            self.cpu_time += process_time() - self.start_process_time
+            self.start_process_time = None
 
     def __enter__(self):
         self.start()
@@ -131,6 +142,10 @@ class Profiler(object):
                 return root_frame
 
         return frame
+    
+    @property
+    def number_of_samples(self):
+        return len(self.frame_records)
 
     def starting_frame(self, root=False):
         if root:
@@ -147,7 +162,7 @@ class Profiler(object):
     def output(self, renderer, root=False, **renderer_kwargs):
         if not isinstance(renderer, renderers.Renderer):
             renderer_class = get_renderer_class(renderer)
-            renderer = renderer_class(**renderer_kwargs)
+            renderer = renderer_class(profiler=self, **renderer_kwargs)
 
         return renderer.render(self.starting_frame(root=root))
 

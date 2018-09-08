@@ -1,4 +1,5 @@
 from operator import methodcaller
+from .frame import FrameGroup
 
 '''
 Processors are functions that take a Frame object, and mutate the tree to perform some task.
@@ -10,7 +11,6 @@ called like:
 '''
 
 def remove_importlib(frame):
-    # iterate over a copy of the children since it's going to mutate while we're iterating
     for child in frame.children:
         remove_importlib(child)
 
@@ -60,10 +60,33 @@ def aggregate_repeated_calls(frame):
 
     return frame
 
+
+def group_library_frames_processor(frame):
+    def should_be_hidden(frame):
+        return not (frame.is_application_code
+                    or frame.parent.is_application_code)
+
+    def add_frames_to_group(frame, group):
+        group.add_frame(frame)
+        for child in frame.children:
+            if should_be_hidden(child):
+                add_frames_to_group(child, group)
+
+    for child in frame.children:
+        if not child.group and should_be_hidden(child):
+            group = FrameGroup(child)
+            add_frames_to_group(child, group)
+
+        group_library_frames_processor(child)
+
+    return frame    
+
+
 def default_time_aggregate_processors():
     return [
         remove_importlib,
-        aggregate_repeated_calls
+        aggregate_repeated_calls,
+        group_library_frames_processor
     ]
 
 def default_timeline_processors():
