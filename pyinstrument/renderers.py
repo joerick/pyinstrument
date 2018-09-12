@@ -21,12 +21,13 @@ class Renderer(object):
         '''
         raise NotImplementedError()
 
-    def preprocess(self, frame):
+    def preprocess(self, root_frame):
+        frame = root_frame
         for processor in self.processors:
             frame = processor(frame)
         return frame
 
-    def render(self, frame):
+    def render(self, session):
         ''' 
         Return a string that contains the rendered form of `frame`
         '''
@@ -34,56 +35,42 @@ class Renderer(object):
 
 
 class ConsoleRenderer(Renderer):
-    def __init__(self, unicode=False, color=False, profiler=None, **kwargs):
+    def __init__(self, unicode=False, color=False, **kwargs):
         super(ConsoleRenderer, self).__init__(**kwargs)
 
         self.unicode = unicode
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
-        self.profiler = profiler
 
-    def render(self, frame):
-        self.root_frame = frame
-        frame = self.preprocess(frame)
+    def render(self, session):
+        result = self.render_preamble(session)
 
-        result = self.render_preamble()
-        result += self.render_frame(frame, indent=u'', child_indent=u'')
+        self.root_frame = self.preprocess(session.root_frame())
+        result += self.render_frame(self.root_frame)
         result += '\n'
-        self.root_frame = None
+
         return result
 
     # pylint: disable=W1401
-    def render_preamble(self):
-        info = {
-            'time': time.strftime('%X'),
-            'duration': '{:.3n}s'.format(self.root_frame.time()),
-            'version': 'v'+pyinstrument.__version__,
-            'program': ' '.join(sys.argv),
-        }
-        if self.profiler:
-            info['samples'] = str(self.profiler.number_of_samples)
-            if self.profiler.cpu_time is not None:
-                info['cpu_time'] = '{:.3n}s'.format(self.profiler.cpu_time)
-
+    def render_preamble(self, session):
         lines = [
             "",
             "              _          __                          __ ",
             "   ___  __ __(_)__  ___ / /_______ ____ _  ___ ___  / /_",
             "  / _ \/ // / / _ \(_-</ __/ __/ // /  ' \/ -_) _ \/ __/",
             " / .__/\_, /_/_//_/___/\__/_/  \_,_/_/_/_/\__/_//_/\__/ ",
-            "/_/   /___/                 {version:>26}  ".format(**info)
+            "/_/   /___/                 {:>26}  ".format(pyinstrument.__version__)
         ]
 
 
-        lines[1] += "    Recorded:  {time}".format(**info)
-        if info.get('samples'):
-            lines[2] += "    Samples:   {samples}".format(**info)
-        lines[3] += "    Duration:  {duration}".format(**info)
-        if info.get('cpu_time'):
-            lines[4] += "    CPU time:  {cpu_time}".format(**info)
+        lines[2] += "    Recorded:  %s" % time.strftime('%X', time.localtime(session.start_time))
+        lines[3] += "    Samples:   %s" % session.sample_count
+        lines[4] += "    Duration:  {:.3n}".format(session.duration)
+        if session.cpu_time is not None:
+            lines[5] += "    CPU time:  {:.3n}".format(session.cpu_time)
 
         lines.append('')
-        lines.append('Program: {program}'.format(**info))
+        lines.append('Program: %s' % session.program)
         lines.append('')
         lines.append('')
 
@@ -93,10 +80,10 @@ class ConsoleRenderer(Renderer):
         if not frame.group or (frame.group.root == frame
                                or frame.self_time > 0.2*self.root_frame.time()
                                or frame in frame.group.exit_frames):
-            time_str = (self._ansi_color_for_frame(frame)
+            time_str = (self._ansi_color_for_time(frame)
                         + '{:.3f}'.format(frame.time()) 
                         + self.colors.end)
-            function_color = self.colors.bg_dark_blue+self.colors.white if frame.is_application_code else ''
+            function_color = self._ansi_color_for_function(frame)
             result = u'{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n'.format(
                 indent=indent,
                 time_str=time_str,
@@ -137,7 +124,7 @@ class ConsoleRenderer(Renderer):
 
         return result
 
-    def _ansi_color_for_frame(self, frame):
+    def _ansi_color_for_time(self, frame):
         if frame.proportion_of_total > 0.6:
             return self.colors.red
         elif frame.proportion_of_total > 0.2:
@@ -146,6 +133,12 @@ class ConsoleRenderer(Renderer):
             return self.colors.green
         else:
             return self.colors.bright_green + self.colors.faint
+
+    def _ansi_color_for_function(self, frame):
+        if frame.is_application_code:
+            return self.colors.bg_dark_blue_255+self.colors.white_255
+        else:
+            return ''
 
     def default_processors(self):
         return processors.default_time_aggregate_processors()
@@ -159,7 +152,8 @@ class ConsoleRenderer(Renderer):
         bright_green = '\033[92m'
         white = '\033[37m\033[97m'
 
-        bg_dark_blue = '\033[48;5;24m'
+        bg_dark_blue_255 = '\033[48;5;24m'
+        white_255 = '\033[38;5;15m'
 
         bold = '\033[1m'
         faint = '\033[2m'
@@ -175,8 +169,8 @@ class ConsoleRenderer(Renderer):
 
 
 class HTMLRenderer(Renderer):
-    def render(self, frame):
-        frame = self.preprocess(frame)
+    def render(self, session):
+        frame = self.preprocess(session.root_frame())
 
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/')
 
@@ -257,8 +251,8 @@ class JSONRenderer(Renderer):
             'children': [JSONRenderer.render_frame(frame) for frame in frame.children]
         }
 
-    def render(self, frame):
-        frame = self.preprocess(frame)
+    def render(self, session):
+        frame = self.preprocess(session.root_frame())
         return json.dumps(JSONRenderer.render_frame(frame), indent=2)
 
     def default_processors(self):

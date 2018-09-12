@@ -1,4 +1,5 @@
 import importlib
+from pyinstrument.vendor.decorator import decorator
 
 def object_with_import_path(import_path):
     if '.' not in import_path:
@@ -12,3 +13,9 @@ def truncate(string, max_length):
     if len(string) > max_length:
         return string[0:max_length-3]+'...'
     return string
+
+@decorator
+def deprecated(func):
+    ''' Marks a function as deprecated. '''
+    # TODO: add a runtime warning here
+    return func
