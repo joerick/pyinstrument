@@ -1,5 +1,5 @@
 from operator import methodcaller
-from .frame import FrameGroup
+from pyinstrument.frame import FrameGroup
 
 '''
 Processors are functions that take a Frame object, and mutate the tree to perform some task.

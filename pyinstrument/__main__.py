@@ -1,7 +1,7 @@
 import sys, os, codecs, runpy, tempfile
 from optparse import OptionParser
 from pyinstrument import Profiler
-from .six import exec_
+from pyinstrument.vendor.six import exec_
 
 
 def main():
