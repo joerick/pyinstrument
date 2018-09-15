@@ -87,11 +87,11 @@ class Profiler(object):
         if event == 'call':
             frame = frame.f_back
 
-        self._record_frame(frame, time_since_last_profile)
+        self.frame_records.append((self._call_stack_for_frame(frame), time_since_last_profile))
 
         self.last_profile_time = now
 
-    def _record_frame(self, frame, time):
+    def _call_stack_for_frame(self, frame):
         call_stack = []
 
         while frame is not None:
@@ -104,7 +104,7 @@ class Profiler(object):
         # we iterated from the leaf to the root, we actually want the call stack
         # starting at the root, so reverse this array
         call_stack.reverse()
-        self.frame_records.append((call_stack, time))
+        return call_stack
 
     @deprecated
     def root_frame(self):

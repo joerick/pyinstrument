@@ -1,5 +1,4 @@
-import sys, os, codecs, runpy, tempfile, glob, time
-from optparse import OptionParser
+import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.vendor.six import exec_
@@ -7,29 +6,48 @@ from pyinstrument.vendor.six import exec_
 
 def main():
     usage = ("usage: pyinstrument [options] [scriptfile [arg]] ...")
-    parser = OptionParser(usage=usage)
+    parser = optparse.OptionParser(usage=usage)
     parser.allow_interspersed_args = False
 
     parser.add_option('', '--load-prev',
-        dest='load_prev', action='store', metavar='FILE',
+        dest='load_prev', action='store', metavar='ID',
         help="Instead of running a script, load a previous report")
 
     parser.add_option('-m', '',
         dest='module_name', action='store',
         help="run library module as a script, like 'python -m module'")
 
+    parser.add_option('-o', '--outfile',
+        dest="outfile", action='store',
+        help="save to <outfile>", default=None)
+
     parser.add_option('-r', '--renderer',
         dest='renderer', action='store', type='string',
-        help="how the report should be rendered. One of: 'text', 'html', 'json', or python import path to a renderer class", 
+        help=("how the report should be rendered. One of: 'text', 'html', 'json', or python "
+              "import path to a renderer class"),
         default='text')
 
     parser.add_option('', '--html',
         dest="output_html", action='store_true',
-        help="Shortcut for '--renderer=html'", default=False)
+        help=optparse.SUPPRESS_HELP, default=False)  # deprecated shortcut for --renderer=html
+    
+    parser.add_option('-t', '--timeline',
+        dest='timeline', action='store_true',
+        help="render as a timeline - preserve ordering and don't condense repeated calls")
 
-    parser.add_option('-o', '--outfile',
-        dest="outfile", action='store',
-        help="save report to <outfile>", default=None)
+    parser.add_option('', '--hide',
+        dest='hide_fnmatch', action='store', metavar='EXPR',
+        help=("glob-style pattern matching the file paths whose frames to hide. Defaults to "
+              "'*{sep}lib{sep}*'.").format(sep=os.sep),
+        default='*{sep}lib{sep}*'.format(sep=os.sep))
+    parser.add_option('', '--hide-regex',
+        dest='hide_regex', action='store', metavar='REGEX',
+        help=("regex matching the file paths whose frames to hide. Useful if --hide doesn't give "
+              "enough control."))
+    
+    parser.add_option('', '--show-all',
+        dest='show_all', action='store_true',
+        help="(text renderer only) show external library code", default=False)
 
     parser.add_option('', '--unicode',
         dest='unicode', action='store_true',
@@ -50,6 +68,9 @@ def main():
         sys.exit(2)
 
     options, args = parser.parse_args()
+
+    if not options.hide_regex:
+        options.hide_regex = fnmatch.translate(options.hide_fnmatch)
 
     if args == [] and options.module_name is None and options.load_prev is None:
         parser.print_help()
@@ -105,7 +126,10 @@ def main():
     else:
         f = sys.stdout
 
-    renderer_kwargs = {}
+    renderer_kwargs = {'processor_options': {'hide_regex': options.hide_regex}}
+
+    if options.timeline is not None:
+        renderer_kwargs['timeline']: options.timeline
 
     if options.renderer == 'text':
         unicode_override = options.unicode != None
@@ -113,9 +137,10 @@ def main():
         unicode = options.unicode if unicode_override else file_supports_unicode(f)
         color = options.color if color_override else file_supports_color(f)
         
-        renderer_kwargs = {'unicode': unicode, 'color': color}
+        renderer_kwargs.update({'unicode': unicode, 'color': color, 'show_all': options.show_all})
 
-    renderer = get_renderer_class(options.renderer)(**renderer_kwargs)
+    renderer_class = get_renderer_class(options.renderer)
+    renderer = renderer_class(**renderer_kwargs)
 
     f.write(renderer.render(session))
 

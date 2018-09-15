@@ -10,10 +10,11 @@ except ImportError:
 
 
 class Renderer(object):
-    def __init__(self):
+    def __init__(self, processor_options=None):
         # processors is defined on the base class to provide a common way for users to
         # add to and manipulate them before calling render()
         self.processors = self.default_processors()
+        self.processor_options = processor_options or {}
 
     def default_processors(self):
         ''' 
@@ -24,23 +25,25 @@ class Renderer(object):
     def preprocess(self, root_frame):
         frame = root_frame
         for processor in self.processors:
-            frame = processor(frame)
+            frame = processor(frame, options=self.processor_options)
         return frame
 
     def render(self, session):
-        ''' 
+        '''
         Return a string that contains the rendered form of `frame`
         '''
         raise NotImplementedError()
 
 
 class ConsoleRenderer(Renderer):
-    def __init__(self, unicode=False, color=False, **kwargs):
+    def __init__(self, unicode=False, color=False, show_all=False, **kwargs):
         super(ConsoleRenderer, self).__init__(**kwargs)
 
         self.unicode = unicode
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
+        if show_all:
+            self.processors.remove(processors.group_library_frames_processor)
 
     def render(self, session):
         result = self.render_preamble(session)
@@ -89,7 +92,7 @@ class ConsoleRenderer(Renderer):
                 time_str=time_str,
                 function_color=function_color,
                 function=frame.function,
-                code_position=frame.code_position_short,
+                code_position=frame.file_path,
                 c=self.colors)
             if self.unicode:
                 indents = {'├': u'├─ ', '│': u'│  ', '└': u'└─ ', ' ': u'   '}

@@ -1,3 +1,4 @@
+import re
 from operator import methodcaller
 from pyinstrument.frame import FrameGroup
 
@@ -7,12 +8,12 @@ Processors are functions that take a Frame object, and mutate the tree to perfor
 They can mutate the tree in-place, but also can change the root frame, they should always be
 called like:
 
-    frame = processor(frame)
+    frame = processor(frame, options=...)
 '''
 
-def remove_importlib(frame):
+def remove_importlib(frame, options):
     for child in frame.children:
-        remove_importlib(child)
+        remove_importlib(child, options=options)
 
         if '<frozen importlib._bootstrap' in child.file_path:
             # remove this node, moving the self_time and children up to the parent
@@ -23,7 +24,7 @@ def remove_importlib(frame):
     return frame
 
 
-def aggregate_repeated_calls(frame):
+def aggregate_repeated_calls(frame, options):
     '''
     Converts a timeline into a time-aggregate summary.
 
@@ -51,7 +52,7 @@ def aggregate_repeated_calls(frame):
 
     # recurse into the children
     for child in frame.children:
-        aggregate_repeated_calls(child)
+        aggregate_repeated_calls(child, options=options)
 
     # sort the children by time
     # it's okay to use the internal _children list, sinde we're not changing the tree
@@ -61,9 +62,11 @@ def aggregate_repeated_calls(frame):
     return frame
 
 
-def group_library_frames_processor(frame):
+def group_library_frames_processor(frame, options):
+    hide_regex = options.get('hide_regex', r'.*[\\\/]lib[\\\/].*')
+
     def should_be_hidden(frame):
-        return not (frame.is_application_code)
+        return re.match(hide_regex, frame.file_path)
 
     def add_frames_to_group(frame, group):
         group.add_frame(frame)
@@ -76,7 +79,7 @@ def group_library_frames_processor(frame):
             group = FrameGroup(child)
             add_frames_to_group(child, group)
 
-        group_library_frames_processor(child)
+        group_library_frames_processor(child, options=options)
 
     return frame    
 
@@ -91,4 +94,5 @@ def default_time_aggregate_processors():
 def default_timeline_processors():
     return [
         remove_importlib,
+        group_library_frames_processor,
     ]
