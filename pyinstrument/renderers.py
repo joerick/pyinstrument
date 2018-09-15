@@ -92,7 +92,7 @@ class ConsoleRenderer(Renderer):
                 time_str=time_str,
                 function_color=function_color,
                 function=frame.function,
-                code_position=frame.file_path,
+                code_position=frame.code_position_short,
                 c=self.colors)
             if self.unicode:
                 indents = {'├': u'├─ ', '│': u'│  ', '└': u'└─ ', ' ': u'   '}
