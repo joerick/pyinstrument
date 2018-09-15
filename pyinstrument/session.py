@@ -1,6 +1,9 @@
 import io, json
 from pyinstrument.frame import Frame
 
+ASSERTION_MESSAGE = ('Please raise an issue at http://github.com/pyinstrument/issues and '
+                     'let me know how you caused this error!')
+
 class ProfilerSession(object):
     def __init__(self, frame_records, start_time, duration, sample_count, program, cpu_time=None):
         self.frame_records = frame_records
@@ -44,7 +47,7 @@ class ProfilerSession(object):
         ''' 
         Parses the internal frame records and returns a tree of Frame objects
         '''
-        root_frame = Frame()
+        root_frame = None
 
         frame_stack = []
 
@@ -60,19 +63,21 @@ class ProfilerSession(object):
                         del frame_stack[stack_depth:]
 
                 if stack_depth >= len(frame_stack):
+                    frame = Frame(frame_identifier)
+                    frame_stack.append(frame)
+                    
                     if stack_depth == 0:
-                        parent = root_frame
+                        # There should only be one root frame, I think!
+                        assert root_frame is None, ASSERTION_MESSAGE
+                        root_frame = frame
                     else:
                         parent = frame_stack[stack_depth-1]
-
-                    frame = Frame(frame_identifier)
-                    parent.add_child(frame)
-                    frame_stack.append(frame)
+                        parent.add_child(frame)
 
             # trim any extra frames
             del frame_stack[stack_depth+1:]
 
             # assign the time to the final frame
             frame_stack[-1].self_time += time
-
+        
         return root_frame
