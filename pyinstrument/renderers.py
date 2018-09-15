@@ -49,6 +49,11 @@ class ConsoleRenderer(Renderer):
         result = self.render_preamble(session)
 
         self.root_frame = self.preprocess(session.root_frame())
+
+        if self.root_frame is None:
+            result += 'No samples were recorded.\n\n'
+            return result
+
         result += self.render_frame(self.root_frame)
         result += '\n'
 

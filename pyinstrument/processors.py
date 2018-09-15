@@ -12,6 +12,9 @@ called like:
 '''
 
 def remove_importlib(frame, options):
+    if frame is None:
+        return None
+
     for child in frame.children:
         remove_importlib(child, options=options)
 
@@ -33,6 +36,9 @@ def aggregate_repeated_calls(frame, options):
 
     Useful for outputs that display a summary of execution (e.g. text and html outputs)
     '''
+    if frame is None:
+        return None
+
     children_by_identifier = {}
 
     # iterate over a copy of the children since it's going to mutate while we're iterating
@@ -63,6 +69,9 @@ def aggregate_repeated_calls(frame, options):
 
 
 def group_library_frames_processor(frame, options):
+    if frame is None:
+        return None
+
     hide_regex = options.get('hide_regex', r'.*[\\\/]lib[\\\/].*')
 
     def should_be_hidden(frame):

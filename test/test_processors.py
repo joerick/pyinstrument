@@ -2,6 +2,12 @@ from pyinstrument import processors
 from pyinstrument.frame import Frame
 from pytest import approx
 
+all_processors = [
+    processors.aggregate_repeated_calls,
+    processors.group_library_frames_processor,
+    processors.remove_importlib,
+]
+
 def test_remove_importlib():
     frame = Frame(
         identifier='<module>\x00sympy/__init__.py\x0012',
@@ -45,3 +51,7 @@ def test_remove_importlib():
     assert frame.children[1].file_path == 'sympy/polys/partfrac.py'
     assert frame.children[2].file_path == 'sympy/polys/numberfields.py'
 
+
+def test_frame_passthrough_none():
+    for processor in all_processors:
+        assert processor(None, options={}) is None
