@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-import timeit
-import warnings, time, sys
+import timeit, warnings, time, sys, inspect
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
-from pyinstrument.util import object_with_import_path, deprecated
+from pyinstrument.util import deprecated
 from pyinstrument_cext import setstatprofile
 
 try:

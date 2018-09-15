@@ -1,6 +1,7 @@
 import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
+from pyinstrument.util import object_with_import_path
 from pyinstrument.vendor.six import exec_
 
 
