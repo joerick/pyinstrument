@@ -104,3 +104,8 @@ def test_json_output():
 
     assert output['function'] == 'test_json_output'
     assert len(output['children']) == 2
+
+def test_empty_profile():
+    with Profiler() as profiler:
+        pass
+    profiler.output(renderer=renderers.ConsoleRenderer())
