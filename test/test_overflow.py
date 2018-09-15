@@ -26,10 +26,10 @@ def test_profiler_doesnt_overflow_on_large_call_stacks():
     profiler.stop()
 
     renderers = [
-        ConsoleRenderer,
-        HTMLRenderer,
-        JSONRenderer
+        ConsoleRenderer(),
+        HTMLRenderer(),
+        JSONRenderer(),
     ]
 
     for renderer in renderers:
-        print(profiler.output(renderer=renderer, root=True))
+        profiler.output(renderer=renderer, root=True)

@@ -42,7 +42,7 @@ def test_remove_importlib():
     assert frame.self_time == 0.0
     assert frame.time() == approx(0.5)
 
-    frame = processors.remove_importlib(frame)
+    frame = processors.remove_importlib(frame, options={})
 
     assert frame.self_time == approx(0.2)  # the root gets the self_time from the importlib
     assert frame.time() == approx(0.5)
