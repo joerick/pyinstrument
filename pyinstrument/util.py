@@ -15,7 +15,7 @@ def truncate(string, max_length):
     return string
 
 @decorator
-def deprecated(func):
+def deprecated(func, *args, **kwargs):
     ''' Marks a function as deprecated. '''
     # TODO: add a runtime warning here
-    return func
+    return func(*args, **kwargs)
