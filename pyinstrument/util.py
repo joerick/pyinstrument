@@ -20,7 +20,7 @@ def deprecated(func, *args, **kwargs):
     warnings.warn(
         '{} is deprecated and should no longer be used.'.format(func),
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=3
     )
     return func(*args, **kwargs)
 
@@ -29,9 +29,9 @@ def deprecated_option(option_name, message=''):
     def caller(func, *args, **kwargs):
         if option_name in kwargs:
             warnings.warn(
-                '{} is deprecated and should no longer be used. {}'.format(option_name, message),
+                '{} is deprecated. {}'.format(option_name, message),
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=3
             )
             
         return func(*args, **kwargs)

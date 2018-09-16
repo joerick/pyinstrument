@@ -13,14 +13,6 @@ except ImportError:
 timer = timeit.default_timer
 
 
-class NotMainThreadError(Exception):
-    '''deprecated as of 0.14'''
-    pass
-
-
-class SignalUnavailableError(Exception):
-    '''deprecated as of 0.14'''
-    pass
 
 
 class Profiler(object):
@@ -103,6 +95,18 @@ class Profiler(object):
         call_stack.reverse()
         return call_stack
 
+    @deprecated_option('root')
+    def output_text(self, root=None, unicode=False, color=False):
+        return renderers.ConsoleRenderer(unicode=unicode, color=color).render(self.last_session)
+
+    @deprecated_option('root')
+    def output_html(self, root=None):
+        return renderers.HTMLRenderer().render(self.last_session)
+
+    @deprecated_option('root')
+    def output(self, renderer, root=None):
+        return renderer.render(self.last_session)
+
     @deprecated
     def root_frame(self):
         if self.last_session:
@@ -131,15 +135,3 @@ class Profiler(object):
             return self.root_frame()
         else:
             return self.first_interesting_frame()
-
-    @deprecated_option('root')
-    def output_text(self, root=None, unicode=False, color=False):
-        return renderers.ConsoleRenderer(unicode=unicode, color=color).render(self.last_session)
-
-    @deprecated_option('root')
-    def output_html(self, root=None):
-        return renderers.HTMLRenderer().render(self.last_session)
-
-    @deprecated_option('root')
-    def output(self, renderer, root=None):
-        return renderer.render(self.last_session)
