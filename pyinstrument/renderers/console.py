@@ -1,3 +1,4 @@
+# coding: utf8
 import time
 import pyinstrument
 from pyinstrument.renderers.base import Renderer
