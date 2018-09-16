@@ -130,7 +130,7 @@ def main():
     renderer_kwargs = {'processor_options': {'hide_regex': options.hide_regex}}
 
     if options.timeline is not None:
-        renderer_kwargs['timeline']: options.timeline
+        renderer_kwargs['timeline'] = options.timeline
 
     if options.renderer == 'text':
         unicode_override = options.unicode != None
