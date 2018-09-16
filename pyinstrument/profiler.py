@@ -41,12 +41,14 @@ class Profiler(object):
         self._start_process_time = None
         self.last_session = None
 
-    def start(self):
+    def start(self, caller_frame=None):
         self.last_profile_time = timer()
         self._start_time = time.time()
-
         if process_time:
             self._start_process_time = process_time()
+        if caller_frame is None:
+            caller_frame = inspect.currentframe().f_back
+        self._start_call_stack = self._call_stack_for_frame(caller_frame)
 
         setstatprofile(self._profile, self.interval)
 
@@ -64,12 +66,14 @@ class Profiler(object):
             duration=time.time() - self._start_time,
             sample_count=len(self.frame_records),
             program=' '.join(sys.argv),
+            start_call_stack=self._start_call_stack,
             cpu_time=cpu_time,
         )
+
         return self.last_session
 
     def __enter__(self):
-        self.start()
+        self.start(caller_frame=inspect.currentframe().f_back)
         return self
 
     def __exit__(self, *args):
