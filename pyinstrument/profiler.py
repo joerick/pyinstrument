@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import timeit, warnings, time, sys, inspect
+import timeit, time, sys, inspect
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import deprecated, deprecated_option

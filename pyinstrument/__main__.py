@@ -239,6 +239,7 @@ def save_report(session):
     session.save(path)
     return path, identifier
 
+# pylint: disable=W0613
 def remove_first_pyinstrument_frame_processor(frame, options):
     ''' 
     The first frame when using the command line is always the __main__ function. I want to remove

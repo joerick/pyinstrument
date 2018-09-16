@@ -1,7 +1,3 @@
-import re
-from operator import methodcaller
-from pyinstrument.frame import FrameGroup
-
 '''
 Processors are functions that take a Frame object, and mutate the tree to perform some task.
 
@@ -10,6 +6,11 @@ called like:
 
     frame = processor(frame, options=...)
 '''
+
+import re
+from operator import methodcaller
+from pyinstrument.frame import FrameGroup
+
 
 def remove_importlib(frame, options):
     if frame is None:
