@@ -244,6 +244,9 @@ def remove_first_pyinstrument_frame_processor(frame, options):
     The first frame when using the command line is always the __main__ function. I want to remove
     that from the output.
     '''
+    if frame is None:
+        return None
+
     if 'pyinstrument' in frame.file_path and len(frame.children) == 1:
         frame = frame.children[0]
         frame.remove_from_parent()
