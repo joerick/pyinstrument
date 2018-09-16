@@ -14,10 +14,10 @@ TEMPLATE_DEBUG = True
 
 SECRET_KEY = 'qg7_r+b@)(--as*(4ls$j$$(9i(pl_@y$g0j0r+!=@&$he(+o%'
 
-ROOT_URLCONF = 'django_test.urls'
+ROOT_URLCONF = 'django_example.urls'
 
 INSTALLED_APPS = (
-    'django_test',
+    'django_example',
     'django.contrib.contenttypes',
     'django.contrib.auth',
 )
