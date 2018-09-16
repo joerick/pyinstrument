@@ -143,6 +143,9 @@ def main():
     renderer_class = get_renderer_class(options.renderer)
     renderer = renderer_class(**renderer_kwargs)
 
+    # remove this frame from the trace
+    renderer.processors.append(remove_first_pyinstrument_frame_processor)
+
     f.write(renderer.render(session))
 
     if output_to_temp_file:
@@ -235,6 +238,18 @@ def save_report(session):
     )
     session.save(path)
     return path, identifier
+
+def remove_first_pyinstrument_frame_processor(frame, options):
+    ''' 
+    The first frame when using the command line is always the __main__ function. I want to remove
+    that from the output.
+    '''
+    if 'pyinstrument' in frame.file_path and len(frame.children) == 1:
+        frame = frame.children[0]
+        frame.remove_from_parent()
+        return frame
+
+    return frame
 
 
 if __name__ == '__main__':
