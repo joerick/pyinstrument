@@ -197,6 +197,7 @@ class FrameGroup(object):
     def frames(self):
         return tuple(self._frames)
 
+    # pylint: disable=W0212
     def add_frame(self, frame):
         if frame.group:
             frame.group._frames.remove(frame)

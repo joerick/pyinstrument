@@ -75,7 +75,7 @@ class ProfilerSession(object):
                         parent.add_child(frame)
 
             # trim any extra frames
-            del frame_stack[stack_depth+1:]
+            del frame_stack[stack_depth+1:]  # pylint: disable=W0631
 
             # assign the time to the final frame
             frame_stack[-1].self_time += time
