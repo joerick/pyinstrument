@@ -2,7 +2,7 @@
 import timeit, warnings, time, sys, inspect
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
-from pyinstrument.util import deprecated
+from pyinstrument.util import deprecated, deprecated_option
 from pyinstrument_cext import setstatprofile
 
 try:
@@ -24,16 +24,10 @@ class SignalUnavailableError(Exception):
 
 
 class Profiler(object):
+    # pylint: disable=W0613
+    @deprecated_option('use_signal')
+    @deprecated_option('recorder')
     def __init__(self, interval=0.001, use_signal=None, recorder=None):
-        if use_signal is not None:
-            warnings.warn('use_signal is deprecated and should no longer be used.', 
-                          DeprecationWarning,
-                          stacklevel=2)
-        if recorder is not None:
-            warnings.warn('recorder is deprecated and should no longer be used.',
-                          DeprecationWarning,
-                          stacklevel=2)
-
         self.interval = interval
         self.last_profile_time = 0.0
         self.frame_records = []
@@ -138,11 +132,14 @@ class Profiler(object):
         else:
             return self.first_interesting_frame()
 
+    @deprecated_option('root')
     def output_text(self, root=None, unicode=False, color=False):
         return renderers.ConsoleRenderer(unicode=unicode, color=color).render(self.last_session)
 
+    @deprecated_option('root')
     def output_html(self, root=None):
         return renderers.HTMLRenderer().render(self.last_session)
 
+    @deprecated_option('root')
     def output(self, renderer, root=None):
         return renderer.render(self.last_session)
