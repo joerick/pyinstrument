@@ -2,6 +2,7 @@ import json
 from pyinstrument.renderers.base import Renderer
 from pyinstrument import processors
 
+# note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
 
 class JSONRenderer(Renderer):
     @staticmethod
