@@ -1,4 +1,54 @@
+import setuptools, subprocess, os, distutils
+import setuptools.command.build_py
 from setuptools import setup
+
+
+HTML_RENDERER_DIR = 'html_renderer'
+
+# pylint: disable=e1101
+class CommandUtilities:
+    def check_call(self, args, **popen_kwargs):
+        self.announce('Running command: %s' % ' '.join(args), level=distutils.log.INFO)
+        if not self.dry_run:
+            subprocess.check_call(args, **popen_kwargs)
+
+
+class BuildPyCommand(setuptools.command.build_py.build_py, CommandUtilities):
+    """Custom build command."""
+
+    def run(self):
+        '''compile the JS, then run superclass implementation'''
+
+        if subprocess.call(['npm', '--version']) != 0:
+            raise RuntimeError('npm is required to build the HTML renderer.')
+
+        self.check_call(['npm', 'run', 'build'], cwd=HTML_RENDERER_DIR)
+
+        self.copy_file(HTML_RENDERER_DIR+'/dist/js/app.js', 'pyinstrument/renderers/html_resources/app.js')
+
+        setuptools.command.build_py.build_py.run(self)
+
+
+class HTMLDevServerCommand(distutils.cmd.Command, CommandUtilities):
+    description = 'run the HTML renderer dev server'
+    user_options = []
+    def initialize_options(self): pass
+    def finalize_options(self): pass
+
+    def run(self):
+        subprocess.check_call(['npm', 'run', 'serve'], cwd=HTML_RENDERER_DIR)
+
+
+class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
+    user_options = []
+    def initialize_options(self): pass
+    def finalize_options(self): pass
+    def run(self):
+        self.check_call(['rm', '-rf', 'dist'])
+        self.run_command('build')
+        self.run_command('bdist_wheel')
+        self.check_call(['twine upload dist/*'], shell=True)
+
 
 setup(
     name="pyinstrument",
@@ -15,6 +65,11 @@ setup(
     zip_safe=False,
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
+    cmdclass={
+        'build_py': BuildPyCommand,
+        'dev_server': HTMLDevServerCommand,
+        'build_and_upload': BuildAndUploadCommand,
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
