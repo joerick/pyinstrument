@@ -10,7 +10,7 @@ export default class Group {
     this.frames.push(frame);
   }
 
-  exitFrames() {
+  get exitFrames() {
     // exit frames are frames inside this group that have children outside the group.
     const exitFrames = []
 
@@ -29,5 +29,18 @@ export default class Group {
     }
 
     return exitFrames;
+  }
+
+  get libraries() {
+    const libraries = [];
+
+    for (const frame of this.frames) {
+      const library = /^[^\\/.]*/.exec(frame.filePathShort)[0]
+      if (!libraries.includes(library)) {
+        libraries.push(library);
+      }
+    }
+
+    return libraries;
   }
 }

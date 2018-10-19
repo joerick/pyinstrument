@@ -6,7 +6,7 @@
 
       <div class="frame-description" v-if="isVisible"
            :style="{paddingLeft: `${indent*35}px`}"
-           @click="childrenVisible = !childrenVisible">
+           @click.prevent.stop="childrenVisible = !childrenVisible">
         <div class="frame-triangle"
              :class="{rotate: childrenVisible}"
              :style="{visibility: frame.children.length > 0 ? 'visible': 'hidden'}">
@@ -17,6 +17,7 @@
           {{formattedTime}}
         </div>
         <div class="name">{{frame.function}}</div>
+        <div class="spacer" style="flex: 1"></div>
         <div class="code-position">
           {{codePosition}}
         </div>
@@ -31,6 +32,7 @@
             <svg width="6" height="10" xmlns="http://www.w3.org/2000/svg"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="#FFF" fill-rule="evenodd" fill-opacity=".582"/></svg>
           </div>
           {{frame.group.frames.length}} frames hidden
+          ({{groupLibrarySummary}})
         </div>
       </div>
 
@@ -42,13 +44,12 @@
              :frame="child"
              :indent="indent + (isVisible ? 1 : 0)" />
     </div>
-    <div class="visual-guide" :style="{left: `${indent*35 + 6}px`, 
+    <div class="visual-guide" :style="{left: `${indent*35 + 21}px`, 
                                        backgroundColor: timeStyle.color}"></div>
   </div>
 </template>
 
 <script>
-import Group from './Group.vue';
 import appState from './appState';
 
 export default {
@@ -95,6 +96,17 @@ export default {
         maximumFractionDigits: 3,
       })
     },
+    groupLibrarySummary() {
+      if (!this.frame.group) {
+        return
+      }
+      const libraries = this.frame.group.libraries;
+      if (libraries.length < 4) {
+        return libraries.join(', ')
+      } else {
+        return `${libraries[0]}, ${libraries[1]}, ${libraries[2]}...`;
+      }
+    },
     timeStyle() {
       let color = undefined;
       let fontWeight = undefined;
@@ -116,9 +128,6 @@ export default {
       return {color, fontWeight}
     },
   },
-  components: {
-    Group
-  }
 }
 </script>
 
@@ -128,6 +137,7 @@ export default {
   font-size: 15px;
   z-index: 0;
   position: relative;
+  user-select: none;
 }
 .group-header {
   margin-left: 35px;
@@ -179,9 +189,6 @@ export default {
   background-color: #354759;
   opacity: 0.5;
 }
-.application-code > * > * > .name {
-  color: rgba(93, 179, 255, 1.0);
-}
 .frame-triangle {
   padding-right: 3px;
   opacity: 0.0;
@@ -189,15 +196,22 @@ export default {
 .frame-description:hover .frame-triangle {
   opacity: 1.0;
 }
+.name {
+  user-select: text;
+}
+.application-code > * > * > .name {
+  color: rgba(93, 179, 255, 1.0);
+}
 .time {
   margin-right: 0.55em;
   color: rgba(184, 233, 134, 0.52);
+  user-select: text;
 }
 .code-position {
   color: rgba(255, 255, 255, 0.5);
-  flex: 1;
   text-align: right;
   margin-left: 1em;
+  user-select: text;
 }
 </style>
 
@@ -209,7 +223,7 @@ export default {
   width: 2px;
   background-color: white;
   position: absolute;
-  opacity: 0.0;
+  opacity: 0.08;
 }
 .indent:hover ~ .visual-guide {
   opacity: 0.4;
