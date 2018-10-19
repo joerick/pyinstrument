@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, uuid
 
 
 class Frame(object):
@@ -175,6 +175,7 @@ class FrameGroup(object):
     def __init__(self, root, **kwargs):
         super(FrameGroup, self).__init__(**kwargs)
         self.root = root
+        self.id = str(uuid.uuid4())
         self._frames = []
         self._exit_frames = None
         self._libraries = None

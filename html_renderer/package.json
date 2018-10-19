@@ -39,5 +39,10 @@
   "browserslist": [
     "> 5%",
     "not ie <= 8"
-  ]
+  ],
+  "babel": {
+    "presets": [
+      "@vue/app"
+    ]
+  }
 }
