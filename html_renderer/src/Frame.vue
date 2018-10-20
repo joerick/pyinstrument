@@ -1,10 +1,11 @@
 <template>
-  <div class="frame"
-       :class="{'application-code': frame.isApplicationCode}">
+  <div class="frame">
 
     <div class="indent">
 
       <div class="frame-description" v-if="isVisible"
+           :class="{'application-code': frame.isApplicationCode,
+                    'children-visible': childrenVisible}"
            :style="{paddingLeft: `${indent*35}px`}"
            @click.prevent.stop="childrenVisible = !childrenVisible">
         <div class="frame-triangle"
@@ -166,12 +167,12 @@ export default {
 .group-triangle, .frame-triangle {
   width: 6px;
   height: 10px;
-  padding-right: 4px;
-  padding-left: 4px;
+  padding-left: 6px;
+  padding-right: 5px;
   display: inline-block;
 }
 .group-triangle.rotate, .frame-triangle.rotate {
-  transform: translate(4px, 5px) rotate(90deg);
+  transform: translate(6px, 4px) rotate(90deg);
 }
 
 .frame-description {
@@ -190,17 +191,19 @@ export default {
   opacity: 0.5;
 }
 .frame-triangle {
-  padding-right: 3px;
+  opacity: 1.0;
+}
+.frame-description.children-visible .frame-triangle {
   opacity: 0.0;
 }
-.frame-description:hover .frame-triangle {
+.frame-description.children-visible:hover .frame-triangle {
   opacity: 1.0;
 }
 .name, .time, .code-position {
   user-select: text;
   cursor: default;
 }
-.application-code > * > * > .name {
+.application-code .name {
   color: rgba(93, 179, 255, 1.0);
 }
 .time {
