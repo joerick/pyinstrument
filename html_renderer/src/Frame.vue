@@ -1,42 +1,38 @@
 <template>
   <div class="frame">
 
-    <div class="indent">
-
-      <div class="frame-description" v-if="isVisible"
-           :class="{'application-code': frame.isApplicationCode,
-                    'children-visible': childrenVisible}"
-           :style="{paddingLeft: `${indent*35}px`}"
-           @click.prevent.stop="childrenVisible = !childrenVisible">
-        <div class="frame-triangle"
-             :class="{rotate: childrenVisible}"
-             :style="{visibility: frame.children.length > 0 ? 'visible': 'hidden'}">
-          <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" :fill="timeStyle.color" fill-rule="evenodd" fill-opacity=".582"/></svg>
-        </div>
-        <div class="time"
-             :style="timeStyle">
-          {{formattedTime}}
-        </div>
-        <div class="name">{{frame.function}}</div>
-        <div class="spacer" style="flex: 1"></div>
-        <div class="code-position">
-          {{codePosition}}
-        </div>
+    <div class="frame-description" v-if="isVisible"
+         :class="{'application-code': frame.isApplicationCode,
+                  'children-visible': childrenVisible}"
+         :style="{paddingLeft: `${indent*35}px`}"
+         @click.prevent.stop="childrenVisible = !childrenVisible">
+      <div class="frame-triangle"
+           :class="{rotate: childrenVisible}"
+           :style="{visibility: frame.children.length > 0 ? 'visible': 'hidden'}">
+        <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" :fill="timeStyle.color" fill-rule="evenodd" fill-opacity=".582"/></svg>
       </div>
-
-      <div v-if="frame.group && frame.group.rootFrame == frame && childrenVisible" 
-           class="group-header"
-           :style="{paddingLeft: `${indent*35}px`}"
-           @click.prevent.stop="headerClicked">
-        <div class="group-header-button">
-          <div class="group-triangle" :class="{rotate: isGroupVisible}">
-            <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="#FFF" fill-rule="evenodd" fill-opacity=".582"/></svg>
-          </div>
-          {{frame.group.frames.length}} frames hidden
-          ({{groupLibrarySummary}})
-        </div>
+      <div class="time"
+           :style="timeStyle">
+        {{formattedTime}}
       </div>
+      <div class="name">{{frame.function}}</div>
+      <div class="spacer" style="flex: 1"></div>
+      <div class="code-position">
+        {{codePosition}}
+      </div>
+    </div>
 
+    <div v-if="frame.group && frame.group.rootFrame == frame && childrenVisible" 
+         class="group-header"
+         :style="{paddingLeft: `${indent*35}px`}"
+         @click.prevent.stop="headerClicked">
+      <div class="group-header-button">
+        <div class="group-triangle" :class="{rotate: isGroupVisible}">
+          <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="#FFF" fill-rule="evenodd" fill-opacity=".582"/></svg>
+        </div>
+        {{frame.group.frames.length}} frames hidden
+        ({{groupLibrarySummary}})
+      </div>
     </div>
 
     <div class="children" v-if="childrenVisible">
@@ -45,8 +41,11 @@
              :frame="child"
              :indent="indent + (isVisible ? 1 : 0)" />
     </div>
-    <div class="visual-guide" :style="{left: `${indent*35 + 21}px`, 
-                                       backgroundColor: timeStyle.color}"></div>
+
+    <div class="visual-guide" 
+         :style="{left: `${indent*35 + 21}px`, 
+                  backgroundColor: timeStyle.color}">
+    </div>
   </div>
 </template>
 
@@ -227,10 +226,10 @@ export default {
   position: absolute;
   opacity: 0.08;
 }
-.indent:hover ~ .visual-guide {
+.frame-description:hover ~ .visual-guide {
   opacity: 0.4;
 }
-.indent:hover ~ .children .visual-guide {
+.frame-description:hover ~ .children .visual-guide {
   opacity: 0.1;
 }
 </style>
