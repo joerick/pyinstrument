@@ -20,7 +20,7 @@ export default {
   data() {
     return {
       appState,
-      session: window.profilerSession,
+      session: window.profileSession,
     }
   },
   mounted() {
@@ -28,9 +28,13 @@ export default {
     this.setFavicon(require('./assets/favicon.png'));
 
     if (!this.session) {
-      import('./sample.json').then(sample => {
-        this.session = sample;
-      })
+      // in dev mode, load a sample json.
+      fetch('./sample.json')
+        .then(response => response.json())
+        .then(sample => {
+          this.session = sample;
+        })
+        .catch(console.log)
     }
 
     this.scrollListener = () => this.didScroll()

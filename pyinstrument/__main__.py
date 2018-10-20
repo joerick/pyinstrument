@@ -147,6 +147,8 @@ def main():
     renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
     f.write(renderer.render(session))
+    if f is not sys.stdout:
+        f.close()
 
     if output_to_temp_file:
         print('stdout is a terminal, so saved profile output to %s' % output_filename)
