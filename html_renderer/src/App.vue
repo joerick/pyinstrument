@@ -30,18 +30,17 @@ export default {
       })
     }
 
-    this.scrollWatcher = window.addEventListener('scroll', () => this.didScroll(), false);
-    didScroll();
+    this.scrollListener = () => this.didScroll()
+    window.addEventListener('scroll', this.scrollListener, {passive: true});
   },
   beforeDestroy() {
-    window.removeEventListener('scroll', this.scrollWatcher);
+    window.removeEventListener('scroll', this.scrollListener, {passive: true});
   },
   methods: {
     didScroll() {
       // don't let the body scroll up due to lack of content (when a tree is closed)
       // prevents the frames from jumping around when they are collapsed
-      const body = document.body;
-      body.style.minHeight = `${window.scrollY + window.innerHeight}px`;
+      document.body.style.minHeight = `${window.scrollY + window.innerHeight}px`;
     }
   },
   computed: {
