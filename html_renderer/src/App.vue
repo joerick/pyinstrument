@@ -24,6 +24,9 @@ export default {
     }
   },
   mounted() {
+    window.App = this;
+    this.setFavicon(require('./assets/favicon.png'));
+
     if (!this.session) {
       import('./sample.json').then(sample => {
         this.session = sample;
@@ -41,6 +44,13 @@ export default {
       // don't let the body scroll up due to lack of content (when a tree is closed)
       // prevents the frames from jumping around when they are collapsed
       document.body.style.minHeight = `${window.scrollY + window.innerHeight}px`;
+    },
+    setFavicon(image) {
+      var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+      // link.type = 'image/x-icon';
+      link.rel = 'shortcut icon';
+      link.href = image;
+      document.getElementsByTagName('head')[0].appendChild(link);
     }
   },
   computed: {
@@ -49,6 +59,26 @@ export default {
         return new FrameModel(this.session.root_frame)
       }
     }
+  },
+  watch: {
+    session: {
+      handler() {
+        if (!this.session) {
+          document.title = 'Pyinstrument';
+          return;
+        }
+
+        const rootFrame = this.rootFrame;
+        const duration = rootFrame.time.toLocaleString({maximumDecimalDigits: 3});
+        let name = rootFrame.function;
+        if (name == '<module>') {
+          name = this.session.program;
+        }
+
+        document.title = `${duration}s - ${name} - pyinstrument`
+      },
+      immediate: true,
+    },
   },
   components: {
     Frame,
