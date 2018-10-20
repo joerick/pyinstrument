@@ -10,7 +10,7 @@
         <div class="frame-triangle"
              :class="{rotate: childrenVisible}"
              :style="{visibility: frame.children.length > 0 ? 'visible': 'hidden'}">
-          <svg width="6" height="10" xmlns="http://www.w3.org/2000/svg"><path d="M.937-.016L5.793 4.84.937 9.696z" :fill="timeStyle.color" fill-rule="evenodd" fill-opacity=".582"/></svg>
+          <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" :fill="timeStyle.color" fill-rule="evenodd" fill-opacity=".582"/></svg>
         </div>
         <div class="time"
              :style="timeStyle">
@@ -29,7 +29,7 @@
            @click.prevent.stop="headerClicked">
         <div class="group-header-button">
           <div class="group-triangle" :class="{rotate: isGroupVisible}">
-            <svg width="6" height="10" xmlns="http://www.w3.org/2000/svg"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="#FFF" fill-rule="evenodd" fill-opacity=".582"/></svg>
+            <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="#FFF" fill-rule="evenodd" fill-opacity=".582"/></svg>
           </div>
           {{frame.group.frames.length}} frames hidden
           ({{groupLibrarySummary}})
@@ -166,8 +166,8 @@ export default {
 .group-triangle, .frame-triangle {
   width: 6px;
   height: 10px;
-  margin-right: 4px;
-  margin-left: 4px;
+  padding-right: 4px;
+  padding-left: 4px;
   display: inline-block;
 }
 .group-triangle.rotate, .frame-triangle.rotate {
@@ -196,8 +196,9 @@ export default {
 .frame-description:hover .frame-triangle {
   opacity: 1.0;
 }
-.name {
+.name, .time, .code-position {
   user-select: text;
+  cursor: default;
 }
 .application-code > * > * > .name {
   color: rgba(93, 179, 255, 1.0);
@@ -205,13 +206,11 @@ export default {
 .time {
   margin-right: 0.55em;
   color: rgba(184, 233, 134, 0.52);
-  user-select: text;
 }
 .code-position {
   color: rgba(255, 255, 255, 0.5);
   text-align: right;
   margin-left: 1em;
-  user-select: text;
 }
 </style>
 
