@@ -1,12 +1,17 @@
 import sys, os, codecs, runpy, tempfile
 from optparse import OptionParser
+import pyinstrument
 from pyinstrument import Profiler
 from .six import exec_
 
 
 def main():
     usage = ("usage: pyinstrument [options] scriptfile [arg] ...")
-    parser = OptionParser(usage=usage)
+    version_string = 'pyinstrument {v}, on Python {pyv[0]}.{pyv[1]}.{pyv[2]}'.format(
+        v=pyinstrument.__version__,
+        pyv=sys.version_info,
+    )
+    parser = OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
     parser.add_option('-m', '',
