@@ -101,9 +101,12 @@ def test_json_output():
     output_data = profiler.output(renderers.JSONRenderer(), root=True)
 
     output = json.loads(output_data)
+    assert 'root_frame' in output
 
-    assert output['function'] == 'test_json_output'
-    assert len(output['children']) == 2
+    root_frame = output['root_frame']
+
+    assert root_frame['function'] == 'test_json_output'
+    assert len(root_frame['children']) == 2
 
 def test_empty_profile():
     with Profiler() as profiler:
