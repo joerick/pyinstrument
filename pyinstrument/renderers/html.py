@@ -2,10 +2,6 @@ import os
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument import processors
-try:
-    from html import escape as html_escape
-except ImportError:
-    from cgi import escape as html_escape
 
 
 class HTMLRenderer(Renderer):
@@ -36,7 +32,7 @@ class HTMLRenderer(Renderer):
         return page
 
     def render_json(self, session):
-        json_renderer = JSONRenderer(include_groups=True)
+        json_renderer = JSONRenderer()
         json_renderer.processors = self.processors
         return json_renderer.render(session)
 

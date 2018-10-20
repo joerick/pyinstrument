@@ -5,10 +5,6 @@ from pyinstrument import processors
 # note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
 
 class JSONRenderer(Renderer):
-    def __init__(self, include_groups=True, **kwargs):
-        super(JSONRenderer, self).__init__(**kwargs)
-        self.include_groups = include_groups
-
     def render_frame(self, frame):
         frame_dict = {
             'function': frame.function,
@@ -24,7 +20,7 @@ class JSONRenderer(Renderer):
             children_json.append(self.render_frame(child))
         frame_dict['children'] = children_json
 
-        if self.include_groups and frame.group:
+        if frame.group:
             frame_dict['group_id'] = frame.group.id
         
         return frame_dict
