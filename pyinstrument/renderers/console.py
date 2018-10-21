@@ -7,7 +7,7 @@ from pyinstrument.util import truncate
 
 
 class ConsoleRenderer(Renderer):
-    def __init__(self, unicode=False, color=False, show_all=False, **kwargs):
+    def __init__(self, unicode=False, color=False, show_all=False, timeline=False, **kwargs):
         super(ConsoleRenderer, self).__init__(**kwargs)
 
         self.unicode = unicode
@@ -15,6 +15,8 @@ class ConsoleRenderer(Renderer):
         self.colors = self.colors_enabled if color else self.colors_disabled
         if show_all:
             self.processors.remove(processors.group_library_frames_processor)
+        if timeline:
+            self.processors.remove(processors.aggregate_repeated_calls)
 
     def render(self, session):
         result = self.render_preamble(session)
@@ -57,7 +59,7 @@ class ConsoleRenderer(Renderer):
 
     def render_frame(self, frame, indent=u'', child_indent=u''):
         if not frame.group or (frame.group.root == frame
-                               or frame.self_time > 0.2*self.root_frame.time()
+                               or frame.total_self_time > 0.2*self.root_frame.time()
                                or frame in frame.group.exit_frames):
             time_str = (self._ansi_color_for_time(frame)
                         + '{:.3f}'.format(frame.time()) 
@@ -87,12 +89,10 @@ class ConsoleRenderer(Renderer):
             result = ''
             indents = {'├': u'', '│': u'', '└': u'', ' ': u''}
 
-        children = [f for f in frame.children if f.proportion_of_total > 0.01]
+        if frame.children:
+            last_child = frame.children[-1]
 
-        if children:
-            last_child = children[-1]
-
-        for child in children:
+        for child in frame.children:
             if child is not last_child:
                 c_indent = child_indent + indents['├']
                 cc_indent = child_indent + indents['│']

@@ -1,20 +1,106 @@
 import sys, os, uuid
 
 
-class Frame(object):
+class BaseFrame(object):
+    def __init__(self, parent=None, self_time=0):
+        self.parent = parent
+        self.self_time = self_time
+        self._proportion_of_parent = None
+        self._proportion_of_total = None
+        self.group = None
+
+    # pylint: disable=W0212
+    def remove_from_parent(self):
+        '''
+        Removes this frame from its parent, and nulls the parent link
+        '''
+        if self.parent:
+            self.parent._children.remove(self)
+            self.parent._invalidate_tree_caches()
+            self.parent = None
+
+        self._invalidate_tree_caches()
+
+    def _invalidate_tree_caches(self):
+        # should be called when manipulating the tree i.e. when changing `parent` or `children`
+        # properties.
+        self._proportion_of_parent = None
+        self._proportion_of_total = None
+
+    @property
+    def proportion_of_parent(self):
+        if self._proportion_of_parent is None:
+            if self.parent and self.time():
+                try:
+                    self._proportion_of_parent = self.time() / self.parent.time()
+                except ZeroDivisionError:
+                    self._proportion_of_parent = float('nan')
+            else:
+                self._proportion_of_parent = 1.0
+
+        return self._proportion_of_parent
+
+    @property
+    def proportion_of_total(self):
+        if self._proportion_of_total is None:
+            if not self.parent:
+                self._proportion_of_total = 1.0
+            else:
+                self._proportion_of_total = (self.parent.proportion_of_total 
+                                             * self.proportion_of_parent)
+
+        return self._proportion_of_total
+
+    @property
+    def total_self_time(self):
+        '''
+        The total amount of self time in this frame (including self time recorded by SelfTimeFrame
+        children)
+        '''
+        self_time = self.self_time
+        for child in self.children:
+            if isinstance(child, SelfTimeFrame):
+                self_time += child.self_time
+        return self_time
+
+    # stylistically I'd rather this was a property, but using @property appears to use twice
+    # as many stack frames, so I'm forced into using a function since this method is recursive
+    # down the call tree.
+    def time(self): raise NotImplementedError()
+
+    @property
+    def function(self): raise NotImplementedError()
+
+    @property
+    def file_path(self): raise NotImplementedError()
+
+    @property
+    def line_no(self): raise NotImplementedError()
+
+    @property
+    def file_path_short(self): raise NotImplementedError()
+
+    @property
+    def is_application_code(self): raise NotImplementedError()
+
+    @property
+    def code_position_short(self): raise NotImplementedError()
+
+    @property
+    def children(self): raise NotImplementedError()
+
+
+class Frame(BaseFrame):
     """
     Object that represents a stack frame in the parsed tree
     """
     def __init__(self, identifier='', parent=None, children=None, self_time=0):
+        super(Frame, self).__init__(parent=parent, self_time=self_time)
+
         self.identifier = identifier
-        self.parent = parent
-        self.self_time = self_time
         self._children = []
-        self.group = None
 
         self._time = None
-        self._proportion_of_parent = None
-        self._proportion_of_total = None
 
         if children:
             for child in children:
@@ -48,18 +134,6 @@ class Frame(object):
         else:
             for frame in frames:
                 self.add_child(frame)
-
-    # pylint: disable=W0212
-    def remove_from_parent(self):
-        '''
-        Removes this frame from its parent, and nulls the parent link
-        '''
-        if self.parent:
-            self.parent._children.remove(self)
-            self.parent._invalidate_tree_caches()
-            self.parent = None
-
-        self._invalidate_tree_caches()
 
     @property
     def children(self):
@@ -119,9 +193,6 @@ class Frame(object):
         if self.identifier:
             return '%s:%i' % (self.file_path_short, self.line_no)
 
-    # stylistically I'd rather this was a property, but using @property appears to use twice
-    # as many stack frames, so I'm forced into using a function since this method is recursive
-    # down the call tree.
     def time(self):
         if self._time is None:
             # can't use a sum(<generator>) expression here sadly, because this method
@@ -134,41 +205,49 @@ class Frame(object):
 
         return self._time
 
-    @property
-    def proportion_of_parent(self):
-        if self._proportion_of_parent is None:
-            if self.parent and self.time():
-                try:
-                    self._proportion_of_parent = self.time() / self.parent.time()
-                except ZeroDivisionError:
-                    self._proportion_of_parent = float('nan')
-            else:
-                self._proportion_of_parent = 1.0
-
-        return self._proportion_of_parent
-
-    @property
-    def proportion_of_total(self):
-        if self._proportion_of_total is None:
-            if not self.parent:
-                self._proportion_of_total = 1.0
-            else:
-                self._proportion_of_total = (self.parent.proportion_of_total 
-                                             * self.proportion_of_parent)
-
-        return self._proportion_of_total
-
     def _invalidate_tree_caches(self):
-        # should be called when manipulating the tree i.e. when changing `parent` or `children`
-        # properties.
+        super(Frame, self)._invalidate_tree_caches()
         self._time = None
-        self._proportion_of_parent = None
-        self._proportion_of_total = None
 
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, len(children)=%d), group=%r' % (
             self.identifier, self.time(), len(self.children), self.group
         )
+
+
+class SelfTimeFrame(BaseFrame):
+    """
+    Represents a time spent inside a function
+    """
+    def time(self): 
+        return self.self_time
+    
+    @property
+    def function(self): return '[self]'
+
+    @property
+    def _children(self): return []
+
+    @property
+    def children(self): return []
+
+    @property
+    def file_path(self): return self.parent.file_path
+
+    @property
+    def line_no(self): return self.parent.line_no
+
+    @property
+    def file_path_short(self): return ''
+
+    @property
+    def is_application_code(self): return False
+
+    @property
+    def code_position_short(self): return ''
+
+    @property
+    def identifier(self): return '[self]'
 
 
 class FrameGroup(object):

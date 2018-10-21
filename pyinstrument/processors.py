@@ -9,7 +9,7 @@ called like:
 
 import re
 from operator import methodcaller
-from pyinstrument.frame import FrameGroup
+from pyinstrument.frame import FrameGroup, SelfTimeFrame
 
 
 def remove_importlib(frame, options):
@@ -94,15 +94,87 @@ def group_library_frames_processor(frame, options):
     return frame    
 
 
+def merge_consecutive_self_time(frame, options):
+    '''
+    Combines consecutive 'self time' frames
+    '''
+    if frame is None:
+        return None
+
+    previous_self_time_frame = None
+
+    for child in frame.children:
+        if isinstance(child, SelfTimeFrame):
+            if previous_self_time_frame:
+                # merge
+                previous_self_time_frame.self_time += child.self_time
+                child.remove_from_parent()
+            else:
+                # keep a reference, maybe it'll be added to on the next loop
+                previous_self_time_frame = child
+        else:
+            previous_self_time_frame = None
+    
+    for child in frame.children:
+        merge_consecutive_self_time(child, options=options)
+    
+    return frame
+
+
+def remove_unnecessary_self_time_nodes(frame, options):
+    '''
+    When a frame has only one child, and that is a self-time frame, remove that node, since it's
+    unnecessary - it clutters the output and offers no additional information.
+    '''
+    if frame is None:
+        return None
+
+    if len(frame.children) == 1 and isinstance(frame.children[0], SelfTimeFrame):
+        child = frame.children[0]
+        frame.self_time += child.self_time
+        child.remove_from_parent()
+    
+    for child in frame.children:
+        remove_unnecessary_self_time_nodes(child, options=options)
+    
+    return frame
+
+def remove_irrelevant_nodes(frame, options):
+    '''
+    Remove nodes that represent less than e.g. 1% of the output
+    '''
+    if frame is None:
+        return None
+
+    filter_threshold = options.get('filter_threshold', 0.01)
+
+    for child in frame.children:
+        if child.proportion_of_total < filter_threshold:
+            frame.self_time += child.time()
+            child.remove_from_parent()
+        
+    for child in frame.children:
+        remove_irrelevant_nodes(child, options=options)
+
+    return frame
+
+
+
 def default_time_aggregate_processors():
     return [
         remove_importlib,
+        merge_consecutive_self_time,
         aggregate_repeated_calls,
-        group_library_frames_processor
+        group_library_frames_processor,
+        remove_unnecessary_self_time_nodes,
+        remove_irrelevant_nodes,
     ]
 
 def default_timeline_processors():
     return [
         remove_importlib,
+        merge_consecutive_self_time,
         group_library_frames_processor,
+        remove_unnecessary_self_time_nodes,
+        remove_irrelevant_nodes,
     ]

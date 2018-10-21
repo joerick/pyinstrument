@@ -1,6 +1,6 @@
 import io, json
 from collections import deque
-from pyinstrument.frame import Frame
+from pyinstrument.frame import Frame, SelfTimeFrame
 from pyinstrument.vendor.six import PY2
 
 ASSERTION_MESSAGE = ('Please raise an issue at http://github.com/pyinstrument/issues and '
@@ -84,7 +84,7 @@ class ProfilerSession(object):
             del frame_stack[stack_depth+1:]  # pylint: disable=W0631
 
             # assign the time to the final frame
-            frame_stack[-1].self_time += time
+            frame_stack[-1].add_child(SelfTimeFrame(self_time=time))
         
         if root_frame is None:
             return None
