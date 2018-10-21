@@ -49,7 +49,8 @@ def aggregate_repeated_calls(frame, options):
 
             # combine the two frames, putting the children and self_time into the aggregate frame.
             aggregate_frame.self_time += child.self_time
-            aggregate_frame.add_children(child.children)
+            if child.children:
+                aggregate_frame.add_children(child.children)
 
             # remove this frame, it's been incorporated into aggregate_frame
             child.remove_from_parent()
