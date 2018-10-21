@@ -188,7 +188,8 @@ class FrameGroup(object):
             libraries = []
             for frame in self.frames:
                 library = frame.file_path_short.split(os.sep)[0]
-                if library not in libraries:
+                library, _ = os.path.splitext(library)
+                if library and library not in libraries:
                     libraries.append(library)
             self._libraries = libraries      
 
