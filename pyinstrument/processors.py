@@ -158,24 +158,3 @@ def remove_irrelevant_nodes(frame, options):
         remove_irrelevant_nodes(child, options=options)
 
     return frame
-
-
-
-def default_time_aggregate_processors():
-    return [
-        remove_importlib,
-        merge_consecutive_self_time,
-        aggregate_repeated_calls,
-        group_library_frames_processor,
-        remove_unnecessary_self_time_nodes,
-        remove_irrelevant_nodes,
-    ]
-
-def default_timeline_processors():
-    return [
-        remove_importlib,
-        merge_consecutive_self_time,
-        group_library_frames_processor,
-        remove_unnecessary_self_time_nodes,
-        remove_irrelevant_nodes,
-    ]
