@@ -1,6 +1,6 @@
 import setuptools, subprocess, os, distutils
 import setuptools.command.build_py
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 HTML_RENDERER_DIR = 'html_renderer'
@@ -53,7 +53,7 @@ class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
 
 setup(
     name="pyinstrument",
-    packages=['pyinstrument'],
+    packages=find_packages(),
     version="2.2.1",
     description="A call stack profiler for Python. Inspired by Apple's Instruments.app",
     author='Joe Rickerby',
