@@ -54,7 +54,7 @@ class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
 setup(
     name="pyinstrument",
     packages=find_packages(),
-    version="2.2.1",
+    version="2.3.0",
     description="A call stack profiler for Python. Inspired by Apple's Instruments.app",
     author='Joe Rickerby',
     author_email='joerick@mac.com',

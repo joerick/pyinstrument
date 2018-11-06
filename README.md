@@ -216,7 +216,7 @@ taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/20
 Changelog
 ---------
 
-### Next version...
+### v2.3.0
 
 -   Big refactor! 
     -   `Recorders` have been removed. The frame recording is now internal to the `Profiler` object.
@@ -226,10 +226,13 @@ Changelog
         a time-aggregating recorder, the profiler just uses timeline-style recording (this is 
         lower-overhead anyway) and the aggregation is done as a processing step.
     -   The upshot of this is that it's now way easier to alter the tree to filter stuff out, and
-        do more advanced things like combining frames that we don't care about.
+        do more advanced things like combining frames that we don't care about. More features to
+        come that use this in v3.0!
 -   Importlib frames are removed - you won't see them at all. Their children are retained, so
     imports are just transparent.
-
+-   Django profile file name is now limited to a hundred of characters (#50)
+-   Fix bug with --html option (#53)
+-   Add `--version` command line option
 
 ### v2.2.1
 

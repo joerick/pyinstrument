@@ -1,4 +1,5 @@
 import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse
+import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import object_with_import_path
@@ -6,8 +7,12 @@ from pyinstrument.vendor.six import exec_
 
 
 def main():
-    usage = ("usage: pyinstrument [options] [scriptfile [arg]] ...")
-    parser = optparse.OptionParser(usage=usage)
+    usage = ("usage: pyinstrument [options] scriptfile [arg] ...")
+    version_string = 'pyinstrument {v}, on Python {pyv[0]}.{pyv[1]}.{pyv[2]}'.format(
+        v=pyinstrument.__version__,
+        pyv=sys.version_info,
+    )
+    parser = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
     parser.add_option('', '--load-prev',
