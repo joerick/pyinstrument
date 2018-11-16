@@ -94,3 +94,51 @@ def test_merge_consecutive_self_time():
     assert frame.children[2].self_time == approx(0.1)
     assert frame.children[3].self_time == approx(0.05)
     assert isinstance(frame.children[3], SelfTimeFrame)
+
+
+def test_aggregate_repeated_calls():
+    frame = Frame(
+        identifier='<module>\x00cibuildwheel/__init__.py\x0012',
+        children=[
+            Frame(
+                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                self_time=0.1,
+                children=[
+                    Frame(
+                        identifier='scan_string\x00cibuildwheel/utils.py\x0054',
+                        self_time=0.2,
+                    ),
+                ]
+            ),
+            SelfTimeFrame(
+                self_time=0.1,
+            ),
+            Frame(
+                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                self_time=0.1,
+            ),
+            SelfTimeFrame(
+                self_time=0.2,
+            ),
+            Frame(
+                identifier='calculate_metrics\x00cibuildwheel/utils.py\x007',
+                self_time=0.1,
+            ),
+            SelfTimeFrame(
+                self_time=0.05,
+            ),
+        ]
+    )
+
+    assert frame.time() == approx(0.85)
+
+    frame = processors.aggregate_repeated_calls(frame, options={})
+
+    assert frame.time() == approx(0.85)
+    # children should be sorted by time
+    assert len(frame.children) == 3
+    assert frame.children[0].function == 'strip_newlines'
+    assert frame.children[0].time() == 0.4
+    assert frame.children[0].children[0].function == 'scan_string'
+    assert isinstance(frame.children[1], SelfTimeFrame)
+    assert frame.children[1].time() == approx(0.35)

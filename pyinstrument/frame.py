@@ -4,9 +4,7 @@ import sys, os, uuid
 class BaseFrame(object):
     def __init__(self, parent=None, self_time=0):
         self.parent = parent
-        self.self_time = self_time
-        self._proportion_of_parent = None
-        self._proportion_of_total = None
+        self._self_time = self_time
         self.group = None
 
     # pylint: disable=W0212
@@ -16,40 +14,18 @@ class BaseFrame(object):
         '''
         if self.parent:
             self.parent._children.remove(self)
-            self.parent._invalidate_tree_caches()
+            self.parent._invalidate_time_caches()
             self.parent = None
-
-        self._invalidate_tree_caches()
-
-    def _invalidate_tree_caches(self):
-        # should be called when manipulating the tree i.e. when changing `parent` or `children`
-        # properties.
-        self._proportion_of_parent = None
-        self._proportion_of_total = None
 
     @property
     def proportion_of_parent(self):
-        if self._proportion_of_parent is None:
-            if self.parent and self.time():
-                try:
-                    self._proportion_of_parent = self.time() / self.parent.time()
-                except ZeroDivisionError:
-                    self._proportion_of_parent = float('nan')
-            else:
-                self._proportion_of_parent = 1.0
-
-        return self._proportion_of_parent
-
-    @property
-    def proportion_of_total(self):
-        if self._proportion_of_total is None:
-            if not self.parent:
-                self._proportion_of_total = 1.0
-            else:
-                self._proportion_of_total = (self.parent.proportion_of_total 
-                                             * self.proportion_of_parent)
-
-        return self._proportion_of_total
+        if self.parent:
+            try:
+                return self.time() / self.parent.time()
+            except ZeroDivisionError:
+                return float('nan')
+        else:
+            return 1.0
 
     @property
     def total_self_time(self):
@@ -62,6 +38,20 @@ class BaseFrame(object):
             if isinstance(child, SelfTimeFrame):
                 self_time += child.self_time
         return self_time
+
+    @property
+    def self_time(self):
+        return self._self_time
+
+    @self_time.setter
+    def self_time(self, self_time):
+        self._self_time = self_time
+        self._invalidate_time_caches()
+
+    # invalidates the cache for the time() function.
+    # called whenever self_time or _children is modified.
+    def _invalidate_time_caches(self):
+        pass
 
     # stylistically I'd rather this was a property, but using @property appears to use twice
     # as many stack frames, so I'm forced into using a function since this method is recursive
@@ -120,7 +110,7 @@ class Frame(BaseFrame):
             index = self._children.index(after) + 1
             self._children.insert(index, frame)
 
-        self._invalidate_tree_caches()
+        self._invalidate_time_caches()
     
     def add_children(self, frames, after=None):
         '''
@@ -205,9 +195,15 @@ class Frame(BaseFrame):
 
         return self._time
 
-    def _invalidate_tree_caches(self):
-        super(Frame, self)._invalidate_tree_caches()
+    # pylint: disable=W0212
+    def _invalidate_time_caches(self):
         self._time = None
+        # null all the parent's caches also.
+        frame = self
+        while frame.parent is not None:
+            frame = frame.parent
+            frame._time = None
+
 
     def __repr__(self):
         return 'Frame(identifier=%s, time=%f, len(children)=%d), group=%r' % (

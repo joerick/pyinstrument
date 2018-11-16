@@ -140,21 +140,26 @@ def remove_unnecessary_self_time_nodes(frame, options):
     
     return frame
 
-def remove_irrelevant_nodes(frame, options):
+def remove_irrelevant_nodes(frame, options, total_time=None):
     '''
     Remove nodes that represent less than e.g. 1% of the output
     '''
     if frame is None:
         return None
+    
+    if total_time is None:
+        total_time = frame.time()
 
     filter_threshold = options.get('filter_threshold', 0.01)
 
     for child in frame.children:
-        if child.proportion_of_total < filter_threshold:
+        proportion_of_total = child.time() / total_time
+
+        if proportion_of_total < filter_threshold:
             frame.self_time += child.time()
             child.remove_from_parent()
         
     for child in frame.children:
-        remove_irrelevant_nodes(child, options=options)
+        remove_irrelevant_nodes(child, options=options, total_time=total_time)
 
     return frame
