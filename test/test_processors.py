@@ -12,6 +12,12 @@ all_processors = [
     processors.remove_irrelevant_nodes,
 ]
 
+
+def test_frame_passthrough_none():
+    for processor in all_processors:
+        assert processor(None, options={}) is None
+
+
 def test_remove_importlib():
     frame = Frame(
         identifier='<module>\x00sympy/__init__.py\x0012',
@@ -54,11 +60,6 @@ def test_remove_importlib():
     assert frame.children[0].file_path == 'sympy/polys/polyfuncs.py'
     assert frame.children[1].file_path == 'sympy/polys/partfrac.py'
     assert frame.children[2].file_path == 'sympy/polys/numberfields.py'
-
-
-def test_frame_passthrough_none():
-    for processor in all_processors:
-        assert processor(None, options={}) is None
 
 
 def test_merge_consecutive_self_time():
