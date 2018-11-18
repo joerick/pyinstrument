@@ -4,15 +4,17 @@ from pyinstrument import processors
 
 # note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
 
+encode_str = json.encoder.encode_basestring
+
+
 class JSONRenderer(Renderer):
     def render_frame(self, frame):
         # we don't use the json module because it uses 2x stack frames 
-        encode = json.encoder.encode_basestring
 
         property_decls = []
-        property_decls.append('"function": %s' % encode(frame.function))
-        property_decls.append('"file_path_short": %s' % encode(frame.file_path_short))
-        property_decls.append('"file_path": %s' % encode(frame.file_path))
+        property_decls.append('"function": %s' % encode_str(frame.function))
+        property_decls.append('"file_path_short": %s' % encode_str(frame.file_path_short))
+        property_decls.append('"file_path": %s' % encode_str(frame.file_path))
         property_decls.append('"line_no": %d' % frame.line_no)
         property_decls.append('"time": %f' % frame.time())
 
@@ -23,13 +25,25 @@ class JSONRenderer(Renderer):
         property_decls.append('"children": [%s]' % ','.join(children_jsons))
 
         if frame.group:
-            property_decls.append('"group_id": %s' % encode(frame.group.id))
+            property_decls.append('"group_id": %s' % encode_str(frame.group.id))
         
         return '{%s}' % ','.join(property_decls)
 
     def render(self, session):
         frame = self.preprocess(session.root_frame())
-        return self.render_frame(frame)
+
+        property_decls = []
+        property_decls.append('"start_time": %f' % session.start_time)
+        property_decls.append('"duration": %f' % session.duration)
+        property_decls.append('"sample_count": %d' % session.sample_count)
+        property_decls.append('"program": %s' % encode_str(session.program))
+        if session.cpu_time is None:
+            property_decls.append('"cpu_time": null')
+        else:
+            property_decls.append('"cpu_time": %f' % session.cpu_time)
+        property_decls.append('"root_frame": %s' % self.render_frame(frame))
+
+        return '{%s}\n' % ','.join(property_decls)
 
     def default_processors(self):
         return [
