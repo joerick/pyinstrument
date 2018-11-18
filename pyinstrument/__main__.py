@@ -125,15 +125,18 @@ def main():
 
     if options.outfile:
         f = codecs.open(options.outfile, 'w', 'utf-8')
+        should_close_f_after_writing = True
     elif output_to_temp_file:
         output_file = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
         f = codecs.getwriter('utf-8')(output_file)
         output_filename = output_file.name
+        should_close_f_after_writing = True
     else:
         if PY2:
             f = codecs.getwriter('utf-8')(sys.stdout)
         else:
             f = sys.stdout
+        should_close_f_after_writing = False
 
     renderer_kwargs = {'processor_options': {'hide_regex': options.hide_regex}}
 
@@ -155,7 +158,7 @@ def main():
     renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
     f.write(renderer.render(session))
-    if f is not sys.stdout:
+    if should_close_f_after_writing:
         f.close()
 
     if output_to_temp_file:
