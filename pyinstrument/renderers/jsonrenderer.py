@@ -6,35 +6,30 @@ from pyinstrument import processors
 
 class JSONRenderer(Renderer):
     def render_frame(self, frame):
-        frame_dict = {
-            'function': frame.function,
-            'file_path_short': frame.file_path_short,
-            'file_path': frame.file_path,
-            'line_no': frame.line_no,
-            'time': frame.time(),
-        }
+        # we don't use the json module because it uses 2x stack frames 
+        encode = json.encoder.encode_basestring
+
+        property_decls = []
+        property_decls.append('"function": %s' % encode(frame.function))
+        property_decls.append('"file_path_short": %s' % encode(frame.file_path_short))
+        property_decls.append('"file_path": %s' % encode(frame.file_path))
+        property_decls.append('"line_no": %d' % frame.line_no)
+        property_decls.append('"time": %f' % frame.time())
 
         # can't use list comprehension here because it uses two stack frames each time.
-        children_json = []
+        children_jsons = []
         for child in frame.children:
-            children_json.append(self.render_frame(child))
-        frame_dict['children'] = children_json
+            children_jsons.append(self.render_frame(child))
+        property_decls.append('"children": [%s]' % ','.join(children_jsons))
 
         if frame.group:
-            frame_dict['group_id'] = frame.group.id
+            property_decls.append('"group_id": %s' % encode(frame.group.id))
         
-        return frame_dict
+        return '{%s}' % ','.join(property_decls)
 
     def render(self, session):
         frame = self.preprocess(session.root_frame())
-        return json.dumps({
-            'root_frame': self.render_frame(frame),
-            'start_time': session.start_time,
-            'duration': session.duration,
-            'sample_count': session.sample_count,
-            'program': session.program,
-            'cpu_time': session.cpu_time,
-        }, indent=2)
+        return self.render_frame(frame)
 
     def default_processors(self):
         return [
