@@ -3,7 +3,7 @@ import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import object_with_import_path
-from pyinstrument.vendor.six import exec_
+from pyinstrument.vendor.six import exec_, PY2
 
 
 def main():
@@ -130,7 +130,10 @@ def main():
         f = codecs.getwriter('utf-8')(output_file)
         output_filename = output_file.name
     else:
-        f = sys.stdout
+        if PY2:
+            f = codecs.getwriter('utf-8')(sys.stdout)
+        else:
+            f = sys.stdout
 
     renderer_kwargs = {'processor_options': {'hide_regex': options.hide_regex}}
 
@@ -157,7 +160,8 @@ def main():
 
     if output_to_temp_file:
         print('stdout is a terminal, so saved profile output to %s' % output_filename)
-        import webbrowser, urllib.parse
+        import webbrowser
+        from pyinstrument.vendor.six.moves import urllib
         url = urllib.parse.urlunparse(('file', '', output_filename, '', '', ''))
         webbrowser.open(url)
     
