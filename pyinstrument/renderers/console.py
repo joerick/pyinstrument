@@ -36,19 +36,16 @@ class ConsoleRenderer(Renderer):
     def render_preamble(self, session):
         lines = [
             r"",
-            r"              _          __                          __ ",
-            r"   ___  __ __(_)__  ___ / /_______ ____ _  ___ ___  / /_",
-            r"  / _ \/ // / / _ \(_-</ __/ __/ // /  ' \/ -_) _ \/ __/",
-            r" / .__/\_, /_/_//_/___/\__/_/  \_,_/_/_/_/\__/_//_/\__/ ",
-            r"/_/   /___/                 {:>26}  ".format(pyinstrument.__version__)
+            r"  _     ._   __/__   _ _  _  _ _/_   ",
+            r" /_//_/// /_\ / //_// / //_'/ //     ",
+            r"/   _/        {:>20}".format('v'+pyinstrument.__version__),
         ]
 
-
-        lines[2] += "    Recorded:  %s" % time.strftime('%X', time.localtime(session.start_time))
-        lines[3] += "    Samples:   %s" % session.sample_count
-        lines[4] += "    Duration:  {:.3n}".format(session.duration)
+        lines[1] += "  Recorded:  {:<10}".format(time.strftime('%X', time.localtime(session.start_time)))
+        lines[2] += "  Duration:  {:<10.3n}".format(session.duration)
+        lines[1] += "  Samples:  {}".format(session.sample_count)
         if session.cpu_time is not None:
-            lines[5] += "    CPU time:  {:.3n}".format(session.cpu_time)
+            lines[2] += "  CPU time: {:.3n}".format(session.cpu_time)
 
         lines.append('')
         lines.append('Program: %s' % session.program)
