@@ -30,12 +30,14 @@ def most_common_words(page):
 
     return word_list[0:5]
 
-if __name__ == '__main__':
+def main():
     data = parse(download())
     page = list(data['query']['pages'].values())[0]
 
     sys.stderr.write('This most common words were %s\n' % most_common_words(page))
 
+if __name__ == '__main__':
+    main()
 
 
 
