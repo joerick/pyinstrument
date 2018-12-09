@@ -9,7 +9,8 @@ encode_str = json.encoder.encode_basestring
 
 class JSONRenderer(Renderer):
     def render_frame(self, frame):
-        # we don't use the json module because it uses 2x stack frames 
+        # we don't use the json module because it uses 2x stack frames, so 
+        # crashes on deep but valid call stacks
 
         property_decls = []
         property_decls.append(u'"function": %s' % encode_str(frame.function))
