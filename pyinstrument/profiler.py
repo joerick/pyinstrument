@@ -1,49 +1,65 @@
 # -*- coding: utf-8 -*-
-import timeit
-import warnings
-
-from . import renderers
-from pyinstrument.frame import Frame
-from .util import object_with_import_path
+import timeit, time, sys, inspect
+from pyinstrument import renderers
+from pyinstrument.session import ProfilerSession
+from pyinstrument.util import deprecated, deprecated_option
 from pyinstrument_cext import setstatprofile
+
+try:
+    from time import process_time
+except ImportError:
+    process_time = None
 
 timer = timeit.default_timer
 
 
-class NotMainThreadError(Exception):
-    '''deprecated as of 0.14'''
-    pass
-
-
-class SignalUnavailableError(Exception):
-    '''deprecated as of 0.14'''
-    pass
 
 
 class Profiler(object):
+    # pylint: disable=W0613
+    @deprecated_option('use_signal')
+    @deprecated_option('recorder')
     def __init__(self, interval=0.001, use_signal=None, recorder=None):
-        if use_signal is not None:
-            warnings.warn('use_signal is deprecated and should no longer be used.', 
-                          DeprecationWarning,
-                          stacklevel=2)
-        if recorder is not None:
-            warnings.warn('recorder is deprecated and should no longer be used.',
-                          DeprecationWarning,
-                          stacklevel=2)
-
         self.interval = interval
         self.last_profile_time = 0.0
         self.frame_records = []
+        self._start_time = None
+        self._start_process_time = None
+        self.last_session = None
 
-    def start(self):
+    def start(self, caller_frame=None):
         self.last_profile_time = timer()
+        self._start_time = time.time()
+        if process_time:
+            self._start_process_time = process_time()
+        if caller_frame is None:
+            caller_frame = inspect.currentframe().f_back
+        self._start_call_stack = self._call_stack_for_frame(caller_frame)
+
         setstatprofile(self._profile, self.interval)
 
     def stop(self):
         setstatprofile(None)
+        if process_time:
+            cpu_time = process_time() - self._start_process_time
+            self._start_process_time = None
+        else:
+            cpu_time = None
+
+        self.last_session = ProfilerSession(
+            frame_records=self.frame_records,
+            start_time=self._start_time,
+            duration=time.time() - self._start_time,
+            sample_count=len(self.frame_records),
+            program=' '.join(sys.argv),
+            start_call_stack=self._start_call_stack,
+            cpu_time=cpu_time,
+        )
+
+        return self.last_session
 
     def __enter__(self):
-        self.start()
+        self.start(caller_frame=inspect.currentframe().f_back)
         return self
 
     def __exit__(self, *args):
@@ -60,11 +76,11 @@ class Profiler(object):
         if event == 'call':
             frame = frame.f_back
 
-        self._record_frame(frame, time_since_last_profile)
+        self.frame_records.append((self._call_stack_for_frame(frame), time_since_last_profile))
 
         self.last_profile_time = now
 
-    def _record_frame(self, frame, time):
+    def _call_stack_for_frame(self, frame):
         call_stack = []
 
         while frame is not None:
@@ -77,45 +93,26 @@ class Profiler(object):
         # we iterated from the leaf to the root, we actually want the call stack
         # starting at the root, so reverse this array
         call_stack.reverse()
-        self.frame_records.append((call_stack, time))
+        return call_stack
 
+    @deprecated_option('root')
+    def output_text(self, root=None, unicode=False, color=False):
+        return renderers.ConsoleRenderer(unicode=unicode, color=color).render(self.last_session)
+
+    @deprecated_option('root')
+    def output_html(self, root=None):
+        return renderers.HTMLRenderer().render(self.last_session)
+
+    @deprecated_option('root')
+    def output(self, renderer, root=None):
+        return renderer.render(self.last_session)
+
+    @deprecated
     def root_frame(self):
-        ''' 
-        Parses the internal frame records and returns a tree of Frame objects
-        '''
-        root_frame = Frame()
+        if self.last_session:
+            return self.last_session.root_frame()
 
-        frame_stack = []
-
-        for frame_tuple in self.frame_records:
-            identifier_stack = frame_tuple[0]
-            time = frame_tuple[1]
-
-            # now we must create a stack of frame objects and assign this time to the leaf
-            for stack_depth, frame_identifier in enumerate(identifier_stack):
-                if stack_depth < len(frame_stack):
-                    if frame_identifier != frame_stack[stack_depth].identifier:
-                        # trim any frames after and including this one
-                        del frame_stack[stack_depth:]
-
-                if stack_depth >= len(frame_stack):
-                    if stack_depth == 0:
-                        parent = root_frame
-                    else:
-                        parent = frame_stack[stack_depth-1]
-
-                    frame = Frame(frame_identifier)
-                    parent.add_child(frame)
-                    frame_stack.append(frame)
-
-            # trim any extra frames
-            del frame_stack[stack_depth+1:]
-
-            # assign the time to the final frame
-            frame_stack[-1].self_time += time
-
-        return root_frame
-
+    @deprecated
     def first_interesting_frame(self):
         """
         Traverse down the frame hierarchy until a frame is found with more than one child
@@ -132,36 +129,9 @@ class Profiler(object):
 
         return frame
 
+    @deprecated
     def starting_frame(self, root=False):
         if root:
             return self.root_frame()
         else:
             return self.first_interesting_frame()
-
-    def output_text(self, root=False, unicode=False, color=False):
-        return self.output(renderer='text', root=root, unicode=unicode, color=color)
-
-    def output_html(self, root=False):
-        return self.output(renderer='html', root=root)
-
-    def output(self, renderer, root=False, **renderer_kwargs):
-        if not isinstance(renderer, renderers.Renderer):
-            renderer_class = get_renderer_class(renderer)
-            renderer = renderer_class(**renderer_kwargs)
-
-        return renderer.render(self.starting_frame(root=root))
-
-
-def get_renderer_class(renderer):
-    if callable(renderer):
-        # allow just passing the class object itself
-        return renderer
-
-    if renderer == 'text':
-        return renderers.ConsoleRenderer
-    elif renderer == 'html':
-        return renderers.HTMLRenderer
-    elif renderer == 'json':
-        return renderers.JSONRenderer
-    else:
-        return object_with_import_path(renderer)

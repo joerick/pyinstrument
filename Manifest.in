@@ -1,3 +1,6 @@
 include README.md
 include LICENSE
-recursive-include pyinstrument *.js *.css
+recursive-include pyinstrument *.js
+recursive-include html_renderer *.html *.json *.js *.ts *.vue *.css *.png
+prune html_renderer/node_modules
+prune html_renderer/dist

@@ -3,7 +3,7 @@ try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
-import collections
+import collections, sys
 import operator
 
 
@@ -30,12 +30,14 @@ def most_common_words(page):
 
     return word_list[0:5]
 
-if __name__ == '__main__':
+def main():
     data = parse(download())
     page = list(data['query']['pages'].values())[0]
 
-    print('This most common words were %s' % most_common_words(page))
+    sys.stderr.write('This most common words were %s\n' % most_common_words(page))
 
+if __name__ == '__main__':
+    main()
 
 
 

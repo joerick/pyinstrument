@@ -57,7 +57,7 @@ def test_profiler_retains_multiple_calls():
 
     print(profiler.output_text())
 
-    frame = profiler.first_interesting_frame()
+    frame = profiler.last_session.root_frame()
     assert frame.function == 'test_profiler_retains_multiple_calls'
     assert len(frame.children) == 4
 
@@ -72,7 +72,7 @@ def test_two_functions():
 
     print(profiler.output_text())
 
-    frame = profiler.first_interesting_frame()
+    frame = profiler.last_session.root_frame()
 
     assert frame.function == 'test_two_functions'
     assert len(frame.children) == 2
@@ -89,7 +89,7 @@ def test_context_manager():
         long_function_a()
         long_function_b()
 
-    frame = profiler.first_interesting_frame()
+    frame = profiler.last_session.root_frame()
     assert frame.function == 'test_context_manager'
     assert len(frame.children) == 2
 
@@ -98,9 +98,17 @@ def test_json_output():
         long_function_a()
         long_function_b()
 
-    output_data = profiler.output(renderers.JSONRenderer())
+    output_data = profiler.output(renderers.JSONRenderer(), root=True)
 
     output = json.loads(output_data)
+    assert 'root_frame' in output
 
-    assert output['function'] == 'test_json_output'
-    assert len(output['children']) == 2
+    root_frame = output['root_frame']
+
+    assert root_frame['function'] == 'test_json_output'
+    assert len(root_frame['children']) == 2
+
+def test_empty_profile():
+    with Profiler() as profiler:
+        pass
+    profiler.output(renderer=renderers.ConsoleRenderer())

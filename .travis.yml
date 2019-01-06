@@ -9,7 +9,10 @@ python:
   - "3.6"
   - "3.7"
 cache: pip
+before_install:
+  - nvm install node
 install:
   - pip install -r requirements-dev.txt
+  - python setup.py build
 script:
   - pytest test

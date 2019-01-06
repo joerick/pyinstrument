@@ -1,0 +1,622 @@
+{
+  "root_frame": {
+    "function": "<module>",
+    "file_path_short": "wikipedia_article_word_count.py",
+    "file_path": "examples/wikipedia_article_word_count.py",
+    "line_no": 1,
+    "time": 1.1059269190300256,
+    "children": [
+      {
+        "function": "<module>",
+        "file_path_short": "urllib/request.py",
+        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+        "line_no": 68,
+        "time": 0.6747039500623941,
+        "children": [
+          {
+            "function": "<module>",
+            "file_path_short": "http/client.py",
+            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+            "line_no": 69,
+            "time": 0.01671655592508614,
+            "children": [
+              {
+                "function": "<module>",
+                "file_path_short": "ssl.py",
+                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                "line_no": 91,
+                "time": 0.01542082498781383,
+                "children": [
+                  {
+                    "function": "_convert",
+                    "file_path_short": "enum.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                    "line_no": 602,
+                    "time": 0.001997870043851435,
+                    "children": [
+                      {
+                        "function": "__call__",
+                        "file_path_short": "enum.py",
+                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                        "line_no": 265,
+                        "time": 0.001997870043851435,
+                        "children": [
+                          {
+                            "function": "_create_",
+                            "file_path_short": "enum.py",
+                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                            "line_no": 364,
+                            "time": 0.001997870043851435,
+                            "children": [
+                              {
+                                "function": "__new__",
+                                "file_path_short": "enum.py",
+                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                                "line_no": 124,
+                                "time": 0.001997870043851435,
+                                "children": [
+                                  {
+                                    "function": "__setattr__",
+                                    "file_path_short": "enum.py",
+                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                                    "line_no": 351,
+                                    "time": 0.001997870043851435,
+                                    "children": [],
+                                    "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                                  }
+                                ],
+                                "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                              }
+                            ],
+                            "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                          }
+                        ],
+                        "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                      }
+                    ],
+                    "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                  },
+                  {
+                    "function": "__new__",
+                    "file_path_short": "enum.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                    "line_no": 124,
+                    "time": 0.0013634880306199193,
+                    "children": [
+                      {
+                        "function": "__new__",
+                        "file_path_short": "ssl.py",
+                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                        "line_no": 360,
+                        "time": 0.0013634880306199193,
+                        "children": [],
+                        "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                      }
+                    ],
+                    "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                  },
+                  {
+                    "function": "namedtuple",
+                    "file_path_short": "collections/__init__.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/collections/__init__.py",
+                    "line_no": 357,
+                    "time": 0.0010601179674267769,
+                    "children": [],
+                    "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+                  }
+                ],
+                "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+              }
+            ],
+            "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+          },
+          {
+            "function": "<module>",
+            "file_path_short": "http/__init__.py",
+            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/__init__.py",
+            "line_no": 1,
+            "time": 0.0010016770102083683,
+            "children": [
+              {
+                "function": "__new__",
+                "file_path_short": "enum.py",
+                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/enum.py",
+                "line_no": 124,
+                "time": 0.0010016770102083683,
+                "children": [],
+                "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+              }
+            ],
+            "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+          }
+        ],
+        "group_id": "bb7ab151-75f3-4747-bed6-545ab06f392c"
+      },
+      {
+        "function": "download",
+        "file_path_short": "wikipedia_article_word_count.py",
+        "file_path": "examples/wikipedia_article_word_count.py",
+        "line_no": 12,
+        "time": 0.4300254030385986,
+        "children": [
+          {
+            "function": "urlopen",
+            "file_path_short": "urllib/request.py",
+            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+            "line_no": 140,
+            "time": 0.42161056597251445,
+            "children": [
+              {
+                "function": "open",
+                "file_path_short": "urllib/request.py",
+                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                "line_no": 508,
+                "time": 0.3348857240052894,
+                "children": [
+                  {
+                    "function": "_open",
+                    "file_path_short": "urllib/request.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                    "line_no": 536,
+                    "time": 0.3348857240052894,
+                    "children": [
+                      {
+                        "function": "_call_chain",
+                        "file_path_short": "urllib/request.py",
+                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                        "line_no": 497,
+                        "time": 0.3348857240052894,
+                        "children": [
+                          {
+                            "function": "https_open",
+                            "file_path_short": "urllib/request.py",
+                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                            "line_no": 1359,
+                            "time": 0.3348857240052894,
+                            "children": [
+                              {
+                                "function": "do_open",
+                                "file_path_short": "urllib/request.py",
+                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                                "line_no": 1276,
+                                "time": 0.3348857240052894,
+                                "children": [
+                                  {
+                                    "function": "getresponse",
+                                    "file_path_short": "http/client.py",
+                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                    "line_no": 1287,
+                                    "time": 0.17754529602825642,
+                                    "children": [
+                                      {
+                                        "function": "begin",
+                                        "file_path_short": "http/client.py",
+                                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                        "line_no": 290,
+                                        "time": 0.17754529602825642,
+                                        "children": [
+                                          {
+                                            "function": "_read_status",
+                                            "file_path_short": "http/client.py",
+                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                            "line_no": 257,
+                                            "time": 0.17754529602825642,
+                                            "children": [
+                                              {
+                                                "function": "readinto",
+                                                "file_path_short": "socket.py",
+                                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/socket.py",
+                                                "line_no": 572,
+                                                "time": 0.17754529602825642,
+                                                "children": [
+                                                  {
+                                                    "function": "recv_into",
+                                                    "file_path_short": "ssl.py",
+                                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                    "line_no": 998,
+                                                    "time": 0.17754529602825642,
+                                                    "children": [
+                                                      {
+                                                        "function": "read",
+                                                        "file_path_short": "ssl.py",
+                                                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                        "line_no": 863,
+                                                        "time": 0.17754529602825642,
+                                                        "children": [
+                                                          {
+                                                            "function": "read",
+                                                            "file_path_short": "ssl.py",
+                                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                            "line_no": 624,
+                                                            "time": 0.17754529602825642,
+                                                            "children": [],
+                                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                          }
+                                                        ],
+                                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                      }
+                                                    ],
+                                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                  }
+                                                ],
+                                                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                              }
+                                            ],
+                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                          }
+                                        ],
+                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                      }
+                                    ],
+                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                  },
+                                  {
+                                    "function": "request",
+                                    "file_path_short": "http/client.py",
+                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                    "line_no": 1236,
+                                    "time": 0.14358445000834763,
+                                    "children": [
+                                      {
+                                        "function": "_send_request",
+                                        "file_path_short": "http/client.py",
+                                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                        "line_no": 1241,
+                                        "time": 0.14358445000834763,
+                                        "children": [
+                                          {
+                                            "function": "endheaders",
+                                            "file_path_short": "http/client.py",
+                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                            "line_no": 1223,
+                                            "time": 0.14358445000834763,
+                                            "children": [
+                                              {
+                                                "function": "_send_output",
+                                                "file_path_short": "http/client.py",
+                                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                                "line_no": 1017,
+                                                "time": 0.14358445000834763,
+                                                "children": [
+                                                  {
+                                                    "function": "send",
+                                                    "file_path_short": "http/client.py",
+                                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                                    "line_no": 956,
+                                                    "time": 0.14358445000834763,
+                                                    "children": [
+                                                      {
+                                                        "function": "connect",
+                                                        "file_path_short": "http/client.py",
+                                                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                                        "line_no": 1389,
+                                                        "time": 0.14358445000834763,
+                                                        "children": [
+                                                          {
+                                                            "function": "connect",
+                                                            "file_path_short": "http/client.py",
+                                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                                            "line_no": 933,
+                                                            "time": 0.08178039907943457,
+                                                            "children": [
+                                                              {
+                                                                "function": "create_connection",
+                                                                "file_path_short": "socket.py",
+                                                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/socket.py",
+                                                                "line_no": 688,
+                                                                "time": 0.08178039907943457,
+                                                                "children": [
+                                                                  {
+                                                                    "function": "getaddrinfo",
+                                                                    "file_path_short": "socket.py",
+                                                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/socket.py",
+                                                                    "line_no": 728,
+                                                                    "time": 0.056695011095143855,
+                                                                    "children": [
+                                                                      {
+                                                                        "function": "search_function",
+                                                                        "file_path_short": "encodings/__init__.py",
+                                                                        "file_path": "/usr/local/bin/../../../Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/encodings/__init__.py",
+                                                                        "line_no": 71,
+                                                                        "time": 0.005070303101092577,
+                                                                        "children": [
+                                                                          {
+                                                                            "function": "<module>",
+                                                                            "file_path_short": "encodings/idna.py",
+                                                                            "file_path": "/usr/local/bin/../../../Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/encodings/idna.py",
+                                                                            "line_no": 3,
+                                                                            "time": 0.003020904026925564,
+                                                                            "children": [
+                                                                              {
+                                                                                "function": "<module>",
+                                                                                "file_path_short": "stringprep.py",
+                                                                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/stringprep.py",
+                                                                                "line_no": 6,
+                                                                                "time": 0.003020904026925564,
+                                                                                "children": [],
+                                                                                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                              }
+                                                                            ],
+                                                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                          }
+                                                                        ],
+                                                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                      },
+                                                                      {
+                                                                        "function": "encode",
+                                                                        "file_path_short": "encodings/idna.py",
+                                                                        "file_path": "/usr/local/bin/../../../Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/encodings/idna.py",
+                                                                        "line_no": 147,
+                                                                        "time": 0.001228300970979035,
+                                                                        "children": [],
+                                                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                      }
+                                                                    ],
+                                                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                  }
+                                                                ],
+                                                                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                              }
+                                                            ],
+                                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                          },
+                                                          {
+                                                            "function": "wrap_socket",
+                                                            "file_path_short": "ssl.py",
+                                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                            "line_no": 399,
+                                                            "time": 0.06180405092891306,
+                                                            "children": [
+                                                              {
+                                                                "function": "__init__",
+                                                                "file_path_short": "ssl.py",
+                                                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                                "line_no": 723,
+                                                                "time": 0.06180405092891306,
+                                                                "children": [
+                                                                  {
+                                                                    "function": "do_handshake",
+                                                                    "file_path_short": "ssl.py",
+                                                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                                    "line_no": 1061,
+                                                                    "time": 0.06180405092891306,
+                                                                    "children": [
+                                                                      {
+                                                                        "function": "do_handshake",
+                                                                        "file_path_short": "ssl.py",
+                                                                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                                                        "line_no": 687,
+                                                                        "time": 0.06180405092891306,
+                                                                        "children": [],
+                                                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                      }
+                                                                    ],
+                                                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                                  }
+                                                                ],
+                                                                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                              }
+                                                            ],
+                                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                          }
+                                                        ],
+                                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                      }
+                                                    ],
+                                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                                  }
+                                                ],
+                                                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                              }
+                                            ],
+                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                          }
+                                        ],
+                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                      }
+                                    ],
+                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                  },
+                                  {
+                                    "function": "__init__",
+                                    "file_path_short": "http/client.py",
+                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                                    "line_no": 1362,
+                                    "time": 0.013755977968685329,
+                                    "children": [
+                                      {
+                                        "function": "create_default_context",
+                                        "file_path_short": "ssl.py",
+                                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                        "line_no": 488,
+                                        "time": 0.013755977968685329,
+                                        "children": [
+                                          {
+                                            "function": "load_default_certs",
+                                            "file_path_short": "ssl.py",
+                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                            "line_no": 451,
+                                            "time": 0.008733766968362033,
+                                            "children": [],
+                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                          },
+                                          {
+                                            "function": "__new__",
+                                            "file_path_short": "ssl.py",
+                                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                            "line_no": 390,
+                                            "time": 0.005022211000323296,
+                                            "children": [],
+                                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                          }
+                                        ],
+                                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                      }
+                                    ],
+                                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                                  }
+                                ],
+                                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                              }
+                            ],
+                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                          }
+                        ],
+                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                      }
+                    ],
+                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                  }
+                ],
+                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+              },
+              {
+                "function": "build_opener",
+                "file_path_short": "urllib/request.py",
+                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                "line_no": 576,
+                "time": 0.08672484196722507,
+                "children": [
+                  {
+                    "function": "__init__",
+                    "file_path_short": "urllib/request.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                    "line_no": 798,
+                    "time": 0.08672484196722507,
+                    "children": [
+                      {
+                        "function": "getproxies",
+                        "file_path_short": "urllib/request.py",
+                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                        "line_no": 2614,
+                        "time": 0.08672484196722507,
+                        "children": [
+                          {
+                            "function": "getproxies_macosx_sysconf",
+                            "file_path_short": "urllib/request.py",
+                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/urllib/request.py",
+                            "line_no": 2591,
+                            "time": 0.08672484196722507,
+                            "children": [],
+                            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                          }
+                        ],
+                        "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                      }
+                    ],
+                    "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+                  }
+                ],
+                "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+              }
+            ],
+            "group_id": "1c0ddbac-1f38-49a5-a477-964769188781"
+          },
+          {
+            "function": "read",
+            "file_path_short": "http/client.py",
+            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+            "line_no": 438,
+            "time": 0.008414837066084146,
+            "children": [
+              {
+                "function": "_readall_chunked",
+                "file_path_short": "http/client.py",
+                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                "line_no": 558,
+                "time": 0.008414837066084146,
+                "children": [
+                  {
+                    "function": "_safe_read",
+                    "file_path_short": "http/client.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                    "line_no": 596,
+                    "time": 0.006519785965792835,
+                    "children": [
+                      {
+                        "function": "readinto",
+                        "file_path_short": "socket.py",
+                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/socket.py",
+                        "line_no": 572,
+                        "time": 0.006519785965792835,
+                        "children": [
+                          {
+                            "function": "recv_into",
+                            "file_path_short": "ssl.py",
+                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                            "line_no": 998,
+                            "time": 0.006519785965792835,
+                            "children": [
+                              {
+                                "function": "read",
+                                "file_path_short": "ssl.py",
+                                "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                "line_no": 863,
+                                "time": 0.006519785965792835,
+                                "children": [
+                                  {
+                                    "function": "read",
+                                    "file_path_short": "ssl.py",
+                                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/ssl.py",
+                                    "line_no": 624,
+                                    "time": 0.006519785965792835,
+                                    "children": [],
+                                    "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                                  }
+                                ],
+                                "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                              }
+                            ],
+                            "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                          }
+                        ],
+                        "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                      }
+                    ],
+                    "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                  },
+                  {
+                    "function": "_get_chunk_left",
+                    "file_path_short": "http/client.py",
+                    "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                    "line_no": 534,
+                    "time": 0.0018950511002913117,
+                    "children": [
+                      {
+                        "function": "_close_conn",
+                        "file_path_short": "http/client.py",
+                        "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/http/client.py",
+                        "line_no": 400,
+                        "time": 0.0018950511002913117,
+                        "children": [
+                          {
+                            "function": "close",
+                            "file_path_short": "socket.py",
+                            "file_path": "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/socket.py",
+                            "line_no": 649,
+                            "time": 0.0018950511002913117,
+                            "children": [],
+                            "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                          }
+                        ],
+                        "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                      }
+                    ],
+                    "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+                  }
+                ],
+                "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+              }
+            ],
+            "group_id": "bfc83d50-e33d-4da3-9a40-c6daf184e05b"
+          }
+        ]
+      }
+    ]
+  },
+  "start_time": 1539030238.1377869,
+  "duration": 1.107295274734497,
+  "sample_count": 30,
+  "program": "examples/wikipedia_article_word_count.py",
+  "cpu_time": 0.580186
+}

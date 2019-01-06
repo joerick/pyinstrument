@@ -25,7 +25,7 @@ def main():
         INSTALLED_APPS=(), 
         TEMPLATES=[{
             "BACKEND": "django.template.backends.django.DjangoTemplates",
-            "DIRS": ['.']
+            "DIRS": ['./django_example/django_example/templates']
         }],
     )
     django.setup()

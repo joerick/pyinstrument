@@ -1,19 +1,96 @@
-import sys, os
+import sys, os, uuid
 
 
-class Frame(object):
+class BaseFrame(object):
+    def __init__(self, parent=None, self_time=0):
+        self.parent = parent
+        self._self_time = self_time
+        self.group = None
+
+    # pylint: disable=W0212
+    def remove_from_parent(self):
+        '''
+        Removes this frame from its parent, and nulls the parent link
+        '''
+        if self.parent:
+            self.parent._children.remove(self)
+            self.parent._invalidate_time_caches()
+            self.parent = None
+
+    @property
+    def proportion_of_parent(self):
+        if self.parent:
+            try:
+                return self.time() / self.parent.time()
+            except ZeroDivisionError:
+                return float('nan')
+        else:
+            return 1.0
+
+    @property
+    def total_self_time(self):
+        '''
+        The total amount of self time in this frame (including self time recorded by SelfTimeFrame
+        children)
+        '''
+        self_time = self.self_time
+        for child in self.children:
+            if isinstance(child, SelfTimeFrame):
+                self_time += child.self_time
+        return self_time
+
+    @property
+    def self_time(self):
+        return self._self_time
+
+    @self_time.setter
+    def self_time(self, self_time):
+        self._self_time = self_time
+        self._invalidate_time_caches()
+
+    # invalidates the cache for the time() function.
+    # called whenever self_time or _children is modified.
+    def _invalidate_time_caches(self):
+        pass
+
+    # stylistically I'd rather this was a property, but using @property appears to use twice
+    # as many stack frames, so I'm forced into using a function since this method is recursive
+    # down the call tree.
+    def time(self): raise NotImplementedError()
+
+    @property
+    def function(self): raise NotImplementedError()
+
+    @property
+    def file_path(self): raise NotImplementedError()
+
+    @property
+    def line_no(self): raise NotImplementedError()
+
+    @property
+    def file_path_short(self): raise NotImplementedError()
+
+    @property
+    def is_application_code(self): raise NotImplementedError()
+
+    @property
+    def code_position_short(self): raise NotImplementedError()
+
+    @property
+    def children(self): raise NotImplementedError()
+
+
+class Frame(BaseFrame):
     """
     Object that represents a stack frame in the parsed tree
     """
     def __init__(self, identifier='', parent=None, children=None, self_time=0):
+        super(Frame, self).__init__(parent=parent, self_time=self_time)
+
         self.identifier = identifier
-        self.parent = parent
-        self.self_time = self_time
         self._children = []
 
         self._time = None
-        self._proportion_of_parent = None
-        self._proportion_of_total = None
 
         if children:
             for child in children:
@@ -33,7 +110,7 @@ class Frame(object):
             index = self._children.index(after) + 1
             self._children.insert(index, frame)
 
-        self._invalidate_tree_caches()
+        self._invalidate_time_caches()
     
     def add_children(self, frames, after=None):
         '''
@@ -47,18 +124,6 @@ class Frame(object):
         else:
             for frame in frames:
                 self.add_child(frame)
-
-    # pylint: disable=W0212
-    def remove_from_parent(self):
-        '''
-        Removes this frame from its parent, and nulls the parent link
-        '''
-        if self.parent:
-            self.parent._children.remove(self)
-            self.parent._invalidate_tree_caches()
-            self.parent = None
-
-        self._invalidate_tree_caches()
 
     @property
     def children(self):
@@ -110,16 +175,14 @@ class Frame(object):
     @property
     def is_application_code(self):
         if self.identifier:
-            return ('%slib%s' % (os.sep, os.sep)) not in self.file_path
+            return (('%slib%s' % (os.sep, os.sep)) not in self.file_path
+                    and '<frozen importlib._bootstrap' not in self.file_path)
 
     @property
     def code_position_short(self):
         if self.identifier:
             return '%s:%i' % (self.file_path_short, self.line_no)
 
-    # stylistically I'd rather this was a property, but using @property appears to use twice
-    # as many stack frames, so I'm forced into using a function since this method is recursive
-    # down the call tree.
     def time(self):
         if self._time is None:
             # can't use a sum(<generator>) expression here sadly, because this method
@@ -132,38 +195,106 @@ class Frame(object):
 
         return self._time
 
-    @property
-    def proportion_of_parent(self):
-        if self._proportion_of_parent is None:
-            if self.parent and self.time():
-                try:
-                    self._proportion_of_parent = self.time() / self.parent.time()
-                except ZeroDivisionError:
-                    self._proportion_of_parent = float('nan')
-            else:
-                self._proportion_of_parent = 1.0
-
-        return self._proportion_of_parent
-
-    @property
-    def proportion_of_total(self):
-        if self._proportion_of_total is None:
-            if not self.parent:
-                self._proportion_of_total = 1.0
-            else:
-                self._proportion_of_total = (self.parent.proportion_of_total 
-                                             * self.proportion_of_parent)
-
-        return self._proportion_of_total
-
-    def _invalidate_tree_caches(self):
-        # should be called when manipulating the tree i.e. when changing `parent` or `children`
-        # properties.
+    # pylint: disable=W0212
+    def _invalidate_time_caches(self):
         self._time = None
-        self._proportion_of_parent = None
-        self._proportion_of_total = None
+        # null all the parent's caches also.
+        frame = self
+        while frame.parent is not None:
+            frame = frame.parent
+            frame._time = None
+
 
     def __repr__(self):
-        return 'Frame(identifier=%s, time=%f, len(children)=%d)' % (
-            self.identifier, self.time(), len(self.children)
+        return 'Frame(identifier=%s, time=%f, len(children)=%d), group=%r' % (
+            self.identifier, self.time(), len(self.children), self.group
         )
+
+
+class SelfTimeFrame(BaseFrame):
+    """
+    Represents a time spent inside a function
+    """
+    def time(self): 
+        return self.self_time
+    
+    @property
+    def function(self): return '[self]'
+
+    @property
+    def _children(self): return []
+
+    @property
+    def children(self): return []
+
+    @property
+    def file_path(self): return self.parent.file_path
+
+    @property
+    def line_no(self): return self.parent.line_no
+
+    @property
+    def file_path_short(self): return ''
+
+    @property
+    def is_application_code(self): return False
+
+    @property
+    def code_position_short(self): return ''
+
+    @property
+    def identifier(self): return '[self]'
+
+
+class FrameGroup(object):
+    def __init__(self, root, **kwargs):
+        super(FrameGroup, self).__init__(**kwargs)
+        self.root = root
+        self.id = str(uuid.uuid4())
+        self._frames = []
+        self._exit_frames = None
+        self._libraries = None
+
+        self.add_frame(root)
+    
+    @property
+    def libraries(self):
+        if self._libraries is None:
+            libraries = []
+            for frame in self.frames:
+                library = frame.file_path_short.split(os.sep)[0]
+                library, _ = os.path.splitext(library)
+                if library and library not in libraries:
+                    libraries.append(library)
+            self._libraries = libraries      
+
+        return self._libraries
+
+    @property
+    def frames(self):
+        return tuple(self._frames)
+
+    # pylint: disable=W0212
+    def add_frame(self, frame):
+        if frame.group:
+            frame.group._frames.remove(frame)
+
+        self._frames.append(frame)
+        frame.group = self
+
+    @property
+    def exit_frames(self):
+        '''
+        Returns a list of frames whose children include a frame outside of the group
+        '''
+        if self._exit_frames is None:
+            exit_frames = []
+            for frame in self.frames:
+                if any(c.group != self for c in frame.children):
+                    exit_frames.append(frame)
+            self._exit_frames = exit_frames
+
+        return self._exit_frames
+
+    def __repr__(self):
+        return 'FrameGroup(len(frames)=%d)' % len(self.frames)
