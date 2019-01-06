@@ -50,12 +50,16 @@ class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
         self.run_command('bdist_wheel')
         self.check_call(['twine upload dist/*'], shell=True)
 
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
+    long_description = f.read()
 
 setup(
     name="pyinstrument",
     packages=find_packages(),
     version="3.0.0b2",
-    description="A call stack profiler for Python. Inspired by Apple's Instruments.app",
+    description="Call stack profiler for Python. Shows you why your code is slow!",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Joe Rickerby',
     author_email='joerick@mac.com',
     url='https://github.com/joerick/pyinstrument',
