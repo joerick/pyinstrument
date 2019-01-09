@@ -3,12 +3,12 @@ pyinstrument
 
  [![PyPI version](https://badge.fury.io/py/pyinstrument.svg)](https://badge.fury.io/py/pyinstrument) [![Build Status](https://travis-ci.org/joerick/pyinstrument.svg?branch=master)](https://travis-ci.org/joerick/pyinstrument)
 
+[![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
+
 Pyinstrument is a Python profiler. A profiler is a tool to help you 'optimize'
 your code - make it faster. It sounds obvious, but to get the biggest speed
-increase you must [focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
+increase you should [focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
 Pyinstrument helps you find it!
-
-[![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
 
 Documentation
 -------------
@@ -35,10 +35,6 @@ Pyinstrument supports Python 2.7 and 3.3+.
 How to use it
 -------------
 
-Pyinstrument tells you which sections of code are making your software slow. It
-does this by observing your program's execution and then presenting a report
-that highlights the slow parts.
-
 ### Profile a Python script
 
 Call Pyinstrument directly from the command line. Instead of writing
@@ -51,22 +47,31 @@ Here are the options you can use:
     Usage: pyinstrument [options] scriptfile [arg] ...
 
     Options:
+      --version             show program's version number and exit
       -h, --help            show this help message and exit
+      --load-prev=ID        Instead of running a script, load a previous report
       -m MODULE_NAME        run library module as a script, like 'python -m
                             module'
+      -o OUTFILE, --outfile=OUTFILE
+                            save to <outfile>
       -r RENDERER, --renderer=RENDERER
                             how the report should be rendered. One of: 'text',
                             'html', 'json', or python import path to a renderer
                             class
-      --html                Shortcut for '--renderer=html'
-      -o OUTFILE, --outfile=OUTFILE
-                            save report to <outfile>
+      -t, --timeline        render as a timeline - preserve ordering and don't
+                            condense repeated calls
+      --hide=EXPR           glob-style pattern matching the file paths whose
+                            frames to hide. Defaults to '*/lib/*'.
+      --hide-regex=REGEX    regex matching the file paths whose frames to hide.
+                            Useful if --hide doesn't give enough control.
+      --show-all            (text renderer only) show external library code
       --unicode             (text renderer only) force unicode text output
       --no-unicode          (text renderer only) force ascii text output
       --color               (text renderer only) force ansi color text output
       --no-color            (text renderer only) force no color text output
 
-
+**Protip:** `-r html` will give you a interactive profile report as HTML - you
+can really explore this way!
 
 ### Profile a specific chunk of code
 
@@ -91,7 +96,7 @@ not support them.)
 
 ### Profile a web request in Django
 
-Pyinstrument can also profile web requests in Django. To use it, add
+To profile Django web requests, add
 `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES` in your
 `settings.py`.
 
@@ -128,7 +133,9 @@ def after_request(response):
     return make_response(output_html)
 ```
 
-This will check for the `?profile` query param on each request and if found, it starts profiling. After each request where the profiler was running it creates the html output and returns that instead of the actual response.
+This will check for the `?profile` query param on each request and if found,
+it starts profiling. After each request where the profiler was running it
+creates the html output and returns that instead of the actual response.
 
 ### Profile something else?
 
@@ -140,12 +147,12 @@ How is it different to `profile` or `cProfile`?
 
 ### Statistical profiling (not tracing)
 
-Pyinstrument is a statistical profiler. That means it does not track every
-single function call that your program makes. Instead, it's 'sampling' the
-process every 1ms and recording the call stack at that point.
+Pyinstrument is a statistical profiler - it doesn't track every
+function call that your program makes. Instead, it's recording the call stack
+every 1ms.
 
-That gives some clear advantages over other profilers. Statistical profilers
-are much lower-overhead (and thus accurate) than tracing profilers.
+That gives some advantages over other profilers. Firstly, statistical
+profilers are much lower-overhead than tracing profilers.
 
 |              | Django template render × 4000                      | Overhead
 | -------------|:---------------------------------------------------|---------:
@@ -155,21 +162,24 @@ are much lower-overhead (and thus accurate) than tracing profilers.
 | cProfile     | `█████████████████████████████          `  0.61s   |      84%
 | profile      | `██████████████████████████████████...██`  6.79s   |    2057%
 
-This overhead is important a lot can distort your timings. When using a tracing
-profiler, code that makes a lot of Python function calls could appear to take
-longer than code that does not.
+But low overhead is also important because it can distort the results. When
+using a tracing profiler, code that makes a lot of Python function calls
+invokes the profiler a lot, making it slower. This distorts the 
+results, and might lead you to optimise the wrong part of your program!
 
 ### Full-stack recording
 
-The standard Python profilers [`profile`][1] and [`cProfile`][2] produce
-output where time is totalled according to the time spent in each function.
-This is great, but it falls down when you profile code where most time is
-spent in framework code that you're not familiar with.
+The standard Python profilers [`profile`][1] and [`cProfile`][2] show you a
+big list of functions, ordered by the time spent in each function.
+This is great, but it can be difficult to interpret _why_ those functions are
+getting called. It's more helpful to know why those functions are called, and
+which parts of user code were involved.
 
 [1]: http://docs.python.org/2/library/profile.html#module-profile
 [2]: http://docs.python.org/2/library/profile.html#module-cProfile
 
-Here's an example of profile output when using Django.
+For example, let's say I want to figure out why a web request in Django is
+slow. If I use cProfile, I might get this:
 
     151940 function calls (147672 primitive calls) in 1.696 seconds
 
@@ -194,13 +204,29 @@ Here's an example of profile output when using Django.
 It's often hard to understand how your own code relates to these traces.
 
 Pyinstrument records the entire stack, so tracking expensive calls is much
-easier.
+easier. It also hides library frames by default, letting you focus on your
+app/module is affecting performance.
+
+```
+  _     ._   __/__   _ _  _  _ _/_   Recorded: 14:53:35  Samples:  131
+ /_//_/// /_\ / //_// / //_'/ //    Duration: 3.131     CPU time: 0.195
+/   _/                    v3.0.0b3
+
+Program: examples/django_example/manage.py runserver --nothreading --noreload
+
+3.131 <module>  manage.py:2
+└─ 3.118 execute_from_command_line  django/core/management/__init__.py:378
+      [473 frames hidden]  django, socketserver, selectors, wsgi...
+         2.836 select  selectors.py:365
+         0.126 _get_response  django/core/handlers/base.py:96
+         └─ 0.126 hello_world  django_example/views.py:4
+```
 
 ### 'Wall-clock' time (not CPU time)
 
-Pyinstrument records duration using 'wall-clock' time. That means that when
-you're writing a program that downloads data, reads files, and talks to
-databases, that time is included in the tracked time by pyinstrument.
+Pyinstrument records duration using 'wall-clock' time. When you're writing a
+program that downloads data, reads files, and talks to databases, all that
+time is *included* in the tracked time by pyinstrument.
 
 That's really important when debugging performance problems, since Python is
 often used as a 'glue' language between other services. The problem might not
@@ -213,8 +239,56 @@ Pyinstrument interrupts the program every 1ms and records the entire stack at
 that point. It does this using a C extension and `PyEval_SetProfile`, but only
 taking readings every 1ms. Check out [this blog post](http://joerick.me/posts/2017/12/15/pyinstrument-20/) for more info.
 
+You might be surprised at how few samples make up a report, but don't worry,
+it won't decrease accuracy. The default interval of 1ms is a lower bound for
+recording a stackframe, but if there is a long time spent in a single function
+call, it will be recorded at the end of that call. So effectively those
+samples were 'bunched up' and recorded at the end.
+
 Changelog
 ---------
+
+### v3.0.0
+
+- Pyinstrument will now hide traces through libraries that you're using by default. So instead of showing you loads of frames going through the internals of something external e.g. urllib, it lets you focus on your code.
+
+    | Before | After |
+    | --- | ---
+    | ![image](https://user-images.githubusercontent.com/1244307/50928250-1e50db00-1452-11e9-9164-6050a3c950ed.png) | ![image](https://user-images.githubusercontent.com/1244307/50928326-4c361f80-1452-11e9-91e8-cea735584806.png) | 
+
+- 'Entry' frames of hidden groups are shown, so you know which call is the problem
+- Really slow frames in the groups are shown too, e.g. the 'read' call on the socket
+- Application code is highlighted in the console
+- Additional metrics are shown at the top of the trace - timestamp, number of samples, duration, CPU time
+- Hidden code is controlled by the `--hide` or `--hide-regex` options - matching on the path of the code files. 
+  ```
+    --hide=EXPR           glob-style pattern matching the file paths whose
+                          frames to hide. Defaults to '*/lib/*'.
+    --hide-regex=REGEX    regex matching the file paths whose frames to hide.
+                          Useful if --hide doesn't give enough control.
+  ```
+
+- Outputting a timeline is supported from the command line.
+
+  ```
+    -t, --timeline        render as a timeline - preserve ordering and don't
+                          condense repeated calls
+  ```
+
+- Because there are a few rendering options now, you can load a previous profiling session using `--load-prev` - pyinstrument keeps the last 10 sessions.
+
+- Hidden groups can also call back into application code, that looks like this:
+    
+    ![image](https://user-images.githubusercontent.com/1244307/50928591-fca42380-1452-11e9-8320-3c851cf5210e.png)
+
+- (internal) When recording timelines, frame trees are completely linear now, allowing 
+  for the creation of super-accurate frame charts.
+
+- (internal) The HTML renderer has been rewritten as a Vue.js app. All the console improvements apply to the HTML output too, plus it's interactive.
+
+- (internal) A lot of unit and integration tests added!
+
+Yikes! See #49 for the gory details. I hope you like it.
 
 ### v2.3.0
 
