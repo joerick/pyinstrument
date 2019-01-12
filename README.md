@@ -32,6 +32,14 @@ Installation
 
 Pyinstrument supports Python 2.7 and 3.3+.
 
+To run pyinstrument from the git repo, you must first run
+
+    python setup.py build
+
+This compiles the Javascript code needed for the HTML output. You will need
+[node](https://nodejs.org/en/) installed. Node is not required for the pip
+install as the framework is already pre-built in the wheel.
+
 How to use it
 -------------
 
