@@ -8,6 +8,12 @@ class HTMLRenderer(Renderer):
     def render(self, session):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html_resources/')
 
+        if not os.path.exists(os.path.join(resources_dir, 'app.js')):
+            raise RuntimeError("Could not find app.js. If you are running "
+                               "pyinstrument from a git checkout, run 'python "
+                               "setup.py build' to compile the Javascript "
+                               "(requires nodejs).")
+
         with io.open(os.path.join(resources_dir, 'app.js'), encoding='utf-8') as f:
             js = f.read()
 
