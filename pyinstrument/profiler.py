@@ -96,8 +96,8 @@ class Profiler(object):
         return call_stack
 
     @deprecated_option('root')
-    def output_text(self, root=None, unicode=False, color=False):
-        return renderers.ConsoleRenderer(unicode=unicode, color=color).render(self.last_session)
+    def output_text(self, root=None, unicode=False, color=False, show_all=False, timeline=False):
+        return renderers.ConsoleRenderer(unicode=unicode, color=color, show_all=show_all, timeline=timeline).render(self.last_session)
 
     @deprecated_option('root')
     def output_html(self, root=None):
