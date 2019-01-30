@@ -1,3 +1,4 @@
+import time
 from pyinstrument import Profiler
 
 try:
@@ -27,3 +28,16 @@ def after_request(response):
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
+
+    
+@app.route('/sleep')
+def sleep():
+    time.sleep(0.1)
+    return 'Good morning!'
+
+
+@app.route('/dosomething')
+def do_something():
+    import requests
+    requests.get('http://google.com')
+    return 'Google says hello!'
