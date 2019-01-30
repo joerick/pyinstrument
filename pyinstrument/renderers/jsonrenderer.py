@@ -9,6 +9,8 @@ encode_str = json.encoder.encode_basestring
 
 class JSONRenderer(Renderer):
     def render_frame(self, frame):
+        if frame is None:
+            return u'null'
         # we don't use the json module because it uses 2x stack frames, so 
         # crashes on deep but valid call stacks
 

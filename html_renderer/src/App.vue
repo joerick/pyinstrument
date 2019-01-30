@@ -59,7 +59,7 @@ export default {
   },
   computed: {
     rootFrame() {
-      if (this.session) {
+      if (this.session && this.session.root_frame) {
         return new FrameModel(this.session.root_frame)
       }
     }
@@ -67,7 +67,7 @@ export default {
   watch: {
     session: {
       handler() {
-        if (!this.session) {
+        if (!this.session || !this.rootFrame) {
           document.title = 'Pyinstrument';
           return;
         }
