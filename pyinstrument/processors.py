@@ -86,7 +86,8 @@ def group_library_frames_processor(frame, options):
                 add_frames_to_group(child, group)
 
     for child in frame.children:
-        if not child.group and should_be_hidden(child):
+        if not child.group and (should_be_hidden(child)
+                                and any(should_be_hidden(cc) for cc in child.children)):
             group = FrameGroup(child)
             add_frames_to_group(child, group)
 
