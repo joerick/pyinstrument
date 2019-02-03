@@ -15,12 +15,20 @@ def main():
     parser = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
+    def dash_m_callback(option, opt, value, parser):
+        parser.values.module_name = value
+        # everything after the -m argument should be passed to that module
+        parser.values.module_args = parser.rargs + parser.largs
+        parser.rargs[:] = []
+        parser.largs[:] = []
+
     parser.add_option('', '--load-prev',
         dest='load_prev', action='store', metavar='ID',
         help="Instead of running a script, load a previous report")
 
     parser.add_option('-m', '',
-        dest='module_name', action='store',
+        dest='module_name', action='callback', callback=dash_m_callback,
+        type="str",
         help="run library module as a script, like 'python -m module'")
 
     parser.add_option('-o', '--outfile',
@@ -86,7 +94,7 @@ def main():
         session = load_report(options.load_prev)
     else:
         if options.module_name is not None:
-            sys.argv[:] = [options.module_name] + args
+            sys.argv[:] = [options.module_name] + options.module_args
             code = "run_module(modname, run_name='__main__')"
             globs = {
                 'run_module': runpy.run_module,

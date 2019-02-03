@@ -1,5 +1,6 @@
 # this script just does a busywait for 0.25 seconds.
-import time
+from __future__ import print_function
+import time, sys
 
 def do_nothing():
     pass
@@ -11,6 +12,7 @@ def busy_wait(duration):
         do_nothing()
 
 def main():
+    print('sys.argv: ', sys.argv)
     busy_wait(0.25)
 
 
