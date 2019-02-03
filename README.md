@@ -251,6 +251,11 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.0.1
+
+- Fix #60: pass all arguments after -m module_name to the called module
+- Fix crash during HTML/JSON output when no frames were captured.
+
 ### v3.0.0
 
 - Pyinstrument will now hide traces through libraries that you're using by default. So instead of showing you loads of frames going through the internals of something external e.g. urllib, it lets you focus on your code.
