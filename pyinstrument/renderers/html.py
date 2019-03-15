@@ -41,6 +41,14 @@ class HTMLRenderer(Renderer):
         return page
 
     def open_in_browser(self, session, output_filename=None):
+        """
+        Open the rendered HTML in a webbrowser.
+
+        If output_filename=None (the default), a tempfile is used.
+
+        The filename of the HTML file is returned.
+
+        """
         if output_filename is None:
             output_file = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
             output_filename = output_file.name
