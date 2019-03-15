@@ -1,4 +1,7 @@
 import os, io
+import codecs
+import tempfile
+import webbrowser
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument import processors
@@ -36,6 +39,21 @@ class HTMLRenderer(Renderer):
             </html>'''.format(js=js, session_json=session_json)
 
         return page
+
+    def open_in_browser(self, session, output_filename=None):
+        if output_filename is None:
+            output_file = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
+            output_filename = output_file.name
+            with codecs.getwriter('utf-8')(output_file) as f:
+                f.write(self.render(session))
+        else:
+            with codecs.open(output_filename, 'w', 'utf-8') as f:
+                f.write(self.render(session))
+
+        from pyinstrument.vendor.six.moves import urllib
+        url = urllib.parse.urlunparse(('file', '', output_filename, '', '', ''))
+        webbrowser.open(url)
+        return output_filename
 
     def render_json(self, session):
         json_renderer = JSONRenderer()
