@@ -44,7 +44,7 @@ def main():
     parser.add_option('', '--html',
         dest="output_html", action='store_true',
         help=optparse.SUPPRESS_HELP, default=False)  # deprecated shortcut for --renderer=html
-    
+
     parser.add_option('-t', '--timeline',
         dest='timeline', action='store_true',
         help="render as a timeline - preserve ordering and don't condense repeated calls")
@@ -58,7 +58,7 @@ def main():
         dest='hide_regex', action='store', metavar='REGEX',
         help=("regex matching the file paths whose frames to hide. Useful if --hide doesn't give "
               "enough control."))
-    
+
     parser.add_option('', '--show-all',
         dest='show_all', action='store_true',
         help="(text renderer only) show external library code", default=False)
@@ -126,7 +126,7 @@ def main():
 
     if options.output_html:
         options.renderer = 'html'
-    
+
     output_to_temp_file = (options.renderer == 'html'
                            and not options.outfile
                            and file_is_a_tty(sys.stdout))
@@ -134,12 +134,7 @@ def main():
     if options.outfile:
         f = codecs.open(options.outfile, 'w', 'utf-8')
         should_close_f_after_writing = True
-    elif output_to_temp_file:
-        output_file = tempfile.NamedTemporaryFile(suffix='.html', delete=False)
-        f = codecs.getwriter('utf-8')(output_file)
-        output_filename = output_file.name
-        should_close_f_after_writing = True
-    else:
+    elif not output_to_temp_file:
         if PY2:
             f = codecs.getwriter('utf-8')(sys.stdout)
         else:
@@ -156,7 +151,7 @@ def main():
         color_override = options.color != None
         unicode = options.unicode if unicode_override else file_supports_unicode(f)
         color = options.color if color_override else file_supports_color(f)
-        
+
         renderer_kwargs.update({'unicode': unicode, 'color': color, 'show_all': options.show_all})
 
     renderer_class = get_renderer_class(options.renderer)
@@ -165,17 +160,15 @@ def main():
     # remove this frame from the trace
     renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
-    f.write(renderer.render(session))
-    if should_close_f_after_writing:
-        f.close()
 
     if output_to_temp_file:
+        output_filename = renderer.open_in_browser(session)
         print('stdout is a terminal, so saved profile output to %s' % output_filename)
-        import webbrowser
-        from pyinstrument.vendor.six.moves import urllib
-        url = urllib.parse.urlunparse(('file', '', output_filename, '', '', ''))
-        webbrowser.open(url)
-    
+    else:
+        f.write(renderer.render(session))
+        if should_close_f_after_writing:
+            f.close()
+
     if options.renderer == 'text':
         _, report_identifier = save_report(session)
         print('To view this report with different options, run:')
@@ -263,7 +256,7 @@ def save_report(session):
 
 # pylint: disable=W0613
 def remove_first_pyinstrument_frame_processor(frame, options):
-    ''' 
+    '''
     The first frame when using the command line is always the __main__ function. I want to remove
     that from the output.
     '''

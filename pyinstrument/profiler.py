@@ -103,6 +103,9 @@ class Profiler(object):
     def output_html(self, root=None):
         return renderers.HTMLRenderer().render(self.last_session)
 
+    def open_in_browser(self):
+        return renderers.HTMLRenderer().open_in_browser(self.last_session)
+
     @deprecated_option('root')
     def output(self, renderer, root=None):
         return renderer.render(self.last_session)
