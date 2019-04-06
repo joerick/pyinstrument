@@ -59,9 +59,19 @@ def main():
         help=("regex matching the file paths whose frames to hide. Useful if --hide doesn't give "
               "enough control."))
 
+    parser.add_option('', '--show',
+        dest='show_fnmatch', action='store', metavar='EXPR',
+        help=("glob-style pattern matching the file paths whose frames to "
+              "show, regardless of --hide or --hide-regex. For example, use "
+              "--show '*/<library>/*' to show frames within a library that "
+              "would otherwise be hidden."))
+    parser.add_option('', '--show-regex',
+        dest='show_regex', action='store', metavar='REGEX',
+        help=("regex matching the file paths whose frames to always show. "
+              "Useful if --show doesn't give enough control."))
     parser.add_option('', '--show-all',
         dest='show_all', action='store_true',
-        help="(text renderer only) show external library code", default=False)
+        help="show everything", default=False)
 
     parser.add_option('', '--unicode',
         dest='unicode', action='store_true',
@@ -83,12 +93,18 @@ def main():
 
     options, args = parser.parse_args()
 
-    if not options.hide_regex:
-        options.hide_regex = fnmatch.translate(options.hide_fnmatch)
-
     if args == [] and options.module_name is None and options.load_prev is None:
         parser.print_help()
         sys.exit(2)
+
+    if not options.hide_regex:
+        options.hide_regex = fnmatch.translate(options.hide_fnmatch)
+    
+    if not options.show_regex and options.show_fnmatch:
+        options.show_regex = fnmatch.translate(options.show_fnmatch)
+     
+    if options.show_all:
+        options.show_regex = r'.*'
 
     if options.load_prev:
         session = load_report(options.load_prev)
@@ -141,7 +157,10 @@ def main():
             f = sys.stdout
         should_close_f_after_writing = False
 
-    renderer_kwargs = {'processor_options': {'hide_regex': options.hide_regex}}
+    renderer_kwargs = {'processor_options': {
+        'hide_regex': options.hide_regex,
+        'show_regex': options.show_regex,
+    }}
 
     if options.timeline is not None:
         renderer_kwargs['timeline'] = options.timeline
@@ -151,8 +170,8 @@ def main():
         color_override = options.color != None
         unicode = options.unicode if unicode_override else file_supports_unicode(f)
         color = options.color if color_override else file_supports_color(f)
-
-        renderer_kwargs.update({'unicode': unicode, 'color': color, 'show_all': options.show_all})
+        
+        renderer_kwargs.update({'unicode': unicode, 'color': color})
 
     renderer_class = get_renderer_class(options.renderer)
     renderer = renderer_class(**renderer_kwargs)

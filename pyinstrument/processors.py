@@ -75,9 +75,11 @@ def group_library_frames_processor(frame, options):
         return None
 
     hide_regex = options.get('hide_regex', r'.*[\\\/]lib[\\\/].*')
+    show_regex = options.get('show_regex')
 
     def should_be_hidden(frame):
-        return re.match(hide_regex, frame.file_path)
+        return ((hide_regex and re.match(hide_regex, frame.file_path))
+                and not (show_regex and re.match(show_regex, frame.file_path)))
 
     def add_frames_to_group(frame, group):
         group.add_frame(frame)
