@@ -251,6 +251,12 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.0.2
+
+- Add `--show` and `--show-regex` options, to mark certain files to be
+  displayed. This helps to profile inside specific modules, while hiding
+  others. For example, `pyinstrument --show '*/sympy/*' script.py`.
+
 ### v3.0.1
 
 - Fix #60: pass all arguments after -m module_name to the called module
