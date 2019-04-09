@@ -70,9 +70,6 @@ class Profiler(object):
         now = timer()
         time_since_last_profile = now - self.last_profile_time
 
-        if time_since_last_profile < self.interval:
-            return
-
         if event == 'call':
             frame = frame.f_back
 
