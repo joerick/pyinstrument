@@ -59,7 +59,7 @@ def test_profiler_retains_multiple_calls():
 
     frame = profiler.last_session.root_frame()
     assert frame.function == 'test_profiler_retains_multiple_calls'
-    assert len(frame.children) == 5
+    assert len(frame.children) == 4
 
 def test_two_functions():
     profiler = Profiler()
@@ -75,9 +75,9 @@ def test_two_functions():
     frame = profiler.last_session.root_frame()
 
     assert frame.function == 'test_two_functions'
-    assert len(frame.children) == 3
+    assert len(frame.children) == 2
 
-    frame_b, frame_a, _ = sorted(frame.children, key=lambda f: f.time(), reverse=True)
+    frame_b, frame_a = sorted(frame.children, key=lambda f: f.time(), reverse=True)
 
     assert frame_a.function == 'long_function_a'
     assert frame_b.function == 'long_function_b'
@@ -91,7 +91,7 @@ def test_context_manager():
 
     frame = profiler.last_session.root_frame()
     assert frame.function == 'test_context_manager'
-    assert len(frame.children) == 3
+    assert len(frame.children) == 2
 
 def test_json_output():
     with Profiler() as profiler:
