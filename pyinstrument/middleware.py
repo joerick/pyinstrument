@@ -30,7 +30,7 @@ class ProfilerMiddleware(MiddlewareMixin):
 
             # Limit the length of the file name (255 characters is the max limit on major current OS, but it is rather
             # high and the other parts (see line 36) are to be taken into account; so a hundred will be fine here).
-            path = request.get_full_path().replace('/', '_')[:100]
+            path = request.get_full_path().replace('/', '_').replace('?', '_qs_')[:100]
 
             if profile_dir:
                 filename = '{total_time:.3f}s {path} {timestamp:.0f}.html'.format(
