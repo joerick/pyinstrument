@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.conf import settings
 from pyinstrument import Profiler
+import platform
 import time
 import os
 try:
@@ -31,6 +32,10 @@ class ProfilerMiddleware(MiddlewareMixin):
             # Limit the length of the file name (255 characters is the max limit on major current OS, but it is rather
             # high and the other parts (see line 36) are to be taken into account; so a hundred will be fine here).
             path = request.get_full_path().replace('/', '_')[:100]
+
+            # Swap ? for _qs_ on Windows, as it does not support ? in filenames.
+            if platform.platform().startswith('Windows'):
+                path = path.replace('?', '_qs_')
 
             if profile_dir:
                 filename = '{total_time:.3f}s {path} {timestamp:.0f}.html'.format(
