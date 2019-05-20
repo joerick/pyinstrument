@@ -56,7 +56,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
 setup(
     name="pyinstrument",
     packages=find_packages(),
-    version="3.0.2",
+    version="3.0.3",
     description="Call stack profiler for Python. Shows you why your code is slow!",
     long_description=long_description,
     long_description_content_type='text/markdown',
