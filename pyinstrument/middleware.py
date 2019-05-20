@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.conf import settings
 from pyinstrument import Profiler
-import platform
+import sys
 import time
 import os
 try:
@@ -34,7 +34,7 @@ class ProfilerMiddleware(MiddlewareMixin):
             path = request.get_full_path().replace('/', '_')[:100]
 
             # Swap ? for _qs_ on Windows, as it does not support ? in filenames.
-            if platform.platform().startswith('Windows'):
+            if sys.platform in ['win32', 'cygwin']:
                 path = path.replace('?', '_qs_')
 
             if profile_dir:
