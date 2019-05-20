@@ -251,6 +251,12 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.0.3
+
+- Fixed bug with the Django middleware on Windows where profiling would fail
+  because we were trying to put an illegal character '?' in the profile path.
+  (#66)
+
 ### v3.0.2
 
 - Add `--show` and `--show-regex` options, to mark certain files to be
@@ -269,6 +275,8 @@ Changelog
     | Before | After |
     | --- | ---
     | ![image](https://user-images.githubusercontent.com/1244307/50928250-1e50db00-1452-11e9-9164-6050a3c950ed.png) | ![image](https://user-images.githubusercontent.com/1244307/50928326-4c361f80-1452-11e9-91e8-cea735584806.png) | 
+
+  To go back to the old behaviour, use `--show-all` on the command line.
 
 - 'Entry' frames of hidden groups are shown, so you know which call is the problem
 - Really slow frames in the groups are shown too, e.g. the 'read' call on the socket
