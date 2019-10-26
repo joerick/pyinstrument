@@ -21,8 +21,6 @@ Documentation
   * [Flask](#profile-a-web-request-in-flask)
 * [How does it work?](#how-does-it-work)
 * [Changelog](#changelog)
-* [Further information](#further-information)
-  * [Call stack profiling?](#call-stack-profiling)
 * [Contributing](#contributing)
 
 Installation
