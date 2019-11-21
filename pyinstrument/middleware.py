@@ -1,9 +1,14 @@
-from django.http import HttpResponse
-from django.conf import settings
-from pyinstrument import Profiler
+import io
+import os
 import sys
 import time
-import os
+
+from django.http import HttpResponse
+from django.conf import settings
+
+from pyinstrument import Profiler
+
+
 try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:
@@ -49,7 +54,7 @@ class ProfilerMiddleware(MiddlewareMixin):
                 if not os.path.exists(profile_dir):
                     os.mkdir(profile_dir)
 
-                with open(file_path, 'w') as f:
+                with io.open(file_path, 'w', encoding='utf-8') as f:
                     f.write(output_html)
 
             if getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET:
