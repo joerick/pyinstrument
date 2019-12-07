@@ -5,7 +5,7 @@ import time
 
 from django.http import HttpResponse
 from django.conf import settings
-
+from django.utils.module_loading import import_string
 from pyinstrument import Profiler
 
 
@@ -19,12 +19,21 @@ class ProfilerMiddleware(MiddlewareMixin):
     def process_request(self, request):
         profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
 
-        if getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET or profile_dir:
+        func_or_path = getattr(settings, 'PYINSTRUMENT_SHOW_CALLBACK', None)
+        if isinstance(func_or_path, str):
+            show_pyinstrument = import_string(func_or_path)
+        elif callable(func_or_path):
+            show_pyinstrument = func_or_path
+        else:
+            show_pyinstrument = lambda request: True
+
+        if (show_pyinstrument(request) and
+            getattr(settings, 'PYINSTRUMENT_URL_ARGUMENT', 'profile') in request.GET
+        ) or profile_dir:
             profiler = Profiler()
             profiler.start()
 
             request.profiler = profiler
-
 
     def process_response(self, request, response):
         if hasattr(request, 'profiler'):
