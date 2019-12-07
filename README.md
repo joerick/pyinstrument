@@ -263,6 +263,14 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.1.0
+
+- Added PYINSTRUMENT_SHOW_CALLBACK option on the Django middleware to 
+  add a condition to showing the profile (could be used to run pyinstrument
+  on a live server!)
+- Fixed bug in the Django middleware where file would not be written because
+  of a unicode error
+
 ### v3.0.3
 
 - Fixed bug with the Django middleware on Windows where profiling would fail
