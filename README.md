@@ -110,6 +110,20 @@ profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
 
+If you want to show the profiling page depending on the request you can define 
+`PYINSTRUMENT_SHOW_CALLBACK` as dotted path to a function used for determining 
+whether the page should show or not.
+You can provide your own function callback(request) which returns True or False 
+in your settings.py.
+
+```python
+def custom_show_pyinstrument(request):
+    return request.user.is_superuser
+
+
+PYINSTRUMENT_SHOW_CALLBACK = "%s.custom_show_pyinstrument" % __name__
+```
+
 ### Profile a web request in Flask
 
 A simple setup to profile a Flask application is the following:
