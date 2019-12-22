@@ -263,6 +263,11 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.1.1
+
+- Added support for timeline mode on HTML and JSON renderers
+- Released as a tarball as well as a universal wheel
+
 ### v3.1.0
 
 - Added PYINSTRUMENT_SHOW_CALLBACK option on the Django middleware to 
