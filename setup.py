@@ -47,6 +47,7 @@ class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
     def run(self):
         self.check_call(['rm', '-rf', 'dist'])
         self.run_command('build')
+        self.run_command('sdist')
         self.run_command('bdist_wheel')
         self.check_call(['twine upload dist/*'], shell=True)
 
