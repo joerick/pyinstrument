@@ -2,21 +2,17 @@
 import time
 import pyinstrument
 from pyinstrument.renderers.base import Renderer
-from pyinstrument import processors
 from pyinstrument.util import truncate
+from pyinstrument import processors
 
 
 class ConsoleRenderer(Renderer):
-    def __init__(self, unicode=False, color=False, show_all=False, timeline=False, **kwargs):
+    def __init__(self, unicode=False, color=False, **kwargs):
         super(ConsoleRenderer, self).__init__(**kwargs)
 
         self.unicode = unicode
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
-        if show_all:
-            self.processors.remove(processors.group_library_frames_processor)
-        if timeline:
-            self.processors.remove(processors.aggregate_repeated_calls)
 
     def render(self, session):
         result = self.render_preamble(session)

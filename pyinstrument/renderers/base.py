@@ -1,9 +1,17 @@
+from pyinstrument import processors
+
+
 class Renderer(object):
-    def __init__(self, processor_options=None):
+    def __init__(self, show_all=False, timeline=False, processor_options=None):
         # processors is defined on the base class to provide a common way for users to
         # add to and manipulate them before calling render()
         self.processors = self.default_processors()
         self.processor_options = processor_options or {}
+
+        if show_all:
+            self.processors.remove(processors.group_library_frames_processor)
+        if timeline:
+            self.processors.remove(processors.aggregate_repeated_calls)
 
     def default_processors(self):
         ''' 
