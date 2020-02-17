@@ -8,6 +8,7 @@ export default class Frame {
     this.filePath = jsonObject.file_path;
     this.lineNo = jsonObject.line_no;
     this.time = jsonObject.time;
+    this.isApplicationCode = jsonObject.is_application_code
 
     if (jsonObject.group_id) {
       const groupId = jsonObject.group_id;
@@ -38,9 +39,5 @@ export default class Frame {
     } else {
       return 1.0;
     }
-  }
-
-  get isApplicationCode() {
-    return ! /[/\\]lib[/\\]/g.test(this.filePath);
   }
 }

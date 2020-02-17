@@ -180,8 +180,13 @@ class Frame(BaseFrame):
             if ('%slib%s' % (os.sep, os.sep)) in file_path:
                 return False
 
-            if file_path.startswith('<') and file_path.endswith('>'):
-                return False
+            if file_path.startswith('<'):
+                if file_path.startswith('<ipython-input-'):
+                    # lines typed at a console or in a notebook are app code
+                    return True
+                else:
+                    # otherwise, this is probably some library-internal code gen
+                    return False
 
             return True
 

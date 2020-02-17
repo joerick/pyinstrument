@@ -6,6 +6,9 @@ from pyinstrument import processors
 
 encode_str = json.encoder.encode_basestring
 
+def encode_bool(a_bool):
+    return 'true' if a_bool else 'false'
+
 
 class JSONRenderer(Renderer):
     def render_frame(self, frame):
@@ -20,6 +23,7 @@ class JSONRenderer(Renderer):
         property_decls.append(u'"file_path": %s' % encode_str(frame.file_path))
         property_decls.append(u'"line_no": %d' % frame.line_no)
         property_decls.append(u'"time": %f' % frame.time())
+        property_decls.append(u'"is_application_code": %s' % encode_bool(frame.is_application_code))
 
         # can't use list comprehension here because it uses two stack frames each time.
         children_jsons = []
