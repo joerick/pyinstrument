@@ -1,4 +1,4 @@
-import importlib, warnings
+import importlib, warnings, sys, os, codecs
 from pyinstrument.vendor.decorator import decorator
 
 def object_with_import_path(import_path):
@@ -36,3 +36,30 @@ def deprecated_option(option_name, message=''):
             
         return func(*args, **kwargs)
     return decorator(caller)
+
+def file_is_a_tty(file_obj):
+    return hasattr(file_obj, 'isatty') and file_obj.isatty()
+
+def file_supports_color(file_obj):
+    """
+    Returns True if the running system's terminal supports color.
+
+    Borrowed from Django
+    https://github.com/django/django/blob/master/django/core/management/color.py
+    """
+    plat = sys.platform
+    supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
+                                                  'ANSICON' in os.environ)
+
+    is_a_tty = file_is_a_tty(file_obj)
+
+    return (supported_platform and is_a_tty)
+
+def file_supports_unicode(file_obj):
+    encoding = getattr(file_obj, 'encoding', None)
+    if not encoding:
+        return False
+
+    codec_info = codecs.lookup(encoding)
+
+    return ('utf' in codec_info.name)

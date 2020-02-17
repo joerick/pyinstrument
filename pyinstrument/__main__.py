@@ -2,7 +2,7 @@ import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse
 import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
-from pyinstrument.util import object_with_import_path
+from pyinstrument.util import object_with_import_path, file_is_a_tty, file_supports_color, file_supports_unicode
 from pyinstrument.vendor.six import exec_, PY2
 
 
@@ -194,37 +194,6 @@ def main():
         print('    pyinstrument --load-prev %s [options]' % report_identifier)
         print('')
 
-
-def file_supports_color(file_obj):
-    """
-    Returns True if the running system's terminal supports color.
-
-    Borrowed from Django
-    https://github.com/django/django/blob/master/django/core/management/color.py
-    """
-    plat = sys.platform
-    supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
-                                                  'ANSICON' in os.environ)
-
-    is_a_tty = file_is_a_tty(file_obj)
-
-    return (supported_platform and is_a_tty)
-
-
-def file_supports_unicode(file_obj):
-    encoding = getattr(file_obj, 'encoding', None)
-    if not encoding:
-        return False
-
-    codec_info = codecs.lookup(encoding)
-
-    return ('utf' in codec_info.name)
-
-
-def file_is_a_tty(file_obj):
-    return hasattr(file_obj, 'isatty') and file_obj.isatty()
-
-
 def get_renderer_class(renderer):
     if renderer == 'text':
         return renderers.ConsoleRenderer
@@ -234,7 +203,6 @@ def get_renderer_class(renderer):
         return renderers.JSONRenderer
     else:
         return object_with_import_path(renderer)
-
 
 def report_dir():
     report_dir = os.path.join(tempfile.gettempdir(), 'pyinstrument')
