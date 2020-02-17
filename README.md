@@ -263,6 +263,10 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.1.2
+
+- Fix `<__array_function__ internals>` frames appearing as app code in reports
+
 ### v3.1.1
 
 - Added support for timeline mode on HTML and JSON renderers
