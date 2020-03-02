@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.utils.module_loading import import_string
 from pyinstrument import Profiler
+from pyinstrument.renderers.html import HTMLRenderer
 
 
 try:
@@ -37,9 +38,10 @@ class ProfilerMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if hasattr(request, 'profiler'):
-            request.profiler.stop()
+            profile_session = request.profiler.stop()
 
-            output_html = request.profiler.output_html()
+            renderer = HTMLRenderer()
+            output_html = renderer.render(profile_session)
 
             profile_dir = getattr(settings, 'PYINSTRUMENT_PROFILE_DIR', None)
 
@@ -53,9 +55,9 @@ class ProfilerMiddleware(MiddlewareMixin):
 
             if profile_dir:
                 filename = '{total_time:.3f}s {path} {timestamp:.0f}.html'.format(
-                    total_time=request.profiler.root_frame().time(),
+                    total_time=profile_session.duration,
                     path=path,
-                    timestamp=time.time()
+                    timestamp=time.time(),
                 )
 
                 file_path = os.path.join(profile_dir, filename)
