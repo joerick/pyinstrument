@@ -8,13 +8,13 @@ ASSERTION_MESSAGE = ('Please raise an issue at http://github.com/pyinstrument/is
 
 class ProfilerSession(object):
     def __init__(self, frame_records, start_time, duration, sample_count, start_call_stack, 
-                 program, cpu_time=None):
+                 target_description, cpu_time=None):
         self.frame_records = frame_records
         self.start_time = start_time
         self.duration = duration
         self.sample_count = sample_count
         self.start_call_stack = start_call_stack
-        self.program = program
+        self.target_description = target_description
         self.cpu_time = cpu_time
 
     @staticmethod
@@ -33,7 +33,7 @@ class ProfilerSession(object):
             'duration': self.duration,
             'sample_count': self.sample_count,
             'start_call_stack': self.start_call_stack,
-            'program': self.program,
+            'target_description': self.target_description,
             'cpu_time': self.cpu_time,
         }
 
@@ -45,7 +45,7 @@ class ProfilerSession(object):
             duration=json_dict['duration'],
             sample_count=json_dict['sample_count'],
             start_call_stack=json_dict['start_call_stack'],
-            program=json_dict['program'],
+            target_description=json_dict['target_description'],
             cpu_time=json_dict['cpu_time'],
         )
 

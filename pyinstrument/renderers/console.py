@@ -1,54 +1,18 @@
 # coding: utf8
-import time
+import time, textwrap
 import pyinstrument
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.util import truncate
 from pyinstrument import processors
 
 
-class ConsoleRenderer(Renderer):
+class BaseConsoleRenderer(Renderer):
     def __init__(self, unicode=False, color=False, **kwargs):
-        super(ConsoleRenderer, self).__init__(**kwargs)
+        super(BaseConsoleRenderer, self).__init__(**kwargs)
 
         self.unicode = unicode
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
-
-    def render(self, session):
-        result = self.render_preamble(session)
-
-        self.root_frame = self.preprocess(session.root_frame())
-
-        if self.root_frame is None:
-            result += 'No samples were recorded.\n\n'
-            return result
-
-        result += self.render_frame(self.root_frame)
-        result += '\n'
-
-        return result
-
-    # pylint: disable=W1401
-    def render_preamble(self, session):
-        lines = [
-            r"",
-            r"  _     ._   __/__   _ _  _  _ _/_  ",
-            r" /_//_/// /_\ / //_// / //_'/ //    ",
-            r"/   _/        {:>20}".format('v'+pyinstrument.__version__),
-        ]
-
-        lines[1] += " Recorded: {:<9}".format(time.strftime('%X', time.localtime(session.start_time)))
-        lines[2] += " Duration: {:<9.3f}".format(session.duration)
-        lines[1] += " Samples:  {}".format(session.sample_count)
-        if session.cpu_time is not None:
-            lines[2] += " CPU time: {:.3f}".format(session.cpu_time)
-
-        lines.append('')
-        lines.append('Program: %s' % session.program)
-        lines.append('')
-        lines.append('')
-
-        return '\n'.join(lines)
 
     def render_frame(self, frame, indent=u'', child_indent=u''):
         if not frame.group or (frame.group.root == frame
@@ -147,3 +111,81 @@ class ConsoleRenderer(Renderer):
             return ''
 
     colors_disabled = colors_disabled()
+
+
+class ConsoleRenderer(BaseConsoleRenderer):
+    def render(self, session):
+        result = self.render_preamble(session)
+
+        self.root_frame = self.preprocess(session.root_frame())
+
+        if self.root_frame is None:
+            result += 'No samples were recorded.\n\n'
+            return result
+
+        result += self.render_frame(self.root_frame)
+        result += '\n'
+
+        return result
+
+    # pylint: disable=W1401
+    def render_preamble(self, session):
+        lines = [
+            r"",
+            r"  _     ._   __/__   _ _  _  _ _/_  ",
+            r" /_//_/// /_\ / //_// / //_'/ //    ",
+            r"/   _/        {:>20}".format('v'+pyinstrument.__version__),
+        ]
+
+        lines[1] += " Recorded: {:<9}".format(time.strftime('%X', time.localtime(session.start_time)))
+        lines[2] += " Duration: {:<9.3f}".format(session.duration)
+        lines[1] += " Samples:  {}".format(session.sample_count)
+        if session.cpu_time is not None:
+            lines[2] += " CPU time: {:.3f}".format(session.cpu_time)
+
+        lines.append('')
+        lines.append('Program: %s' % session.program)
+        lines.append('')
+        lines.append('')
+
+        return '\n'.join(lines)
+
+
+class ShortConsoleRenderer(BaseConsoleRenderer):
+    def render(self, session):
+        result = textwrap.dedent('''
+            pyinstrument ........................................
+            .
+            .  {}
+            .
+        ''').format(
+            session.target_description,
+        )
+
+        self.root_frame = self.preprocess(session.root_frame())
+
+        if self.root_frame is None:
+            result += 'No samples were recorded.\n'
+            return result
+
+        result += self.render_frame(self.root_frame, indent='.  ', child_indent='.  ')
+        result += '.  \n'
+
+        first_line = result.splitlines()[1]
+        result += '.'*len(first_line) + '\n'
+
+        result += '\n'
+
+        return result
+
+    def render_preamble_short(self, session):
+        lines = []
+        lines.append('pyinstrument v{} ----------------------------------------'.format(pyinstrument.__version__))
+        lines.append('Recorded: {:<9}  |  Duration: {:<9.3f}  |  CPU time: {:.3f}'.format(
+            time.strftime('%X', time.localtime(session.start_time)),
+            session.duration,
+            session.cpu_time,
+        ))
+        lines.append('')
+
+        return '\n'.join(lines)
