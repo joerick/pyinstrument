@@ -7,7 +7,7 @@ p.start()
 
 def func():
     fd = open('/dev/urandom', 'rb')
-    data = fd.read(1024*1024)
+    _ = fd.read(1024*1024)
 
 func()
 

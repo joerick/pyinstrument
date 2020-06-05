@@ -1,15 +1,13 @@
 import django.template.loader
 import django.conf
 from timeit import Timer
-import sys
 import profile
 import cProfile
 import pyinstrument
 
-sys.path.append('django_test')
 django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATES=[{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS':['./examples'],
+    'DIRS': ['./examples/django_example/django_example/templates',]
 }])
 django.setup()
 

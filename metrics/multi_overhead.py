@@ -2,18 +2,18 @@ import re
 import pyinstrument
 from timeit import Timer
 import django.conf
-import os
-from django.template.loader import render_to_string
 import sys
 import time
 import cProfile, profile
 
-sys.path.append('django_test')
-
-django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATE_DIRS=('./examples',))
+django.conf.settings.configure(INSTALLED_APPS=(), TEMPLATES=[{
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS': ['./examples/django_example/django_example/templates',]
+}])
+django.setup()
 
 def test_func_re():
-    re.compile("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+    re.compile(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
 
 def test_func_template():
     django.template.loader.render_to_string('template.html')
@@ -21,14 +21,6 @@ def test_func_template():
 # heat caches
 test_func_template()
 
-def TestRun(object):
-    def __init__(self, function, repeats):
-        self.timer = Timer(stmt=function)
-        self.repeats = repeats
-
-def TestRunBase(TestRun):
-    def run(self):
-        return self.timer.repeat(number=self.repeats)
 
 def time_base(function, repeats):
     timer = Timer(stmt=function)
@@ -44,17 +36,9 @@ def time_cProfile(function, repeats):
     p = cProfile.Profile()
     return p.runcall(lambda: timer.repeat(number=repeats))
 
-def time_pyinstrument_signal(function, repeats):
+def time_pyinstrument(function, repeats):
     timer = Timer(stmt=function)
     p = pyinstrument.Profiler()
-    p.start()
-    result = timer.repeat(number=repeats)
-    p.stop()
-    return result
-
-def time_pyinstrument_event(function, repeats):
-    timer = Timer(stmt=function)
-    p = pyinstrument.Profiler(use_signal=False)
     p.start()
     result = timer.repeat(number=repeats)
     p.stop()
@@ -64,8 +48,7 @@ profilers = (
     ('Base', time_base),
     # ('profile', time_profile),
     ('cProfile', time_cProfile),
-    ('pyinstrument (signal)', time_pyinstrument_signal),
-    ('pyinstrument (event)', time_pyinstrument_event),
+    ('pyinstrument', time_pyinstrument),
 )
 
 tests = (
