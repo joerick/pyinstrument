@@ -4,6 +4,7 @@ from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import object_with_import_path
 from pyinstrument.vendor.six import exec_, PY2
+from pyinstrument.vendor import appdirs
 
 
 def main():
@@ -237,9 +238,10 @@ def get_renderer_class(renderer):
 
 
 def report_dir():
-    report_dir = os.path.join(tempfile.gettempdir(), 'pyinstrument')
+    data_dir = appdirs.user_data_dir('pyinstrument', 'com.github.joerick')
+    report_dir = os.path.join(data_dir, 'reports')
     if not os.path.exists(report_dir):
-        os.mkdir(report_dir)
+        os.makedirs(report_dir)
     return report_dir
 
 def load_report(identifier=None):
