@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 
 
 HTML_RENDERER_DIR = 'html_renderer'
+JS_BUNDLE = 'pyinstrument/renderers/html_resources/app.js'
 
 # pylint: disable=e1101
 class CommandUtilities:
@@ -19,13 +20,24 @@ class BuildPyCommand(setuptools.command.build_py.build_py, CommandUtilities):
     def run(self):
         '''compile the JS, then run superclass implementation'''
 
-        if subprocess.call(['npm', '--version']) != 0:
-            raise RuntimeError('npm is required to build the HTML renderer.')
+        # when installing from tarball, the JS is already built, so don't try to build it again
+        js_source_mtime = 0
+        for dirpath, _, filenames in os.walk(HTML_RENDERER_DIR):
+            for filename in filenames:
+                file = os.path.join(dirpath, filename)
+                js_source_mtime = max(js_source_mtime, os.path.getmtime(file))
+        
+        js_bundle_is_up_to_date = (os.path.exists(JS_BUNDLE)
+                                   and os.path.getmtime(JS_BUNDLE) >= js_source_mtime)
 
-        self.check_call(['npm', 'install'], cwd=HTML_RENDERER_DIR)
-        self.check_call(['npm', 'run', 'build'], cwd=HTML_RENDERER_DIR)
+        if not js_bundle_is_up_to_date:
+            if subprocess.call(['npm', '--version']) != 0:
+                raise RuntimeError('npm is required to build the HTML renderer.')
 
-        self.copy_file(HTML_RENDERER_DIR+'/dist/js/app.js', 'pyinstrument/renderers/html_resources/app.js')
+            self.check_call(['npm', 'install'], cwd=HTML_RENDERER_DIR)
+            self.check_call(['npm', 'run', 'build'], cwd=HTML_RENDERER_DIR)
+
+            self.copy_file(HTML_RENDERER_DIR+'/dist/js/app.js', JS_BUNDLE)
 
         setuptools.command.build_py.build_py.run(self)
 
@@ -46,6 +58,7 @@ class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
     def finalize_options(self): pass
     def run(self):
         self.check_call(['rm', '-rf', 'dist'])
+        self.check_call(['rm', '-rf', JS_BUNDLE])
         self.run_command('build')
         self.run_command('sdist')
         self.run_command('bdist_wheel')
