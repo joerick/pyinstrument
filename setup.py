@@ -82,8 +82,6 @@ setup(
     include_package_data=True,
     entry_points={'console_scripts': ['pyinstrument = pyinstrument.__main__:main']},
     zip_safe=False,
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
     cmdclass={
         'build_py': BuildPyCommand,
         'dev_server': HTMLDevServerCommand,
