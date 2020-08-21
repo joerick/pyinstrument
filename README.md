@@ -463,4 +463,4 @@ To get some sample output:
 
 To run the tests:
 
-    python setup.py test
+    pytest
