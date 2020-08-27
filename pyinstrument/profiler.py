@@ -72,8 +72,17 @@ class Profiler(object):
 
         if event == 'call':
             frame = frame.f_back
+        
 
-        self.frame_records.append((self._call_stack_for_frame(frame), time_since_last_profile))
+        call_stack = self._call_stack_for_frame(frame)
+
+        if event == 'c_return' or event == 'c_exception':
+            c_frame_identifier = '%s\x00%s\x00%i' % (
+                getattr(arg, '__qualname__', arg.__name__), '<built-in>', 0
+            )
+            call_stack.append(c_frame_identifier)
+
+        self.frame_records.append((call_stack, time_since_last_profile))
 
         self.last_profile_time = now
 
