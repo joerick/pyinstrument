@@ -265,6 +265,14 @@ samples were 'bunched up' and recorded at the end.
 Changelog
 ---------
 
+### v3.2.0
+
+- Added the ability to track time in C functions. Minor note - Pyinstrument 
+  will record time spent C functions as 'leaf' functions, due to a limitation
+  in how Python records frames. `Python -> C -> Python` is recorded as 
+  `Python -> Python`, but `Python -> Python -> C` will be attributed correctly.
+  (#103)
+
 ### v3.1.2
 
 - Fix `<__array_function__ internals>` frames appearing as app code in reports
