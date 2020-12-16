@@ -95,7 +95,9 @@ print(profiler.output_text(unicode=True, color=True))
 (You can omit the `unicode` and `color` flags if your output/terminal does
 not support them.)
 
-**Protip:** To render the output as HTML, use `profiler.output_html()`
+**Protip:** To explore the profile in a web browser, use
+`profiler.open_in_browser()`. To save this HTML for later, use 
+`profiler.output_html()`.
 
 ### Profile a web request in Django
 
