@@ -20,6 +20,7 @@ Documentation
   * [Django](#profile-a-web-request-in-django)
   * [Flask](#profile-a-web-request-in-flask)
 * [How does it work?](#how-does-it-work)
+* [Known issues](#known-issues)
 * [Changelog](#changelog)
 * [Contributing](#contributing)
 
@@ -263,6 +264,17 @@ it won't decrease accuracy. The default interval of 1ms is a lower bound for
 recording a stackframe, but if there is a long time spent in a single function
 call, it will be recorded at the end of that call. So effectively those
 samples were 'bunched up' and recorded at the end.
+
+Known issues
+------------
+
+- Profiling code inside a Docker container can cause some strange results,
+  because the gettimeofday syscall that pyinstrument uses is slow in that
+  environment. See [#83](https://github.com/joerick/pyinstrument/issues/83)
+- When using `pyinstrument script.py` where `script.py` contains a class
+  serialized with `pickle`, you might encounter errors because the
+  serialisation machinery doesn't know where `__main__` is. [See this issue
+  for workarounds](https://github.com/joerick/pyinstrument/issues/109#issuecomment-722276263)
 
 Changelog
 ---------
