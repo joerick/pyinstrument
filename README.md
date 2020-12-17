@@ -279,6 +279,13 @@ Known issues
 Changelog
 ---------
 
+### v3.3.0
+
+- Fixed issue with `pyinstrument -m module`, where pyinstrument wouldn't find
+  modules in the current directory.
+- Dropped support for Python 2.7 and 3.5. Old versions will remain available
+  on PyPI, and pip should choose the correct one automatically.
+
 ### v3.2.0
 
 - Added the ability to track time in C functions. Minor note - Pyinstrument 
