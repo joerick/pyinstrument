@@ -480,7 +480,7 @@ This compiles the Javascript code needed for the HTML output. You will need
 [node](https://nodejs.org/en/) installed (Node isn't required for the pip
 install as the Javascript is already pre-built in the wheel).
 
-To setup a dev envronment, do:
+To setup a dev environment, do:
 
     virtualenv --python=python3 env
     . env/bin/activate
