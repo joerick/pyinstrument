@@ -11,6 +11,10 @@ def encode_bool(a_bool):
 
 
 class JSONRenderer(Renderer):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
     def render_frame(self, frame):
         if frame is None:
             return u'null'
