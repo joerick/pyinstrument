@@ -478,7 +478,10 @@ To run pyinstrument from the git repo or a source checkout, you must first run
 
 This compiles the Javascript code needed for the HTML output. You will need
 [node](https://nodejs.org/en/) installed (Node isn't required for the pip
-install as the Javascript is already pre-built in the wheel).
+install as the Javascript is already pre-built in the wheel). 
+
+> When using node note these instructions have been testing on v12.20.0 
+> (i.e. `nvm use 12.20.0`). Other versions are not guaranteed to work.
 
 To setup a dev environment, do:
 

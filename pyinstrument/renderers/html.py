@@ -8,6 +8,10 @@ from pyinstrument import processors
 
 
 class HTMLRenderer(Renderer):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def render(self, session):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html_resources/')
 
