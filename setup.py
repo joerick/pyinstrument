@@ -1,3 +1,4 @@
+import sys
 import setuptools, subprocess, os, distutils
 import setuptools.command.build_py
 from setuptools import setup, find_packages
@@ -62,7 +63,7 @@ class BuildAndUploadCommand(distutils.cmd.Command, CommandUtilities):
         self.run_command('build')
         self.run_command('sdist')
         self.run_command('bdist_wheel')
-        self.check_call(['twine upload dist/*'], shell=True)
+        self.check_call([sys.executable + ' -m twine upload dist/*'], shell=True)
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
     long_description = f.read()
