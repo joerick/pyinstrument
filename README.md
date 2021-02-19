@@ -279,6 +279,15 @@ Known issues
 Changelog
 ---------
 
+### v3.4.1
+
+- Under-the-hood modernisation
+
+### v3.4.0
+
+- Added `timeline` option (boolean) to Profiler methods `output_html()` and
+  `open_in_browser()`.
+
 ### v3.3.0
 
 - Fixed issue with `pyinstrument -m module`, where pyinstrument wouldn't find
