@@ -1,4 +1,4 @@
-import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse
+import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse, shutil
 import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
@@ -31,6 +31,10 @@ def main():
         dest='module_name', action='callback', callback=dash_m_callback,
         type="str",
         help="run library module as a script, like 'python -m module'")
+
+    parser.add_option('', '--path',
+        dest='path', action='store_true',
+        help="Lookup program to profile in the PATH")
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
@@ -120,6 +124,16 @@ def main():
             globs = {
                 'run_module': runpy.run_module,
                 'modname': options.module_name
+            }
+        elif options.path is not None:
+            sys.argv[:] = args
+            progname = shutil.which(args[0])
+            if progname is None:
+                sys.exit('Error: program {} not found in PATH!'.format(args[0]))
+            code = "run_path(progname, run_name='__main__')"
+            globs = {
+                'run_path': runpy.run_path,
+                'progname': progname
             }
         else:
             sys.argv[:] = args
