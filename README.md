@@ -29,7 +29,7 @@ Installation
 
     pip install pyinstrument
 
-Pyinstrument supports Python 2.7 and 3.3+.
+Pyinstrument supports Python 3.6+.
 
 > To run Pyinstrument from a git checkout, there's a build step.
 Take a look at [Contributing](#contributing) for more info.
