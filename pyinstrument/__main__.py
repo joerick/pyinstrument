@@ -31,10 +31,9 @@ def main():
         dest='module_name', action='callback', callback=dash_m_callback,
         type="str",
         help="run library module as a script, like 'python -m module'")
-
     parser.add_option('', '--path',
         dest='path', action='store_true',
-        help="Lookup program to profile in the PATH")
+        help="Lookup scriptfile to profile in the PATH")
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
@@ -102,12 +101,15 @@ def main():
         parser.print_help()
         sys.exit(2)
 
+    if options.module_name is not None and options.path:
+        parser.error("The options --module and --path are mutually exclusive.")
+
     if not options.hide_regex:
         options.hide_regex = fnmatch.translate(options.hide_fnmatch)
-    
+
     if not options.show_regex and options.show_fnmatch:
         options.show_regex = fnmatch.translate(options.show_fnmatch)
-     
+
     if options.show_all:
         options.show_regex = r'.*'
 
@@ -189,7 +191,7 @@ def main():
         color_override = options.color != None
         unicode = options.unicode if unicode_override else file_supports_unicode(f)
         color = options.color if color_override else file_supports_color(f)
-        
+
         renderer_kwargs.update({'unicode': unicode, 'color': color})
 
     renderer_class = get_renderer_class(options.renderer)

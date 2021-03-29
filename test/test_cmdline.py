@@ -1,5 +1,5 @@
 from __future__ import print_function
-import subprocess, sys
+import os, subprocess, sys
 from pathlib import Path
 
 import pytest
@@ -79,4 +79,15 @@ class TestCommandLine:
     def test_running_yourself_as_module(self, invocation):
         subprocess.check_call(
             [*invocation, '-m', 'pyinstrument'],
+        )
+
+    def test_path(self, invocation, tmp_path: Path):
+        PROGRAM_FILENAME = 'program'
+        program_path = tmp_path / PROGRAM_FILENAME
+        program_path.write_text(busy_wait_script)
+        program_path.chmod(0x755)
+
+        output = subprocess.check_output(
+            [*invocation, '--path', '--', PROGRAM_FILENAME],
+            env={'PATH': str(tmp_path) + os.pathsep + os.getenv('PATH')},
         )
