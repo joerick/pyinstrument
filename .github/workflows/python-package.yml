@@ -26,6 +26,8 @@ jobs:
     - name: Build
       run: |
         python setup.py build
+      env: 
+        DISTUTILS_DEBUG: "1"
     - name: Test with pytest
       run: |
         pytest
