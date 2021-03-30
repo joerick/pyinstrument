@@ -130,6 +130,7 @@ def main():
         elif options.path is not None:
             sys.argv[:] = args
             progname = shutil.which(args[0])
+            sys.path[0] = os.path.dirname(progname)
             if progname is None:
                 sys.exit('Error: program {} not found in PATH!'.format(args[0]))
             code = "run_path(progname, run_name='__main__')"

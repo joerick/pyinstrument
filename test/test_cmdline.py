@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os, subprocess, sys
+import os, subprocess, sys, textwrap
 from pathlib import Path
 
 import pytest
@@ -87,7 +87,38 @@ class TestCommandLine:
         program_path.write_text(busy_wait_script)
         program_path.chmod(0x755)
 
-        output = subprocess.check_output(
+        subprocess.check_call(
             [*invocation, '--path', '--', PROGRAM_FILENAME],
             env={'PATH': str(tmp_path) + os.pathsep + os.getenv('PATH')},
         )
+    
+    def test_path_execution_details(self, invocation, tmp_path: Path, monkeypatch):
+        PROGRAM_FILENAME = 'program'
+        program_path = tmp_path / PROGRAM_FILENAME
+        program_path.write_text(textwrap.dedent(f'''
+            #!{sys.executable}
+            import sys, os
+            print('__name__', __name__, file=sys.stderr)
+            print('sys.argv', sys.argv, file=sys.stderr)
+            print('sys.path', sys.path, file=sys.stderr)
+            print('sys.executable', os.path.realpath(sys.executable), file=sys.stderr)
+            print('os.getcwd()', os.getcwd(), file=sys.stderr)
+        ''').strip())
+        program_path.chmod(0x755)
+        monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
+
+        process_pyi = subprocess.run(
+            [*invocation, '--path', '--', PROGRAM_FILENAME, 'arg1', 'arg2'],
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+        process_native = subprocess.run(
+            [PROGRAM_FILENAME, 'arg1', 'arg2'],
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+
+        # check the execution environments match
+        print('process_pyi.stderr', process_pyi.stderr)
+        print('process_native.stderr', process_native.stderr)
+        assert process_pyi.stderr == process_native.stderr
