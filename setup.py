@@ -36,7 +36,7 @@ class BuildPyCommand(setuptools.command.build_py.build_py, CommandUtilities):
                 raise RuntimeError('npm is required to build the HTML renderer.')
 
             self.check_call('npm ci', cwd=HTML_RENDERER_DIR, shell=True)
-            self.check_call('npm run build'], cwd=HTML_RENDERER_DIR, shell=True)
+            self.check_call('npm run build', cwd=HTML_RENDERER_DIR, shell=True)
 
             self.copy_file(HTML_RENDERER_DIR+'/dist/js/app.js', JS_BUNDLE)
 
