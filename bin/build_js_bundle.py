@@ -14,7 +14,7 @@ if __name__ == '__main__':
     os.chdir(os.path.dirname(__file__))
     os.chdir('..')
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument('--force', action='store_true',
                         help='force a rebuild of the bundle')
 

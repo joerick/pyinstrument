@@ -10,7 +10,7 @@ repos:
     hooks:
     -   id: build
         name: build js bundle
-        entry: bin/build_js_bundle.py
+        entry: bin/build_js_bundle.py --force
         files: html_renderer/.*
         language: node
         pass_filenames: false
