@@ -102,7 +102,7 @@ def main():
         sys.exit(2)
 
     if options.module_name is not None and options.path:
-        parser.error("The options --module and --path are mutually exclusive.")
+        parser.error("The options -m and --from-path are mutually exclusive.")
 
     if not options.hide_regex:
         options.hide_regex = fnmatch.translate(options.hide_fnmatch)
