@@ -14,11 +14,11 @@ class JSONRenderer(Renderer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-    
+
     def render_frame(self, frame):
         if frame is None:
             return u'null'
-        # we don't use the json module because it uses 2x stack frames, so 
+        # we don't use the json module because it uses 2x stack frames, so
         # crashes on deep but valid call stacks
 
         property_decls = []
@@ -37,7 +37,7 @@ class JSONRenderer(Renderer):
 
         if frame.group:
             property_decls.append(u'"group_id": %s' % encode_str(frame.group.id))
-        
+
         return u'{%s}' % u','.join(property_decls)
 
     def render(self, session):

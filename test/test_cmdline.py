@@ -32,7 +32,7 @@ class TestCommandLine:
     def test_command_line(self, invocation, tmp_path: Path):
         busy_wait_py = tmp_path / 'busy_wait.py'
         busy_wait_py.write_text(busy_wait_script)
-        
+
         output = subprocess.check_output([*invocation, busy_wait_py])
 
         assert 'busy_wait' in str(output)

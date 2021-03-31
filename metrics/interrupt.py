@@ -11,7 +11,7 @@ def func():
 
 func()
 
-# this failed on ubuntu 12.04 
+# this failed on ubuntu 12.04
 platform()
 
 p.stop()

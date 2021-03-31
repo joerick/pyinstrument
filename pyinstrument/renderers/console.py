@@ -55,7 +55,7 @@ class ConsoleRenderer(Renderer):
                                or frame.total_self_time > 0.2*self.root_frame.time()
                                or frame in frame.group.exit_frames):
             time_str = (self._ansi_color_for_time(frame)
-                        + '{:.3f}'.format(frame.time()) 
+                        + '{:.3f}'.format(frame.time())
                         + self.colors.end)
             function_color = self._ansi_color_for_function(frame)
             result = u'{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n'.format(
@@ -98,7 +98,7 @@ class ConsoleRenderer(Renderer):
 
     def _ansi_color_for_time(self, frame):
         proportion_of_total = frame.time() / self.root_frame.time()
-        
+
         if proportion_of_total > 0.6:
             return self.colors.red
         elif proportion_of_total > 0.2:
@@ -123,7 +123,7 @@ class ConsoleRenderer(Renderer):
             processors.remove_unnecessary_self_time_nodes,
             processors.remove_irrelevant_nodes,
         ]
-     
+
     class colors_enabled:
         red = '\033[31m'
         green = '\033[32m'

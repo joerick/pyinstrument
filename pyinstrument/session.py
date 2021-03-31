@@ -7,7 +7,7 @@ ASSERTION_MESSAGE = ('Please raise an issue at http://github.com/pyinstrument/is
                      'let me know how you caused this error!')
 
 class ProfilerSession(object):
-    def __init__(self, frame_records, start_time, duration, sample_count, start_call_stack, 
+    def __init__(self, frame_records, start_time, duration, sample_count, start_call_stack,
                  program, cpu_time=None):
         self.frame_records = frame_records
         self.start_time = start_time
@@ -50,7 +50,7 @@ class ProfilerSession(object):
         )
 
     def root_frame(self, trim_stem=True):
-        ''' 
+        '''
         Parses the internal frame records and returns a tree of Frame objects
         '''
         root_frame = None
@@ -71,7 +71,7 @@ class ProfilerSession(object):
                 if stack_depth >= len(frame_stack):
                     frame = Frame(frame_identifier)
                     frame_stack.append(frame)
-                    
+
                     if stack_depth == 0:
                         # There should only be one root frame, as far as I know
                         assert root_frame is None, ASSERTION_MESSAGE
@@ -85,13 +85,13 @@ class ProfilerSession(object):
 
             # assign the time to the final frame
             frame_stack[-1].add_child(SelfTimeFrame(self_time=time))
-        
+
         if root_frame is None:
             return None
-        
+
         if trim_stem:
             root_frame = self._trim_stem(root_frame)
-        
+
         return root_frame
 
     def _trim_stem(self, frame):

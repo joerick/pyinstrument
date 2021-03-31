@@ -95,7 +95,7 @@ class Frame(BaseFrame):
         if children:
             for child in children:
                 self.add_child(child)
-    
+
     def add_child(self, frame, after=None):
         '''
         Adds a child frame, updating the parent link.
@@ -111,7 +111,7 @@ class Frame(BaseFrame):
             self._children.insert(index, frame)
 
         self._invalidate_time_caches()
-    
+
     def add_children(self, frames, after=None):
         '''
         Convenience method to add multiple frames at once.
@@ -227,9 +227,9 @@ class SelfTimeFrame(BaseFrame):
     """
     Represents a time spent inside a function
     """
-    def time(self): 
+    def time(self):
         return self.self_time
-    
+
     @property
     def function(self): return '[self]'
 
@@ -268,7 +268,7 @@ class FrameGroup(object):
         self._libraries = None
 
         self.add_frame(root)
-    
+
     @property
     def libraries(self):
         if self._libraries is None:
@@ -278,7 +278,7 @@ class FrameGroup(object):
                 library, _ = os.path.splitext(library)
                 if library and library not in libraries:
                     libraries.append(library)
-            self._libraries = libraries      
+            self._libraries = libraries
 
         return self._libraries
 
