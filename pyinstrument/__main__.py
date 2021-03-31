@@ -31,9 +31,9 @@ def main():
         dest='module_name', action='callback', callback=dash_m_callback,
         type="str",
         help="run library module as a script, like 'python -m module'")
-    parser.add_option('', '--path',
+    parser.add_option('', '--from-path',
         dest='path', action='store_true',
-        help="Lookup scriptfile to profile in the PATH")
+        help="Instead of the working directory, look for scriptfile in the PATH environment variable")
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
