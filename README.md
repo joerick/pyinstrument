@@ -265,6 +265,7 @@ recording a stackframe, but if there is a long time spent in a single function
 call, it will be recorded at the end of that call. So effectively those
 samples were 'bunched up' and recorded at the end.
 
+
 Known issues
 ------------
 
