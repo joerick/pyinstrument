@@ -177,8 +177,13 @@ class Frame(BaseFrame):
         if self.identifier:
             file_path = self.file_path
 
-            if ('%slib%s' % (os.sep, os.sep)) in file_path:
+            if '/lib/' in file_path:
                 return False
+
+            if os.sep != '/':
+                # windows uses back-slash too, so let's look for that too.
+                if ('%slib%s' % (os.sep, os.sep)) in file_path:
+                    return False
 
             if file_path.startswith('<'):
                 if file_path.startswith('<ipython-input-'):
