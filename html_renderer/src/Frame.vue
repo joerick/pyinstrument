@@ -112,7 +112,7 @@ export default {
       let fontWeight = undefined;
 
       if (this.frame.proportionOfTotal > 0.6) {
-        color = '#FF4159';
+        color = '#FF4158';
         fontWeight = 600;
       } else if (this.frame.proportionOfTotal > 0.3) {
         color = '#F5A623'
