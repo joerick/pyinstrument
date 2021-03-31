@@ -32,7 +32,7 @@ class TestCommandLine:
     def test_command_line(self, invocation, tmp_path: Path):
         busy_wait_py = tmp_path / 'busy_wait.py'
         busy_wait_py.write_text(busy_wait_script)
-        
+
         output = subprocess.check_output([*invocation, busy_wait_py])
 
         assert 'busy_wait' in str(output)
@@ -88,10 +88,10 @@ class TestCommandLine:
         program_path.chmod(0x755)
 
         subprocess.check_call(
-            [*invocation, '--path', '--', PROGRAM_FILENAME],
+            [*invocation, '--from-path', '--', PROGRAM_FILENAME],
             env={'PATH': str(tmp_path) + os.pathsep + os.getenv('PATH')},
         )
-    
+
     def test_path_execution_details(self, invocation, tmp_path: Path, monkeypatch):
         PROGRAM_FILENAME = 'program'
         program_path = tmp_path / PROGRAM_FILENAME
@@ -108,7 +108,7 @@ class TestCommandLine:
         monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
 
         process_pyi = subprocess.run(
-            [*invocation, '--path', '--', PROGRAM_FILENAME, 'arg1', 'arg2'],
+            [*invocation, '--from-path', '--', PROGRAM_FILENAME, 'arg1', 'arg2'],
             stderr=subprocess.PIPE,
             check=True,
         )
