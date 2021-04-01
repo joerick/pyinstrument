@@ -32,7 +32,7 @@ def main():
         type="str",
         help="run library module as a script, like 'python -m module'")
     parser.add_option('', '--from-path',
-        dest='path', action='store_true',
+        dest='from_path', action='store_true',
         help="Instead of the working directory, look for scriptfile in the PATH environment variable")
 
     parser.add_option('-o', '--outfile',
@@ -127,27 +127,21 @@ def main():
                 'run_module': runpy.run_module,
                 'modname': options.module_name
             }
-        elif options.path is not None:
+        else:
             sys.argv[:] = args
-            progname = shutil.which(args[0])
-            sys.path[0] = os.path.dirname(progname)
-            if progname is None:
-                sys.exit('Error: program {} not found in PATH!'.format(args[0]))
+            if options.from_path:
+                progname = shutil.which(args[0])
+                if progname is None:
+                    sys.exit('Error: program {} not found in PATH!'.format(args[0]))
+                # Make sure we overwrite the first entry of sys.path ('.') with directory of the program.
+                sys.path[0] = os.path.dirname(progname)
+            else:
+                progname = args[0]
+                sys.path.insert(0, os.path.dirname(progname))
             code = "run_path(progname, run_name='__main__')"
             globs = {
                 'run_path': runpy.run_path,
                 'progname': progname
-            }
-        else:
-            sys.argv[:] = args
-            progname = args[0]
-            sys.path.insert(0, os.path.dirname(progname))
-            with open(progname, 'rb') as fp:
-                code = compile(fp.read(), progname, 'exec')
-            globs = {
-                '__file__': progname,
-                '__name__': '__main__',
-                '__package__': None,
             }
 
         profiler = Profiler()
