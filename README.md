@@ -3,7 +3,7 @@ pyinstrument
 
 [![PyPI version](https://badge.fury.io/py/pyinstrument.svg)](https://badge.fury.io/py/pyinstrument)
 [![.github/workflows/python-package.yml](https://github.com/joerick/pyinstrument/actions/workflows/python-package.yml/badge.svg)](https://github.com/joerick/pyinstrument/actions/workflows/python-package.yml)
- 
+
 [![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
 
 Pyinstrument is a Python profiler. A profiler is a tool to help you 'optimize'
