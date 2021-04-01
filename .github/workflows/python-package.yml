@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [ master, multi-os-testing ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
