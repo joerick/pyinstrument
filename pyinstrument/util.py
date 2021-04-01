@@ -33,6 +33,6 @@ def deprecated_option(option_name, message=''):
                 DeprecationWarning,
                 stacklevel=3
             )
-            
+
         return func(*args, **kwargs)
     return decorator(caller)

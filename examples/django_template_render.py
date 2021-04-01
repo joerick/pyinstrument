@@ -22,7 +22,7 @@ def main():
     os.chdir(os.path.dirname(__file__))
 
     django.conf.settings.configure(
-        INSTALLED_APPS=(), 
+        INSTALLED_APPS=(),
         TEMPLATES=[{
             "BACKEND": "django.template.backends.django.DjangoTemplates",
             "DIRS": ['./django_example/django_example/templates']

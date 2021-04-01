@@ -28,7 +28,7 @@ base_timings = test_func()
 cp = cProfile.Profile()
 cProfile_timings = cp.runcall(test_func)
 
-# pyinstrument 
+# pyinstrument
 profiler = pyinstrument.Profiler()
 profiler.start()
 pyinstrument_timings = test_func()

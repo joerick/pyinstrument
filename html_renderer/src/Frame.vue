@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div v-if="frame.group && frame.group.rootFrame == frame && childrenVisible" 
+    <div v-if="frame.group && frame.group.rootFrame == frame && childrenVisible"
          class="group-header"
          :style="{paddingLeft: `${indent*35}px`}"
          @click.prevent.stop="headerClicked">
@@ -37,13 +37,13 @@
 
     <div class="children" v-if="childrenVisible">
       <Frame v-for="child in frame.children"
-             :key="child.identifier" 
+             :key="child.identifier"
              :frame="child"
              :indent="indent + (isVisible ? 1 : 0)" />
     </div>
 
-    <div class="visual-guide" 
-         :style="{left: `${indent*35 + 21}px`, 
+    <div class="visual-guide"
+         :style="{left: `${indent*35 + 21}px`,
                   backgroundColor: timeStyle.color}">
     </div>
   </div>
@@ -102,7 +102,7 @@ export default {
       }
       const libraries = this.frame.group.libraries;
       if (libraries.length < 4) {
-        return libraries.join(', ')
+        return libraries.join(', ');
       } else {
         return `${libraries[0]}, ${libraries[1]}, ${libraries[2]}...`;
       }

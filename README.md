@@ -97,7 +97,7 @@ print(profiler.output_text(unicode=True, color=True))
 not support them.)
 
 **Protip:** To explore the profile in a web browser, use
-`profiler.open_in_browser()`. To save this HTML for later, use 
+`profiler.open_in_browser()`. To save this HTML for later, use
 `profiler.output_html()`.
 
 ### Profile a web request in Django
@@ -115,10 +115,10 @@ profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
 
-If you want to show the profiling page depending on the request you can define 
-`PYINSTRUMENT_SHOW_CALLBACK` as dotted path to a function used for determining 
+If you want to show the profiling page depending on the request you can define
+`PYINSTRUMENT_SHOW_CALLBACK` as dotted path to a function used for determining
 whether the page should show or not.
-You can provide your own function callback(request) which returns True or False 
+You can provide your own function callback(request) which returns True or False
 in your settings.py.
 
 ```python
@@ -176,7 +176,7 @@ profilers are much lower-overhead than tracing profilers.
 
 |              | Django template render × 4000                      | Overhead
 | -------------|:---------------------------------------------------|---------:
-| Base         | `████████████████                       `  0.33s   | 
+| Base         | `████████████████                       `  0.33s   |
 |              |                                                    |
 | pyinstrument | `████████████████████                   `  0.43s   |      30%
 | cProfile     | `█████████████████████████████          `  0.61s   |      84%
@@ -184,7 +184,7 @@ profilers are much lower-overhead than tracing profilers.
 
 But low overhead is also important because it can distort the results. When
 using a tracing profiler, code that makes a lot of Python function calls
-invokes the profiler a lot, making it slower. This distorts the 
+invokes the profiler a lot, making it slower. This distorts the
 results, and might lead you to optimise the wrong part of your program!
 
 ### Full-stack recording
@@ -265,6 +265,7 @@ recording a stackframe, but if there is a long time spent in a single function
 call, it will be recorded at the end of that call. So effectively those
 samples were 'bunched up' and recorded at the end.
 
+
 Known issues
 ------------
 
@@ -297,9 +298,9 @@ Changelog
 
 ### v3.2.0
 
-- Added the ability to track time in C functions. Minor note - Pyinstrument 
+- Added the ability to track time in C functions. Minor note - Pyinstrument
   will record time spent C functions as 'leaf' functions, due to a limitation
-  in how Python records frames. `Python -> C -> Python` is recorded as 
+  in how Python records frames. `Python -> C -> Python` is recorded as
   `Python -> Python`, but `Python -> Python -> C` will be attributed correctly.
   (#103)
 
@@ -314,7 +315,7 @@ Changelog
 
 ### v3.1.0
 
-- Added PYINSTRUMENT_SHOW_CALLBACK option on the Django middleware to 
+- Added PYINSTRUMENT_SHOW_CALLBACK option on the Django middleware to
   add a condition to showing the profile (could be used to run pyinstrument
   on a live server!)
 - Fixed bug in the Django middleware where file would not be written because
@@ -343,7 +344,7 @@ Changelog
 
     | Before | After |
     | --- | ---
-    | ![image](https://user-images.githubusercontent.com/1244307/50928250-1e50db00-1452-11e9-9164-6050a3c950ed.png) | ![image](https://user-images.githubusercontent.com/1244307/50928326-4c361f80-1452-11e9-91e8-cea735584806.png) | 
+    | ![image](https://user-images.githubusercontent.com/1244307/50928250-1e50db00-1452-11e9-9164-6050a3c950ed.png) | ![image](https://user-images.githubusercontent.com/1244307/50928326-4c361f80-1452-11e9-91e8-cea735584806.png) |
 
   To go back to the old behaviour, use `--show-all` on the command line.
 
@@ -351,7 +352,7 @@ Changelog
 - Really slow frames in the groups are shown too, e.g. the 'read' call on the socket
 - Application code is highlighted in the console
 - Additional metrics are shown at the top of the trace - timestamp, number of samples, duration, CPU time
-- Hidden code is controlled by the `--hide` or `--hide-regex` options - matching on the path of the code files. 
+- Hidden code is controlled by the `--hide` or `--hide-regex` options - matching on the path of the code files.
   ```
     --hide=EXPR           glob-style pattern matching the file paths whose
                           frames to hide. Defaults to '*/lib/*'.
@@ -369,10 +370,10 @@ Changelog
 - Because there are a few rendering options now, you can load a previous profiling session using `--load-prev` - pyinstrument keeps the last 10 sessions.
 
 - Hidden groups can also call back into application code, that looks like this:
-    
+
     ![image](https://user-images.githubusercontent.com/1244307/50928591-fca42380-1452-11e9-8320-3c851cf5210e.png)
 
-- (internal) When recording timelines, frame trees are completely linear now, allowing 
+- (internal) When recording timelines, frame trees are completely linear now, allowing
   for the creation of super-accurate frame charts.
 
 - (internal) The HTML renderer has been rewritten as a Vue.js app. All the console improvements apply to the HTML output too, plus it's interactive.
@@ -383,12 +384,12 @@ Yikes! See #49 for the gory details. I hope you like it.
 
 ### v2.3.0
 
--   Big refactor! 
+-   Big refactor!
     -   `Recorders` have been removed. The frame recording is now internal to the `Profiler` object.
         This means the 'frame' objects are more general-purpose, which paves the way for...
     -   Processors! These are functions that mutate the tree to sculpt the output.
         They are used by the renderers to filter the output to the correct form. Now, instead of
-        a time-aggregating recorder, the profiler just uses timeline-style recording (this is 
+        a time-aggregating recorder, the profiler just uses timeline-style recording (this is
         lower-overhead anyway) and the aggregation is done as a processing step.
     -   The upshot of this is that it's now way easier to alter the tree to filter stuff out, and
         do more advanced things like combining frames that we don't care about. More features to
@@ -405,7 +406,7 @@ Yikes! See #49 for the gory details. I hope you like it.
 
 ### v2.2.0
 
--   Added support for JSON output. Use `pyinstrument --renderer=json scriptfile.py`. 
+-   Added support for JSON output. Use `pyinstrument --renderer=json scriptfile.py`.
     [PR](https://github.com/joerick/pyinstrument/pull/46)
 -   [@iddan](https://github.com/iddan) has put together an
     [interactive viewer](https://python-flame-chart.netlify.com/) using the JSON output!
@@ -417,9 +418,9 @@ Yikes! See #49 for the gory details. I hope you like it.
 ### v2.1.0
 
 -   Added support for running modules with pyinstrument via the command line. The new syntax
-    is the `-m` flag e.g. `pyinstrument -m module_name`! [PR](https://github.com/joerick/pyinstrument/pull/45#pullrequestreview-143383557) 
+    is the `-m` flag e.g. `pyinstrument -m module_name`! [PR](https://github.com/joerick/pyinstrument/pull/45#pullrequestreview-143383557)
 
-### v2.0.4 
+### v2.0.4
 
 -   Fix crashes due to multi-threaded use of pyinstrument. The fix is in the C extension,
     over at https://github.com/joerick/pyinstrument_cext/pull/3
@@ -443,13 +444,13 @@ Yikes! See #49 for the gory details. I hope you like it.
 ### v2.0.1
 
 -   Ensure license is included in the sdist.
-    
+
 ### v2.0.0
 
 -   **Pyinstrument uses a new profiling mode**. Rather than using
     signals, pyintrument uses a new statistical profiler built on
-    PyEval_SetProfile. This means no more main thread restriction, no more 
-    IO errors when using Pyinstrument, and no need for a separate more 
+    PyEval_SetProfile. This means no more main thread restriction, no more
+    IO errors when using Pyinstrument, and no need for a separate more
     'setprofile' mode!
 
 -   **Renderers**. Users can customize Pyinstrument to use alternative renderers
@@ -464,35 +465,24 @@ Yikes! See #49 for the gory details. I hope you like it.
 ### v0.13
 
 -   `pyinstrument` command. You can now profile python scripts from the shell
-    by running `$ pyinstrument script.py`. This is now equivalent to 
+    by running `$ pyinstrument script.py`. This is now equivalent to
     `python -m pyinstrument`. Thanks @asmeurer!
 
 ### v0.12
 
 -   Application code is highlighted in HTML traces to make it easier to spot
 
--   Added `PYINSTRUMENT_PROFILE_DIR` option to the Django interface, which 
+-   Added `PYINSTRUMENT_PROFILE_DIR` option to the Django interface, which
     will log profiles of all requests to a file the specified folder. Useful
     for profiling API calls.
-    
+
 -   Added `PYINSTRUMENT_USE_SIGNAL` option to the Django interface, for use
     when signal mode presents problems.
 
 Contributing
 ------------
 
-To run pyinstrument from the git repo or a source checkout, you must first run
-
-    python setup.py build
-
-This compiles the Javascript code needed for the HTML output. You will need
-[node](https://nodejs.org/en/) installed (Node isn't required for the pip
-install as the Javascript is already pre-built in the wheel). 
-
-> When using node note these instructions have been testing on v12.20.0 
-> (i.e. `nvm use 12.20.0`). Other versions are not guaranteed to work.
-
-To setup a dev environment, do:
+To setup a dev environment:
 
     virtualenv --python=python3 env
     . env/bin/activate
@@ -505,3 +495,22 @@ To get some sample output:
 To run the tests:
 
     pytest
+
+### The HTML renderer Vue.js app
+
+The HTML renderer works by embedding a JSON representation of the sample with
+a Javascript 'bundle' inside an HTML file that can be viewed in any web
+browser.
+
+To edit the html renderer style, do:
+
+    cd html_renderer
+    npm ci
+    npm run serve
+
+When launched without a top-level `window.profileSession` object, it will
+fetch a sample profile so you can work with it.
+
+To compile the JS app and bundle it back into the pyinstrument python tool:
+
+    bin/build_js_bundle.py [--force]

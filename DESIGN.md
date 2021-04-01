@@ -29,4 +29,4 @@ from the output.
 
 Self time nodes exist to record time spent in a node, but not in its children.
 But normal frame objects can have self_time too. Why? frame.self_time is used
-to store the self_time of any nodes that were removed during processing. 
+to store the self_time of any nodes that were removed during processing.

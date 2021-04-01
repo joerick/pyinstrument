@@ -277,9 +277,8 @@ def test_group_library_frames_processor():
     assert group_root.children[0].children[0] in group.frames
     assert group_root.children[0].children[0] in group.exit_frames
     assert group_root.children[0].children[0].children[0] not in group.frames
-    
+
     old_sys_path = sys.path[:]
     sys.path.append('env/lib/python3.6')
     assert group.libraries == ['django']
     sys.path[:] = old_sys_path
-
