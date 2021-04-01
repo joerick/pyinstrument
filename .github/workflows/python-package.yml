@@ -10,6 +10,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        # Checkout pull request HEAD commit instead of merge commit
+        ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
     - uses: actions/setup-python@v2
     - uses: pre-commit/action@v2.0.0
