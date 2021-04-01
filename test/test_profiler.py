@@ -1,7 +1,9 @@
 from __future__ import print_function
 import time, json
 
+import pytest
 from pyinstrument import Profiler, renderers
+from flaky import flaky
 
 # Utilities #
 
@@ -44,6 +46,10 @@ def test_collapses_multiple_calls_by_default():
     assert text_output.count('long_function_a') == 1
     assert text_output.count('long_function_b') == 1
 
+# this test can be flaky on CI, because it's not deterministic when the
+# setstatprofile timer will fire. Sometimes the profiler.start frame is
+# included.
+@flaky(max_runs=5, min_passes=2)
 def test_profiler_retains_multiple_calls():
     profiler = Profiler()
     profiler.start()
@@ -61,6 +67,7 @@ def test_profiler_retains_multiple_calls():
     assert frame.function == 'test_profiler_retains_multiple_calls'
     assert len(frame.children) == 4
 
+@flaky(max_runs=5, min_passes=2)
 def test_two_functions():
     profiler = Profiler()
     profiler.start()
@@ -81,11 +88,13 @@ def test_two_functions():
 
     assert frame_a.function == 'long_function_a'
     assert frame_b.function == 'long_function_b'
+
     # busy CI runners can be slow to wake up from the sleep. So we relax the
     # ranges a bit
-    assert 0.2 < frame_a.time() < 0.5
-    assert 0.45 < frame_b.time() < 0.9
+    assert frame_a.time() == pytest.approx(0.25, abs=0.1)
+    assert frame_b.time() == pytest.approx(0.5, abs=0.2)
 
+@flaky(max_runs=5, min_passes=2)
 def test_context_manager():
     with Profiler() as profiler:
         long_function_a()
@@ -95,6 +104,7 @@ def test_context_manager():
     assert frame.function == 'test_context_manager'
     assert len(frame.children) == 2
 
+@flaky(max_runs=5, min_passes=2)
 def test_json_output():
     with Profiler() as profiler:
         long_function_a()
