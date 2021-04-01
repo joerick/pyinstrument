@@ -29,7 +29,7 @@ def after_request(response):
 def hello_world():
     return 'Hello, World!'
 
-    
+
 @app.route('/sleep')
 def sleep():
     time.sleep(0.1)

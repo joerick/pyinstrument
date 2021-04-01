@@ -22,7 +22,7 @@ def most_common_words(page):
         article = revision['*']
 
         for word in article.split():
-            if len(word) < 2: 
+            if len(word) < 2:
                 continue
             word_occurences[word] += 1
 
@@ -38,6 +38,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-

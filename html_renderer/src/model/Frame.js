@@ -16,7 +16,7 @@ export default class Frame {
       if (!group) {
         group = context.groups[groupId] = new Group(groupId, this);
       }
-      group.addFrame(this)
+      group.addFrame(this);
       this.group = context.groups[groupId];
     } else {
       this.group = null;

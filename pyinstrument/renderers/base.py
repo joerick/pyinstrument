@@ -14,7 +14,7 @@ class Renderer(object):
             self.processors.remove(processors.aggregate_repeated_calls)
 
     def default_processors(self):
-        ''' 
+        '''
         Return a list of processors that this renderer uses by default
         '''
         raise NotImplementedError()

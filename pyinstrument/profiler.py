@@ -72,7 +72,7 @@ class Profiler(object):
 
         if event == 'call':
             frame = frame.f_back
-        
+
 
         call_stack = self._call_stack_for_frame(frame)
 
