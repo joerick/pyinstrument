@@ -496,12 +496,21 @@ To run the tests:
 
     pytest
 
-To edit the html renderer style (a Vue.js app), do:
+### The HTML renderer Vue.js app
+
+The HTML renderer works by embedding a JSON representation of the sample with
+a Javascript 'bundle' inside an HTML file that can be viewed in any web
+browser.
+
+To edit the html renderer style, do:
 
     cd html_renderer
     npm ci
     npm run serve
 
-To compile this app and bundle it back into the pyinstrument python tool:
+When launched without a top-level `window.profileSession` object, it will
+fetch a sample profile so you can work with it.
+
+To compile the JS app and bundle it back into the pyinstrument python tool:
 
     bin/build_js_bundle.py [--force]
