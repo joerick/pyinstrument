@@ -1,4 +1,4 @@
-import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse
+import sys, os, codecs, runpy, tempfile, glob, time, fnmatch, optparse, shutil
 import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
@@ -25,12 +25,15 @@ def main():
 
     parser.add_option('', '--load-prev',
         dest='load_prev', action='store', metavar='ID',
-        help="Instead of running a script, load a previous report")
+        help="instead of running a script, load a previous report")
 
     parser.add_option('-m', '',
         dest='module_name', action='callback', callback=dash_m_callback,
         type="str",
         help="run library module as a script, like 'python -m module'")
+    parser.add_option('', '--from-path',
+        dest='from_path', action='store_true',
+        help="(POSIX only) instead of the working directory, look for scriptfile in the PATH environment variable")
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
@@ -98,6 +101,12 @@ def main():
         parser.print_help()
         sys.exit(2)
 
+    if options.module_name is not None and options.from_path:
+        parser.error("The options -m and --from-path are mutually exclusive.")
+
+    if options.from_path and sys.platform == 'win32':
+        parser.error('--from-path is not supported on Windows')
+
     if not options.hide_regex:
         options.hide_regex = fnmatch.translate(options.hide_fnmatch)
 
@@ -113,24 +122,32 @@ def main():
         if options.module_name is not None:
             if not (sys.path[0] and os.path.samefile(sys.path[0], '.')):
                 # when called with '-m', search the cwd for that module
-                sys.path.insert(0, os.path.abspath('.'))
+                sys.path[0] = os.path.abspath('.')
 
             sys.argv[:] = [options.module_name] + options.module_args
-            code = "run_module(modname, run_name='__main__')"
+            code = "run_module(modname, run_name='__main__', alter_sys=True)"
             globs = {
                 'run_module': runpy.run_module,
                 'modname': options.module_name
             }
         else:
             sys.argv[:] = args
-            progname = args[0]
-            sys.path.insert(0, os.path.dirname(progname))
-            with open(progname, 'rb') as fp:
-                code = compile(fp.read(), progname, 'exec')
+            if options.from_path:
+                progname = shutil.which(args[0])
+                if progname is None:
+                    sys.exit('Error: program {} not found in PATH!'.format(args[0]))
+            else:
+                progname = args[0]
+                if not os.path.exists(progname):
+                    sys.exit('Error: program {} not found!'.format(args[0]))
+
+            # Make sure we overwrite the first entry of sys.path ('.') with directory of the program.
+            sys.path[0] = os.path.dirname(progname)
+
+            code = "run_path(progname, run_name='__main__')"
             globs = {
-                '__file__': progname,
-                '__name__': '__main__',
-                '__package__': None,
+                'run_path': runpy.run_path,
+                'progname': progname
             }
 
         profiler = Profiler()
