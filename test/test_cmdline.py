@@ -84,9 +84,9 @@ class TestCommandLine:
 
     def test_path(self, pyinstrument_invocation, tmp_path: Path, monkeypatch):
         if sys.platform == 'win32':
-            program_path = tmp_path / 'pyi_test_program.exe'
-        else:
-            program_path = tmp_path / 'pyi_test_program'
+            pytest.skip('--from-path is not supported on Windows')
+
+        program_path = tmp_path / 'pyi_test_program'
 
         program_path.write_text(BUSY_WAIT_SCRIPT)
         program_path.chmod(0x755)
@@ -144,10 +144,9 @@ class TestCommandLine:
 
     def test_path_execution_details(self, pyinstrument_invocation, tmp_path: Path, monkeypatch):
         if sys.platform == 'win32':
-            program_path = tmp_path / 'pyi_test_program.exe'
-        else:
-            program_path = tmp_path / 'pyi_test_program'
+            pytest.skip('--from-path is not supported on Windows')
 
+        program_path = tmp_path / 'pyi_test_program'
         program_path.write_text(EXECUTION_DETAILS_SCRIPT)
         program_path.chmod(0x755)
         monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)

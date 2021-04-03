@@ -33,7 +33,7 @@ def main():
         help="run library module as a script, like 'python -m module'")
     parser.add_option('', '--from-path',
         dest='from_path', action='store_true',
-        help="Instead of the working directory, look for scriptfile in the PATH environment variable")
+        help="Instead of the working directory, look for scriptfile in the PATH environment variable (POSIX only)")
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
@@ -103,6 +103,9 @@ def main():
 
     if options.module_name is not None and options.from_path:
         parser.error("The options -m and --from-path are mutually exclusive.")
+
+    if options.from_path and sys.platform == 'win32':
+        parser.error('--from-path is not supported on Windows')
 
     if not options.hide_regex:
         options.hide_regex = fnmatch.translate(options.hide_fnmatch)
