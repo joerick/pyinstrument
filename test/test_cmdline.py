@@ -122,14 +122,14 @@ class TestCommandLine:
 
         process_pyi = subprocess.run(
             [*pyinstrument_invocation, '-m', 'test_module', 'arg1', 'arg2'],
-            stderr=subprocess.PIPE,
+            # stderr=subprocess.PIPE,
             check=True,
             cwd=tmp_path,
             universal_newlines=True,
         )
         process_native = subprocess.run(
             [sys.executable, '-m', 'test_module', 'arg1', 'arg2'],
-            stderr=subprocess.PIPE,
+            # stderr=subprocess.PIPE,
             check=True,
             cwd=tmp_path,
             universal_newlines=True,

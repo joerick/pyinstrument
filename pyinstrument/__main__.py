@@ -101,7 +101,7 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    if options.module_name is not None and options.path:
+    if options.module_name is not None and options.from_path:
         parser.error("The options -m and --from-path are mutually exclusive.")
 
     if not options.hide_regex:
@@ -133,11 +133,14 @@ def main():
                 progname = shutil.which(args[0])
                 if progname is None:
                     sys.exit('Error: program {} not found in PATH!'.format(args[0]))
-                # Make sure we overwrite the first entry of sys.path ('.') with directory of the program.
-                sys.path[0] = os.path.dirname(progname)
             else:
                 progname = args[0]
-                sys.path.insert(0, os.path.dirname(progname))
+                if not os.path.exists(progname):
+                    sys.exit('Error: program {} not found!'.format(args[0]))
+
+            # Make sure we overwrite the first entry of sys.path ('.') with directory of the program.
+            sys.path[0] = os.path.dirname(progname)
+
             code = "run_path(progname, run_name='__main__')"
             globs = {
                 'run_path': runpy.run_path,
