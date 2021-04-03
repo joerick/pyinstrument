@@ -25,7 +25,7 @@ def main():
 
     parser.add_option('', '--load-prev',
         dest='load_prev', action='store', metavar='ID',
-        help="Instead of running a script, load a previous report")
+        help="instead of running a script, load a previous report")
 
     parser.add_option('-m', '',
         dest='module_name', action='callback', callback=dash_m_callback,
@@ -33,7 +33,7 @@ def main():
         help="run library module as a script, like 'python -m module'")
     parser.add_option('', '--from-path',
         dest='from_path', action='store_true',
-        help="Instead of the working directory, look for scriptfile in the PATH environment variable (POSIX only)")
+        help="(POSIX only) instead of the working directory, look for scriptfile in the PATH environment variable")
 
     parser.add_option('-o', '--outfile',
         dest="outfile", action='store',
