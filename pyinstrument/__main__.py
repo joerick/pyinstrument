@@ -119,10 +119,10 @@ def main():
         if options.module_name is not None:
             if not (sys.path[0] and os.path.samefile(sys.path[0], '.')):
                 # when called with '-m', search the cwd for that module
-                sys.path.insert(0, os.path.abspath('.'))
+                sys.path[0] = os.path.abspath('.')
 
             sys.argv[:] = [options.module_name] + options.module_args
-            code = "run_module(modname, run_name='__main__')"
+            code = "run_module(modname, run_name='__main__', alter_sys=True)"
             globs = {
                 'run_module': runpy.run_module,
                 'modname': options.module_name
