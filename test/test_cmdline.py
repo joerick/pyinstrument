@@ -83,14 +83,17 @@ class TestCommandLine:
         )
 
     def test_path(self, pyinstrument_invocation, tmp_path: Path, monkeypatch):
-        PROGRAM_FILENAME = 'program'
-        program_path = tmp_path / PROGRAM_FILENAME
+        if sys.platform == 'win32':
+            program_path = tmp_path / 'pyi_test_program.exe'
+        else:
+            program_path = tmp_path / 'pyi_test_program'
+
         program_path.write_text(BUSY_WAIT_SCRIPT)
         program_path.chmod(0x755)
         monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
 
         subprocess.check_call(
-            [*pyinstrument_invocation, '--from-path', '--', PROGRAM_FILENAME],
+            [*pyinstrument_invocation, '--from-path', '--', 'pyi_test_program'],
         )
 
     def test_script_execution_details(self, pyinstrument_invocation, tmp_path: Path):
@@ -140,20 +143,23 @@ class TestCommandLine:
         assert process_pyi.stderr == process_native.stderr
 
     def test_path_execution_details(self, pyinstrument_invocation, tmp_path: Path, monkeypatch):
-        PROGRAM_FILENAME = 'program'
-        program_path = tmp_path / PROGRAM_FILENAME
+        if sys.platform == 'win32':
+            program_path = tmp_path / 'pyi_test_program.exe'
+        else:
+            program_path = tmp_path / 'pyi_test_program'
+
         program_path.write_text(EXECUTION_DETAILS_SCRIPT)
         program_path.chmod(0x755)
         monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
 
         process_pyi = subprocess.run(
-            [*pyinstrument_invocation, '--from-path', '--', PROGRAM_FILENAME, 'arg1', 'arg2'],
+            [*pyinstrument_invocation, '--from-path', '--', 'pyi_test_program', 'arg1', 'arg2'],
             stderr=subprocess.PIPE,
             check=True,
             universal_newlines=True,
         )
         process_native = subprocess.run(
-            [PROGRAM_FILENAME, 'arg1', 'arg2'],
+            ['pyi_test_program', 'arg1', 'arg2'],
             stderr=subprocess.PIPE,
             check=True,
             universal_newlines=True,
