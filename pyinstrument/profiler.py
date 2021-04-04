@@ -2,7 +2,7 @@
 import timeit, time, sys, inspect
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
-from pyinstrument.util import deprecated, deprecated_option
+from pyinstrument.util import deprecated, deprecated_option, file_supports_color, file_supports_unicode
 from pyinstrument_cext import setstatprofile
 
 try:
@@ -100,6 +100,22 @@ class Profiler(object):
         # starting at the root, so reverse this array
         call_stack.reverse()
         return call_stack
+
+    def print(self, file=sys.stdout, unicode=None, color=None, show_all=False, timeline=False):
+        if unicode is None:
+            unicode = file_supports_unicode(file)
+        if color is None:
+            color = file_supports_color(file)
+
+        print(
+            self.output_text(
+                unicode=unicode,
+                color=color,
+                show_all=show_all,
+                timeline=timeline,
+            ),
+            file=file,
+        )
 
     @deprecated_option('root')
     def output_text(self, root=None, unicode=False, color=False, show_all=False, timeline=False):
