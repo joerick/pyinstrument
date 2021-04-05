@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import annotations
-
 import timeit, time, sys, inspect
 from contextvars import ContextVar
 from pyinstrument import renderers
@@ -16,7 +14,7 @@ except ImportError:
 timer = timeit.default_timer
 
 
-active_profiler_context_var: ContextVar[Profiler|None] = ContextVar('active_profiler_context_var', default=None)
+active_profiler_context_var = ContextVar('active_profiler_context_var', default=None)
 
 
 class Profiler(object):
