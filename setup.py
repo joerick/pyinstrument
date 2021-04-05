@@ -37,7 +37,10 @@ setup(
     author_email='joerick@mac.com',
     url='https://github.com/joerick/pyinstrument',
     keywords=['profiling', 'profile', 'profiler', 'cpu', 'time', 'sampling'],
-    install_requires=['pyinstrument_cext>=0.2.2'],
+    install_requires=[
+        'pyinstrument_cext>=0.2.2',
+        'contextvars;python_version<"3.7"',
+    ],
     include_package_data=True,
     python_requires='>=3.6',
     entry_points={'console_scripts': ['pyinstrument = pyinstrument.__main__:main']},

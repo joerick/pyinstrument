@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import timeit, time, sys, inspect
+from contextvars import ContextVar
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import deprecated, deprecated_option, file_supports_color, file_supports_unicode
@@ -13,6 +16,7 @@ except ImportError:
 timer = timeit.default_timer
 
 
+active_profiler_context_var: ContextVar[Profiler|None] = ContextVar('active_profiler_context_var', default=None)
 
 
 class Profiler(object):
@@ -26,6 +30,7 @@ class Profiler(object):
         self._start_time = None
         self._start_process_time = None
         self.last_session = None
+        self.context_var_token = None
 
     def start(self, caller_frame=None):
         self.last_profile_time = timer()
@@ -39,10 +44,13 @@ class Profiler(object):
         if sys.getprofile() is not None:
             raise RuntimeError('A profiler is already running. Running multiple profilers on the same thead is not supported.')
 
+        self.context_var_token = active_profiler_context_var.set(self)
         setstatprofile(self._profile, self.interval)
 
     def stop(self):
         setstatprofile(None)
+        active_profiler_context_var.reset(self.context_var_token)
+
         if process_time:
             cpu_time = process_time() - self._start_process_time
             self._start_process_time = None
@@ -73,19 +81,22 @@ class Profiler(object):
         now = timer()
         time_since_last_profile = now - self.last_profile_time
 
-        if event == 'call':
-            frame = frame.f_back
+        if active_profiler_context_var.get() is self:
+            if event == 'call':
+                frame = frame.f_back
 
+            call_stack = self._call_stack_for_frame(frame)
 
-        call_stack = self._call_stack_for_frame(frame)
+            if event == 'c_return' or event == 'c_exception':
+                c_frame_identifier = '%s\x00%s\x00%i' % (
+                    getattr(arg, '__qualname__', arg.__name__), '<built-in>', 0
+                )
+                call_stack.append(c_frame_identifier)
 
-        if event == 'c_return' or event == 'c_exception':
-            c_frame_identifier = '%s\x00%s\x00%i' % (
-                getattr(arg, '__qualname__', arg.__name__), '<built-in>', 0
-            )
-            call_stack.append(c_frame_identifier)
-
-        self.frame_records.append((call_stack, time_since_last_profile))
+            self.frame_records.append((call_stack, time_since_last_profile))
+        else:
+            # we have left the async context where this profiler was started.
+            self.frame_records.append(([Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER], time_since_last_profile))
 
         self.last_profile_time = now
 
@@ -103,6 +114,8 @@ class Profiler(object):
         # starting at the root, so reverse this array
         call_stack.reverse()
         return call_stack
+
+    OUT_OF_CONTEXT_FRAME_IDENTIFIER = '<out-of-context>\x00<out-of-context>\x000'
 
     def print(self, file=sys.stdout, unicode=None, color=None, show_all=False, timeline=False):
         if unicode is None:

@@ -177,6 +177,9 @@ class Frame(BaseFrame):
         if self.identifier:
             file_path = self.file_path
 
+            if not file_path:
+                return False
+
             if '/lib/' in file_path:
                 return False
 

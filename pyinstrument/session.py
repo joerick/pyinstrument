@@ -53,13 +53,19 @@ class ProfilerSession(object):
         '''
         Parses the internal frame records and returns a tree of Frame objects
         '''
+        from pyinstrument.profiler import Profiler
         root_frame = None
+        out_of_context_frame = Frame(Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER)
 
         frame_stack = []
 
         for frame_tuple in self.frame_records:
             identifier_stack = frame_tuple[0]
             time = frame_tuple[1]
+
+            if len(identifier_stack) == 1 and identifier_stack[0] == Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER:
+                out_of_context_frame.add_child(SelfTimeFrame(self_time=time))
+                continue
 
             # now we must create a stack of frame objects and assign this time to the leaf
             for stack_depth, frame_identifier in enumerate(identifier_stack):
@@ -91,6 +97,15 @@ class ProfilerSession(object):
 
         if trim_stem:
             root_frame = self._trim_stem(root_frame)
+
+        if len(out_of_context_frame.children) > 0:
+            # add a synthetic wrapper frame that contains both the root frame
+            # and the out of context stuff
+            new_root_frame = Frame('Async context\x00\x000', children=[
+                root_frame,
+                out_of_context_frame,
+            ])
+            root_frame = new_root_frame
 
         return root_frame
 
