@@ -115,7 +115,7 @@ profiler = Profiler(interval=0.0001)
 ```
 
 Experiment with the interval value to see different depths, but keep in mind
-that this will affect performance
+that smaller intervals could affect the performance overhead of profiling.
 
 **Protip:** To explore the profile in a web browser, use
 `profiler.open_in_browser()`. To save this HTML for later, use
