@@ -110,7 +110,7 @@ def test_json_output():
         long_function_a()
         long_function_b()
 
-    output_data = profiler.output(renderers.JSONRenderer(), root=True)
+    output_data = profiler.output(renderers.JSONRenderer())
 
     output = json.loads(output_data)
     assert 'root_frame' in output
