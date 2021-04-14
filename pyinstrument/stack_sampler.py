@@ -1,7 +1,7 @@
 import threading
 import timeit
 import types
-from typing import Any, List, NamedTuple, Optional, Union
+from typing import Any, Callable, List, NamedTuple, Optional, Union
 
 from pyinstrument_cext import setstatprofile
 
@@ -10,25 +10,32 @@ timer = timeit.default_timer
 
 
 class StackSamplerSubscriber(NamedTuple):
-    target: Any
+    target: Callable[[List[str], float], None]
     desired_interval: float
 
 
 class StackSampler:
     """ Manages setstatprofile for Profilers on a single thread """
 
-    subscribers: List[StackSamplerSubscriber] = []
-    current_sampling_interval: Optional[float] = None
-    last_profile_time: float = 0.0
+    subscribers: List[StackSamplerSubscriber]
+    current_sampling_interval: Optional[float]
+    last_profile_time: float
 
-    def subscribe(self, subscriber, desired_interval):
+    def __init__(self) -> None:
+        self.subscribers = []
+        self.current_sampling_interval = None
+        self.last_profile_time = 0.0
+
+    def subscribe(self, target, desired_interval):
         self.subscribers.append(
-            StackSamplerSubscriber(target=subscriber, desired_interval=desired_interval)
+            StackSamplerSubscriber(target=target, desired_interval=desired_interval)
         )
         self._update()
 
-    def unsubscribe(self, subscriber):
-        self.subscribers = [s for s in self.subscribers if s.target is not subscriber]
+    def unsubscribe(self, target):
+        print(self.subscribers)
+        self.subscribers = [s for s in self.subscribers if s.target != target]
+        print(self.subscribers)
         self._update()
 
     def _update(self):
@@ -59,14 +66,14 @@ class StackSampler:
         call_stack = build_call_stack(frame, event, arg)
 
         for subscriber in self.subscribers:
-            subscriber.target.sampler_saw_call_stack(call_stack, time_since_last_sample)
+            subscriber.target(call_stack, time_since_last_sample)
 
         self.last_profile_time = now
 
 
 def get_stack_sampler() -> StackSampler:
     """
-    gets the stack sampler for the current thread, creating it if necessary
+    Gets the stack sampler for the current thread, creating it if necessary
     """
     if not hasattr(thread_locals, "stack_sampler"):
         thread_locals.stack_sampler = StackSampler()

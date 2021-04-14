@@ -39,10 +39,10 @@ class Profiler(object):
         self._start_call_stack = build_call_stack(caller_frame, 'initial', None)
 
         self.context_var_token = active_profiler_context_var.set(self)
-        get_stack_sampler().subscribe(self, self.interval)
+        get_stack_sampler().subscribe(self._sampler_saw_call_stack, self.interval)
 
     def stop(self):
-        get_stack_sampler().unsubscribe(self)
+        get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
         active_profiler_context_var.reset(self.context_var_token)
 
         if process_time:
@@ -71,7 +71,7 @@ class Profiler(object):
         self.stop()
 
     # pylint: disable=W0613
-    def sampler_saw_call_stack(self, call_stack, time_since_last_sample):
+    def _sampler_saw_call_stack(self, call_stack, time_since_last_sample):
         if active_profiler_context_var.get() is self:
             self.frame_records.append((call_stack, time_since_last_sample))
         else:
