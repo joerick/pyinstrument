@@ -29,6 +29,12 @@ class Profiler(object):
         self.context_var_token = None
 
     def start(self, caller_frame=None):
+        if active_profiler_context_var.get() is not None:
+            raise RuntimeError(
+                'A profiler is already running. Running multiple profilers on the same thead is not '
+                'supported, unless they\'re in different async contexts.'
+            )
+
         self._start_time = time.time()
 
         if process_time:
