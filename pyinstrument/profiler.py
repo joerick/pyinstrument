@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from typing import Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
 import timeit, time, sys, inspect
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import file_supports_color, file_supports_unicode
@@ -10,62 +10,81 @@ from pyinstrument.util import file_supports_color, file_supports_unicode
 try:
     from time import process_time
 except ImportError:
-    process_time = None
+    process_time = lambda: None
 
 timer = timeit.default_timer
 
 
-active_profiler_context_var: ContextVar[Union['Profiler', None]] = ContextVar('active_profiler_context_var', default=None)
+active_profiler_context_var: ContextVar[Optional['Profiler']] = ContextVar('active_profiler_context_var', default=None)
+
+
+class ActiveProfilerSession:
+    frame_records: List[Tuple[List[str], float]]
+
+    def __init__(
+        self,
+        context_var_token: Token,
+        start_time: float,
+        start_process_time: Optional[float],
+        start_call_stack: List[str],
+    ) -> None:
+        self.context_var_token = context_var_token
+        self.start_time = start_time
+        self.start_process_time = start_process_time
+        self.start_call_stack = start_call_stack
+        self.frame_records = []
 
 
 class Profiler(object):
+    last_session: Optional[ProfilerSession]
+    _active_session: Optional[ActiveProfilerSession]
+
     def __init__(self, interval=0.001):
         self.interval = interval
-        self.last_profile_time = 0.0
-        self.frame_records = []
-        self._start_time = None
-        self._start_process_time = None
         self.last_session = None
-        self.context_var_token = None
+        self._active_session = None
 
     def start(self, caller_frame=None):
         if active_profiler_context_var.get() is not None:
             raise RuntimeError(
-                'A profiler is already running. Running multiple profilers on the same thead is not '
-                'supported, unless they\'re in different async contexts.'
+                'A profiler is already running. Running multiple profilers on the same thead is '
+                'not supported, unless they\'re in different async contexts.'
             )
 
-        self._start_time = time.time()
-
-        if process_time:
-            self._start_process_time = process_time()
         if caller_frame is None:
             caller_frame = inspect.currentframe().f_back
 
-        self._start_call_stack = build_call_stack(caller_frame, 'initial', None)
+        self._active_session = ActiveProfilerSession(
+            start_time=time.time(),
+            context_var_token=active_profiler_context_var.set(self),
+            start_process_time=process_time(),
+            start_call_stack=build_call_stack(caller_frame, 'initial', None)
+        )
 
-        self.context_var_token = active_profiler_context_var.set(self)
         get_stack_sampler().subscribe(self._sampler_saw_call_stack, self.interval)
 
     def stop(self):
-        get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
-        active_profiler_context_var.reset(self.context_var_token)
+        if not self._active_session:
+            raise RuntimeError('This profiler is not currently running.')
 
-        if process_time:
-            cpu_time = process_time() - self._start_process_time
-            self._start_process_time = None
+        get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
+        active_profiler_context_var.reset(self._active_session.context_var_token)
+
+        if self._active_session.start_process_time:
+            cpu_time = process_time() - self._active_session.start_process_time
         else:
             cpu_time = None
 
         self.last_session = ProfilerSession(
-            frame_records=self.frame_records,
-            start_time=self._start_time,
-            duration=time.time() - self._start_time,
-            sample_count=len(self.frame_records),
+            frame_records=self._active_session.frame_records,
+            start_time=self._active_session.start_time,
+            duration=time.time() - self._active_session.start_time,
+            sample_count=len(self._active_session.frame_records),
             program=' '.join(sys.argv),
-            start_call_stack=self._start_call_stack,
+            start_call_stack=self._active_session.start_call_stack,
             cpu_time=cpu_time,
         )
+        self._active_session = None
 
         return self.last_session
 
@@ -78,11 +97,14 @@ class Profiler(object):
 
     # pylint: disable=W0613
     def _sampler_saw_call_stack(self, call_stack, time_since_last_sample):
+        if not self._active_session:
+            raise RuntimeError('Received a call stack without an active session')
+
         if active_profiler_context_var.get() is self:
-            self.frame_records.append((call_stack, time_since_last_sample))
+            self._active_session.frame_records.append((call_stack, time_since_last_sample))
         else:
             # we have left the async context where this profiler was started.
-            self.frame_records.append(([Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER], time_since_last_sample))
+            self._active_session.frame_records.append(([Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER], time_since_last_sample))
 
     OUT_OF_CONTEXT_FRAME_IDENTIFIER = '<out-of-context>\x00<out-of-context>\x000'
 
