@@ -3,7 +3,7 @@ import time, json
 
 import pytest
 from pyinstrument import Profiler, renderers
-from flaky import flaky
+from .util import flaky_in_ci
 
 # Utilities #
 
@@ -49,7 +49,7 @@ def test_collapses_multiple_calls_by_default():
 # this test can be flaky on CI, because it's not deterministic when the
 # setstatprofile timer will fire. Sometimes the profiler.start frame is
 # included.
-@flaky(max_runs=5, min_passes=2)
+@flaky_in_ci
 def test_profiler_retains_multiple_calls():
     profiler = Profiler()
     profiler.start()
@@ -67,7 +67,7 @@ def test_profiler_retains_multiple_calls():
     assert frame.function == 'test_profiler_retains_multiple_calls'
     assert len(frame.children) == 4
 
-@flaky(max_runs=5, min_passes=2)
+@flaky_in_ci
 def test_two_functions():
     profiler = Profiler()
     profiler.start()
@@ -94,7 +94,7 @@ def test_two_functions():
     assert frame_a.time() == pytest.approx(0.25, abs=0.1)
     assert frame_b.time() == pytest.approx(0.5, abs=0.2)
 
-@flaky(max_runs=5, min_passes=2)
+@flaky_in_ci
 def test_context_manager():
     with Profiler() as profiler:
         long_function_a()
@@ -104,7 +104,7 @@ def test_context_manager():
     assert frame.function == 'test_context_manager'
     assert len(frame.children) == 2
 
-@flaky(max_runs=5, min_passes=2)
+@flaky_in_ci
 def test_json_output():
     with Profiler() as profiler:
         long_function_a()
@@ -124,3 +124,47 @@ def test_empty_profile():
     with Profiler() as profiler:
         pass
     profiler.output(renderer=renderers.ConsoleRenderer())
+
+@flaky_in_ci
+def test_state_management():
+    profiler = Profiler()
+
+    assert profiler.last_session is None
+    assert profiler.is_running == False
+
+    profiler.start()
+
+    assert profiler.last_session is None
+    assert profiler.is_running == True
+
+    busy_wait(0.1)
+
+    profiler.stop()
+
+    assert profiler.is_running == False
+    assert profiler.last_session is not None
+    assert profiler.last_session.duration == pytest.approx(0.1, rel=0.1)
+
+    # test a second session, does it merge with the first?
+    profiler.start()
+
+    assert profiler.is_running == True
+    busy_wait(0.1)
+
+    profiler.stop()
+
+    assert profiler.is_running == False
+
+    assert profiler.last_session is not None
+    assert profiler.last_session.duration == pytest.approx(0.2, rel=0.1)
+
+    # test a reset
+    profiler.reset()
+    assert profiler.last_session is None
+
+    # test a reset while running
+    profiler.start()
+    assert profiler.is_running == True
+    profiler.reset()
+    assert profiler.is_running == False
+    assert profiler.last_session is None

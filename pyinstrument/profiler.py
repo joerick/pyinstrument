@@ -54,6 +54,7 @@ class Profiler(object):
         if caller_frame is None:
             caller_frame = inspect.currentframe().f_back
 
+
         self._active_session = ActiveProfilerSession(
             start_time=time.time(),
             context_var_token=active_profiler_context_var.set(self),
@@ -75,7 +76,7 @@ class Profiler(object):
         else:
             cpu_time = None
 
-        self.last_session = ProfilerSession(
+        session = ProfilerSession(
             frame_records=self._active_session.frame_records,
             start_time=self._active_session.start_time,
             duration=time.time() - self._active_session.start_time,
@@ -86,7 +87,23 @@ class Profiler(object):
         )
         self._active_session = None
 
-        return self.last_session
+        if self.last_session is not None:
+            # include the previous session's data too
+            session = ProfilerSession.combine(self.last_session, session)
+
+        self.last_session = session
+
+        return session
+
+    @property
+    def is_running(self):
+        return self._active_session is not None
+
+    def reset(self):
+        if self.is_running:
+            self.stop()
+
+        self.last_session = None
 
     def __enter__(self):
         self.start(caller_frame=inspect.currentframe().f_back)

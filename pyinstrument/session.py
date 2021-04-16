@@ -49,6 +49,22 @@ class ProfilerSession(object):
             cpu_time=json_dict['cpu_time'],
         )
 
+    @staticmethod
+    def combine(session1: 'ProfilerSession', session2: 'ProfilerSession'):
+        if session1.start_time > session2.start_time:
+            # swap them around so that session1 is the first one
+            session1, session2 = session2, session1
+
+        return ProfilerSession(
+            frame_records=session1.frame_records + session2.frame_records,
+            start_time=session1.start_time,
+            duration=session1.duration + session2.duration,
+            sample_count=session1.sample_count + session2.sample_count,
+            start_call_stack=session1.start_call_stack,
+            program=session1.program,
+            cpu_time=session1.cpu_time + session2.cpu_time,
+        )
+
     def root_frame(self, trim_stem=True):
         '''
         Parses the internal frame records and returns a tree of Frame objects
