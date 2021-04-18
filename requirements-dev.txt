@@ -3,3 +3,4 @@ pytest
 pylint
 pytest-runner
 flaky
+trio
