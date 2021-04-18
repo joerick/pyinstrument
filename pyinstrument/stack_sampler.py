@@ -1,9 +1,11 @@
+from contextvars import ContextVar, Token
+import sys
 import threading
 import timeit
 import types
 from typing import Any, Callable, List, NamedTuple, Optional, Union
 
-from pyinstrument_cext import setstatprofile
+# from pyinstrument_cext import setstatprofile
 
 thread_locals = threading.local()
 timer = timeit.default_timer
@@ -12,7 +14,10 @@ timer = timeit.default_timer
 class StackSamplerSubscriber(NamedTuple):
     target: Callable[[List[str], float], None]
     desired_interval: float
+    context_token: Token
 
+
+active_profiler_context_var: ContextVar[Optional[object]] = ContextVar('active_profiler_context_var', default=None)
 
 class StackSampler:
     """ Manages setstatprofile for Profilers on a single thread """
@@ -27,15 +32,26 @@ class StackSampler:
         self.last_profile_time = 0.0
 
     def subscribe(self, target, desired_interval):
+        context_token = active_profiler_context_var.set(target)
+
         self.subscribers.append(
-            StackSamplerSubscriber(target=target, desired_interval=desired_interval)
+            StackSamplerSubscriber(
+                target=target,
+                desired_interval=desired_interval,
+                context_token=context_token
+            )
         )
         self._update()
 
     def unsubscribe(self, target):
-        print(self.subscribers)
-        self.subscribers = [s for s in self.subscribers if s.target != target]
-        print(self.subscribers)
+        try:
+            subscriber = next(s for s in self.subscribers if s.target == target)
+        except StopIteration:
+            raise ValueError('target not found in subscribers')
+
+        active_profiler_context_var.reset(subscriber.context_token)
+        self.subscribers.remove(subscriber)
+
         self._update()
 
     def _update(self):
@@ -52,7 +68,7 @@ class StackSampler:
         self.current_sampling_interval = interval
         if self.last_profile_time == 0.0:
             self.last_profile_time = timer()
-        setstatprofile(self._sample, interval)
+        setstatprofile(self._sample, interval, active_profiler_context_var)
 
     def _stop_sampling(self):
         setstatprofile(None)
@@ -64,6 +80,9 @@ class StackSampler:
         time_since_last_sample = now - self.last_profile_time
 
         call_stack = build_call_stack(frame, event, arg)
+
+        if event == 'context_changed':
+            print('context_changed', arg)
 
         for subscriber in self.subscribers:
             subscriber.target(call_stack, time_since_last_sample)
@@ -117,3 +136,43 @@ def build_call_stack(
     call_stack.reverse()
 
     return call_stack
+
+
+class PythonStatProfiler:
+    def __init__(self, target, interval, context_var):
+        self.target = target
+        self.interval = interval
+        self.last_invocation = timer()
+        self.context_var = context_var
+        self.last_context_var_value = context_var.get() if context_var else None
+        self.coroutine_stack = []
+
+    def profile(self, frame: types.FrameType, event: str, arg: Any):
+        now = timer()
+
+        if self.context_var:
+            context_var_value = self.context_var.get()
+            last_context_var_value = self.last_context_var_value
+
+            if context_var_value is not last_context_var_value:
+                self.target(frame, 'context_changed', (context_var_value, last_context_var_value, self.coroutine_stack))
+                self.last_context_var_value = context_var_value
+
+            # 0x80 == CO_COROUTINE (i.e. defined with 'async def')
+            if event == 'return' and frame.f_code.co_flags & 0x80:
+                self.coroutine_stack.append(frame)
+            else:
+                self.coroutine_stack.clear()
+
+        if now < self.last_invocation + self.interval:
+            return
+
+        self.last_invocation = now
+        return self.target(frame, event, arg)
+
+
+def setstatprofile(target, interval=0.001, context_var=None):
+    if target:
+        sys.setprofile(PythonStatProfiler(target, interval, context_var).profile)
+    else:
+        sys.setprofile(None)

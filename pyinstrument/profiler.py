@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
 import timeit, time, sys, inspect
 from contextvars import ContextVar, Token

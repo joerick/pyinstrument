@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os, subprocess, sys, textwrap
+import os, subprocess, sys
 from pathlib import Path
 
 import pytest
