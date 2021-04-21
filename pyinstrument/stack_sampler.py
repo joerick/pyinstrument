@@ -1,8 +1,10 @@
 from contextvars import ContextVar, Token
 import sys
 import threading
+from time import time
 import timeit
 import types
+import pprint
 from typing import Any, Callable, List, NamedTuple, Optional, Union
 
 # from pyinstrument_cext import setstatprofile
@@ -11,10 +13,18 @@ thread_locals = threading.local()
 timer = timeit.default_timer
 
 
-class StackSamplerSubscriber(NamedTuple):
-    target: Callable[[List[str], float], None]
-    desired_interval: float
-    context_token: Token
+class StackSamplerSubscriber:
+    def __init__(
+        self,
+        target: Callable[[List[str], float], None],
+        desired_interval: float,
+        context_token: Token,
+        call_stack_when_context_left: Optional[List[str]],
+    ) -> None:
+        self.target = target
+        self.desired_interval = desired_interval
+        self.context_token = context_token
+        self.call_stack_when_context_left = call_stack_when_context_left
 
 
 active_profiler_context_var: ContextVar[Optional[object]] = ContextVar('active_profiler_context_var', default=None)
@@ -38,7 +48,8 @@ class StackSampler:
             StackSamplerSubscriber(
                 target=target,
                 desired_interval=desired_interval,
-                context_token=context_token
+                context_token=context_token,
+                call_stack_when_context_left=None,
             )
         )
         self._update()
@@ -76,18 +87,31 @@ class StackSampler:
         self.last_profile_time = 0.0
 
     def _sample(self, frame, event, arg):
-        now = timer()
-        time_since_last_sample = now - self.last_profile_time
-
-        call_stack = build_call_stack(frame, event, arg)
-
         if event == 'context_changed':
-            print('context_changed', arg)
+            new, old, stack = arg
 
-        for subscriber in self.subscribers:
-            subscriber.target(call_stack, time_since_last_sample)
+            for subscriber in self.subscribers:
+                if subscriber.target == old:
+                    subscriber.call_stack_when_context_left = stack
+                elif subscriber.target == new:
+                    subscriber.call_stack_when_context_left = None
 
-        self.last_profile_time = now
+            print('context_changed')
+            pprint.pprint(arg)
+        else:
+            # active_profiler = active_profiler_context_var.get()
+            now = timer()
+            time_since_last_sample = now - self.last_profile_time
+
+            call_stack = build_call_stack(frame, event, arg)
+
+            for subscriber in self.subscribers:
+                if subscriber.call_stack_when_context_left is None:
+                    subscriber.target(call_stack, time_since_last_sample)
+                else:
+                    subscriber.target(subscriber.call_stack_when_context_left, time_since_last_sample)
+
+            self.last_profile_time = now
 
 
 def get_stack_sampler() -> StackSampler:
@@ -139,13 +163,15 @@ def build_call_stack(
 
 
 class PythonStatProfiler:
+    coroutine_stack: Optional[List[str]]
+
     def __init__(self, target, interval, context_var):
         self.target = target
         self.interval = interval
         self.last_invocation = timer()
         self.context_var = context_var
         self.last_context_var_value = context_var.get() if context_var else None
-        self.coroutine_stack = []
+        self.coroutine_stack = None
 
     def profile(self, frame: types.FrameType, event: str, arg: Any):
         now = timer()
@@ -160,9 +186,10 @@ class PythonStatProfiler:
 
             # 0x80 == CO_COROUTINE (i.e. defined with 'async def')
             if event == 'return' and frame.f_code.co_flags & 0x80:
-                self.coroutine_stack.append(frame)
+                if self.coroutine_stack is None:
+                    self.coroutine_stack = build_call_stack(frame, event, arg)
             else:
-                self.coroutine_stack.clear()
+                self.coroutine_stack = None
 
         if now < self.last_invocation + self.interval:
             return

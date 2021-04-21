@@ -117,11 +117,7 @@ class Profiler(object):
         if not self._active_session:
             raise RuntimeError('Received a call stack without an active session')
 
-        if active_profiler_context_var.get() is self:
-            self._active_session.frame_records.append((call_stack, time_since_last_sample))
-        else:
-            # we have left the async context where this profiler was started.
-            self._active_session.frame_records.append(([Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER], time_since_last_sample))
+        self._active_session.frame_records.append((call_stack, time_since_last_sample))
 
     OUT_OF_CONTEXT_FRAME_IDENTIFIER = '<out-of-context>\x00<out-of-context>\x000'
 
