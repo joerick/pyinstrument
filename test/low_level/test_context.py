@@ -4,13 +4,15 @@ import time
 import pytest
 from ..util import busy_wait
 
+
 def test_context_type():
     with pytest.raises(TypeError):
-        setstatprofile(lambda f, e, a: 0, 1e6, 'not a context var')
+        setstatprofile(lambda f, e, a: 0, 1e6, "not a context var")
         setstatprofile(None)
 
 
-profiler_context_var = contextvars.ContextVar('profiler_context_var', default=None)
+profiler_context_var = contextvars.ContextVar("profiler_context_var", default=None)
+
 
 def test_context_tracking():
     profile_calls = []
@@ -31,7 +33,7 @@ def test_context_tracking():
     setstatprofile(
         profile_callback,
         1e10,  # set large interval so we only get context_change events
-        profiler_context_var
+        profiler_context_var,
     )
 
     context_1.run(busy_wait, 0.001)
@@ -39,7 +41,7 @@ def test_context_tracking():
 
     setstatprofile(None)
 
-    assert all(c[1] == 'context_changed' for c in profile_calls)
+    assert all(c[1] == "context_changed" for c in profile_calls)
     assert len(profile_calls) == 4
 
     new, old, _ = profile_calls[0][2]

@@ -6,12 +6,14 @@ from pyinstrument.renderers import JSONRenderer, ConsoleRenderer, HTMLRenderer
 
 # Utilities
 
+
 def recurse(depth):
     if depth == 0:
         time.sleep(0.1)
         return
 
     recurse(depth - 1)
+
 
 def current_stack_depth():
     depth = 0
@@ -21,7 +23,9 @@ def current_stack_depth():
         depth += 1
     return depth
 
+
 # Fixtures
+
 
 @pytest.fixture(scope="module")
 def deep_profiler_session():
@@ -35,14 +39,18 @@ def deep_profiler_session():
     profiler.stop()
     return profiler.last_session
 
+
 # Tests
+
 
 def test_console(deep_profiler_session):
     ConsoleRenderer().render(deep_profiler_session)
 
+
 # html now uses the json renderer, so it's xfail too.
 def test_html(deep_profiler_session):
     HTMLRenderer().render(deep_profiler_session)
+
 
 def test_json(deep_profiler_session):
     JSONRenderer().render(deep_profiler_session)

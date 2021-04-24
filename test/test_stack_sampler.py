@@ -54,6 +54,7 @@ def test_multiple_samplers():
 
     class SampleCounter:
         count = 0
+
         def sample(self, stack, time, await_stack):
             self.count += 1
 

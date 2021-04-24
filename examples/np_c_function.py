@@ -9,6 +9,6 @@ arr = np.random.randint(0, 10000, 10000)
 # sys.setprofile(print_profiler)
 
 for i in range(10000):
-        arr.cumsum()
+    arr.cumsum()
 
 # sys.setprofile(None)

@@ -27,7 +27,10 @@ class StackSamplerSubscriber:
         self.await_call_stack = await_call_stack
 
 
-active_profiler_context_var: ContextVar[Optional[object]] = ContextVar('active_profiler_context_var', default=None)
+active_profiler_context_var: ContextVar[Optional[object]] = ContextVar(
+    "active_profiler_context_var", default=None
+)
+
 
 class StackSampler:
     """ Manages setstatprofile for Profilers on a single thread """
@@ -44,7 +47,7 @@ class StackSampler:
     def subscribe(self, target, desired_interval):
         if active_profiler_context_var.get() is not None:
             raise RuntimeError(
-                'There is already a profiler running. You cannot run multiple profilers in the same thread or async context.'
+                "There is already a profiler running. You cannot run multiple profilers in the same thread or async context."
             )
         context_token = active_profiler_context_var.set(target)
 
@@ -62,7 +65,7 @@ class StackSampler:
         try:
             subscriber = next(s for s in self.subscribers if s.target == target)
         except StopIteration:
-            raise ValueError('target not found in subscribers')
+            raise ValueError("target not found in subscribers")
 
         active_profiler_context_var.reset(subscriber.context_token)
         self.subscribers.remove(subscriber)
@@ -91,7 +94,7 @@ class StackSampler:
         self.last_profile_time = 0.0
 
     def _sample(self, frame, event, arg):
-        if event == 'context_changed':
+        if event == "context_changed":
             new, old, stack = arg
 
             for subscriber in self.subscribers:
@@ -114,7 +117,9 @@ class StackSampler:
                 if subscriber.await_call_stack is None:
                     subscriber.target(call_stack, time_since_last_sample, None)
                 else:
-                    subscriber.target(call_stack, time_since_last_sample, subscriber.await_call_stack)
+                    subscriber.target(
+                        call_stack, time_since_last_sample, subscriber.await_call_stack
+                    )
 
             self.last_profile_time = now
 
@@ -128,9 +133,7 @@ def get_stack_sampler() -> StackSampler:
     return thread_locals.stack_sampler
 
 
-def build_call_stack(
-    frame: Union[types.FrameType, None], event: str, arg: Any
-) -> List[str]:
+def build_call_stack(frame: Union[types.FrameType, None], event: str, arg: Any) -> List[str]:
     call_stack = []
 
     if event == "call":

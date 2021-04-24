@@ -3,12 +3,23 @@ from collections import deque
 from pyinstrument.frame import Frame, SelfTimeFrame
 from pyinstrument.vendor.six import PY2
 
-ASSERTION_MESSAGE = ('Please raise an issue at http://github.com/pyinstrument/issues and '
-                     'let me know how you caused this error!')
+ASSERTION_MESSAGE = (
+    "Please raise an issue at http://github.com/pyinstrument/issues and "
+    "let me know how you caused this error!"
+)
+
 
 class ProfilerSession(object):
-    def __init__(self, frame_records, start_time, duration, sample_count, start_call_stack,
-                 program, cpu_time=None):
+    def __init__(
+        self,
+        frame_records,
+        start_time,
+        duration,
+        sample_count,
+        start_call_stack,
+        program,
+        cpu_time=None,
+    ):
         self.frame_records = frame_records
         self.start_time = start_time
         self.duration = duration
@@ -19,38 +30,38 @@ class ProfilerSession(object):
 
     @staticmethod
     def load(filename):
-        with io.open(filename, 'rb' if PY2 else 'r') as f:
+        with io.open(filename, "rb" if PY2 else "r") as f:
             return ProfilerSession.from_json(json.load(f))
 
     def save(self, filename):
-        with io.open(filename, 'wb' if PY2 else 'w') as f:
+        with io.open(filename, "wb" if PY2 else "w") as f:
             json.dump(self.to_json(), f)
 
     def to_json(self):
         return {
-            'frame_records': self.frame_records,
-            'start_time': self.start_time,
-            'duration': self.duration,
-            'sample_count': self.sample_count,
-            'start_call_stack': self.start_call_stack,
-            'program': self.program,
-            'cpu_time': self.cpu_time,
+            "frame_records": self.frame_records,
+            "start_time": self.start_time,
+            "duration": self.duration,
+            "sample_count": self.sample_count,
+            "start_call_stack": self.start_call_stack,
+            "program": self.program,
+            "cpu_time": self.cpu_time,
         }
 
     @staticmethod
     def from_json(json_dict):
         return ProfilerSession(
-            frame_records=json_dict['frame_records'],
-            start_time=json_dict['start_time'],
-            duration=json_dict['duration'],
-            sample_count=json_dict['sample_count'],
-            start_call_stack=json_dict['start_call_stack'],
-            program=json_dict['program'],
-            cpu_time=json_dict['cpu_time'],
+            frame_records=json_dict["frame_records"],
+            start_time=json_dict["start_time"],
+            duration=json_dict["duration"],
+            sample_count=json_dict["sample_count"],
+            start_call_stack=json_dict["start_call_stack"],
+            program=json_dict["program"],
+            cpu_time=json_dict["cpu_time"],
         )
 
     @staticmethod
-    def combine(session1: 'ProfilerSession', session2: 'ProfilerSession'):
+    def combine(session1: "ProfilerSession", session2: "ProfilerSession"):
         if session1.start_time > session2.start_time:
             # swap them around so that session1 is the first one
             session1, session2 = session2, session1
@@ -66,10 +77,11 @@ class ProfilerSession(object):
         )
 
     def root_frame(self, trim_stem=True):
-        '''
+        """
         Parses the internal frame records and returns a tree of Frame objects
-        '''
+        """
         from pyinstrument.profiler import Profiler
+
         root_frame = None
         out_of_context_frame = Frame(Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER)
 
@@ -79,7 +91,10 @@ class ProfilerSession(object):
             identifier_stack = frame_tuple[0]
             time = frame_tuple[1]
 
-            if len(identifier_stack) == 1 and identifier_stack[0] == Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER:
+            if (
+                len(identifier_stack) == 1
+                and identifier_stack[0] == Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER
+            ):
                 out_of_context_frame.add_child(SelfTimeFrame(self_time=time))
                 continue
 
@@ -99,11 +114,11 @@ class ProfilerSession(object):
                         assert root_frame is None, ASSERTION_MESSAGE
                         root_frame = frame
                     else:
-                        parent = frame_stack[stack_depth-1]
+                        parent = frame_stack[stack_depth - 1]
                         parent.add_child(frame)
 
             # trim any extra frames
-            del frame_stack[stack_depth+1:]  # pylint: disable=W0631
+            del frame_stack[stack_depth + 1 :]  # pylint: disable=W0631
 
             # assign the time to the final frame
             frame_stack[-1].add_child(SelfTimeFrame(self_time=time))
@@ -117,10 +132,13 @@ class ProfilerSession(object):
         if len(out_of_context_frame.children) > 0:
             # add a synthetic wrapper frame that contains both the root frame
             # and the out of context stuff
-            new_root_frame = Frame('Async context\x00\x000', children=[
-                root_frame,
-                out_of_context_frame,
-            ])
+            new_root_frame = Frame(
+                "Async context\x00\x000",
+                children=[
+                    root_frame,
+                    out_of_context_frame,
+                ],
+            )
             root_frame = new_root_frame
 
         return root_frame

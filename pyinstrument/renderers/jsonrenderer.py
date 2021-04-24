@@ -6,18 +6,18 @@ from pyinstrument import processors
 
 encode_str = json.encoder.encode_basestring
 
+
 def encode_bool(a_bool):
-    return 'true' if a_bool else 'false'
+    return "true" if a_bool else "false"
 
 
 class JSONRenderer(Renderer):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def render_frame(self, frame):
         if frame is None:
-            return u'null'
+            return u"null"
         # we don't use the json module because it uses 2x stack frames, so
         # crashes on deep but valid call stacks
 
@@ -33,12 +33,12 @@ class JSONRenderer(Renderer):
         children_jsons = []
         for child in frame.children:
             children_jsons.append(self.render_frame(child))
-        property_decls.append(u'"children": [%s]' % u','.join(children_jsons))
+        property_decls.append(u'"children": [%s]' % u",".join(children_jsons))
 
         if frame.group:
             property_decls.append(u'"group_id": %s' % encode_str(frame.group.id))
 
-        return u'{%s}' % u','.join(property_decls)
+        return u"{%s}" % u",".join(property_decls)
 
     def render(self, session):
         frame = self.preprocess(session.root_frame())
@@ -54,7 +54,7 @@ class JSONRenderer(Renderer):
             property_decls.append(u'"cpu_time": %f' % session.cpu_time)
         property_decls.append(u'"root_frame": %s' % self.render_frame(frame))
 
-        return u'{%s}\n' % u','.join(property_decls)
+        return u"{%s}\n" % u",".join(property_decls)
 
     def default_processors(self):
         return [
