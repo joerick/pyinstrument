@@ -8,18 +8,9 @@ from functools import partial
 
 import pytest
 from pyinstrument import Profiler, renderers
-from .util import assert_never, flaky_in_ci
+from .util import assert_never, flaky_in_ci, busy_wait
 
 # Utilities #
-
-def do_nothing():
-    pass
-
-def busy_wait(duration):
-    end_time = time.time() + duration
-
-    while time.time() < end_time:
-        do_nothing()
 
 def long_function_a():
     time.sleep(0.25)

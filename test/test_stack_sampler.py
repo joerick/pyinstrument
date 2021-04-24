@@ -3,10 +3,8 @@ import sys
 import time
 from pyinstrument import stack_sampler
 import pytest
+from .util import do_nothing
 
-
-def do_nothing():
-    pass
 
 @pytest.fixture(autouse=True)
 def check_sampler_state():
