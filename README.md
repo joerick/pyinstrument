@@ -105,6 +105,18 @@ print(profiler.output_text(unicode=True, color=True))
 (You can omit the `unicode` and `color` flags if your output/terminal does
 not support them.)
 
+If you get "No samples were recorded." because your code executed in under
+1ms, hooray! If you **still** want to instrument the code, set an interval
+value smaller than the default 0.001 (1 millisecond) like this:
+
+```python
+profiler = Profiler(interval=0.0001)
+...
+```
+
+Experiment with the interval value to see different depths, but keep in mind
+that smaller intervals could affect the performance overhead of profiling.
+
 **Protip:** To explore the profile in a web browser, use
 `profiler.open_in_browser()`. To save this HTML for later, use
 `profiler.output_html()`.
