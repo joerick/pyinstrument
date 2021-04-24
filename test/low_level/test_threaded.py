@@ -31,4 +31,4 @@ def test_threaded():
 
     # threaded counts can be way lower, presumably due to the GIL.
     # Really we only care that it didn't crash!
-    assert 50 < counter.count < 125
+    assert 40 < counter.count < 125
