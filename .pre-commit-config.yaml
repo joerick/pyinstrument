@@ -7,17 +7,17 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
 
--   repo: https://github.com/psf/black
-    rev: 20.8b1
-    hooks:
-      - id: black
-        language_version: python3
-
 -   repo: https://github.com/asottile/pyupgrade
     rev: v2.13.0
     hooks:
     -   id: pyupgrade
         args: [--py37-plus, --keep-percent-format]
+
+-   repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3
 
 -   repo: local
     hooks:
