@@ -9,6 +9,9 @@ env3/
 *.pyc
 __pycache__/
 
+# C extensions
+*.so
+
 # distribution
 dist/
 *.egg-info/
