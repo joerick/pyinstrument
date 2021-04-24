@@ -1,5 +1,6 @@
 import os
 from typing import NoReturn
+import time
 
 from flaky import flaky
 
@@ -13,3 +14,12 @@ else:
 
 def assert_never(x: NoReturn) -> NoReturn:
     raise AssertionError(f"Invalid value: {x!r}")
+
+def do_nothing():
+    pass
+
+def busy_wait(duration):
+    end_time = time.time() + duration
+
+    while time.time() < end_time:
+        do_nothing()
