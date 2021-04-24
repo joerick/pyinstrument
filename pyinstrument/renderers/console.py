@@ -1,4 +1,3 @@
-# coding: utf8
 import time
 import pyinstrument
 from pyinstrument.renderers.base import Renderer
@@ -8,7 +7,7 @@ from pyinstrument import processors
 
 class ConsoleRenderer(Renderer):
     def __init__(self, unicode=False, color=False, **kwargs):
-        super(ConsoleRenderer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.unicode = unicode
         self.color = color
@@ -40,10 +39,10 @@ class ConsoleRenderer(Renderer):
         lines[1] += " Recorded: {:<9}".format(
             time.strftime("%X", time.localtime(session.start_time))
         )
-        lines[2] += " Duration: {:<9.3f}".format(session.duration)
-        lines[1] += " Samples:  {}".format(session.sample_count)
+        lines[2] += f" Duration: {session.duration:<9.3f}"
+        lines[1] += f" Samples:  {session.sample_count}"
         if session.cpu_time is not None:
-            lines[2] += " CPU time: {:.3f}".format(session.cpu_time)
+            lines[2] += f" CPU time: {session.cpu_time:.3f}"
 
         lines.append("")
         lines.append("Program: %s" % session.program)
@@ -52,17 +51,15 @@ class ConsoleRenderer(Renderer):
 
         return "\n".join(lines)
 
-    def render_frame(self, frame, indent=u"", child_indent=u""):
+    def render_frame(self, frame, indent="", child_indent=""):
         if not frame.group or (
             frame.group.root == frame
             or frame.total_self_time > 0.2 * self.root_frame.time()
             or frame in frame.group.exit_frames
         ):
-            time_str = (
-                self._ansi_color_for_time(frame) + "{:.3f}".format(frame.time()) + self.colors.end
-            )
+            time_str = self._ansi_color_for_time(frame) + f"{frame.time():.3f}" + self.colors.end
             function_color = self._ansi_color_for_function(frame)
-            result = u"{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
+            result = "{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
                 indent=indent,
                 time_str=time_str,
                 function_color=function_color,
@@ -71,22 +68,22 @@ class ConsoleRenderer(Renderer):
                 c=self.colors,
             )
             if self.unicode:
-                indents = {"├": u"├─ ", "│": u"│  ", "└": u"└─ ", " ": u"   "}
+                indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
             else:
-                indents = {"├": u"|- ", "│": u"|  ", "└": u"`- ", " ": u"   "}
+                indents = {"├": "|- ", "│": "|  ", "└": "`- ", " ": "   "}
 
             if frame.group and frame.group.root == frame:
-                result += u"{indent}[{count} frames hidden]  {c.faint}{libraries}{c.end}\n".format(
-                    indent=child_indent + u"   ",
+                result += "{indent}[{count} frames hidden]  {c.faint}{libraries}{c.end}\n".format(
+                    indent=child_indent + "   ",
                     count=len(frame.group.frames),
                     libraries=truncate(", ".join(frame.group.libraries), 40),
                     c=self.colors,
                 )
                 for key in indents:
-                    indents[key] = u"      "
+                    indents[key] = "      "
         else:
             result = ""
-            indents = {"├": u"", "│": u"", "└": u"", " ": u""}
+            indents = {"├": "", "│": "", "└": "", " ": ""}
 
         if frame.children:
             last_child = frame.children[-1]

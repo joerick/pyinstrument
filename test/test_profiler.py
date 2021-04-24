@@ -1,4 +1,3 @@
-from __future__ import print_function
 import asyncio
 from pyinstrument.frame import Frame
 from pyinstrument.session import ProfilerSession

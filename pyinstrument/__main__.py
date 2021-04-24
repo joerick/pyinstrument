@@ -221,11 +221,11 @@ def main():
             if options.from_path:
                 progname = shutil.which(args[0])
                 if progname is None:
-                    sys.exit("Error: program {} not found in PATH!".format(args[0]))
+                    sys.exit(f"Error: program {args[0]} not found in PATH!")
             else:
                 progname = args[0]
                 if not os.path.exists(progname):
-                    sys.exit("Error: program {} not found!".format(args[0]))
+                    sys.exit(f"Error: program {args[0]} not found!")
 
             # Make sure we overwrite the first entry of sys.path ('.') with directory of the program.
             sys.path[0] = os.path.dirname(progname)

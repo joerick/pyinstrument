@@ -9,7 +9,7 @@ ASSERTION_MESSAGE = (
 )
 
 
-class ProfilerSession(object):
+class ProfilerSession:
     def __init__(
         self,
         frame_records,
@@ -30,11 +30,11 @@ class ProfilerSession(object):
 
     @staticmethod
     def load(filename):
-        with io.open(filename, "rb" if PY2 else "r") as f:
+        with open(filename, "rb" if PY2 else "r") as f:
             return ProfilerSession.from_json(json.load(f))
 
     def save(self, filename):
-        with io.open(filename, "wb" if PY2 else "w") as f:
+        with open(filename, "wb" if PY2 else "w") as f:
             json.dump(self.to_json(), f)
 
     def to_json(self):

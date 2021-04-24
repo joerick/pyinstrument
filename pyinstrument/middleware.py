@@ -66,7 +66,7 @@ class ProfilerMiddleware(MiddlewareMixin):
                 if not os.path.exists(profile_dir):
                     os.mkdir(profile_dir)
 
-                with io.open(file_path, "w", encoding="utf-8") as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(output_html)
 
             if getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET:

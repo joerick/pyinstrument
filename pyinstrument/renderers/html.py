@@ -22,12 +22,12 @@ class HTMLRenderer(Renderer):
                 "(requires nodejs)."
             )
 
-        with io.open(os.path.join(resources_dir, "app.js"), encoding="utf-8") as f:
+        with open(os.path.join(resources_dir, "app.js"), encoding="utf-8") as f:
             js = f.read()
 
         session_json = self.render_json(session)
 
-        page = u"""<!DOCTYPE html>
+        page = """<!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8">

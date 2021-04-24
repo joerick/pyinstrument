@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import List, Optional, Tuple
 from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
 import timeit, time, sys, inspect
@@ -37,7 +36,7 @@ class ActiveProfilerSession:
         self.frame_records = []
 
 
-class Profiler(object):
+class Profiler:
     last_session: Optional[ProfilerSession]
     _active_session: Optional[ActiveProfilerSession]
 

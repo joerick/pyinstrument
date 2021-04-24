@@ -1,7 +1,7 @@
 import sys, os, uuid
 
 
-class BaseFrame(object):
+class BaseFrame:
     def __init__(self, parent=None, self_time=0):
         self.parent = parent
         self._self_time = self_time
@@ -94,7 +94,7 @@ class Frame(BaseFrame):
     """
 
     def __init__(self, identifier="", parent=None, children=None, self_time=0):
-        super(Frame, self).__init__(parent=parent, self_time=self_time)
+        super().__init__(parent=parent, self_time=self_time)
 
         self.identifier = identifier
         self._children = []
@@ -194,7 +194,7 @@ class Frame(BaseFrame):
 
             if os.sep != "/":
                 # windows uses back-slash too, so let's look for that too.
-                if ("%slib%s" % (os.sep, os.sep)) in file_path:
+                if (f"{os.sep}lib{os.sep}") in file_path:
                     return False
 
             if file_path.startswith("<"):
@@ -287,9 +287,9 @@ class SelfTimeFrame(BaseFrame):
         return "[self]"
 
 
-class FrameGroup(object):
+class FrameGroup:
     def __init__(self, root, **kwargs):
-        super(FrameGroup, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.root = root
         self.id = str(uuid.uuid4())
         self._frames = []

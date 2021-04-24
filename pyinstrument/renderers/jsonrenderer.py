@@ -17,44 +17,44 @@ class JSONRenderer(Renderer):
 
     def render_frame(self, frame):
         if frame is None:
-            return u"null"
+            return "null"
         # we don't use the json module because it uses 2x stack frames, so
         # crashes on deep but valid call stacks
 
         property_decls = []
-        property_decls.append(u'"function": %s' % encode_str(frame.function))
-        property_decls.append(u'"file_path_short": %s' % encode_str(frame.file_path_short))
-        property_decls.append(u'"file_path": %s' % encode_str(frame.file_path))
-        property_decls.append(u'"line_no": %d' % frame.line_no)
-        property_decls.append(u'"time": %f' % frame.time())
-        property_decls.append(u'"is_application_code": %s' % encode_bool(frame.is_application_code))
+        property_decls.append('"function": %s' % encode_str(frame.function))
+        property_decls.append('"file_path_short": %s' % encode_str(frame.file_path_short))
+        property_decls.append('"file_path": %s' % encode_str(frame.file_path))
+        property_decls.append('"line_no": %d' % frame.line_no)
+        property_decls.append('"time": %f' % frame.time())
+        property_decls.append('"is_application_code": %s' % encode_bool(frame.is_application_code))
 
         # can't use list comprehension here because it uses two stack frames each time.
         children_jsons = []
         for child in frame.children:
             children_jsons.append(self.render_frame(child))
-        property_decls.append(u'"children": [%s]' % u",".join(children_jsons))
+        property_decls.append('"children": [%s]' % ",".join(children_jsons))
 
         if frame.group:
-            property_decls.append(u'"group_id": %s' % encode_str(frame.group.id))
+            property_decls.append('"group_id": %s' % encode_str(frame.group.id))
 
-        return u"{%s}" % u",".join(property_decls)
+        return "{%s}" % ",".join(property_decls)
 
     def render(self, session):
         frame = self.preprocess(session.root_frame())
 
         property_decls = []
-        property_decls.append(u'"start_time": %f' % session.start_time)
-        property_decls.append(u'"duration": %f' % session.duration)
-        property_decls.append(u'"sample_count": %d' % session.sample_count)
-        property_decls.append(u'"program": %s' % encode_str(session.program))
+        property_decls.append('"start_time": %f' % session.start_time)
+        property_decls.append('"duration": %f' % session.duration)
+        property_decls.append('"sample_count": %d' % session.sample_count)
+        property_decls.append('"program": %s' % encode_str(session.program))
         if session.cpu_time is None:
-            property_decls.append(u'"cpu_time": null')
+            property_decls.append('"cpu_time": null')
         else:
-            property_decls.append(u'"cpu_time": %f' % session.cpu_time)
-        property_decls.append(u'"root_frame": %s' % self.render_frame(frame))
+            property_decls.append('"cpu_time": %f' % session.cpu_time)
+        property_decls.append('"root_frame": %s' % self.render_frame(frame))
 
-        return u"{%s}\n" % u",".join(property_decls)
+        return "{%s}\n" % ",".join(property_decls)
 
     def default_processors(self):
         return [

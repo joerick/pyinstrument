@@ -26,7 +26,7 @@ def truncate(string, max_length):
 def deprecated(func, *args, **kwargs):
     """ Marks a function as deprecated. """
     warnings.warn(
-        "{} is deprecated and should no longer be used.".format(func),
+        f"{func} is deprecated and should no longer be used.",
         DeprecationWarning,
         stacklevel=3,
     )
@@ -39,7 +39,7 @@ def deprecated_option(option_name, message=""):
     def caller(func, *args, **kwargs):
         if option_name in kwargs:
             warnings.warn(
-                "{} is deprecated. {}".format(option_name, message),
+                f"{option_name} is deprecated. {message}",
                 DeprecationWarning,
                 stacklevel=3,
             )

@@ -84,15 +84,15 @@ def timings_for_test(test_func, repeats):
 
 # print header
 for column in [""] + [test[0] for test in tests]:
-    sys.stdout.write("{:>24}".format(column))
+    sys.stdout.write(f"{column:>24}")
 
 sys.stdout.write("\n")
 
 for profiler_tuple in profilers:
-    sys.stdout.write("{:>24}".format(profiler_tuple[0]))
+    sys.stdout.write(f"{profiler_tuple[0]:>24}")
     sys.stdout.flush()
     for test_tuple in tests:
         time = min(profiler_tuple[1](test_tuple[1], test_tuple[2])) * 10
-        sys.stdout.write("{:>24.2f}".format(time))
+        sys.stdout.write(f"{time:>24.2f}")
         sys.stdout.flush()
     sys.stdout.write("\n")
