@@ -1,7 +1,6 @@
 import io, json
 from collections import deque
 from pyinstrument.frame import Frame, SelfTimeFrame
-from pyinstrument.vendor.six import PY2
 
 ASSERTION_MESSAGE = (
     "Please raise an issue at http://github.com/pyinstrument/issues and "
@@ -30,11 +29,11 @@ class ProfilerSession:
 
     @staticmethod
     def load(filename):
-        with open(filename, "rb" if PY2 else "r") as f:
+        with open(filename) as f:
             return ProfilerSession.from_json(json.load(f))
 
     def save(self, filename):
-        with open(filename, "wb" if PY2 else "w") as f:
+        with open(filename, "w") as f:
             json.dump(self.to_json(), f)
 
     def to_json(self):

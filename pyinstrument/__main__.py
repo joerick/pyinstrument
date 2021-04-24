@@ -8,7 +8,6 @@ from pyinstrument.util import (
     file_supports_unicode,
     object_with_import_path,
 )
-from pyinstrument.vendor.six import exec_, PY2
 from pyinstrument.vendor import appdirs
 
 
@@ -238,7 +237,7 @@ def main():
         profiler.start()
 
         try:
-            exec_(code, globs, None)
+            exec(code, globs, None)
         except (SystemExit, KeyboardInterrupt):
             pass
 
@@ -256,10 +255,7 @@ def main():
         f = codecs.open(options.outfile, "w", "utf-8")
         should_close_f_after_writing = True
     elif not output_to_temp_file:
-        if PY2:
-            f = codecs.getwriter("utf-8")(sys.stdout)
-        else:
-            f = sys.stdout
+        f = sys.stdout
         should_close_f_after_writing = False
 
     renderer_kwargs = {

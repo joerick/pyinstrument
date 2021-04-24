@@ -2,6 +2,7 @@ import os, io
 import codecs
 import tempfile
 import webbrowser
+import urllib
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument import processors
@@ -64,8 +65,6 @@ class HTMLRenderer(Renderer):
         else:
             with codecs.open(output_filename, "w", "utf-8") as f:
                 f.write(self.render(session))
-
-        from pyinstrument.vendor.six.moves import urllib
 
         url = urllib.parse.urlunparse(("file", "", output_filename, "", "", ""))
         webbrowser.open(url)
