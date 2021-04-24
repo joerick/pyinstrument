@@ -7,7 +7,7 @@ import types
 import pprint
 from typing import Any, Callable, List, NamedTuple, Optional, Union
 
-# from pyinstrument_cext import setstatprofile
+from pyinstrument_cext import setstatprofile
 
 thread_locals = threading.local()
 timer = timeit.default_timer
@@ -16,15 +16,15 @@ timer = timeit.default_timer
 class StackSamplerSubscriber:
     def __init__(
         self,
-        target: Callable[[List[str], float], None],
+        target: Callable[[List[str], float, Optional[List[str]]], None],
         desired_interval: float,
         context_token: Token,
-        call_stack_when_context_left: Optional[List[str]],
+        await_call_stack: Optional[List[str]],
     ) -> None:
         self.target = target
         self.desired_interval = desired_interval
         self.context_token = context_token
-        self.call_stack_when_context_left = call_stack_when_context_left
+        self.await_call_stack = await_call_stack
 
 
 active_profiler_context_var: ContextVar[Optional[object]] = ContextVar('active_profiler_context_var', default=None)
@@ -42,6 +42,10 @@ class StackSampler:
         self.last_profile_time = 0.0
 
     def subscribe(self, target, desired_interval):
+        if active_profiler_context_var.get() is not None:
+            raise RuntimeError(
+                'There is already a profiler running. You cannot run multiple profilers in the same thread or async context.'
+            )
         context_token = active_profiler_context_var.set(target)
 
         self.subscribers.append(
@@ -49,7 +53,7 @@ class StackSampler:
                 target=target,
                 desired_interval=desired_interval,
                 context_token=context_token,
-                call_stack_when_context_left=None,
+                await_call_stack=None,
             )
         )
         self._update()
@@ -92,12 +96,13 @@ class StackSampler:
 
             for subscriber in self.subscribers:
                 if subscriber.target == old:
-                    subscriber.call_stack_when_context_left = stack
+                    full_stack = build_call_stack(frame, event, arg)
+                    full_stack.extend(reversed(stack))
+                    subscriber.await_call_stack = full_stack
                 elif subscriber.target == new:
-                    subscriber.call_stack_when_context_left = None
-
-            print('context_changed')
-            pprint.pprint(arg)
+                    subscriber.await_call_stack = None
+                else:
+                    assert subscriber.target is not None
         else:
             # active_profiler = active_profiler_context_var.get()
             now = timer()
@@ -106,10 +111,10 @@ class StackSampler:
             call_stack = build_call_stack(frame, event, arg)
 
             for subscriber in self.subscribers:
-                if subscriber.call_stack_when_context_left is None:
-                    subscriber.target(call_stack, time_since_last_sample)
+                if subscriber.await_call_stack is None:
+                    subscriber.target(call_stack, time_since_last_sample, None)
                 else:
-                    subscriber.target(subscriber.call_stack_when_context_left, time_since_last_sample)
+                    subscriber.target(call_stack, time_since_last_sample, subscriber.await_call_stack)
 
             self.last_profile_time = now
 
@@ -163,7 +168,7 @@ def build_call_stack(
 
 
 class PythonStatProfiler:
-    coroutine_stack: Optional[List[str]]
+    await_stack: List[str]
 
     def __init__(self, target, interval, context_var):
         self.target = target
@@ -171,7 +176,7 @@ class PythonStatProfiler:
         self.last_invocation = timer()
         self.context_var = context_var
         self.last_context_var_value = context_var.get() if context_var else None
-        self.coroutine_stack = None
+        self.await_stack = []
 
     def profile(self, frame: types.FrameType, event: str, arg: Any):
         now = timer()
@@ -181,15 +186,19 @@ class PythonStatProfiler:
             last_context_var_value = self.last_context_var_value
 
             if context_var_value is not last_context_var_value:
-                self.target(frame, 'context_changed', (context_var_value, last_context_var_value, self.coroutine_stack))
+                context_change_frame = frame.f_back if event == 'call' else frame
+                self.target(context_change_frame, 'context_changed', (context_var_value, last_context_var_value, self.await_stack))
                 self.last_context_var_value = context_var_value
 
             # 0x80 == CO_COROUTINE (i.e. defined with 'async def')
             if event == 'return' and frame.f_code.co_flags & 0x80:
-                if self.coroutine_stack is None:
-                    self.coroutine_stack = build_call_stack(frame, event, arg)
+                self.await_stack.append("%s\x00%s\x00%i" % (
+                    frame.f_code.co_name,
+                    frame.f_code.co_filename,
+                    frame.f_code.co_firstlineno,
+                ))
             else:
-                self.coroutine_stack = None
+                self.await_stack.clear()
 
         if now < self.last_invocation + self.interval:
             return
@@ -198,8 +207,8 @@ class PythonStatProfiler:
         return self.target(frame, event, arg)
 
 
-def setstatprofile(target, interval=0.001, context_var=None):
-    if target:
-        sys.setprofile(PythonStatProfiler(target, interval, context_var).profile)
-    else:
-        sys.setprofile(None)
+# def setstatprofile(target, interval=0.001, context_var=None):
+#     if target:
+#         sys.setprofile(PythonStatProfiler(target, interval, context_var).profile)
+#     else:
+#         sys.setprofile(None)

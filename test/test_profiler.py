@@ -240,4 +240,4 @@ def test_async(engine):
 
     root_frame =  profiler_session.root_frame()
     fake_work_frame = next(f for f in walk_frames(root_frame) if f.function == 'async_wait')
-    assert fake_work_frame.time() == pytest.approx(0.1, rel=0.1)
+    assert fake_work_frame.time() == pytest.approx(0.1 + 0.5, rel=0.1)

@@ -113,13 +113,19 @@ class Profiler(object):
         self.stop()
 
     # pylint: disable=W0613
-    def _sampler_saw_call_stack(self, call_stack, time_since_last_sample):
+    def _sampler_saw_call_stack(self, call_stack, time_since_last_sample, awaiting_coroutine_stack):
         if not self._active_session:
             raise RuntimeError('Received a call stack without an active session')
 
-        self._active_session.frame_records.append((call_stack, time_since_last_sample))
+        if awaiting_coroutine_stack is not None:
+            # we are in an 'await' - we have left the profiler's context
+            self._active_session.frame_records.append((awaiting_coroutine_stack + [Profiler.AWAIT_FRAME_IDENTIFIER], time_since_last_sample))
+        else:
+            # regular sync code
+            self._active_session.frame_records.append((call_stack, time_since_last_sample))
 
-    OUT_OF_CONTEXT_FRAME_IDENTIFIER = '<out-of-context>\x00<out-of-context>\x000'
+    OUT_OF_CONTEXT_FRAME_IDENTIFIER = '[out-of-context]\x00<out-of-context>\x000'
+    AWAIT_FRAME_IDENTIFIER = '[await]\x00<await>\x000'
 
     def print(self, file=sys.stdout, unicode=None, color=None, show_all=False, timeline=False):
         if unicode is None:

@@ -1,3 +1,4 @@
+import contextvars
 import sys
 import time
 from pyinstrument import stack_sampler
@@ -28,7 +29,7 @@ def test_get_samples():
 
     sample_count = 0
 
-    def sample_observer(stack, time):
+    def sample_observer(stack, time, await_stack):
         nonlocal sample_count
         sample_count += 1
 
@@ -55,16 +56,20 @@ def test_multiple_samplers():
 
     class SampleCounter:
         count = 0
-        def sample(self, stack, time):
+        def sample(self, stack, time, await_stack):
             self.count += 1
 
     counter_1 = SampleCounter()
     counter_2 = SampleCounter()
 
+    context_1 = contextvars.copy_context()
+    context_2 = contextvars.copy_context()
+
     assert sys.getprofile() is None
     assert len(sampler.subscribers) == 0
-    sampler.subscribe(counter_1.sample, 0.001)
-    sampler.subscribe(counter_2.sample, 0.001)
+    context_1.run(sampler.subscribe, counter_1.sample, 0.001)
+    context_2.run(sampler.subscribe, counter_2.sample, 0.001)
+
     assert sys.getprofile() is not None
     assert len(sampler.subscribers) == 2
 
@@ -76,8 +81,10 @@ def test_multiple_samplers():
     assert counter_2.count > 0
 
     assert sys.getprofile() is not None
-    sampler.unsubscribe(counter_1.sample)
-    sampler.unsubscribe(counter_2.sample)
+
+    context_1.run(sampler.unsubscribe, counter_1.sample)
+    context_2.run(sampler.unsubscribe, counter_2.sample)
+
     assert sys.getprofile() is None
 
     assert len(sampler.subscribers) == 0
