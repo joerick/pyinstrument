@@ -4,7 +4,7 @@ from pyinstrument import processors
 
 # note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
 
-encode_str = json.encoder.encode_basestring
+encode_str = json.encoder.encode_basestring  # type: ignore
 
 
 def encode_bool(a_bool):

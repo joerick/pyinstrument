@@ -1,7 +1,9 @@
+from _typeshed import FileDescriptorLike
 import codecs
 import importlib
 import os
 import sys
+from typing import IO
 import warnings
 
 from pyinstrument.vendor.decorator import decorator
@@ -16,7 +18,7 @@ def object_with_import_path(import_path):
     return getattr(module, object_name)
 
 
-def truncate(string, max_length):
+def truncate(string: str, max_length: int):
     if len(string) > max_length:
         return string[0 : max_length - 3] + "..."
     return string
@@ -49,7 +51,7 @@ def deprecated_option(option_name, message=""):
     return decorator(caller)
 
 
-def file_supports_color(file_obj):
+def file_supports_color(file_obj: IO) -> bool:
     """
     Returns True if the running system's terminal supports color.
 
@@ -64,7 +66,7 @@ def file_supports_color(file_obj):
     return supported_platform and is_a_tty
 
 
-def file_supports_unicode(file_obj):
+def file_supports_unicode(file_obj: IO) -> bool:
     encoding = getattr(file_obj, "encoding", None)
     if not encoding:
         return False
@@ -74,5 +76,5 @@ def file_supports_unicode(file_obj):
     return "utf" in codec_info.name
 
 
-def file_is_a_tty(file_obj):
+def file_is_a_tty(file_obj: IO) -> bool:
     return hasattr(file_obj, "isatty") and file_obj.isatty()

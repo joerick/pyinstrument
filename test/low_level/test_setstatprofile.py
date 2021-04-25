@@ -20,7 +20,7 @@ def test_100ms():
     setstatprofile(counter, 0.1)
     busy_wait(1.0)
     setstatprofile(None)
-    assert 8 < counter.count < 12, "profile count should be approx. 10, was %i" % self.count
+    assert 8 < counter.count < 12
 
 
 def test_10ms():
@@ -28,7 +28,7 @@ def test_10ms():
     setstatprofile(counter, 0.01)
     busy_wait(1.0)
     setstatprofile(None)
-    assert 70 <= counter.count <= 130, "profile count should be approx. 100, was %i" % self.count
+    assert 70 <= counter.count <= 130
 
 
 def test_internal_object_compatibility():

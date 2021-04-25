@@ -1,5 +1,7 @@
+from __future__ import annotations
 import io, json
 from collections import deque
+from typing import List, Tuple
 from pyinstrument.frame import Frame, SelfTimeFrame
 
 ASSERTION_MESSAGE = (
@@ -7,11 +9,13 @@ ASSERTION_MESSAGE = (
     "let me know how you caused this error!"
 )
 
+FrameRecordType = Tuple[List[str], float]
+
 
 class ProfilerSession:
     def __init__(
         self,
-        frame_records,
+        frame_records: list[FrameRecordType],
         start_time,
         duration,
         sample_count,
@@ -60,7 +64,7 @@ class ProfilerSession:
         )
 
     @staticmethod
-    def combine(session1: "ProfilerSession", session2: "ProfilerSession"):
+    def combine(session1: ProfilerSession, session2: ProfilerSession):
         if session1.start_time > session2.start_time:
             # swap them around so that session1 is the first one
             session1, session2 = session2, session1
@@ -75,7 +79,7 @@ class ProfilerSession:
             cpu_time=session1.cpu_time + session2.cpu_time,
         )
 
-    def root_frame(self, trim_stem=True):
+    def root_frame(self, trim_stem=True) -> Frame | None:
         """
         Parses the internal frame records and returns a tree of Frame objects
         """
@@ -97,6 +101,8 @@ class ProfilerSession:
                 out_of_context_frame.add_child(SelfTimeFrame(self_time=time))
                 continue
 
+            stack_depth = 0
+
             # now we must create a stack of frame objects and assign this time to the leaf
             for stack_depth, frame_identifier in enumerate(identifier_stack):
                 if stack_depth < len(frame_stack):
@@ -117,7 +123,7 @@ class ProfilerSession:
                         parent.add_child(frame)
 
             # trim any extra frames
-            del frame_stack[stack_depth + 1 :]  # pylint: disable=W0631
+            del frame_stack[stack_depth + 1 :]
 
             # assign the time to the final frame
             frame_stack[-1].add_child(SelfTimeFrame(self_time=time))

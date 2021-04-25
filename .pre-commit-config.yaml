@@ -21,6 +21,13 @@ repos:
 
 -   repo: local
     hooks:
+    -   id: pyright
+        name: pyright
+        entry: pyright
+        language: node
+        pass_filenames: false
+        types: [python]
+        additional_dependencies: ['pyright@1.1.134']
     -   id: build
         name: build js bundle
         entry: bin/build_js_bundle.py --force

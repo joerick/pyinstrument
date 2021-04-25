@@ -1,4 +1,6 @@
+from pyinstrument.renderers.html import HTMLRenderer
 import sys, os, codecs, runpy, glob, time, fnmatch, optparse, shutil
+from typing import Any, List, cast
 import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.session import ProfilerSession
@@ -184,6 +186,8 @@ def main():
         sys.exit(2)
 
     options, args = parser.parse_args()
+    # work around a type checking bug...
+    args = cast(List[str], args)
 
     if args == [] and options.module_name is None and options.load_prev is None:
         parser.print_help()
@@ -247,14 +251,10 @@ def main():
     if options.output_html:
         options.renderer = "html"
 
-    output_to_temp_file = (
-        options.renderer == "html" and not options.outfile and file_is_a_tty(sys.stdout)
-    )
-
     if options.outfile:
         f = codecs.open(options.outfile, "w", "utf-8")
         should_close_f_after_writing = True
-    elif not output_to_temp_file:
+    else:
         f = sys.stdout
         should_close_f_after_writing = False
 
@@ -269,10 +269,10 @@ def main():
         renderer_kwargs["timeline"] = options.timeline
 
     if options.renderer == "text":
-        unicode_override = options.unicode != None
-        color_override = options.color != None
-        unicode = options.unicode if unicode_override else file_supports_unicode(f)
-        color = options.color if color_override else file_supports_color(f)
+        unicode_override = options.unicode is not None
+        color_override = options.color is not None
+        unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
+        color: Any = options.color if color_override else file_supports_color(f)
 
         renderer_kwargs.update({"unicode": unicode, "color": color})
 
@@ -282,7 +282,8 @@ def main():
     # remove this frame from the trace
     renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
-    if output_to_temp_file:
+    if isinstance(renderer, HTMLRenderer) and not options.outfile and file_is_a_tty(f):
+        # don't write HTML to a TTY, open in browser instead
         output_filename = renderer.open_in_browser(session)
         print("stdout is a terminal, so saved profile output to %s" % output_filename)
     else:

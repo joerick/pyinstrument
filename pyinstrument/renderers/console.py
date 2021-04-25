@@ -88,14 +88,14 @@ class ConsoleRenderer(Renderer):
         if frame.children:
             last_child = frame.children[-1]
 
-        for child in frame.children:
-            if child is not last_child:
-                c_indent = child_indent + indents["├"]
-                cc_indent = child_indent + indents["│"]
-            else:
-                c_indent = child_indent + indents["└"]
-                cc_indent = child_indent + indents[" "]
-            result += self.render_frame(child, indent=c_indent, child_indent=cc_indent)
+            for child in frame.children:
+                if child is not last_child:
+                    c_indent = child_indent + indents["├"]
+                    cc_indent = child_indent + indents["│"]
+                else:
+                    c_indent = child_indent + indents["└"]
+                    cc_indent = child_indent + indents[" "]
+                result += self.render_frame(child, indent=c_indent, child_indent=cc_indent)
 
         return result
 
@@ -145,7 +145,18 @@ class ConsoleRenderer(Renderer):
         end = "\033[0m"
 
     class colors_disabled:
-        def __getattr__(self, key):
-            return ""
+        red = ""
+        green = ""
+        yellow = ""
+        blue = ""
+        cyan = ""
+        bright_green = ""
+        white = ""
 
-    colors_disabled = colors_disabled()
+        bg_dark_blue_255 = ""
+        white_255 = ""
+
+        bold = ""
+        faint = ""
+
+        end = ""

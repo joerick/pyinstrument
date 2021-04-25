@@ -2,7 +2,7 @@ import os, io
 import codecs
 import tempfile
 import webbrowser
-import urllib
+import urllib.parse
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument import processors

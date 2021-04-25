@@ -16,7 +16,7 @@ except ImportError:
     MiddlewareMixin = object
 
 
-class ProfilerMiddleware(MiddlewareMixin):
+class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
     def process_request(self, request):
         profile_dir = getattr(settings, "PYINSTRUMENT_PROFILE_DIR", None)
 
