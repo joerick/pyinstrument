@@ -2,3 +2,4 @@
 pytest
 flaky
 trio
+django  # used by middleware
