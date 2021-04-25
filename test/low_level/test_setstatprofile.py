@@ -4,9 +4,8 @@ from typing import Any
 
 import pytest
 
-from pyinstrument.low_level.stat_profile import setstatprofile
-
 from ..util import busy_wait
+from .util import parametrize_setstatprofile
 
 
 class CallCounter:
@@ -17,7 +16,8 @@ class CallCounter:
         self.count += 1
 
 
-def test_100ms():
+@parametrize_setstatprofile
+def test_100ms(setstatprofile):
     counter = CallCounter()
     setstatprofile(counter, 0.1)
     busy_wait(1.0)
@@ -25,7 +25,8 @@ def test_100ms():
     assert 8 < counter.count < 12
 
 
-def test_10ms():
+@parametrize_setstatprofile
+def test_10ms(setstatprofile):
     counter = CallCounter()
     setstatprofile(counter, 0.01)
     busy_wait(1.0)
@@ -33,7 +34,8 @@ def test_10ms():
     assert 70 <= counter.count <= 130
 
 
-def test_internal_object_compatibility():
+@parametrize_setstatprofile
+def test_internal_object_compatibility(setstatprofile):
     setstatprofile(CallCounter(), 1e6)
 
     profile_state = sys.getprofile()

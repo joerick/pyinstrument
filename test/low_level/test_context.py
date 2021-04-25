@@ -3,12 +3,12 @@ import time
 
 import pytest
 
-from pyinstrument.low_level.stat_profile import setstatprofile
-
 from ..util import busy_wait
+from .util import parametrize_setstatprofile
 
 
-def test_context_type():
+@parametrize_setstatprofile
+def test_context_type(setstatprofile):
     with pytest.raises(TypeError):
         setstatprofile(lambda f, e, a: 0, 1e6, "not a context var")
         setstatprofile(None)
@@ -17,7 +17,8 @@ def test_context_type():
 profiler_context_var = contextvars.ContextVar("profiler_context_var", default=None)
 
 
-def test_context_tracking():
+@parametrize_setstatprofile
+def test_context_tracking(setstatprofile):
     profile_calls = []
 
     def profile_callback(frame, event, arg):

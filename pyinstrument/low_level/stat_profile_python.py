@@ -1,7 +1,8 @@
+import contextvars
 import sys
 import timeit
 import types
-from typing import Any, List
+from typing import Any, List, Type
 
 timer = timeit.default_timer
 
@@ -13,6 +14,12 @@ class PythonStatProfiler:
         self.target = target
         self.interval = interval
         self.last_invocation = timer()
+
+        if context_var:
+            # raise typeerror to match the C version
+            if not isinstance(context_var, contextvars.ContextVar):
+                raise TypeError("not a context var")
+
         self.context_var = context_var
         self.last_context_var_value = context_var.get() if context_var else None
         self.await_stack = []
