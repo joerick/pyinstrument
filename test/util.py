@@ -1,6 +1,6 @@
 import os
-from typing import NoReturn
 import time
+from typing import NoReturn
 
 from flaky import flaky
 

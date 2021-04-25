@@ -1,7 +1,11 @@
-import time, sys, inspect
+import inspect
+import sys
+import time
+
 import pytest
+
 from pyinstrument import Profiler
-from pyinstrument.renderers import JSONRenderer, ConsoleRenderer, HTMLRenderer
+from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer
 
 # Utilities
 

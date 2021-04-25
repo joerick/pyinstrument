@@ -1,5 +1,6 @@
-from django.http import HttpResponse
 import time
+
+from django.http import HttpResponse
 
 
 def hello_world(request):

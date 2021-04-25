@@ -1,9 +1,11 @@
+import sys
 import time
 from typing import Any
+
 import pytest
-import sys
 
 from pyinstrument.low_level.stat_profile import setstatprofile
+
 from ..util import busy_wait
 
 

@@ -1,6 +1,7 @@
 import asyncio
-import pyinstrument
 import time
+
+import pyinstrument
 
 
 def do_nothing():

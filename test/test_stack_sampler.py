@@ -1,8 +1,11 @@
 import contextvars
 import sys
 import time
-from pyinstrument import stack_sampler
+
 import pytest
+
+from pyinstrument import stack_sampler
+
 from .util import do_nothing
 
 

@@ -1,6 +1,7 @@
 import json
-from pyinstrument.renderers.base import Renderer
+
 from pyinstrument import processors
+from pyinstrument.renderers.base import Renderer
 
 # note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
 

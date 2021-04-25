@@ -1,11 +1,13 @@
-import os, io
 import codecs
+import io
+import os
 import tempfile
-import webbrowser
 import urllib.parse
+import webbrowser
+
+from pyinstrument import processors
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
-from pyinstrument import processors
 
 
 class HTMLRenderer(Renderer):

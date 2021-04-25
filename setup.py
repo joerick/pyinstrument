@@ -1,7 +1,9 @@
+import distutils
+import os
+import subprocess
 import sys
-import subprocess, os, distutils
-from setuptools import setup, find_packages, Extension
 
+from setuptools import Extension, find_packages, setup
 
 with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
     long_description = f.read()

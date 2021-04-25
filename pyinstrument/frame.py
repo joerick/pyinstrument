@@ -1,4 +1,6 @@
-import sys, os, uuid
+import os
+import sys
+import uuid
 
 
 class BaseFrame:

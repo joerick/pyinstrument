@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import subprocess
+import argparse
 import os
 import shutil
+import subprocess
 import sys
-import argparse
 
 HTML_RENDERER_DIR = "html_renderer"
 JS_BUNDLE = "pyinstrument/renderers/html_resources/app.js"

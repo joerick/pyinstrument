@@ -1,7 +1,9 @@
 import sys
+
+from pytest import approx
+
 from pyinstrument import processors
 from pyinstrument.frame import Frame, SelfTimeFrame
-from pytest import approx
 
 all_processors = [
     processors.aggregate_repeated_calls,

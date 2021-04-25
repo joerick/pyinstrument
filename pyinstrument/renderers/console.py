@@ -1,8 +1,9 @@
 import time
+
 import pyinstrument
+from pyinstrument import processors
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.util import truncate
-from pyinstrument import processors
 
 
 class ConsoleRenderer(Renderer):

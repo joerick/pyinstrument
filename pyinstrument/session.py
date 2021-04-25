@@ -1,7 +1,10 @@
 from __future__ import annotations
-import io, json
+
+import io
+import json
 from collections import deque
 from typing import List, Tuple
+
 from pyinstrument.frame import Frame, SelfTimeFrame
 
 ASSERTION_MESSAGE = (

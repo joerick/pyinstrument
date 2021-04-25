@@ -2,8 +2,8 @@ import codecs
 import importlib
 import os
 import sys
-from typing import IO
 import warnings
+from typing import IO
 
 from pyinstrument.vendor.decorator import decorator
 

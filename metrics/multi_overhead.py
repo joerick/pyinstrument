@@ -1,10 +1,13 @@
+import cProfile
+import profile
 import re
-import pyinstrument
-from timeit import Timer
-import django.conf
 import sys
 import time
-import cProfile, profile
+from timeit import Timer
+
+import django.conf
+
+import pyinstrument
 
 django.conf.settings.configure(
     INSTALLED_APPS=(),

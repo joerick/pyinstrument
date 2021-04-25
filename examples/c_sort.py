@@ -10,8 +10,8 @@ fine.
 """
 import sys
 import time
-import numpy as np
 
+import numpy as np
 
 arr = np.random.randint(0, 10, 10)
 

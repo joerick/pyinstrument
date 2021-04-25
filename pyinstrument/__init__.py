@@ -1,5 +1,6 @@
-from pyinstrument.profiler import Profiler
 import warnings
+
+from pyinstrument.profiler import Profiler
 
 __version__ = "3.4.1"
 

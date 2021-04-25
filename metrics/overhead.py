@@ -1,8 +1,10 @@
-import django.template.loader
-import django.conf
-from timeit import Timer
-import profile
 import cProfile
+import profile
+from timeit import Timer
+
+import django.conf
+import django.template.loader
+
 import pyinstrument
 
 django.conf.settings.configure(

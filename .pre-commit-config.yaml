@@ -13,6 +13,12 @@ repos:
     -   id: pyupgrade
         args: [--py37-plus, --keep-percent-format]
 
+-   repo: https://github.com/pycqa/isort
+    rev: 5.8.0
+    hooks:
+      - id: isort
+        name: isort (python)
+
 -   repo: https://github.com/psf/black
     rev: 20.8b1
     hooks:

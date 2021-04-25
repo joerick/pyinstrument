@@ -1,10 +1,10 @@
-from contextvars import ContextVar, Token
+import pprint
 import sys
 import threading
-from time import time
 import timeit
 import types
-import pprint
+from contextvars import ContextVar, Token
+from time import time
 from typing import Any, Callable, List, NamedTuple, Optional, Union
 
 from pyinstrument.low_level.stat_profile import setstatprofile

@@ -4,9 +4,10 @@ try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
-import collections, sys
-import operator
 
+import collections
+import operator
+import sys
 
 WIKIPEDIA_ARTICLE_API_URL = "https://en.wikipedia.org/w/api.php?action=query&titles=Spoon&prop=revisions&rvprop=content&format=json"
 

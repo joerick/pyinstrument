@@ -1,7 +1,10 @@
-from pyinstrument.low_level.stat_profile import setstatprofile
 import contextvars
 import time
+
 import pytest
+
+from pyinstrument.low_level.stat_profile import setstatprofile
+
 from ..util import busy_wait
 
 

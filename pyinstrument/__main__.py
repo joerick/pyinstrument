@@ -1,8 +1,17 @@
-from pyinstrument.renderers.html import HTMLRenderer
-import sys, os, codecs, runpy, glob, time, fnmatch, optparse, shutil
+import codecs
+import fnmatch
+import glob
+import optparse
+import os
+import runpy
+import shutil
+import sys
+import time
 from typing import Any, List, cast
+
 import pyinstrument
 from pyinstrument import Profiler, renderers
+from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.session import ProfilerSession
 from pyinstrument.util import (
     file_is_a_tty,

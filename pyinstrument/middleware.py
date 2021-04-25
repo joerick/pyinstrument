@@ -3,12 +3,12 @@ import os
 import sys
 import time
 
-from django.http import HttpResponse
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils.module_loading import import_string
+
 from pyinstrument import Profiler
 from pyinstrument.renderers.html import HTMLRenderer
-
 
 try:
     from django.utils.deprecation import MiddlewareMixin

@@ -1,10 +1,14 @@
 from __future__ import annotations
+
+import threading
+import time
 from typing import Any, List
 from unittest import TestCase
-import time, threading
+
 import pytest
 
 from pyinstrument.low_level.stat_profile import setstatprofile
+
 from ..util import busy_wait, do_nothing
 
 

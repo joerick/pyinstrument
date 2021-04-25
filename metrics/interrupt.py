@@ -1,5 +1,6 @@
-from pyinstrument import Profiler
 from platform import platform
+
+from pyinstrument import Profiler
 
 p = Profiler()
 

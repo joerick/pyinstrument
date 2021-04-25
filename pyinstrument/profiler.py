@@ -1,9 +1,13 @@
-from typing import List, Optional, Tuple
-from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
-import timeit, time, sys, inspect
+import inspect
+import sys
+import time
+import timeit
 from contextvars import ContextVar, Token
+from typing import List, Optional, Tuple
+
 from pyinstrument import renderers
 from pyinstrument.session import ProfilerSession
+from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
 try:

@@ -9,6 +9,7 @@ called like:
 
 import re
 from operator import methodcaller
+
 from pyinstrument.frame import FrameGroup, SelfTimeFrame
 
 

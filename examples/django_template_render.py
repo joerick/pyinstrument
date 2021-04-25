@@ -8,8 +8,8 @@ except ImportError:
     print("Install using `pip install Django`.")
     exit(1)
 
-import django.template.loader
 import django.conf
+import django.template.loader
 
 
 def main():

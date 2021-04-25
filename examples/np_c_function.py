@@ -1,4 +1,5 @@
 import sys
+
 import numpy as np
 
 arr = np.random.randint(0, 10000, 10000)

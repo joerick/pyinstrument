@@ -1,13 +1,17 @@
 import asyncio
-from pyinstrument.frame import Frame
-from pyinstrument.session import ProfilerSession
-import time, json, trio
-from typing import Generator, Optional
+import json
+import time
 from functools import partial
+from typing import Generator, Optional
 
 import pytest
+import trio
+
 from pyinstrument import Profiler, renderers
-from .util import assert_never, flaky_in_ci, busy_wait
+from pyinstrument.frame import Frame
+from pyinstrument.session import ProfilerSession
+
+from .util import assert_never, busy_wait, flaky_in_ci
 
 # Utilities #
 

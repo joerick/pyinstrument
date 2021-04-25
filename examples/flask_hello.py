@@ -1,4 +1,5 @@
 import time
+
 from pyinstrument import Profiler
 
 try:
