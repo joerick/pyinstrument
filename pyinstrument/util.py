@@ -1,4 +1,3 @@
-from _typeshed import FileDescriptorLike
 import codecs
 import importlib
 import os

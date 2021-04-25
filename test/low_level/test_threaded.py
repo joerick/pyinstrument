@@ -1,34 +1,46 @@
-from typing import Any
+from __future__ import annotations
+from typing import Any, List
 from unittest import TestCase
 import time, threading
+import pytest
 
 from pyinstrument.low_level.stat_profile import setstatprofile
-from ..util import busy_wait
+from ..util import busy_wait, do_nothing
 
 
 class CallCounter:
-    def __init__(self) -> None:
+    def __init__(self, thread) -> None:
+        self.thread = thread
         self.count = 0
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
+        assert self.thread is threading.current_thread()
         self.count += 1
 
 
 def test_threaded():
-    counter = CallCounter()
+    # assert that each thread gets its own callbacks, and check that it
+    # doesn't crash!
 
-    def profile_a_busy_wait():
-        setstatprofile(counter, 0.1)
-        busy_wait(1.0)
+    counters: list[CallCounter | None] = [None for _ in range(10)]
+    stop = False
+
+    def profile_a_busy_wait(i):
+        thread = threads[i]
+        counter = CallCounter(thread)
+        counters[i] = counter
+
+        setstatprofile(counter, 0.001)
+        while not stop:
+            do_nothing()
         setstatprofile(None)
 
-    threads = [threading.Thread(target=profile_a_busy_wait) for _ in range(10)]
+    threads = [threading.Thread(target=profile_a_busy_wait, args=(i,)) for i in range(10)]
     for thread in threads:
         thread.start()
 
+    while not stop:
+        stop = all(c is not None and c.count > 10 for c in counters)
+
     for thread in threads:
         thread.join()
-
-    # threaded counts can be way lower, presumably due to the GIL.
-    # Really we only care that it didn't crash!
-    assert 40 < counter.count < 125
