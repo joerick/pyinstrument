@@ -6,6 +6,7 @@ from contextvars import ContextVar, Token
 from typing import List, Optional, Tuple
 
 from pyinstrument import renderers
+from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER
 from pyinstrument.session import ProfilerSession
 from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
 from pyinstrument.util import file_supports_color, file_supports_unicode
@@ -125,16 +126,13 @@ class Profiler:
             # we are in an 'await' - we have left the profiler's context
             self._active_session.frame_records.append(
                 (
-                    awaiting_coroutine_stack + [Profiler.AWAIT_FRAME_IDENTIFIER],
+                    awaiting_coroutine_stack + [AWAIT_FRAME_IDENTIFIER],
                     time_since_last_sample,
                 )
             )
         else:
             # regular sync code
             self._active_session.frame_records.append((call_stack, time_since_last_sample))
-
-    OUT_OF_CONTEXT_FRAME_IDENTIFIER = "[out-of-context]\x00<out-of-context>\x000"
-    AWAIT_FRAME_IDENTIFIER = "[await]\x00<await>\x000"
 
     def print(self, file=sys.stdout, unicode=None, color=None, show_all=False, timeline=False):
         if unicode is None:

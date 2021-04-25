@@ -2,6 +2,7 @@ import time
 
 import pyinstrument
 from pyinstrument import processors
+from pyinstrument.frame import BaseFrame
 from pyinstrument.renderers.base import Renderer
 from pyinstrument.util import truncate
 
@@ -100,7 +101,7 @@ class ConsoleRenderer(Renderer):
 
         return result
 
-    def _ansi_color_for_time(self, frame):
+    def _ansi_color_for_time(self, frame: BaseFrame):
         proportion_of_total = frame.time() / self.root_frame.time()
 
         if proportion_of_total > 0.6:

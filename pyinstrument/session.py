@@ -5,7 +5,7 @@ import json
 from collections import deque
 from typing import List, Tuple
 
-from pyinstrument.frame import Frame, SelfTimeFrame
+from pyinstrument.frame import AwaitTimeFrame, BaseFrame, Frame, SelfTimeFrame
 
 ASSERTION_MESSAGE = (
     "Please raise an issue at http://github.com/pyinstrument/issues and "
@@ -82,27 +82,19 @@ class ProfilerSession:
             cpu_time=session1.cpu_time + session2.cpu_time,
         )
 
-    def root_frame(self, trim_stem=True) -> Frame | None:
+    def root_frame(self, trim_stem=True) -> BaseFrame | None:
         """
         Parses the internal frame records and returns a tree of Frame objects
         """
         from pyinstrument.profiler import Profiler
 
         root_frame = None
-        out_of_context_frame = Frame(Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER)
 
         frame_stack = []
 
         for frame_tuple in self.frame_records:
             identifier_stack = frame_tuple[0]
             time = frame_tuple[1]
-
-            if (
-                len(identifier_stack) == 1
-                and identifier_stack[0] == Profiler.OUT_OF_CONTEXT_FRAME_IDENTIFIER
-            ):
-                out_of_context_frame.add_child(SelfTimeFrame(self_time=time))
-                continue
 
             stack_depth = 0
 
@@ -114,7 +106,7 @@ class ProfilerSession:
                         del frame_stack[stack_depth:]
 
                 if stack_depth >= len(frame_stack):
-                    frame = Frame(frame_identifier)
+                    frame = BaseFrame.new_subclass_with_identifier(frame_identifier)
                     frame_stack.append(frame)
 
                     if stack_depth == 0:
@@ -128,26 +120,18 @@ class ProfilerSession:
             # trim any extra frames
             del frame_stack[stack_depth + 1 :]
 
-            # assign the time to the final frame
-            frame_stack[-1].add_child(SelfTimeFrame(self_time=time))
+            # assign the time to the final frame in the stack
+            final_frame = frame_stack[-1]
+            if isinstance(final_frame, AwaitTimeFrame):
+                final_frame.self_time += time
+            else:
+                final_frame.add_child(SelfTimeFrame(self_time=time))
 
         if root_frame is None:
             return None
 
         if trim_stem:
             root_frame = self._trim_stem(root_frame)
-
-        if len(out_of_context_frame.children) > 0:
-            # add a synthetic wrapper frame that contains both the root frame
-            # and the out of context stuff
-            new_root_frame = Frame(
-                "Async context\x00\x000",
-                children=[
-                    root_frame,
-                    out_of_context_frame,
-                ],
-            )
-            root_frame = new_root_frame
 
         return root_frame
 

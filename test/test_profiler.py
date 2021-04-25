@@ -8,7 +8,7 @@ import pytest
 import trio
 
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import Frame
+from pyinstrument.frame import BaseFrame, Frame
 from pyinstrument.session import ProfilerSession
 
 from .util import assert_never, busy_wait, flaky_in_ci
@@ -47,7 +47,7 @@ async def async_wait(sync_time, async_time, profile=False, engine="asyncio"):
         return profiler.last_session
 
 
-def walk_frames(frame: Frame) -> Generator[Frame, None, None]:
+def walk_frames(frame: BaseFrame) -> Generator[BaseFrame, None, None]:
     yield frame
 
     for f in frame.children:
