@@ -56,8 +56,7 @@ def main():
     parser.add_option('', '--hide',
         dest='hide_fnmatch', action='store', metavar='EXPR',
         help=("glob-style pattern matching the file paths whose frames to hide. Defaults to "
-              "'*{sep}lib{sep}*'.").format(sep=os.sep),
-        default='*{sep}lib{sep}*'.format(sep=os.sep))
+              "hiding non-application code"))
     parser.add_option('', '--hide-regex',
         dest='hide_regex', action='store', metavar='REGEX',
         help=("regex matching the file paths whose frames to hide. Useful if --hide doesn't give "
@@ -107,12 +106,18 @@ def main():
     if options.from_path and sys.platform == 'win32':
         parser.error('--from-path is not supported on Windows')
 
-    if not options.hide_regex:
+    if options.hide_fnmatch is not None and options.hide_regex is not None:
+        parser.error('You can‘t specify both --hide and --hide-regex')
+
+    if options.hide_fnmatch is not None:
         options.hide_regex = fnmatch.translate(options.hide_fnmatch)
 
-    if not options.show_regex and options.show_fnmatch:
-        options.show_regex = fnmatch.translate(options.show_fnmatch)
+    show_options_used = [options.show_fnmatch is not None, options.show_regex is not None, options.show_all]
+    if show_options_used.count(True) > 1:
+        parser.error('You can only specify one of --show, --show-regex and --show-all')
 
+    if options.show_fnmatch is not None:
+        options.show_regex = fnmatch.translate(options.show_fnmatch)
     if options.show_all:
         options.show_regex = r'.*'
 
