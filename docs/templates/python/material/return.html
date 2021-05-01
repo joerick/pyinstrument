@@ -1,0 +1,16 @@
+{{ log.debug() }}
+<table>
+  <thead>
+    <tr>
+        <th>Returns</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td>
+            {{ return.description|convert_markdown(heading_level, html_id) }}
+            Type: <code>{{ return.annotation }}</code>
+        </td>
+      </tr>
+  </tbody>
+</table>
