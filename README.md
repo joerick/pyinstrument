@@ -301,6 +301,11 @@ Known issues
 Changelog
 ---------
 
+### v3.4.2
+
+- Fix a bug that caused `--show`, `--show-regex`, `--show-all` to be ignored
+  on the command line.
+
 ### v3.4.1
 
 - Under-the-hood modernisation

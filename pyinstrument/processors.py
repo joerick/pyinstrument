@@ -79,13 +79,16 @@ def group_library_frames_processor(frame, options):
     show_regex = options.get("show_regex")
 
     def should_be_hidden(frame):
-        if (show_regex is not None) and not re.match(show_regex, frame.file_path):
-            return False
+        should_show = (show_regex is not None) and re.match(show_regex, frame.file_path)
+        should_hide = (hide_regex is not None) and re.match(hide_regex, frame.file_path)
 
-        if hide_regex is not None:
-            return re.match(hide_regex, frame.file_path)
-        else:
-            return not frame.is_application_code
+        # check for explicit user show/hide rules. 'show' has precedence.
+        if should_show:
+            return False
+        if should_hide:
+            return True
+
+        return not frame.is_application_code
 
     def add_frames_to_group(frame, group):
         group.add_frame(frame)
