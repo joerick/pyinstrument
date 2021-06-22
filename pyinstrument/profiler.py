@@ -37,7 +37,7 @@ class Profiler(object):
         self._start_call_stack = self._call_stack_for_frame(caller_frame)
 
         if sys.getprofile() is not None:
-            raise RuntimeError('A profiler is already running. Running multiple profilers on the same thead is not supported.')
+            raise RuntimeError('A profiler is already running. Running multiple profilers on the same thread is not supported.')
 
         setstatprofile(self._profile, self.interval)
 
