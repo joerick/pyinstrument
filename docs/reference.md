@@ -1,5 +1,6 @@
+# Reference
 
-## ::: pyinstrument.Profiler
-    rendering:
-      show_root_heading: true
-      show_source: false
+```{eval-rst}
+.. autoclass:: pyinstrument.Profiler
+    :members:
+```

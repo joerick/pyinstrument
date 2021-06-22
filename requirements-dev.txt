@@ -3,6 +3,6 @@ pytest
 flaky
 trio
 django  # used by middleware
-mkdocs==1.1.2
-mkdocstrings==0.15.0
-mkdocs-material==7.1.3
+sphinx==3.5.4
+myst-parser==0.13.7
+furo==2021.6.18b36

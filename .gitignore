@@ -24,3 +24,6 @@ build
 
 # editor
 .vscode
+
+# docs
+docs/_build

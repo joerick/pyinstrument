@@ -57,10 +57,10 @@ class Profiler:
         """
         Create the profiler.
 
-        Note the profiling will not start until [start()][pyinstrument.Profiler.start] is called.
+        Note the profiling will not start until :func:`start` is called.
 
         Arguments:
-            interval: See [interval][pyinstrument.Profiler.interval] for details.
+            interval: See :attr:`interval` for details.
         """
         self._interval = interval
         self._last_session = None
@@ -86,16 +86,17 @@ class Profiler:
         Instructs the profiler to start - to begin observing the program's execution and recording
         frames.
 
-        The normal way to invoke `start()` is with a new instance, but you can restart a Profiler
+        The normal way to invoke ``start()`` is with a new instance, but you can restart a Profiler
         that was previously running, too. The sessions are combined.
 
         Arguments:
-            caller_frame: Set this to override the default behaviour of treating the caller of
-                `start()` as the 'start_call_stack' - the instigator of the profile. Most
+            caller_frame:
+                Set this to override the default behaviour of treating the caller of
+                ``start()`` as the 'start_call_stack' - the instigator of the profile. Most
                 renderers will trim the 'root' from the call stack up to this frame, to
                 present a simpler output.
 
-                You might want to set this to `inspect.currentframe().f_back` if you are
+                You might want to set this to ``inspect.currentframe().f_back`` if you are
                 writing a library that wraps pyinstrument.
         """
         if active_profiler_context_var.get() is not None:
@@ -118,7 +119,7 @@ class Profiler:
 
     def stop(self) -> ProfilerSession:
         """
-        Stops the profiler observing, and sets [`last_session`][pyinstrument.Profiler.last_session]
+        Stops the profiler observing, and sets :attr:`last_session`
         to the captured session.
 
         Returns:
@@ -221,7 +222,7 @@ class Profiler:
 
         Arguments:
             file: the IO stream to write to. Could be a file descriptor or sys.stdout, sys.stderr. Defaults to sys.stdout.
-            unicode: Override unicode support detection.
+            unicode: Override unicode support detection. Defaults to sys.stdout.
             color: Override ANSI color support detection.
             show_all: Sets the `show_all` parameter on the [renderer].
             timeline: Sets the `timeline` parameter on the [renderer].
