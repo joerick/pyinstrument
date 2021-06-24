@@ -3,6 +3,6 @@ pytest
 flaky
 trio
 django  # used by middleware
-sphinx==3.5.4
-myst-parser==0.13.7
+sphinx==4.0.2
+myst-parser==0.15.1
 furo==2021.6.18b36

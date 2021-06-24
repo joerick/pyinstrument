@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 from collections import deque
+from os import PathLike
 from typing import List, Tuple
 
 from pyinstrument.frame import AwaitTimeFrame, BaseFrame, Frame, SelfTimeFrame
@@ -35,11 +36,14 @@ class ProfilerSession:
         self.cpu_time = cpu_time
 
     @staticmethod
-    def load(filename):
+    def load(filename: str | PathLike) -> ProfilerSession:
+        """
+        Load a previously saved session from disk. Returns a session.
+        """
         with open(filename) as f:
             return ProfilerSession.from_json(json.load(f))
 
-    def save(self, filename):
+    def save(self, filename: PathLike) -> None:
         with open(filename, "w") as f:
             json.dump(self.to_json(), f)
 

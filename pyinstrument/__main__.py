@@ -334,7 +334,7 @@ def load_report(identifier=None):
     """
     Returns the session referred to by identifier
     """
-    path = os.path.join(report_dir(), identifier + ".pyireport")
+    path = os.path.join(report_dir(), identifier + ".pyisession")
     return ProfilerSession.load(path)
 
 
@@ -344,7 +344,7 @@ def save_report(session):
     Also prunes the number of reports to 10 so there aren't loads building up.
     """
     # prune this folder to contain the last 10 sessions
-    previous_reports = glob.glob(os.path.join(report_dir(), "*.pyireport"))
+    previous_reports = glob.glob(os.path.join(report_dir(), "*.pyisession"))
     previous_reports.sort(reverse=True)
     while len(previous_reports) > 10:
         report_file = previous_reports.pop()
@@ -352,7 +352,7 @@ def save_report(session):
 
     identifier = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
 
-    path = os.path.join(report_dir(), identifier + ".pyireport")
+    path = os.path.join(report_dir(), identifier + ".pyisession")
     session.save(path)
     return path, identifier
 

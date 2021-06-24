@@ -67,19 +67,19 @@ class Profiler:
         self._active_session = None
 
     @property
-    def last_session(self):
-        """
-        The previous session recorded by the Profiler.
-        """
-        return self._last_session
-
-    @property
     def interval(self):
         """
         The minimum time, in seconds, between each stack sample. This translates into the
         resolution of the sampling.
         """
         return self._interval
+
+    @property
+    def last_session(self) -> ProfilerSession | None:
+        """
+        The previous session recorded by the Profiler.
+        """
+        return self._last_session
 
     def start(self, caller_frame: types.FrameType = None):
         """
@@ -89,15 +89,13 @@ class Profiler:
         The normal way to invoke ``start()`` is with a new instance, but you can restart a Profiler
         that was previously running, too. The sessions are combined.
 
-        Arguments:
-            caller_frame:
-                Set this to override the default behaviour of treating the caller of
-                ``start()`` as the 'start_call_stack' - the instigator of the profile. Most
-                renderers will trim the 'root' from the call stack up to this frame, to
-                present a simpler output.
+        :param types.FrameType caller_frame: Set this to override the default behaviour of treating the caller of
+            ``start()`` as the 'start_call_stack' - the instigator of the profile. Most
+            renderers will trim the 'root' from the call stack up to this frame, to
+            present a simpler output.
 
-                You might want to set this to ``inspect.currentframe().f_back`` if you are
-                writing a library that wraps pyinstrument.
+            You might want to set this to ``inspect.currentframe().f_back`` if you are
+            writing a library that wraps pyinstrument.
         """
         if active_profiler_context_var.get() is not None:
             raise RuntimeError(
@@ -122,8 +120,7 @@ class Profiler:
         Stops the profiler observing, and sets :attr:`last_session`
         to the captured session.
 
-        Returns:
-            The captured session.
+        Returns The captured session.
         """
         if not self._active_session:
             raise RuntimeError("This profiler is not currently running.")
@@ -212,22 +209,21 @@ class Profiler:
     def print(
         self,
         file: IO[str] = sys.stdout,
+        *,
         unicode: bool | None = None,
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
     ):
-        """
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
+
         Print the captured profile to the console.
 
-        Arguments:
-            file: the IO stream to write to. Could be a file descriptor or sys.stdout, sys.stderr. Defaults to sys.stdout.
-            unicode: Override unicode support detection. Defaults to sys.stdout.
-            color: Override ANSI color support detection.
-            show_all: Sets the `show_all` parameter on the [renderer].
-            timeline: Sets the `timeline` parameter on the [renderer].
-
-        [renderer]: pyinstrument.renderers.ConsoleRenderer
+        :param file: the IO stream to write to. Could be a file descriptor or sys.stdout, sys.stderr. Defaults to sys.stdout.
+        :param unicode: Override unicode support detection.
+        :param color: Override ANSI color support detection.
+        :param show_all: Sets the ``show_all`` parameter on the renderer.
+        :param timeline: Sets the ``timeline`` parameter on the renderer.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)

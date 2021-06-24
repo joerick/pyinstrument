@@ -30,7 +30,7 @@ release = "3.4.2"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["myst_parser", "sphinx.ext.napoleon"]
+extensions = ["myst_parser", "sphinx.ext.autodoc"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -58,5 +58,6 @@ html_static_path = ["_static"]
 autoclass_content = "both"
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
-napoleon_google_docstring = True
-napoleon_use_rtype = False
+autodoc_typehints_description_target = "documented"
+# napoleon_google_docstring = True
+# napoleon_use_rtype = False
