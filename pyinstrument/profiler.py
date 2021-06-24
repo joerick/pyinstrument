@@ -63,7 +63,7 @@ class Profiler:
         self._active_session = None
 
     @property
-    def interval(self):
+    def interval(self) -> float:
         """
         The minimum time, in seconds, between each stack sample. This translates into the
         resolution of the sampling.
@@ -85,7 +85,7 @@ class Profiler:
         The normal way to invoke ``start()`` is with a new instance, but you can restart a Profiler
         that was previously running, too. The sessions are combined.
 
-        :param types.FrameType caller_frame: Set this to override the default behaviour of treating the caller of
+        :param caller_frame: Set this to override the default behaviour of treating the caller of
             ``start()`` as the 'start_call_stack' - the instigator of the profile. Most
             renderers will trim the 'root' from the call stack up to this frame, to
             present a simpler output.
@@ -116,7 +116,7 @@ class Profiler:
         Stops the profiler observing, and sets :attr:`last_session`
         to the captured session.
 
-        Returns The captured session.
+        :return: The captured session.
         """
         if not self._active_session:
             raise RuntimeError("This profiler is not currently running.")
@@ -170,14 +170,14 @@ class Profiler:
 
         Profilers can be used in `with` blocks! See this example:
 
-        ```
-        with Profiler() as p:
-            # your code here...
-            do_some_work()
+        .. code-block:: python
 
-        # profiling has ended. let's print the output.
-        p.print()
-        ```
+            with Profiler() as p:
+                # your code here...
+                do_some_work()
+
+            # profiling has ended. let's print the output.
+            p.print()
         """
         self.start(caller_frame=inspect.currentframe().f_back)  # type: ignore
         return self
@@ -238,7 +238,7 @@ class Profiler:
 
     def output_text(self, unicode=False, color=False, show_all=False, timeline=False) -> str:
         """
-        Return the profile output as text, as rendered by [ConsoleRenderer][pyinstrument.renderers.ConsoleRenderer]
+        Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
         return renderers.ConsoleRenderer(
             unicode=unicode, color=color, show_all=show_all, timeline=timeline
@@ -246,7 +246,7 @@ class Profiler:
 
     def output_html(self, timeline=False) -> str:
         """
-        Return the profile output as HTML, as rendered by [HTMLRenderer][pyinstrument.renderers.HTMLRenderer]
+        Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
         return renderers.HTMLRenderer(timeline=timeline).render(self.last_session)
 
@@ -256,11 +256,10 @@ class Profiler:
         """
         return renderers.HTMLRenderer(timeline=timeline).open_in_browser(self.last_session)
 
-    def output(self, renderer) -> str:
+    def output(self, renderer: renderers.Renderer) -> str:
         """
-        Returns the last profile session, as rendered by `renderer`
+        Returns the last profile session, as rendered by ``renderer``.
 
-        Arguments:
-            renderer: The renderer to use.
+        :param renderer: The renderer to use.
         """
         return renderer.render(self.last_session)

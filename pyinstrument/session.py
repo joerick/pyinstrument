@@ -27,6 +27,12 @@ class Session:
         program,
         cpu_time=None,
     ):
+        """Session()
+
+        Represents a profile session, contains the data collected during a profile session.
+
+        :meta private:
+        """
         self.frame_records = frame_records
         self.start_time = start_time
         self.duration = duration
@@ -38,12 +44,20 @@ class Session:
     @staticmethod
     def load(filename: str | PathLike) -> Session:
         """
-        Load a previously saved session from disk. Returns a session.
+        Load a previously saved session from disk.
+
+        :param filename: The path to load from.
+        :rtype: Session
         """
         with open(filename) as f:
             return Session.from_json(json.load(f))
 
-    def save(self, filename: PathLike) -> None:
+    def save(self, filename: str | PathLike) -> None:
+        """
+        Saves a Session object to disk, in a JSON format.
+
+        :param filename: The path to save to. Using the ``.pyisession`` extension is recommended.
+        """
         with open(filename, "w") as f:
             json.dump(self.to_json(), f)
 
@@ -71,7 +85,16 @@ class Session:
         )
 
     @staticmethod
-    def combine(session1: Session, session2: Session):
+    def combine(session1: Session, session2: Session) -> Session:
+        """
+        Combines two :class:`Session` objects.
+
+        Sessions that are joined in this way probably shouldn't be interpreted
+        as timelines, because the samples are simply concatenated. But
+        aggregate views (the default) of this data will work.
+
+        :rtype: Session
+        """
         if session1.start_time > session2.start_time:
             # swap them around so that session1 is the first one
             session1, session2 = session2, session1
@@ -88,10 +111,12 @@ class Session:
 
     def root_frame(self, trim_stem=True) -> BaseFrame | None:
         """
-        Parses the internal frame records and returns a tree of Frame objects
-        """
-        from pyinstrument.profiler import Profiler
+        Parses the internal frame records and returns a tree of :class:`Frame`
+        objects. This object can be renderered using a :class:`Renderer`
+        object.
 
+        :rtype: A :class:`Frame` object, or None if the session is empty.
+        """
         root_frame = None
 
         frame_stack = []

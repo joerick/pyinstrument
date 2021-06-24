@@ -8,7 +8,16 @@ from pyinstrument.util import truncate
 
 
 class ConsoleRenderer(Renderer):
+    """
+    Produces text-based output, suitable for text files or ANSI-compatible
+    consoles.
+    """
+
     def __init__(self, unicode=False, color=False, **kwargs):
+        """
+        :param unicode: Use unicode, like box-drawing characters in the output.
+        :param color: Enable color support, using ANSI color sequences.
+        """
         super().__init__(**kwargs)
 
         self.unicode = unicode
@@ -18,11 +27,13 @@ class ConsoleRenderer(Renderer):
     def render(self, session):
         result = self.render_preamble(session)
 
-        self.root_frame = self.preprocess(session.root_frame())
+        frame = self.preprocess(session.root_frame())
 
-        if self.root_frame is None:
+        if frame is None:
             result += "No samples were recorded.\n\n"
             return result
+
+        self.root_frame = frame
 
         result += self.render_frame(self.root_frame)
         result += "\n"

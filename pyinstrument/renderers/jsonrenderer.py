@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 from pyinstrument import processors
@@ -14,10 +16,14 @@ def encode_bool(a_bool):
 
 
 class JSONRenderer(Renderer):
+    """
+    Outputs a tree of JSON, containing processed frames.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def render_frame(self, frame: BaseFrame):
+    def render_frame(self, frame: BaseFrame | None):
         if frame is None:
             return "null"
         # we don't use the json module because it uses 2x stack frames, so

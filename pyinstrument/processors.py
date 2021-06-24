@@ -2,18 +2,26 @@
 Processors are functions that take a Frame object, and mutate the tree to perform some task.
 
 They can mutate the tree in-place, but also can change the root frame, they should always be
-called like:
+called like::
 
     frame = processor(frame, options=...)
 """
 
+from __future__ import annotations
+
 import re
 from operator import methodcaller
+from typing import Callable, Union
 
-from pyinstrument.frame import FrameGroup, SelfTimeFrame
+from pyinstrument.frame import BaseFrame, FrameGroup, SelfTimeFrame
+
+ProcessorType = Callable[..., Union[BaseFrame, None]]
 
 
 def remove_importlib(frame, options):
+    """
+    Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
+    """
     if frame is None:
         return None
 
@@ -72,6 +80,14 @@ def aggregate_repeated_calls(frame, options):
 
 
 def group_library_frames_processor(frame, options):
+    """
+    Groups frames that should be hidden into :class:`FrameGroup` objects,
+    according to ``hide_regex`` and ``show_regex`` in the options dict. If
+    both match, 'show' has precedence.
+
+    Single frames are not grouped, there must be at least two frames in a
+    group.
+    """
     if frame is None:
         return None
 
@@ -110,7 +126,7 @@ def group_library_frames_processor(frame, options):
 
 def merge_consecutive_self_time(frame, options):
     """
-    Combines consecutive 'self time' frames
+    Combines consecutive 'self time' frames.
     """
     if frame is None:
         return None
@@ -137,8 +153,9 @@ def merge_consecutive_self_time(frame, options):
 
 def remove_unnecessary_self_time_nodes(frame, options):
     """
-    When a frame has only one child, and that is a self-time frame, remove that node, since it's
-    unnecessary - it clutters the output and offers no additional information.
+    When a frame has only one child, and that is a self-time frame, remove
+    that node and move the time to parent, since it's unnecessary - it
+    clutters the output and offers no additional information.
     """
     if frame is None:
         return None
@@ -156,7 +173,7 @@ def remove_unnecessary_self_time_nodes(frame, options):
 
 def remove_irrelevant_nodes(frame, options, total_time=None):
     """
-    Remove nodes that represent less than e.g. 1% of the output
+    Remove nodes that represent less than e.g. 1% of the output.
     """
     if frame is None:
         return None

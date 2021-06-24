@@ -11,6 +11,10 @@ from pyinstrument.renderers.jsonrenderer import JSONRenderer
 
 
 class HTMLRenderer(Renderer):
+    """
+    Renders a rich, interactive web page, as a string of HTML.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
