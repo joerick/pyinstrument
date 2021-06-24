@@ -12,7 +12,7 @@ from typing import Any, List, cast
 import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.renderers.html import HTMLRenderer
-from pyinstrument.session import ProfilerSession
+from pyinstrument.session import Session
 from pyinstrument.util import (
     file_is_a_tty,
     file_supports_color,
@@ -335,7 +335,7 @@ def load_report(identifier=None):
     Returns the session referred to by identifier
     """
     path = os.path.join(report_dir(), identifier + ".pyisession")
-    return ProfilerSession.load(path)
+    return Session.load(path)
 
 
 def save_report(session):

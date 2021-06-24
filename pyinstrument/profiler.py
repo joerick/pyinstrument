@@ -6,18 +6,14 @@ import time
 import timeit
 import types
 from contextvars import ContextVar, Token
+from time import process_time
 from typing import IO, List, Optional, Tuple
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER
-from pyinstrument.session import ProfilerSession
+from pyinstrument.session import Session
 from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
 from pyinstrument.util import file_supports_color, file_supports_unicode
-
-try:
-    from time import process_time
-except ImportError:
-    process_time = lambda: None
 
 timer = timeit.default_timer
 
@@ -49,7 +45,7 @@ class Profiler:
     The profiler - this is the main way to use pyinstrument.
     """
 
-    _last_session: ProfilerSession | None
+    _last_session: Session | None
     _active_session: ActiveProfilerSession | None
     _interval: float
 
@@ -75,7 +71,7 @@ class Profiler:
         return self._interval
 
     @property
-    def last_session(self) -> ProfilerSession | None:
+    def last_session(self) -> Session | None:
         """
         The previous session recorded by the Profiler.
         """
@@ -115,7 +111,7 @@ class Profiler:
 
         get_stack_sampler().subscribe(self._sampler_saw_call_stack, self.interval)
 
-    def stop(self) -> ProfilerSession:
+    def stop(self) -> Session:
         """
         Stops the profiler observing, and sets :attr:`last_session`
         to the captured session.
@@ -133,7 +129,7 @@ class Profiler:
         else:
             cpu_time = None
 
-        session = ProfilerSession(
+        session = Session(
             frame_records=self._active_session.frame_records,
             start_time=self._active_session.start_time,
             duration=time.time() - self._active_session.start_time,
@@ -146,7 +142,7 @@ class Profiler:
 
         if self.last_session is not None:
             # include the previous session's data too
-            session = ProfilerSession.combine(self.last_session, session)
+            session = Session.combine(self.last_session, session)
 
         self._last_session = session
 
@@ -183,7 +179,7 @@ class Profiler:
         p.print()
         ```
         """
-        self.start(caller_frame=inspect.currentframe().f_back)
+        self.start(caller_frame=inspect.currentframe().f_back)  # type: ignore
         return self
 
     def __exit__(self, *args):

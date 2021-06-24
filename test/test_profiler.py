@@ -9,7 +9,7 @@ import trio
 
 from pyinstrument import Profiler, renderers
 from pyinstrument.frame import BaseFrame, Frame
-from pyinstrument.session import ProfilerSession
+from pyinstrument.session import Session
 
 from .util import assert_never, busy_wait, flaky_in_ci
 
@@ -212,7 +212,7 @@ def test_state_management():
 @flaky_in_ci
 @pytest.mark.parametrize("engine", ["asyncio", "trio"])
 def test_async(engine):
-    profiler_session: Optional[ProfilerSession] = None
+    profiler_session: Optional[Session] = None
 
     if engine == "asyncio":
         loop = asyncio.new_event_loop()

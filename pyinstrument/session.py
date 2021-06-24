@@ -16,7 +16,7 @@ ASSERTION_MESSAGE = (
 FrameRecordType = Tuple[List[str], float]
 
 
-class ProfilerSession:
+class Session:
     def __init__(
         self,
         frame_records: list[FrameRecordType],
@@ -36,12 +36,12 @@ class ProfilerSession:
         self.cpu_time = cpu_time
 
     @staticmethod
-    def load(filename: str | PathLike) -> ProfilerSession:
+    def load(filename: str | PathLike) -> Session:
         """
         Load a previously saved session from disk. Returns a session.
         """
         with open(filename) as f:
-            return ProfilerSession.from_json(json.load(f))
+            return Session.from_json(json.load(f))
 
     def save(self, filename: PathLike) -> None:
         with open(filename, "w") as f:
@@ -60,7 +60,7 @@ class ProfilerSession:
 
     @staticmethod
     def from_json(json_dict):
-        return ProfilerSession(
+        return Session(
             frame_records=json_dict["frame_records"],
             start_time=json_dict["start_time"],
             duration=json_dict["duration"],
@@ -71,12 +71,12 @@ class ProfilerSession:
         )
 
     @staticmethod
-    def combine(session1: ProfilerSession, session2: ProfilerSession):
+    def combine(session1: Session, session2: Session):
         if session1.start_time > session2.start_time:
             # swap them around so that session1 is the first one
             session1, session2 = session2, session1
 
-        return ProfilerSession(
+        return Session(
             frame_records=session1.frame_records + session2.frame_records,
             start_time=session1.start_time,
             duration=session1.duration + session2.duration,
