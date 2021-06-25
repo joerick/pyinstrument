@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd "$(dirname "$0")"
+cd ..
+
+exec make -C docs livehtml

@@ -51,8 +51,6 @@ class Profiler:
 
     def __init__(self, interval: float = 0.001):
         """
-        Create the profiler.
-
         Note the profiling will not start until :func:`start` is called.
 
         Arguments:

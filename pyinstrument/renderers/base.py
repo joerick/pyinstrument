@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import Any, Dict, List
 
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
@@ -15,11 +15,22 @@ class Renderer:
 
     processors: ProcessorList
     """
-    Processors installed on this renderer. This property can be changed before
-    calling :func:`render`.
+    Processors installed on this renderer. This property is defined on the
+        base class to provide a common way for users to # add to and
+        manipulate them before calling :func:`render`.
+    """
+
+    processor_options: dict[str, Any]
+    """
+    Dictionary containing processor options, passed to each processor.
     """
 
     def __init__(self, show_all=False, timeline=False, processor_options=None):
+        """
+        :param show_all: Don't hide library frames - show everything that pyinstrument captures.
+        :param timeline: Instead of aggregating time, leave the samples in chronological order.
+        :param processor_options: A dictionary of processor options.
+        """
         # processors is defined on the base class to provide a common way for users to
         # add to and manipulate them before calling render()
         self.processors = self.default_processors()

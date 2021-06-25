@@ -4,15 +4,17 @@ pyinstrument
 ```{toctree}
 ---
 maxdepth: 2
-caption: "Contents:"
+caption: "Contents"
 ---
-home.md
+Home <home.md>
+guide.md
+how-it-works.md
 reference.md
+GitHub <https://github.com/joerick/pyinstrument>
 ```
 
 Indices and tables
 ------------------
 
 * {ref}`genindex`
-* {ref}`modindex`
 * {ref}`search`
