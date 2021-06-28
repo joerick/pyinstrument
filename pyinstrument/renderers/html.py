@@ -70,6 +70,7 @@ class HTMLRenderer(Renderer):
     def render_json(self, session):
         json_renderer = JSONRenderer()
         json_renderer.processors = self.processors
+        json_renderer.processor_options = self.processor_options
         return json_renderer.render(session)
 
     def default_processors(self):
