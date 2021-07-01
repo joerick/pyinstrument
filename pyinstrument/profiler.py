@@ -9,18 +9,15 @@ from contextvars import ContextVar, Token
 from time import process_time
 from typing import IO, List, Optional, Tuple
 
+from typing_extensions import Literal
+
 from pyinstrument import renderers
-from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER
+from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
 from pyinstrument.session import Session
-from pyinstrument.stack_sampler import build_call_stack, get_stack_sampler
+from pyinstrument.stack_sampler import AsyncState, build_call_stack, get_stack_sampler
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
 timer = timeit.default_timer
-
-
-active_profiler_context_var: ContextVar[Profiler | None] = ContextVar(
-    "active_profiler_context_var", default=None
-)
 
 
 class ActiveProfilerSession:
@@ -28,16 +25,17 @@ class ActiveProfilerSession:
 
     def __init__(
         self,
-        context_var_token: Token,
         start_time: float,
         start_process_time: float | None,
         start_call_stack: list[str],
     ) -> None:
-        self.context_var_token = context_var_token
         self.start_time = start_time
         self.start_process_time = start_process_time
         self.start_call_stack = start_call_stack
         self.frame_records = []
+
+
+AsyncSupport = Literal["enable", "disable", "strict"]
 
 
 class Profiler:
@@ -48,17 +46,19 @@ class Profiler:
     _last_session: Session | None
     _active_session: ActiveProfilerSession | None
     _interval: float
+    _async_support: AsyncSupport
 
-    def __init__(self, interval: float = 0.001):
+    def __init__(self, interval: float = 0.001, async_support: AsyncSupport = "enable"):
         """
         Note the profiling will not start until :func:`start` is called.
 
-        Arguments:
-            interval: See :attr:`interval` for details.
+        :param interval: See :attr:`interval`.
+        :param async_support: See :attr:`async_support`.
         """
         self._interval = interval
         self._last_session = None
         self._active_session = None
+        self._async_support = async_support
 
     @property
     def interval(self) -> float:
@@ -67,6 +67,32 @@ class Profiler:
         resolution of the sampling.
         """
         return self._interval
+
+    @property
+    def async_support(self) -> AsyncSupport:
+        """
+        Configures how this Profiler tracks time in a program that uses
+        async/await.
+
+        ``enable``
+            When this profiler sees an ``await``, time is logged in the function
+            that awaited, rather than observing other coroutines or the event
+            loop.
+
+        ``disable``
+            This profiler doesn't attempt to track ``await``. In a program that
+            uses async/await, this will interleave other coroutines and event
+            loop machinery in the profile. Use this option if async support is
+            causing issues in your use case, or if you want to run multiple
+            profilers at once.
+
+        ``strict``
+            Instructs the profiler to only profile the current
+            `async context <https://docs.python.org/3/library/contextvars.html>`_.
+            Frames that are observed in an other context are ignored, tracked
+            instead as ``<out-of-context>``.
+        """
+        return self._async_support
 
     @property
     def last_session(self) -> Session | None:
@@ -91,23 +117,24 @@ class Profiler:
             You might want to set this to ``inspect.currentframe().f_back`` if you are
             writing a library that wraps pyinstrument.
         """
-        if active_profiler_context_var.get() is not None:
-            raise RuntimeError(
-                "A profiler is already running. Running multiple profilers on the same thead is "
-                "not supported, unless they're in different async contexts."
-            )
 
         if caller_frame is None:
             caller_frame = inspect.currentframe().f_back  # type: ignore
 
-        self._active_session = ActiveProfilerSession(
-            start_time=time.time(),
-            context_var_token=active_profiler_context_var.set(self),
-            start_process_time=process_time(),
-            start_call_stack=build_call_stack(caller_frame, "initial", None),
-        )
+        try:
+            self._active_session = ActiveProfilerSession(
+                start_time=time.time(),
+                start_process_time=process_time(),
+                start_call_stack=build_call_stack(caller_frame, "initial", None),
+            )
 
-        get_stack_sampler().subscribe(self._sampler_saw_call_stack, self.interval)
+            use_async_context = self.async_support != "disable"
+            get_stack_sampler().subscribe(
+                self._sampler_saw_call_stack, self.interval, use_async_context
+            )
+        except:
+            self._active_session = None
+            raise
 
     def stop(self) -> Session:
         """
@@ -120,7 +147,6 @@ class Profiler:
             raise RuntimeError("This profiler is not currently running.")
 
         get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
-        active_profiler_context_var.reset(self._active_session.context_var_token)
 
         if self._active_session.start_process_time:
             cpu_time = process_time() - self._active_session.start_process_time
@@ -184,15 +210,36 @@ class Profiler:
         self.stop()
 
     # pylint: disable=W0613
-    def _sampler_saw_call_stack(self, call_stack, time_since_last_sample, awaiting_coroutine_stack):
+    def _sampler_saw_call_stack(
+        self,
+        call_stack: list[str],
+        time_since_last_sample: float,
+        async_state: AsyncState | None,
+    ):
         if not self._active_session:
             raise RuntimeError("Received a call stack without an active session")
 
-        if awaiting_coroutine_stack is not None:
-            # we are in an 'await' - we have left the profiler's context
+        if (
+            async_state
+            and async_state.state == "out_of_context_awaited"
+            and self._async_support in ["enable", "strict"]
+        ):
+            awaiting_coroutine_stack = async_state.info
             self._active_session.frame_records.append(
                 (
                     awaiting_coroutine_stack + [AWAIT_FRAME_IDENTIFIER],
+                    time_since_last_sample,
+                )
+            )
+        elif (
+            async_state
+            and async_state.state == "out_of_context_unknown"
+            and self._async_support == "strict"
+        ):
+            context_exit_frame = async_state.info
+            self._active_session.frame_records.append(
+                (
+                    context_exit_frame + [OUT_OF_CONTEXT_FRAME_IDENTIFIER],
                     time_since_last_sample,
                 )
             )

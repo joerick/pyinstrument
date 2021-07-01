@@ -9,8 +9,18 @@ from pyinstrument import stack_sampler
 from .util import do_nothing
 
 
+class SampleCounter:
+    count = 0
+
+    def sample(self, stack, time, async_state):
+        self.count += 1
+
+
 @pytest.fixture(autouse=True)
 def check_sampler_state():
+    assert sys.getprofile() is None
+    assert len(stack_sampler.get_stack_sampler().subscribers) == 0
+
     yield
 
     assert sys.getprofile() is None
@@ -27,26 +37,21 @@ def test_create():
 
 def test_get_samples():
     sampler = stack_sampler.get_stack_sampler()
-
-    sample_count = 0
-
-    def sample_observer(stack, time, await_stack):
-        nonlocal sample_count
-        sample_count += 1
+    counter = SampleCounter()
 
     assert sys.getprofile() is None
-    sampler.subscribe(sample_observer, 0.001)
+    sampler.subscribe(counter.sample, desired_interval=0.001, use_async_context=True)
     assert sys.getprofile() is not None
     assert len(sampler.subscribers) == 1
 
     start = time.time()
-    while time.time() < start + 1 and sample_count == 0:
+    while time.time() < start + 1 and counter.count == 0:
         do_nothing()
 
-    assert sample_count > 0
+    assert counter.count > 0
 
     assert sys.getprofile() is not None
-    sampler.unsubscribe(sample_observer)
+    sampler.unsubscribe(counter.sample)
     assert sys.getprofile() is None
 
     assert len(sampler.subscribers) == 0
@@ -54,12 +59,47 @@ def test_get_samples():
 
 def test_multiple_samplers():
     sampler = stack_sampler.get_stack_sampler()
+    counter_1 = SampleCounter()
+    counter_2 = SampleCounter()
 
-    class SampleCounter:
-        count = 0
+    sampler.subscribe(counter_1.sample, desired_interval=0.001, use_async_context=False)
+    sampler.subscribe(counter_2.sample, desired_interval=0.001, use_async_context=False)
 
-        def sample(self, stack, time, await_stack):
-            self.count += 1
+    assert len(sampler.subscribers) == 2
+
+    start = time.time()
+    while time.time() < start + 1 and counter_1.count == 0 and counter_2.count == 0:
+        do_nothing()
+
+    assert counter_1.count > 0
+    assert counter_2.count > 0
+
+    assert sys.getprofile() is not None
+
+    sampler.unsubscribe(counter_1.sample)
+    sampler.unsubscribe(counter_2.sample)
+
+    assert sys.getprofile() is None
+
+    assert len(sampler.subscribers) == 0
+
+
+def test_multiple_samplers_async_error():
+    sampler = stack_sampler.get_stack_sampler()
+
+    counter_1 = SampleCounter()
+    counter_2 = SampleCounter()
+
+    sampler.subscribe(counter_1.sample, desired_interval=0.001, use_async_context=True)
+
+    with pytest.raises(RuntimeError):
+        sampler.subscribe(counter_2.sample, desired_interval=0.001, use_async_context=True)
+
+    sampler.unsubscribe(counter_1.sample)
+
+
+def test_multiple_contexts():
+    sampler = stack_sampler.get_stack_sampler()
 
     counter_1 = SampleCounter()
     counter_2 = SampleCounter()
@@ -69,8 +109,8 @@ def test_multiple_samplers():
 
     assert sys.getprofile() is None
     assert len(sampler.subscribers) == 0
-    context_1.run(sampler.subscribe, counter_1.sample, 0.001)
-    context_2.run(sampler.subscribe, counter_2.sample, 0.001)
+    context_1.run(sampler.subscribe, counter_1.sample, 0.001, True)
+    context_2.run(sampler.subscribe, counter_2.sample, 0.001, True)
 
     assert sys.getprofile() is not None
     assert len(sampler.subscribers) == 2

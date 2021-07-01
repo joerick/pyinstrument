@@ -1,8 +1,13 @@
+import asyncio
 import os
 import time
-from typing import NoReturn
+from typing import Generator, NoReturn
 
+import trio
 from flaky import flaky
+
+from pyinstrument.frame import BaseFrame
+from pyinstrument.profiler import Profiler
 
 if "CI" in os.environ:
     # a decorator that allows some test flakyness in CI environments, presumably
@@ -25,3 +30,33 @@ def busy_wait(duration):
 
     while time.time() < end_time:
         do_nothing()
+
+
+async def async_wait(sync_time, async_time, profile=False, engine="asyncio"):
+    # an async function that has both sync work and async work
+    profiler = None
+
+    if profile:
+        profiler = Profiler()
+        profiler.start()
+
+    busy_wait(sync_time / 2)
+
+    if engine == "asyncio":
+        await asyncio.sleep(async_time)
+    else:
+        await trio.sleep(async_time)
+
+    busy_wait(sync_time / 2)
+
+    if profiler:
+        profiler.stop()
+        profiler.print(show_all=True)
+        return profiler.last_session
+
+
+def walk_frames(frame: BaseFrame) -> Generator[BaseFrame, None, None]:
+    yield frame
+
+    for f in frame.children:
+        yield from walk_frames(f)

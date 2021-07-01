@@ -7,3 +7,5 @@ sphinx==4.0.2
 myst-parser==0.15.1
 furo==2021.6.18b36
 sphinxcontrib-programoutput==0.17
+pytest-asyncio==0.15.1
+greenlet  # used by a test

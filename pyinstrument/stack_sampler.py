@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import pprint
 import sys
 import threading
 import timeit
 import types
+from collections import namedtuple
 from contextvars import ContextVar, Token
 from time import time
 from typing import Any, Callable, List, NamedTuple, Optional, Union
+
+from typing_extensions import Literal
 
 from pyinstrument.low_level.stat_profile import setstatprofile
 
@@ -16,18 +21,19 @@ timer = timeit.default_timer
 class StackSamplerSubscriber:
     def __init__(
         self,
-        target: Callable[[List[str], float, Optional[List[str]]], None],
+        *,
+        target: Callable[[list[str], float, AsyncState | None], None],
         desired_interval: float,
-        context_token: Token,
-        await_call_stack: Optional[List[str]],
+        bound_to_async_context: bool,
+        async_state: AsyncState | None,
     ) -> None:
         self.target = target
         self.desired_interval = desired_interval
-        self.context_token = context_token
-        self.await_call_stack = await_call_stack
+        self.bound_to_async_context = bound_to_async_context
+        self.async_state = async_state
 
 
-active_profiler_context_var: ContextVar[Optional[object]] = ContextVar(
+active_profiler_context_var: ContextVar[object | None] = ContextVar(
     "active_profiler_context_var", default=None
 )
 
@@ -35,8 +41,8 @@ active_profiler_context_var: ContextVar[Optional[object]] = ContextVar(
 class StackSampler:
     """ Manages setstatprofile for Profilers on a single thread """
 
-    subscribers: List[StackSamplerSubscriber]
-    current_sampling_interval: Optional[float]
+    subscribers: list[StackSamplerSubscriber]
+    current_sampling_interval: float | None
     last_profile_time: float
 
     def __init__(self) -> None:
@@ -44,19 +50,20 @@ class StackSampler:
         self.current_sampling_interval = None
         self.last_profile_time = 0.0
 
-    def subscribe(self, target, desired_interval):
-        if active_profiler_context_var.get() is not None:
-            raise RuntimeError(
-                "There is already a profiler running. You cannot run multiple profilers in the same thread or async context."
-            )
-        context_token = active_profiler_context_var.set(target)
+    def subscribe(self, target, desired_interval, use_async_context):
+        if use_async_context:
+            if active_profiler_context_var.get() is not None:
+                raise RuntimeError(
+                    "There is already a profiler running. You cannot run multiple profilers in the same thread or async context."
+                )
+            active_profiler_context_var.set(target)
 
         self.subscribers.append(
             StackSamplerSubscriber(
                 target=target,
                 desired_interval=desired_interval,
-                context_token=context_token,
-                await_call_stack=None,
+                bound_to_async_context=use_async_context,
+                async_state=AsyncState("in_context") if use_async_context else None,
             )
         )
         self._update()
@@ -67,7 +74,11 @@ class StackSampler:
         except StopIteration:
             raise ValueError("target not found in subscribers")
 
-        active_profiler_context_var.reset(subscriber.context_token)
+        if subscriber.bound_to_async_context:
+            # (don't need to use context_var.reset() because we verified it was
+            # None before we started)
+            active_profiler_context_var.set(None)
+
         self.subscribers.remove(subscriber)
 
         self._update()
@@ -95,31 +106,32 @@ class StackSampler:
 
     def _sample(self, frame, event, arg):
         if event == "context_changed":
-            new, old, stack = arg
+            new, old, coroutine_stack = arg
 
             for subscriber in self.subscribers:
                 if subscriber.target == old:
+                    assert subscriber.bound_to_async_context
                     full_stack = build_call_stack(frame, event, arg)
-                    full_stack.extend(reversed(stack))
-                    subscriber.await_call_stack = full_stack
+                    if coroutine_stack:
+                        full_stack.extend(reversed(coroutine_stack))
+                        subscriber.async_state = AsyncState(
+                            "out_of_context_awaited", info=full_stack
+                        )
+                    else:
+                        subscriber.async_state = AsyncState(
+                            "out_of_context_unknown", info=full_stack
+                        )
                 elif subscriber.target == new:
-                    subscriber.await_call_stack = None
-                else:
-                    assert subscriber.target is not None
+                    assert subscriber.bound_to_async_context
+                    subscriber.async_state = AsyncState("in_context")
         else:
-            # active_profiler = active_profiler_context_var.get()
             now = timer()
             time_since_last_sample = now - self.last_profile_time
 
             call_stack = build_call_stack(frame, event, arg)
 
             for subscriber in self.subscribers:
-                if subscriber.await_call_stack is None:
-                    subscriber.target(call_stack, time_since_last_sample, None)
-                else:
-                    subscriber.target(
-                        call_stack, time_since_last_sample, subscriber.await_call_stack
-                    )
+                subscriber.target(call_stack, time_since_last_sample, subscriber.async_state)
 
             self.last_profile_time = now
 
@@ -133,13 +145,13 @@ def get_stack_sampler() -> StackSampler:
     return thread_locals.stack_sampler
 
 
-def build_call_stack(frame: Union[types.FrameType, None], event: str, arg: Any) -> List[str]:
+def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
     call_stack = []
 
     if event == "call":
         # if we're entering a function, the time should be attributed to
         # the caller
-        frame = frame.f_back
+        frame = frame.f_back if frame else None
     elif event == "c_return" or event == "c_exception":
         # if we're exiting a C function, we should add a frame before
         # any Python frames that attributes the time to that C function
@@ -168,3 +180,22 @@ def build_call_stack(frame: Union[types.FrameType, None], event: str, arg: Any) 
     call_stack.reverse()
 
     return call_stack
+
+
+class AsyncState(NamedTuple):
+    state: Literal["in_context", "out_of_context_awaited", "out_of_context_unknown"]
+    """
+    Definitions:
+      ``in_context``: indicates that the sample comes from the subscriber's
+      context.
+
+      ``out_of_context_awaited``: the sample comes from outside the
+      subscriber's context, but we tracked the await that happened before the
+      context exited. :attr:`info` contains the call stack of the await.
+
+      ``out_of_context_unknown``: the sample comes from outside the
+      subscriber's context, but the change of context didn't look like an
+      await. :attr:`info` contains the call stack when the context changed.
+    """
+
+    info: Any = None

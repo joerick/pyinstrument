@@ -24,36 +24,6 @@ def long_function_b():
     time.sleep(0.5)
 
 
-async def async_wait(sync_time, async_time, profile=False, engine="asyncio"):
-    # an async function that has both sync work and async work
-    profiler = None
-
-    if profile:
-        profiler = Profiler()
-        profiler.start()
-
-    busy_wait(sync_time / 2)
-
-    if engine == "asyncio":
-        await asyncio.sleep(async_time)
-    else:
-        await trio.sleep(async_time)
-
-    busy_wait(sync_time / 2)
-
-    if profiler:
-        profiler.stop()
-        profiler.print(show_all=True)
-        return profiler.last_session
-
-
-def walk_frames(frame: BaseFrame) -> Generator[BaseFrame, None, None]:
-    yield frame
-
-    for f in frame.children:
-        yield from walk_frames(f)
-
-
 # Tests #
 
 
@@ -97,7 +67,9 @@ def test_profiler_retains_multiple_calls():
 
     print(profiler.output_text())
 
+    assert profiler.last_session
     frame = profiler.last_session.root_frame()
+    assert frame
     assert frame.function == "test_profiler_retains_multiple_calls"
     assert len(frame.children) == 4
 
@@ -114,8 +86,11 @@ def test_two_functions():
 
     print(profiler.output_text())
 
+    assert profiler.last_session
+
     frame = profiler.last_session.root_frame()
 
+    assert frame
     assert frame.function == "test_two_functions"
     assert len(frame.children) == 2
 
@@ -136,7 +111,9 @@ def test_context_manager():
         long_function_a()
         long_function_b()
 
+    assert profiler.last_session
     frame = profiler.last_session.root_frame()
+    assert frame
     assert frame.function == "test_context_manager"
     assert len(frame.children) == 2
 
@@ -207,56 +184,3 @@ def test_state_management():
     profiler.reset()
     assert profiler.is_running == False
     assert profiler.last_session is None
-
-
-@flaky_in_ci
-@pytest.mark.parametrize("engine", ["asyncio", "trio"])
-def test_async(engine):
-    profiler_session: Optional[Session] = None
-
-    if engine == "asyncio":
-        loop = asyncio.new_event_loop()
-
-        profile_task = loop.create_task(async_wait(sync_time=0.1, async_time=0.5, profile=True))
-        loop.create_task(async_wait(sync_time=0.1, async_time=0.3))
-        loop.create_task(async_wait(sync_time=0.1, async_time=0.3))
-
-        loop.run_until_complete(profile_task)
-        loop.close()
-
-        profiler_session = profile_task.result()
-    elif engine == "trio":
-
-        async def async_wait_and_capture(**kwargs):
-            nonlocal profiler_session
-            profiler_session = await async_wait(**kwargs)
-
-        async def multi_task():
-            async with trio.open_nursery() as nursery:
-                nursery.start_soon(
-                    partial(
-                        async_wait_and_capture,
-                        sync_time=0.1,
-                        async_time=0.5,
-                        engine="trio",
-                        profile=True,
-                    )
-                )
-                nursery.start_soon(
-                    partial(async_wait, sync_time=0.1, async_time=0.3, engine="trio")
-                )
-                nursery.start_soon(
-                    partial(async_wait, sync_time=0.1, async_time=0.3, engine="trio")
-                )
-
-        trio.run(multi_task)
-    else:
-        assert_never(engine)
-
-    assert profiler_session
-    assert profiler_session.duration == pytest.approx(0.1 + 0.5, rel=0.1)
-
-    root_frame = profiler_session.root_frame()
-    assert root_frame is not None
-    fake_work_frame = next(f for f in walk_frames(root_frame) if f.function == "async_wait")
-    assert fake_work_frame.time() == pytest.approx(0.1 + 0.5, rel=0.1)

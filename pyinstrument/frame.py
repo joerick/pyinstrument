@@ -27,6 +27,8 @@ class BaseFrame:
     def new_subclass_with_identifier(identifier: str) -> BaseFrame:
         if identifier == AWAIT_FRAME_IDENTIFIER:
             return AwaitTimeFrame()
+        elif identifier == OUT_OF_CONTEXT_FRAME_IDENTIFIER:
+            return OutOfContextFrame()
         else:
             return Frame(identifier=identifier)
 
@@ -363,6 +365,26 @@ class AwaitTimeFrame(DummyFrame):
 
 
 AWAIT_FRAME_IDENTIFIER = "[await]\x00<await>\x000"
+
+
+class OutOfContextFrame(DummyFrame):
+    """
+    Represents a time spent out of the profiler's context.
+    """
+
+    def time(self):
+        return self.self_time
+
+    @property
+    def function(self):
+        return "[out-of-context]"
+
+    @property
+    def identifier(self):
+        return "[out-of-context]"
+
+
+OUT_OF_CONTEXT_FRAME_IDENTIFIER = "[out-of-context]\x00<out-of-context>\x000"
 
 
 class FrameGroup:

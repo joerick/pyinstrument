@@ -6,7 +6,7 @@ from collections import deque
 from os import PathLike
 from typing import List, Tuple
 
-from pyinstrument.frame import AwaitTimeFrame, BaseFrame, Frame, SelfTimeFrame
+from pyinstrument.frame import AwaitTimeFrame, BaseFrame, DummyFrame, Frame, SelfTimeFrame
 
 ASSERTION_MESSAGE = (
     "Please raise an issue at http://github.com/pyinstrument/issues and "
@@ -151,7 +151,7 @@ class Session:
 
             # assign the time to the final frame in the stack
             final_frame = frame_stack[-1]
-            if isinstance(final_frame, AwaitTimeFrame):
+            if isinstance(final_frame, DummyFrame):
                 final_frame.self_time += time
             else:
                 final_frame.add_child(SelfTimeFrame(self_time=time))
