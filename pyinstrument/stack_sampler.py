@@ -54,7 +54,7 @@ class StackSampler:
         if use_async_context:
             if active_profiler_context_var.get() is not None:
                 raise RuntimeError(
-                    "There is already a profiler running. You cannot run multiple profilers in the same thread or async context."
+                    "There is already a profiler running. You cannot run multiple profilers in the same thread or async context, unless you disable async support."
                 )
             active_profiler_context_var.set(target)
 

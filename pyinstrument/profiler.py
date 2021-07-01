@@ -35,7 +35,7 @@ class ActiveProfilerSession:
         self.frame_records = []
 
 
-AsyncSupport = Literal["enable", "disable", "strict"]
+AsyncMode = Literal["enabled", "disabled", "strict"]
 
 
 class Profiler:
@@ -46,19 +46,19 @@ class Profiler:
     _last_session: Session | None
     _active_session: ActiveProfilerSession | None
     _interval: float
-    _async_support: AsyncSupport
+    _async_mode: AsyncMode
 
-    def __init__(self, interval: float = 0.001, async_support: AsyncSupport = "enable"):
+    def __init__(self, interval: float = 0.001, async_mode: AsyncMode = "enabled"):
         """
         Note the profiling will not start until :func:`start` is called.
 
         :param interval: See :attr:`interval`.
-        :param async_support: See :attr:`async_support`.
+        :param async_mode: See :attr:`async_mode`.
         """
         self._interval = interval
         self._last_session = None
         self._active_session = None
-        self._async_support = async_support
+        self._async_mode = async_mode
 
     @property
     def interval(self) -> float:
@@ -69,7 +69,7 @@ class Profiler:
         return self._interval
 
     @property
-    def async_support(self) -> AsyncSupport:
+    def async_mode(self) -> AsyncMode:
         """
         Configures how this Profiler tracks time in a program that uses
         async/await.
@@ -92,7 +92,7 @@ class Profiler:
             Frames that are observed in an other context are ignored, tracked
             instead as ``<out-of-context>``.
         """
-        return self._async_support
+        return self._async_mode
 
     @property
     def last_session(self) -> Session | None:
@@ -128,7 +128,7 @@ class Profiler:
                 start_call_stack=build_call_stack(caller_frame, "initial", None),
             )
 
-            use_async_context = self.async_support != "disable"
+            use_async_context = self.async_mode != "disabled"
             get_stack_sampler().subscribe(
                 self._sampler_saw_call_stack, self.interval, use_async_context
             )
@@ -222,7 +222,7 @@ class Profiler:
         if (
             async_state
             and async_state.state == "out_of_context_awaited"
-            and self._async_support in ["enable", "strict"]
+            and self._async_mode in ["enabled", "strict"]
         ):
             awaiting_coroutine_stack = async_state.info
             self._active_session.frame_records.append(
@@ -234,7 +234,7 @@ class Profiler:
         elif (
             async_state
             and async_state.state == "out_of_context_unknown"
-            and self._async_support == "strict"
+            and self._async_mode == "strict"
         ):
             context_exit_frame = async_state.info
             self._active_session.frame_records.append(

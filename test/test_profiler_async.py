@@ -126,7 +126,7 @@ def test_greenlet():
 
 
 def test_strict_with_greenlet():
-    profiler = Profiler(async_support="strict")
+    profiler = Profiler(async_mode="strict")
     profiler.start()
 
     def y(duration):
