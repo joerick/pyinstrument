@@ -12,7 +12,7 @@ from pyinstrument.profiler import Profiler
 if "CI" in os.environ:
     # a decorator that allows some test flakyness in CI environments, presumably
     # due to contention. Useful for tests that rely on real time measurments.
-    flaky_in_ci = flaky(max_runs=5, min_passes=2)
+    flaky_in_ci = flaky(max_runs=5, min_passes=1)
 else:
     flaky_in_ci = lambda a: a
 
