@@ -9,12 +9,11 @@ from contextvars import ContextVar, Token
 from time import process_time
 from typing import IO, List, Optional, Tuple
 
-from typing_extensions import Literal
-
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
 from pyinstrument.session import Session
 from pyinstrument.stack_sampler import AsyncState, build_call_stack, get_stack_sampler
+from pyinstrument.typing import LiteralStr
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
 timer = timeit.default_timer
@@ -35,7 +34,7 @@ class ActiveProfilerSession:
         self.frame_records = []
 
 
-AsyncMode = Literal["enabled", "disabled", "strict"]
+AsyncMode = LiteralStr["enabled", "disabled", "strict"]
 
 
 class Profiler:

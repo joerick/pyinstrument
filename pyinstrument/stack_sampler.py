@@ -10,9 +10,8 @@ from contextvars import ContextVar, Token
 from time import time
 from typing import Any, Callable, List, NamedTuple, Optional, Union
 
-from typing_extensions import Literal
-
 from pyinstrument.low_level.stat_profile import setstatprofile
+from pyinstrument.typing import LiteralStr
 
 thread_locals = threading.local()
 timer = timeit.default_timer
@@ -183,7 +182,7 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
 
 
 class AsyncState(NamedTuple):
-    state: Literal["in_context", "out_of_context_awaited", "out_of_context_unknown"]
+    state: LiteralStr["in_context", "out_of_context_awaited", "out_of_context_unknown"]
     """
     Definitions:
       ``in_context``: indicates that the sample comes from the subscriber's
