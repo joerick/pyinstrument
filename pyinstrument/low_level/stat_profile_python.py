@@ -4,16 +4,15 @@ import timeit
 import types
 from typing import Any, Callable, List, Optional, Type
 
-timer = timeit.default_timer
-
 
 class PythonStatProfiler:
     await_stack: List[str]
 
-    def __init__(self, target, interval, context_var):
+    def __init__(self, target, interval, context_var, timer_func):
         self.target = target
         self.interval = interval
-        self.last_invocation = timer()
+        self.timer_func = timer_func or timeit.default_timer
+        self.last_invocation = self.timer_func()
 
         if context_var:
             # raise typeerror to match the C version
@@ -25,7 +24,7 @@ class PythonStatProfiler:
         self.await_stack = []
 
     def profile(self, frame: types.FrameType, event: str, arg: Any):
-        now = timer()
+        now = self.timer_func()
 
         if self.context_var:
             context_var_value = self.context_var.get()
@@ -66,16 +65,14 @@ purposes. Not used in normal execution.
 """
 
 
-def setstatprofile(target, interval=0.001, context_var=None):
+def setstatprofile(target, interval=0.001, context_var=None, timer_func=None):
     if target:
-        sys.setprofile(PythonStatProfiler(target, interval, context_var).profile)
+        profiler = PythonStatProfiler(
+            target=target,
+            interval=interval,
+            context_var=context_var,
+            timer_func=timer_func,
+        )
+        sys.setprofile(profiler.profile)
     else:
         sys.setprofile(None)
-
-
-def set_time_function(timer_func: Optional[Callable[[], float]]):
-    global timer
-    if timer_func:
-        timer = timer_func
-    else:
-        timer = timeit.default_timer

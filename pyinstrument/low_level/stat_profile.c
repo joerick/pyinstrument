@@ -60,41 +60,6 @@ floatclock(void)
 
 #endif  /* MS_WINDOWS */
 
-////////////////////
-// Timer function //
-////////////////////
-
-static PyObject *custom_time_function = NULL;
-
-/**
- * Returns the current time for this profiler. On error, returns -1.0.
- */
-static double
-profiler_time(void)
-{
-    if (custom_time_function != NULL) {
-        // when a custom_time_function is set, call that.
-        PyObject *result = PyEval_CallObject(custom_time_function, NULL);
-        if (result == NULL) {
-            return -1.0;
-        }
-
-        if (!PyFloat_Check(result)) {
-            PyErr_SetString(PyExc_RuntimeError, "custom time function must return a float");
-            return -1.0;
-        }
-
-        double resultDouble = PyFloat_AsDouble(result);
-
-        Py_DECREF(result);
-        return resultDouble;
-    } else {
-        // otherwise as normal, call the C timer function.
-        return floatclock();
-    }
-}
-
-
 ///////////////////
 // ProfilerState //
 ///////////////////
@@ -107,6 +72,7 @@ typedef struct profiler_state {
     PyObject *context_var;
     PyObject *last_context_var_value;
     PyObject *await_stack_list;
+    PyObject *timer_func;
 } ProfilerState;
 
 static void ProfilerState_SetTarget(ProfilerState *self, PyObject *target) {
@@ -139,11 +105,38 @@ static int ProfilerState_UpdateContextVar(ProfilerState *self) {
     return 1;
 }
 
+/**
+ * Returns the current time for this profiler. On error, returns -1.0.
+ */
+static double ProfilerState_GetTime(ProfilerState *self) {
+    if (self->timer_func != NULL) {
+        // when a self->timer_func is set, call that.
+        PyObject *result = PyEval_CallObject(self->timer_func, NULL);
+        if (result == NULL) {
+            return -1.0;
+        }
+
+        if (!PyFloat_Check(result)) {
+            PyErr_SetString(PyExc_RuntimeError, "custom time function must return a float");
+            return -1.0;
+        }
+
+        double resultDouble = PyFloat_AsDouble(result);
+
+        Py_DECREF(result);
+        return resultDouble;
+    } else {
+        // otherwise as normal, call the C timer function.
+        return floatclock();
+    }
+}
+
 static void ProfilerState_Dealloc(ProfilerState *self) {
     ProfilerState_SetTarget(self, NULL);
     Py_XDECREF(self->context_var);
     Py_XDECREF(self->last_context_var_value);
     Py_XDECREF(self->await_stack_list);
+    Py_XDECREF(self->timer_func);
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -197,6 +190,7 @@ static ProfilerState *ProfilerState_New(void) {
     op->context_var = NULL;
     op->last_context_var_value = NULL;
     op->await_stack_list = PyList_New(0);
+    op->timer_func = NULL;
     return op;
 }
 
@@ -286,7 +280,7 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
     ProfilerState *pState = (ProfilerState *)op;
     PyObject *result;
 
-    double now = profiler_time();
+    double now = ProfilerState_GetTime(pState);
     if (now == -1.0) {
         PyEval_SetProfile(NULL, NULL);
         return -1;
@@ -390,13 +384,14 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
 static PyObject *
 setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"target", "interval", "context_var", NULL};
+    static char *kwlist[] = {"target", "interval", "context_var", "timer_func", NULL};
     ProfilerState *pState = NULL;
     double interval = 0.0;
     PyObject *target = NULL;
     PyObject *context_var = NULL;
+    PyObject *timer_func = NULL;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!", kwlist, &target, &interval, &PyContextVar_Type, &context_var))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!O", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_func))
         return NULL;
 
     if (target == Py_None)
@@ -417,8 +412,13 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
         // default interval is 1 ms
         pState->interval = (interval > 0) ? interval : 0.001;
 
+        if (timer_func) {
+            Py_INCREF(timer_func);
+            pState->timer_func = timer_func;
+        }
+
         // initialise the last invocation to avoid immediate callback
-        pState->last_invocation = floatclock();
+        pState->last_invocation = ProfilerState_GetTime(pState);
 
         if (context_var) {
             Py_INCREF(context_var);
@@ -438,28 +438,6 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
-static PyObject *
-set_time_function(PyObject *m, PyObject *args)
-{
-    PyObject *new_func;
-
-    if (!PyArg_ParseTuple(args, "O", &new_func)) {
-        return NULL;
-    }
-
-    if (new_func == Py_None) {
-        new_func = NULL;
-    }
-
-    PyObject *tmp = custom_time_function;
-    Py_XINCREF(new_func);
-    custom_time_function = new_func;
-    Py_XDECREF(tmp);
-
-    Py_RETURN_NONE;
-}
-
-
 ///////////////////////////
 // Module initialization //
 ///////////////////////////
@@ -469,9 +447,6 @@ static PyMethodDef module_methods[] = {
      "Sets the statistal profiler callback. The function in the same manner as setprofile, but "
      "instead of being called every on every call and return, the function is called every "
      "<interval> seconds with the current stack."},
-    {"set_time_function", (PyCFunction)set_time_function, METH_NOARGS,
-     "Sets the timer function used by stat_profile internally. For testing purposes, not intended "
-     "for production use."},
     {NULL}  /* Sentinel */
 };
 
