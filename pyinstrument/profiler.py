@@ -16,8 +16,6 @@ from pyinstrument.stack_sampler import AsyncState, build_call_stack, get_stack_s
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
-timer = timeit.default_timer
-
 
 class ActiveProfilerSession:
     frame_records: list[tuple[list[str], float]]

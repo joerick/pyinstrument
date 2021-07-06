@@ -60,6 +60,41 @@ floatclock(void)
 
 #endif  /* MS_WINDOWS */
 
+////////////////////
+// Timer function //
+////////////////////
+
+static PyObject *custom_time_function = NULL;
+
+/**
+ * Returns the current time for this profiler. On error, returns -1.0.
+ */
+static double
+profiler_time(void)
+{
+    if (custom_time_function != NULL) {
+        // when a custom_time_function is set, call that.
+        PyObject *result = PyEval_CallObject(custom_time_function, NULL);
+        if (result == NULL) {
+            return -1.0;
+        }
+
+        if (!PyFloat_Check(result)) {
+            PyErr_SetString(PyExc_RuntimeError, "custom time function must return a float");
+            return -1.0;
+        }
+
+        double resultDouble = PyFloat_AsDouble(result);
+
+        Py_DECREF(result);
+        return resultDouble;
+    } else {
+        // otherwise as normal, call the C timer function.
+        return floatclock();
+    }
+}
+
+
 ///////////////////
 // ProfilerState //
 ///////////////////
@@ -248,9 +283,14 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
 static int
 profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
 {
-    double now = floatclock();
     ProfilerState *pState = (ProfilerState *)op;
     PyObject *result;
+
+    double now = profiler_time();
+    if (now == -1.0) {
+        PyEval_SetProfile(NULL, NULL);
+        return -1;
+    }
 
     // check for context var change, send context_changed event if seen
     if (pState->context_var) {
@@ -398,43 +438,54 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+static PyObject *
+set_time_function(PyObject *m, PyObject *args)
+{
+    PyObject *new_func;
+
+    if (!PyArg_ParseTuple(args, "O", &new_func)) {
+        return NULL;
+    }
+
+    if (new_func == Py_None) {
+        new_func = NULL;
+    }
+
+    PyObject *tmp = custom_time_function;
+    Py_XINCREF(new_func);
+    custom_time_function = new_func;
+    Py_XDECREF(tmp);
+
+    Py_RETURN_NONE;
+}
+
+
 ///////////////////////////
 // Module initialization //
 ///////////////////////////
-
-#if PY_MAJOR_VERSION >= 3
-    #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-    #define MOD_DEF(m, name, doc, methods, module_state_size) \
-        static struct PyModuleDef moduledef = { \
-            PyModuleDef_HEAD_INIT, name, doc, module_state_size, methods, }; \
-        m = PyModule_Create(&moduledef);
-    #define MOD_RETURN(m) return m;
-#else
-    #define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
-    #define MOD_DEF(m, name, doc, methods, module_state_size) \
-        m = Py_InitModule3(name, methods, doc);
-    #define MOD_RETURN(m) return;
-#endif
 
 static PyMethodDef module_methods[] = {
     {"setstatprofile", (PyCFunction)setstatprofile, METH_VARARGS | METH_KEYWORDS,
      "Sets the statistal profiler callback. The function in the same manner as setprofile, but "
      "instead of being called every on every call and return, the function is called every "
      "<interval> seconds with the current stack."},
+    {"set_time_function", (PyCFunction)set_time_function, METH_NOARGS,
+     "Sets the timer function used by stat_profile internally. For testing purposes, not intended "
+     "for production use."},
     {NULL}  /* Sentinel */
 };
 
-MOD_INIT(stat_profile)
+PyMODINIT_FUNC PyInit_stat_profile(void)
 {
-    PyObject* m;
-
     PyType_Ready(&ProfilerState_Type);
 
-    MOD_DEF(m,
-            "stat_profile",
-            "Module that implements the backend to a statistical profiler",
-            module_methods,
-            0)
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "stat_profile",
+        "Module that implements the backend to a statistical profiler",
+        -1,
+        module_methods
+    };
 
-    MOD_RETURN(m)
+    return PyModule_Create(&moduledef);
 }

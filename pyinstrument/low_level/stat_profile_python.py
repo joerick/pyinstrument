@@ -2,7 +2,7 @@ import contextvars
 import sys
 import timeit
 import types
-from typing import Any, List, Type
+from typing import Any, Callable, List, Optional, Type
 
 timer = timeit.default_timer
 
@@ -71,3 +71,11 @@ def setstatprofile(target, interval=0.001, context_var=None):
         sys.setprofile(PythonStatProfiler(target, interval, context_var).profile)
     else:
         sys.setprofile(None)
+
+
+def set_time_function(timer_func: Optional[Callable[[], float]]):
+    global timer
+    if timer_func:
+        timer = timer_func
+    else:
+        timer = timeit.default_timer
