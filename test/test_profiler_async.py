@@ -2,7 +2,7 @@ import asyncio
 import sys
 import time
 from functools import partial
-from test.fake_time_util import fake_time_asyncio, fake_time_trio
+from test.fake_time_util import fake_time, fake_time_asyncio, fake_time_trio
 from typing import Optional
 
 import greenlet
@@ -170,15 +170,18 @@ def test_profiler_task_isolation(engine):
 
 def test_greenlet():
     profiler = Profiler()
-    profiler.start()
 
-    def y(duration):
-        time.sleep(duration)
+    with fake_time():
+        profiler.start()
 
-    y(0.1)
-    greenlet.greenlet(y).switch(0.1)
+        def y(duration):
+            time.sleep(duration)
 
-    session = profiler.stop()
+        y(0.1)
+        greenlet.greenlet(y).switch(0.1)
+
+        session = profiler.stop()
+
     profiler.print()
 
     root_frame = session.root_frame()
@@ -194,15 +197,18 @@ def test_greenlet():
 
 def test_strict_with_greenlet():
     profiler = Profiler(async_mode="strict")
-    profiler.start()
 
-    def y(duration):
-        time.sleep(duration)
+    with fake_time():
+        profiler.start()
 
-    y(0.1)
-    greenlet.greenlet(y).switch(0.1)
+        def y(duration):
+            time.sleep(duration)
 
-    session = profiler.stop()
+        y(0.1)
+        greenlet.greenlet(y).switch(0.1)
+
+        session = profiler.stop()
+
     profiler.print()
 
     root_frame = session.root_frame()
