@@ -394,8 +394,9 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!O", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_func))
         return NULL;
 
-    if (target == Py_None)
+    if (target == Py_None) {
         target = NULL;
+    }
 
     if (target) {
         if (!PyCallable_Check(target)) {
@@ -411,6 +412,10 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 
         // default interval is 1 ms
         pState->interval = (interval > 0) ? interval : 0.001;
+
+        if (timer_func == Py_None) {
+            timer_func = NULL;
+        }
 
         if (timer_func) {
             Py_INCREF(timer_func);

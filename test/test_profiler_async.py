@@ -1,4 +1,6 @@
 import asyncio
+import contextvars
+import sys
 import time
 from functools import partial
 from typing import Optional
@@ -6,8 +8,10 @@ from typing import Optional
 import greenlet
 import pytest
 import trio
+import trio._core._run
+import trio.lowlevel
 
-from pyinstrument import processors
+from pyinstrument import processors, stack_sampler
 from pyinstrument.frame import AwaitTimeFrame, OutOfContextFrame
 from pyinstrument.profiler import Profiler
 from pyinstrument.session import Session
@@ -17,27 +21,116 @@ from .util import assert_never, async_wait, flaky_in_ci, walk_frames
 # Utilities #
 
 
+@pytest.fixture(autouse=True)
+def setup_sampler():
+    assert sys.getprofile() is None
+    assert len(stack_sampler.get_stack_sampler().subscribers) == 0
+
+    yield
+
+    assert sys.getprofile() is None
+    assert len(stack_sampler.get_stack_sampler().subscribers) == 0
+    stack_sampler.thread_locals.__dict__.clear()
+
+
+@pytest.fixture
+def fake_time():
+    class FakeTime:
+        def __init__(self) -> None:
+            self.time = 0.0
+
+        def __call__(self):
+            return self.time
+
+        def get_time(self):
+            return self.time
+
+        def sleep(self, duration):
+            self.time += duration
+
+        async def async_sleep(self, duration, engine="asyncio"):
+            if engine == "asyncio":
+                asyncio.get_event_loop().call_soon(
+                    self.sleep, duration, context=contextvars.Context()  # type: ignore
+                )
+                await asyncio.sleep(1e-100)
+            elif engine == "trio":
+
+                async def sleep():
+                    await trio.sleep(1e-100)
+                    self.time += duration
+                    await trio.sleep(1e-100)
+
+                async with trio.open_nursery() as nursery:
+                    runner = trio._core._run.GLOBAL_RUN_CONTEXT.runner
+
+                    sleep_shim_coro = sleep()
+                    task = trio.lowlevel.Task._create(
+                        coro=sleep_shim_coro,
+                        parent_nursery=nursery,
+                        runner=runner,
+                        name="sleep",
+                        context=contextvars.Context(),
+                    )
+
+                    runner.tasks.add(task)
+                    if nursery is not None:
+                        nursery._children.add(task)
+                        task._activate_cancel_status(nursery._cancel_status)
+
+                    runner.reschedule(task, None)
+
+    fake_time = FakeTime()
+    stack_sampler.get_stack_sampler().timer_func = fake_time.get_time
+    yield fake_time
+    stack_sampler.get_stack_sampler().timer_func = None
+
+
 # Tests #
 
 
-@flaky_in_ci
 @pytest.mark.asyncio
-async def test_sleep():
+async def test_sleep(fake_time):
     profiler = Profiler()
     profiler.start()
 
-    await asyncio.sleep(0.2)
+    await fake_time.async_sleep(0.2)
 
     session = profiler.stop()
+    assert len(session.frame_records) > 0
+
     root_frame = session.root_frame()
     assert root_frame
 
     assert root_frame.time() == pytest.approx(0.2, rel=0.1)
     assert root_frame.await_time() == pytest.approx(0.2, rel=0.1)
 
-    sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "sleep")
+    sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "async_sleep")
     assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
     assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
+
+
+def test_sleep_trio(fake_time):
+    async def run():
+        profiler = Profiler()
+        profiler.start()
+
+        await fake_time.async_sleep(0.2, engine="trio")
+
+        session = profiler.stop()
+        assert len(session.frame_records) > 0
+
+        root_frame = session.root_frame()
+        assert root_frame
+
+        assert root_frame.time() == pytest.approx(0.2, rel=0.1)
+        assert root_frame.await_time() == pytest.approx(0.2, rel=0.1)
+
+        sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "async_sleep")
+        assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
+        assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
+
+    trio.run(run)
 
 
 @flaky_in_ci

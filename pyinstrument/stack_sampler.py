@@ -14,7 +14,6 @@ from pyinstrument.low_level.stat_profile import setstatprofile
 from pyinstrument.typing import LiteralStr
 
 thread_locals = threading.local()
-timer = timeit.default_timer
 
 
 class StackSamplerSubscriber:
@@ -43,11 +42,13 @@ class StackSampler:
     subscribers: list[StackSamplerSubscriber]
     current_sampling_interval: float | None
     last_profile_time: float
+    timer_func: Optional[Callable[[], float]]
 
     def __init__(self) -> None:
         self.subscribers = []
         self.current_sampling_interval = None
         self.last_profile_time = 0.0
+        self.timer_func = None
 
     def subscribe(self, target, desired_interval, use_async_context):
         if use_async_context:
@@ -95,8 +96,8 @@ class StackSampler:
     def _start_sampling(self, interval):
         self.current_sampling_interval = interval
         if self.last_profile_time == 0.0:
-            self.last_profile_time = timer()
-        setstatprofile(self._sample, interval, active_profiler_context_var)
+            self.last_profile_time = self._timer()
+        setstatprofile(self._sample, interval, active_profiler_context_var, self.timer_func)
 
     def _stop_sampling(self):
         setstatprofile(None)
@@ -124,7 +125,7 @@ class StackSampler:
                     assert subscriber.bound_to_async_context
                     subscriber.async_state = AsyncState("in_context")
         else:
-            now = timer()
+            now = self._timer()
             time_since_last_sample = now - self.last_profile_time
 
             call_stack = build_call_stack(frame, event, arg)
@@ -133,6 +134,12 @@ class StackSampler:
                 subscriber.target(call_stack, time_since_last_sample, subscriber.async_state)
 
             self.last_profile_time = now
+
+    def _timer(self):
+        if self.timer_func:
+            return self.timer_func()
+        else:
+            return timeit.default_timer()
 
 
 def get_stack_sampler() -> StackSampler:
