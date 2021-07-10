@@ -1,8 +1,8 @@
 import asyncio
-import contextvars
 import sys
 import time
 from functools import partial
+from test.fake_time_util import fake_time_asyncio, fake_time_trio
 from typing import Optional
 
 import greenlet
@@ -16,13 +16,13 @@ from pyinstrument.frame import AwaitTimeFrame, OutOfContextFrame
 from pyinstrument.profiler import Profiler
 from pyinstrument.session import Session
 
-from .util import assert_never, async_wait, flaky_in_ci, walk_frames
+from .util import assert_never, flaky_in_ci, walk_frames
 
 # Utilities #
 
 
 @pytest.fixture(autouse=True)
-def setup_sampler():
+def tidy_up_stack_sampler():
     assert sys.getprofile() is None
     assert len(stack_sampler.get_stack_sampler().subscribers) == 0
 
@@ -33,70 +33,20 @@ def setup_sampler():
     stack_sampler.thread_locals.__dict__.clear()
 
 
-@pytest.fixture
-def fake_time():
-    class FakeTime:
-        def __init__(self) -> None:
-            self.time = 0.0
-
-        def __call__(self):
-            return self.time
-
-        def get_time(self):
-            return self.time
-
-        def sleep(self, duration):
-            self.time += duration
-
-        async def async_sleep(self, duration, engine="asyncio"):
-            if engine == "asyncio":
-                asyncio.get_event_loop().call_soon(
-                    self.sleep, duration, context=contextvars.Context()  # type: ignore
-                )
-                await asyncio.sleep(1e-100)
-            elif engine == "trio":
-
-                async def sleep():
-                    await trio.sleep(1e-100)
-                    self.time += duration
-                    await trio.sleep(1e-100)
-
-                async with trio.open_nursery() as nursery:
-                    runner = trio._core._run.GLOBAL_RUN_CONTEXT.runner
-
-                    sleep_shim_coro = sleep()
-                    task = trio.lowlevel.Task._create(
-                        coro=sleep_shim_coro,
-                        parent_nursery=nursery,
-                        runner=runner,
-                        name="sleep",
-                        context=contextvars.Context(),
-                    )
-
-                    runner.tasks.add(task)
-                    if nursery is not None:
-                        nursery._children.add(task)
-                        task._activate_cancel_status(nursery._cancel_status)
-
-                    runner.reschedule(task, None)
-
-    fake_time = FakeTime()
-    stack_sampler.get_stack_sampler().timer_func = fake_time.get_time
-    yield fake_time
-    stack_sampler.get_stack_sampler().timer_func = None
-
-
 # Tests #
 
 
 @pytest.mark.asyncio
-async def test_sleep(fake_time):
+async def test_sleep():
     profiler = Profiler()
-    profiler.start()
 
-    await fake_time.async_sleep(0.2)
+    with fake_time_asyncio():
+        profiler.start()
 
-    session = profiler.stop()
+        await asyncio.sleep(0.2)
+
+        session = profiler.stop()
+
     assert len(session.frame_records) > 0
 
     root_frame = session.root_frame()
@@ -105,17 +55,17 @@ async def test_sleep(fake_time):
     assert root_frame.time() == pytest.approx(0.2, rel=0.1)
     assert root_frame.await_time() == pytest.approx(0.2, rel=0.1)
 
-    sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "async_sleep")
+    sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "sleep")
     assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
     assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
 
 
-def test_sleep_trio(fake_time):
+def test_sleep_trio():
     async def run():
         profiler = Profiler()
         profiler.start()
 
-        await fake_time.async_sleep(0.2, engine="trio")
+        await trio.sleep(0.2)
 
         session = profiler.stop()
         assert len(session.frame_records) > 0
@@ -123,32 +73,56 @@ def test_sleep_trio(fake_time):
         root_frame = session.root_frame()
         assert root_frame
 
-        assert root_frame.time() == pytest.approx(0.2, rel=0.1)
-        assert root_frame.await_time() == pytest.approx(0.2, rel=0.1)
+        assert root_frame.time() == pytest.approx(0.2)
+        assert root_frame.await_time() == pytest.approx(0.2)
 
-        sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "async_sleep")
-        assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
-        assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
+        sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "sleep")
+        assert sleep_frame.time() == pytest.approx(0.2)
+        assert sleep_frame.time() == pytest.approx(0.2)
 
-    trio.run(run)
+    with fake_time_trio() as fake_clock:
+        trio.run(run, clock=fake_clock.trio_clock)
 
 
 @flaky_in_ci
 @pytest.mark.parametrize("engine", ["asyncio", "trio"])
-def test_async_engines(engine):
+def test_profiler_task_isolation(engine):
     profiler_session: Optional[Session] = None
+
+    async def async_wait(sync_time, async_time, profile=False, engine="asyncio"):
+        # an async function that has both sync work and async work
+        profiler = None
+
+        if profile:
+            profiler = Profiler()
+            profiler.start()
+
+        time.sleep(sync_time / 2)
+
+        if engine == "asyncio":
+            await asyncio.sleep(async_time)
+        else:
+            await trio.sleep(async_time)
+
+        time.sleep(sync_time / 2)
+
+        if profiler:
+            profiler.stop()
+            profiler.print(show_all=True)
+            return profiler.last_session
 
     if engine == "asyncio":
         loop = asyncio.new_event_loop()
 
-        profile_task = loop.create_task(async_wait(sync_time=0.1, async_time=0.5, profile=True))
-        loop.create_task(async_wait(sync_time=0.1, async_time=0.3))
-        loop.create_task(async_wait(sync_time=0.1, async_time=0.3))
+        with fake_time_asyncio(loop):
+            profile_task = loop.create_task(async_wait(sync_time=0.1, async_time=0.5, profile=True))
+            loop.create_task(async_wait(sync_time=0.1, async_time=0.3))
+            loop.create_task(async_wait(sync_time=0.1, async_time=0.3))
 
-        loop.run_until_complete(profile_task)
-        loop.close()
+            loop.run_until_complete(profile_task)
+            loop.close()
 
-        profiler_session = profile_task.result()
+            profiler_session = profile_task.result()
     elif engine == "trio":
 
         async def async_wait_and_capture(**kwargs):
@@ -173,12 +147,12 @@ def test_async_engines(engine):
                     partial(async_wait, sync_time=0.1, async_time=0.3, engine="trio")
                 )
 
-        trio.run(multi_task)
+        with fake_time_trio() as fake_clock:
+            trio.run(multi_task, clock=fake_clock.trio_clock)
     else:
         assert_never(engine)
 
     assert profiler_session
-    assert profiler_session.duration == pytest.approx(0.1 + 0.5, rel=0.1)
 
     root_frame = profiler_session.root_frame()
     assert root_frame is not None

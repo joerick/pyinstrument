@@ -1,7 +1,7 @@
 import asyncio
 import os
 import time
-from typing import Generator, NoReturn
+from typing import Generator, Generic, Iterable, Iterator, NoReturn, Optional, TypeVar
 
 import trio
 from flaky import flaky
@@ -32,31 +32,18 @@ def busy_wait(duration):
         do_nothing()
 
 
-async def async_wait(sync_time, async_time, profile=False, engine="asyncio"):
-    # an async function that has both sync work and async work
-    profiler = None
-
-    if profile:
-        profiler = Profiler()
-        profiler.start()
-
-    busy_wait(sync_time / 2)
-
-    if engine == "asyncio":
-        await asyncio.sleep(async_time)
-    else:
-        await trio.sleep(async_time)
-
-    busy_wait(sync_time / 2)
-
-    if profiler:
-        profiler.stop()
-        profiler.print(show_all=True)
-        return profiler.last_session
-
-
 def walk_frames(frame: BaseFrame) -> Generator[BaseFrame, None, None]:
     yield frame
 
     for f in frame.children:
         yield from walk_frames(f)
+
+
+T = TypeVar("T")
+
+
+def first(iterator: Iterator[T]) -> Optional[T]:
+    try:
+        return next(iterator)
+    except StopIteration:
+        return None
