@@ -16,8 +16,8 @@ class Renderer:
     processors: ProcessorList
     """
     Processors installed on this renderer. This property is defined on the
-        base class to provide a common way for users to # add to and
-        manipulate them before calling :func:`render`.
+    base class to provide a common way for users to add and
+    manipulate them before calling :func:`render`.
     """
 
     processor_options: dict[str, Any]
