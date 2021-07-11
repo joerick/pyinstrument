@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 from functools import partial
+from test.fake_time_util import fake_time
 from typing import Generator, Optional
 
 import pytest
@@ -29,41 +30,42 @@ def long_function_b():
 
 def test_collapses_multiple_calls_by_default():
     profiler = Profiler()
-    profiler.start()
 
-    long_function_a()
-    long_function_b()
-    long_function_a()
-    long_function_b()
+    with fake_time():
+        profiler.start()
 
-    profiler.stop()
+        long_function_a()
+        long_function_b()
+        long_function_a()
+        long_function_b()
+
+        profiler.stop()
 
     text_output = profiler.output_text()
+    print(text_output)
 
     # output should be something like:
-    # 1.513 test_collapses_multiple_calls_by_default  test/test_profiler.py:25
-    # |- 0.507 long_function_a  test/test_profiler.py:17
-    # |- 0.503 long_function_b  test/test_profiler.py:20
+    # 1.500 test_collapses_multiple_calls_by_default  test/test_profiler.py:25
+    # |- 0.500 long_function_a  test/test_profiler.py:17
+    # |- 0.500 long_function_b  test/test_profiler.py:20
 
-    assert text_output.count("test_collapses_multiple_calls_by_default") == 1
-    assert text_output.count("long_function_a") == 1
-    assert text_output.count("long_function_b") == 1
+    assert text_output.count("1.500 test_collapses_multiple_calls_by_default") == 1
+    assert text_output.count("0.500 long_function_a") == 1
+    assert text_output.count("1.000 long_function_b") == 1
 
 
-# this test can be flaky on CI, because it's not deterministic when the
-# setstatprofile timer will fire. Sometimes the profiler.start frame is
-# included.
-@flaky_in_ci
 def test_profiler_retains_multiple_calls():
     profiler = Profiler()
-    profiler.start()
 
-    long_function_a()
-    long_function_b()
-    long_function_a()
-    long_function_b()
+    with fake_time():
+        profiler.start()
 
-    profiler.stop()
+        long_function_a()
+        long_function_b()
+        long_function_a()
+        long_function_b()
+
+        profiler.stop()
 
     print(profiler.output_text())
 
@@ -74,15 +76,16 @@ def test_profiler_retains_multiple_calls():
     assert len(frame.children) == 4
 
 
-@flaky_in_ci
 def test_two_functions():
     profiler = Profiler()
-    profiler.start()
 
-    long_function_a()
-    long_function_b()
+    with fake_time():
+        profiler.start()
 
-    profiler.stop()
+        long_function_a()
+        long_function_b()
+
+        profiler.stop()
 
     print(profiler.output_text())
 
@@ -105,11 +108,11 @@ def test_two_functions():
     assert frame_b.time() == pytest.approx(0.5, abs=0.2)
 
 
-@flaky_in_ci
 def test_context_manager():
-    with Profiler() as profiler:
-        long_function_a()
-        long_function_b()
+    with fake_time():
+        with Profiler() as profiler:
+            long_function_a()
+            long_function_b()
 
     assert profiler.last_session
     frame = profiler.last_session.root_frame()
@@ -118,11 +121,11 @@ def test_context_manager():
     assert len(frame.children) == 2
 
 
-@flaky_in_ci
 def test_json_output():
-    with Profiler() as profiler:
-        long_function_a()
-        long_function_b()
+    with fake_time():
+        with Profiler() as profiler:
+            long_function_a()
+            long_function_b()
 
     output_data = profiler.output(renderers.JSONRenderer())
 
@@ -141,7 +144,6 @@ def test_empty_profile():
     profiler.output(renderer=renderers.ConsoleRenderer())
 
 
-@flaky_in_ci
 def test_state_management():
     profiler = Profiler()
 
