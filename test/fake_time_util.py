@@ -35,6 +35,8 @@ def fake_time(fake_clock=None):
 class FakeClockAsyncio:
     # this implementation mostly lifted from
     # https://aiotools.readthedocs.io/en/latest/_modules/aiotools/timer.html#VirtualClock
+    # License: https://github.com/achimnol/aiotools/blob/800f7f1bce086b0c83658bad8377e6cb1908e22f/LICENSE
+    # Copyright (c) 2017 Joongi Kim
     def __init__(self) -> None:
         self.time = random.random() * 1e6
 

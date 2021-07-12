@@ -4,22 +4,18 @@ pyinstrument
 [![PyPI version](https://badge.fury.io/py/pyinstrument.svg)](https://badge.fury.io/py/pyinstrument)
 [![.github/workflows/python-package.yml](https://github.com/joerick/pyinstrument/actions/workflows/python-package.yml/badge.svg)](https://github.com/joerick/pyinstrument/actions/workflows/python-package.yml)
 
+[Documentation](https://pyinstrument.readthedocs.io/)
+
 <!-- MARK intro start -->
 
 [![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
 
-Pyinstrument is a Python profiler. A profiler is a tool to help you 'optimize'
-your code - make it faster. It sounds obvious, but to get the biggest speed
-increase you should [focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
+Pyinstrument is a Python profiler. A profiler is a tool to help you optimize
+your code - make it faster. To get the biggest speed increase you should
+[focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
 Pyinstrument helps you find it!
 
 <!-- MARK intro end -->
-
-* [Installation](#installation)
-* [Documentation](#Documentation)
-* [Known issues](#known-issues)
-* [Changelog](#changelog)
-* [Contributing](#contributing)
 
 Installation
 ------------
@@ -39,7 +35,7 @@ Documentation
 -------------
 
 To learn how to use pyinstrument, or to check the reference, head to the
-[Documentation](https://pyinstrument.readthedocs.io/).
+[documentation](https://pyinstrument.readthedocs.io/).
 
 Known issues
 ------------
