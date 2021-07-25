@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from ..util import busy_wait
+from ..util import busy_wait, flaky_in_ci
 from .util import parametrize_setstatprofile
 
 
@@ -16,6 +16,7 @@ class CallCounter:
         self.count += 1
 
 
+@flaky_in_ci
 @parametrize_setstatprofile
 def test_100ms(setstatprofile):
     counter = CallCounter()
@@ -25,6 +26,7 @@ def test_100ms(setstatprofile):
     assert 8 < counter.count < 12
 
 
+@flaky_in_ci
 @parametrize_setstatprofile
 def test_10ms(setstatprofile):
     counter = CallCounter()
