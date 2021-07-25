@@ -175,7 +175,7 @@ def test_state_management():
     assert profiler.is_running == False
 
     assert profiler.last_session is not None
-    assert profiler.last_session.duration == pytest.approx(0.2, rel=0.1)
+    assert profiler.last_session.duration == pytest.approx(0.2, rel=0.2)
 
     # test a reset
     profiler.reset()
