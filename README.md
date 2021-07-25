@@ -2,13 +2,14 @@ pyinstrument
 ============
 
 [![PyPI version](https://badge.fury.io/py/pyinstrument.svg)](https://badge.fury.io/py/pyinstrument)
-[![.github/workflows/python-package.yml](https://github.com/joerick/pyinstrument/actions/workflows/python-package.yml/badge.svg)](https://github.com/joerick/pyinstrument/actions/workflows/python-package.yml)
+[![.github/workflows/test.yml](https://github.com/joerick/pyinstrument/actions/workflows/test.yml/badge.svg)](https://github.com/joerick/pyinstrument/actions/workflows/test.yml)
+[![Build wheels](https://github.com/joerick/pyinstrument/actions/workflows/wheels.yml/badge.svg)](https://github.com/joerick/pyinstrument/actions/workflows/wheels.yml)
 
 [Documentation](https://pyinstrument.readthedocs.io/)
 
 <!-- MARK intro start -->
 
-[![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/main/screenshot.jpg)
+[![Screenshot](docs/img/screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/main/docs/img/screenshot.jpg)
 
 Pyinstrument is a Python profiler. A profiler is a tool to help you optimize
 your code - make it faster. To get the biggest speed increase you should
