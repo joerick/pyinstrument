@@ -52,6 +52,69 @@ Known issues
 Changelog
 ---------
 
+### v4.0.0
+
+-   Async support! Pyinstrument now detects when an async task hits an await,
+    and tracks time spent outside of the async context under this await.
+
+    So, for example, here's a simple script with an async task that does a
+    sleep:
+
+    ```python
+    import asyncio
+    from pyinstrument import Profiler
+
+    async def main():
+        p = Profiler(async_mode='disabled')
+
+        with p:
+            print('Hello ...')
+            await asyncio.sleep(1)
+            print('... World!')
+
+        p.print()
+
+    asyncio.run(main())
+    ```
+
+    Before Pyinstrument 4.0.0, we'd see only time spent in the run loop, like
+    this:
+
+    ```
+      _     ._   __/__   _ _  _  _ _/_   Recorded: 18:33:03  Samples:  2
+     /_//_/// /_\ / //_// / //_'/ //     Duration: 1.006     CPU time: 0.001
+    /   _/                      v3.4.2
+
+    Program: examples/async_example_simple.py
+
+    1.006 _run_once  asyncio/base_events.py:1784
+    └─ 1.005 select  selectors.py:553
+          [3 frames hidden]  selectors, <built-in>
+             1.005 kqueue.control  <built-in>:0
+    ```
+
+    Now, with pyinstrument 4.0.0, we get:
+
+          _     ._   __/__   _ _  _  _ _/_   Recorded: 18:30:43  Samples:  2
+         /_//_/// /_\ / //_// / //_'/ //     Duration: 1.007     CPU time: 0.001
+        /   _/                      v3.4.2
+
+        Program: examples/async_example_simple.py
+
+        1.006 main  async_example_simple.py:4
+        └─ 1.005 sleep  asyncio/tasks.py:641
+              [2 frames hidden]  asyncio
+                 1.005 [await]
+
+    For more information, check out the [async profiling documentation] and
+    the [Profiler.async_mode] property.
+
+-   Pyinstrument has a [documentation site], including full Python API docs!
+
+[async profiling documentation]: https://pyinstrument.readthedocs.io/en/latest/how-it-works.html#async-profiling
+[async_mode]: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode
+[documentation site]: https://pyinstrument.readthedocs.io
+
 ### v3.4.2
 
 - Fix a bug that caused `--show`, `--show-regex`, `--show-all` to be ignored
