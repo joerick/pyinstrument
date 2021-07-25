@@ -11,7 +11,7 @@ with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
 setup(
     name="pyinstrument",
     packages=find_packages(),
-    version="3.4.2",
+    version="4.0.0",
     ext_modules=[
         Extension(
             "pyinstrument.low_level.stat_profile",
