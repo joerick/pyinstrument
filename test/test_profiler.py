@@ -144,6 +144,7 @@ def test_empty_profile():
     profiler.output(renderer=renderers.ConsoleRenderer())
 
 
+@flaky_in_ci
 def test_state_management():
     profiler = Profiler()
 
@@ -161,7 +162,7 @@ def test_state_management():
 
     assert profiler.is_running == False
     assert profiler.last_session is not None
-    assert profiler.last_session.duration == pytest.approx(0.1, rel=0.1)
+    assert profiler.last_session.duration == pytest.approx(0.1, rel=0.2)
 
     # test a second session, does it merge with the first?
     profiler.start()
