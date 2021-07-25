@@ -8,7 +8,7 @@ pyinstrument
 
 <!-- MARK intro start -->
 
-[![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/master/screenshot.jpg)
+[![Screenshot](screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/main/screenshot.jpg)
 
 Pyinstrument is a Python profiler. A profiler is a tool to help you optimize
 your code - make it faster. To get the biggest speed increase you should
