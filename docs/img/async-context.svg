@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1005" height="329" viewBox="0 0 1005 329">
+  <g fill="none" fill-rule="evenodd" font-family="system-ui, Arial, sans-serif" >
+    <rect width="472" height="50" y="187" fill="#F4F4F4"/>
+    <rect width="472" height="50" x="534" y="187" fill="#A2FFCC"/>
+    <rect width="425.742" height="50" x="46.258" y="120" fill="#F4F4F4"/>
+    <rect width="425.742" height="50" x="580.258" y="120" fill="#A2FFCC"/>
+    <rect width="71" height="50" x="88" y="53" fill="#F4F4F4"/>
+    <rect width="71" height="50" x="622" y="53" fill="#A2FFCC"/>
+    <rect width="71" height="50" x="276" y="53" fill="#F4F4F4"/>
+    <rect width="71" height="50" x="810" y="53" fill="#A2FFCC"/>
+    <rect width="71" height="50" x="183" y="53" fill="#A2FFCC"/>
+    <rect width="71" height="50" x="717" y="53" fill="#A2FFCC"/>
+    <rect width="71" height="50" x="369" y="53" fill="#A2FFCC"/>
+    <rect width="71" height="50" x="903" y="53" fill="#A2FFCC"/>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="204" y="216">APP ENTRYPOINT</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="738" y="216">APP ENTRYPOINT</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="254" y="149">RUN LOOP</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="788" y="149">RUN LOOP</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="100" y="82">TASK 1</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="634" y="82">TASK 1</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="290" y="82">TASK 1</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="824" y="82">TASK 1</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="195" y="82">TASK 2</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="729" y="82">TASK 2</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="183" y="19">PROFILER STARTED HERE</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="534" y="19">PROFILER STARTED HERE</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="381" y="82">TASK 2</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".553" font-size="11" font-style="italic" font-weight="400" letter-spacing="1.833">
+      <tspan x="915" y="82">TASK 2</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".819" font-size="14" letter-spacing=".636">
+      <tspan x="0" y="286">A profiler started in an async task is scoped to that async context.</tspan>
+    </text>
+    <text fill="#000" fill-opacity=".819" font-size="14" letter-spacing=".636">
+      <tspan x="534" y="286">When async tasks are created, they inherit the context from the </tspan> <tspan x="534" y="302">caller. So starting a profiler before the run loop causes all async </tspan> <tspan x="534" y="318">tasks to be profiled.</tspan>
+    </text>
+    <path fill="#727272" fill-rule="nonzero" d="M184 26L184 39 188 39 183.5 48 179 39 183 39 183 26 184 26zM535 26L535 174 539 174 534.5 183 530 174 534 174 534 26 535 26z"/>
+  </g>
+</svg>

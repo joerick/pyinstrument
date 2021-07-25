@@ -6,12 +6,33 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: check-added-large-files
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.8.0
+    hooks:
+      - id: isort
+        name: isort (python)
+
+-   repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3
+
 -   repo: local
     hooks:
+    -   id: pyright
+        name: pyright
+        entry: pyright --venv-path .
+        language: node
+        pass_filenames: false
+        types: [python]
+        additional_dependencies: ['pyright@1.1.134']
     -   id: build
         name: build js bundle
         entry: bin/build_js_bundle.py --force
         files: html_renderer/.*
         language: node
         pass_filenames: false
-exclude: ^pyinstrument/renderers/html_resources/app.js$
+
+exclude: ^pyinstrument/renderers/html_resources/app.js$|^pyinstrument/vendor

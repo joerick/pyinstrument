@@ -1,13 +1,16 @@
-from pyinstrument import Profiler
 from platform import platform
+
+from pyinstrument import Profiler
 
 p = Profiler()
 
 p.start()
 
+
 def func():
-    fd = open('/dev/urandom', 'rb')
-    _ = fd.read(1024*1024)
+    fd = open("/dev/urandom", "rb")
+    _ = fd.read(1024 * 1024)
+
 
 func()
 
@@ -18,5 +21,5 @@ p.stop()
 
 print(p.output_text())
 
-with open('ioerror_out.html', 'w') as f:
+with open("ioerror_out.html", "w") as f:
     f.write(p.output_html())

@@ -1,14 +1,38 @@
-import io, json
+from __future__ import annotations
+
+import io
+import json
 from collections import deque
-from pyinstrument.frame import Frame, SelfTimeFrame
-from pyinstrument.vendor.six import PY2
+from os import PathLike
+from typing import List, Tuple
 
-ASSERTION_MESSAGE = ('Please raise an issue at http://github.com/pyinstrument/issues and '
-                     'let me know how you caused this error!')
+from pyinstrument.frame import AwaitTimeFrame, BaseFrame, DummyFrame, Frame, SelfTimeFrame
 
-class ProfilerSession(object):
-    def __init__(self, frame_records, start_time, duration, sample_count, start_call_stack,
-                 program, cpu_time=None):
+ASSERTION_MESSAGE = (
+    "Please raise an issue at http://github.com/pyinstrument/issues and "
+    "let me know how you caused this error!"
+)
+
+FrameRecordType = Tuple[List[str], float]
+
+
+class Session:
+    def __init__(
+        self,
+        frame_records: list[FrameRecordType],
+        start_time,
+        duration,
+        sample_count,
+        start_call_stack,
+        program,
+        cpu_time=None,
+    ):
+        """Session()
+
+        Represents a profile session, contains the data collected during a profile session.
+
+        :meta private:
+        """
         self.frame_records = frame_records
         self.start_time = start_time
         self.duration = duration
@@ -18,41 +42,81 @@ class ProfilerSession(object):
         self.cpu_time = cpu_time
 
     @staticmethod
-    def load(filename):
-        with io.open(filename, 'rb' if PY2 else 'r') as f:
-            return ProfilerSession.from_json(json.load(f))
+    def load(filename: str | PathLike) -> Session:
+        """
+        Load a previously saved session from disk.
 
-    def save(self, filename):
-        with io.open(filename, 'wb' if PY2 else 'w') as f:
+        :param filename: The path to load from.
+        :rtype: Session
+        """
+        with open(filename) as f:
+            return Session.from_json(json.load(f))
+
+    def save(self, filename: str | PathLike) -> None:
+        """
+        Saves a Session object to disk, in a JSON format.
+
+        :param filename: The path to save to. Using the ``.pyisession`` extension is recommended.
+        """
+        with open(filename, "w") as f:
             json.dump(self.to_json(), f)
 
     def to_json(self):
         return {
-            'frame_records': self.frame_records,
-            'start_time': self.start_time,
-            'duration': self.duration,
-            'sample_count': self.sample_count,
-            'start_call_stack': self.start_call_stack,
-            'program': self.program,
-            'cpu_time': self.cpu_time,
+            "frame_records": self.frame_records,
+            "start_time": self.start_time,
+            "duration": self.duration,
+            "sample_count": self.sample_count,
+            "start_call_stack": self.start_call_stack,
+            "program": self.program,
+            "cpu_time": self.cpu_time,
         }
 
     @staticmethod
     def from_json(json_dict):
-        return ProfilerSession(
-            frame_records=json_dict['frame_records'],
-            start_time=json_dict['start_time'],
-            duration=json_dict['duration'],
-            sample_count=json_dict['sample_count'],
-            start_call_stack=json_dict['start_call_stack'],
-            program=json_dict['program'],
-            cpu_time=json_dict['cpu_time'],
+        return Session(
+            frame_records=json_dict["frame_records"],
+            start_time=json_dict["start_time"],
+            duration=json_dict["duration"],
+            sample_count=json_dict["sample_count"],
+            start_call_stack=json_dict["start_call_stack"],
+            program=json_dict["program"],
+            cpu_time=json_dict["cpu_time"],
         )
 
-    def root_frame(self, trim_stem=True):
-        '''
-        Parses the internal frame records and returns a tree of Frame objects
-        '''
+    @staticmethod
+    def combine(session1: Session, session2: Session) -> Session:
+        """
+        Combines two :class:`Session` objects.
+
+        Sessions that are joined in this way probably shouldn't be interpreted
+        as timelines, because the samples are simply concatenated. But
+        aggregate views (the default) of this data will work.
+
+        :rtype: Session
+        """
+        if session1.start_time > session2.start_time:
+            # swap them around so that session1 is the first one
+            session1, session2 = session2, session1
+
+        return Session(
+            frame_records=session1.frame_records + session2.frame_records,
+            start_time=session1.start_time,
+            duration=session1.duration + session2.duration,
+            sample_count=session1.sample_count + session2.sample_count,
+            start_call_stack=session1.start_call_stack,
+            program=session1.program,
+            cpu_time=session1.cpu_time + session2.cpu_time,
+        )
+
+    def root_frame(self, trim_stem=True) -> BaseFrame | None:
+        """
+        Parses the internal frame records and returns a tree of :class:`Frame`
+        objects. This object can be renderered using a :class:`Renderer`
+        object.
+
+        :rtype: A :class:`Frame` object, or None if the session is empty.
+        """
         root_frame = None
 
         frame_stack = []
@@ -60,6 +124,8 @@ class ProfilerSession(object):
         for frame_tuple in self.frame_records:
             identifier_stack = frame_tuple[0]
             time = frame_tuple[1]
+
+            stack_depth = 0
 
             # now we must create a stack of frame objects and assign this time to the leaf
             for stack_depth, frame_identifier in enumerate(identifier_stack):
@@ -69,7 +135,7 @@ class ProfilerSession(object):
                         del frame_stack[stack_depth:]
 
                 if stack_depth >= len(frame_stack):
-                    frame = Frame(frame_identifier)
+                    frame = BaseFrame.new_subclass_with_identifier(frame_identifier)
                     frame_stack.append(frame)
 
                     if stack_depth == 0:
@@ -77,14 +143,18 @@ class ProfilerSession(object):
                         assert root_frame is None, ASSERTION_MESSAGE
                         root_frame = frame
                     else:
-                        parent = frame_stack[stack_depth-1]
+                        parent = frame_stack[stack_depth - 1]
                         parent.add_child(frame)
 
             # trim any extra frames
-            del frame_stack[stack_depth+1:]  # pylint: disable=W0631
+            del frame_stack[stack_depth + 1 :]
 
-            # assign the time to the final frame
-            frame_stack[-1].add_child(SelfTimeFrame(self_time=time))
+            # assign the time to the final frame in the stack
+            final_frame = frame_stack[-1]
+            if isinstance(final_frame, DummyFrame):
+                final_frame.self_time += time
+            else:
+                final_frame.add_child(SelfTimeFrame(self_time=time))
 
         if root_frame is None:
             return None

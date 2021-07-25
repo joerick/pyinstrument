@@ -1,0 +1,12 @@
+[tool.black]
+line-length = 100
+
+[tool.pyright]
+include = ["pyinstrument", "test"]
+ignore = ["pyinstrument/vendor"]
+pythonVersion = "3.7"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100

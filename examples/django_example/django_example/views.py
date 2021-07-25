@@ -1,5 +1,7 @@
-from django.http import HttpResponse
 import time
+
+from django.http import HttpResponse
+
 
 def hello_world(request):
     # do some useless work to delay this call a bit
@@ -8,4 +10,4 @@ def hello_world(request):
         y *= x
     time.sleep(0.1)
 
-    return HttpResponse('Hello, world!')
+    return HttpResponse("Hello, world!")

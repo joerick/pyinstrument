@@ -4,34 +4,43 @@ from optparse import OptionParser
 try:
     import django
 except ImportError:
-    print('This example requires Django.')
-    print('Install using `pip install Django`.')
+    print("This example requires Django.")
+    print("Install using `pip install Django`.")
     exit(1)
 
-import django.template.loader
 import django.conf
+import django.template.loader
+
 
 def main():
     parser = OptionParser()
-    parser.add_option('-i', '--iterations',
-        dest='iterations', action='store', type='int',
+    parser.add_option(
+        "-i",
+        "--iterations",
+        dest="iterations",
+        action="store",
+        type="int",
         help="number of template render calls to make",
-        default=100)
+        default=100,
+    )
     options, _ = parser.parse_args()
 
     os.chdir(os.path.dirname(__file__))
 
     django.conf.settings.configure(
         INSTALLED_APPS=(),
-        TEMPLATES=[{
-            "BACKEND": "django.template.backends.django.DjangoTemplates",
-            "DIRS": ['./django_example/django_example/templates']
-        }],
+        TEMPLATES=[
+            {
+                "BACKEND": "django.template.backends.django.DjangoTemplates",
+                "DIRS": ["./django_example/django_example/templates"],
+            }
+        ],
     )
     django.setup()
 
     for _ in range(0, options.iterations):
-        django.template.loader.render_to_string('template.html')
+        django.template.loader.render_to_string("template.html")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

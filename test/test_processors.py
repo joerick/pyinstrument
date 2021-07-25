@@ -1,7 +1,9 @@
 import sys
+
+from pytest import approx
+
 from pyinstrument import processors
 from pyinstrument.frame import Frame, SelfTimeFrame
-from pytest import approx
 
 all_processors = [
     processors.aggregate_repeated_calls,
@@ -20,33 +22,33 @@ def test_frame_passthrough_none():
 
 def test_remove_importlib():
     frame = Frame(
-        identifier='<module>\x00sympy/__init__.py\x0012',
+        identifier="<module>\x00sympy/__init__.py\x0012",
         children=[
             Frame(
-                identifier='_handle_fromlist\x00../<frozen importlib._bootstrap>\x00997',
+                identifier="_handle_fromlist\x00../<frozen importlib._bootstrap>\x00997",
                 self_time=0.1,
                 children=[
                     Frame(
-                        identifier='_find_and_load\x00../<frozen importlib._bootstrap>\x00997',
+                        identifier="_find_and_load\x00../<frozen importlib._bootstrap>\x00997",
                         self_time=0.1,
                         children=[
                             Frame(
-                                identifier='<module>\x00sympy/polys/polyfuncs.py\x001',
+                                identifier="<module>\x00sympy/polys/polyfuncs.py\x001",
                                 self_time=0.05,
                             ),
                             Frame(
-                                identifier='<module>\x00sympy/polys/partfrac.py\x001',
+                                identifier="<module>\x00sympy/polys/partfrac.py\x001",
                                 self_time=0.2,
-                            )
-                        ]
+                            ),
+                        ],
                     ),
                     Frame(
-                        identifier='<module>\x00sympy/polys/numberfields.py\x001',
+                        identifier="<module>\x00sympy/polys/numberfields.py\x001",
                         self_time=0.05,
-                    )
-                ]
+                    ),
+                ],
             )
-        ]
+        ],
     )
 
     assert frame.self_time == 0.0
@@ -57,18 +59,19 @@ def test_remove_importlib():
     assert frame.self_time == approx(0.2)  # the root gets the self_time from the importlib
     assert frame.time() == approx(0.5)
     assert len(frame.children) == 3
-    assert frame.children[0].file_path == 'sympy/polys/polyfuncs.py'
-    assert frame.children[1].file_path == 'sympy/polys/partfrac.py'
-    assert frame.children[2].file_path == 'sympy/polys/numberfields.py'
+    assert frame.children[0].file_path == "sympy/polys/polyfuncs.py"
+    assert frame.children[1].file_path == "sympy/polys/partfrac.py"
+    assert frame.children[2].file_path == "sympy/polys/numberfields.py"
 
 
 def test_merge_consecutive_self_time():
     frame = Frame(
-        identifier='<module>\x00cibuildwheel/__init__.py\x0012',
+        identifier="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
-                self_time=0.1),
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
+                self_time=0.1,
+            ),
             SelfTimeFrame(
                 self_time=0.2,
             ),
@@ -76,12 +79,13 @@ def test_merge_consecutive_self_time():
                 self_time=0.1,
             ),
             Frame(
-                identifier='calculate_metrics\x00cibuildwheel/utils.py\x007',
-                self_time=0.1),
+                identifier="calculate_metrics\x00cibuildwheel/utils.py\x007",
+                self_time=0.1,
+            ),
             SelfTimeFrame(
                 self_time=0.05,
             ),
-        ]
+        ],
     )
 
     assert frame.time() == approx(0.55)
@@ -100,36 +104,36 @@ def test_merge_consecutive_self_time():
 
 def test_aggregate_repeated_calls():
     frame = Frame(
-        identifier='<module>\x00cibuildwheel/__init__.py\x0012',
+        identifier="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 self_time=0.1,
                 children=[
                     Frame(
-                        identifier='scan_string\x00cibuildwheel/utils.py\x0054',
+                        identifier="scan_string\x00cibuildwheel/utils.py\x0054",
                         self_time=0.2,
                     ),
-                ]
+                ],
             ),
             SelfTimeFrame(
                 self_time=0.1,
             ),
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 self_time=0.1,
             ),
             SelfTimeFrame(
                 self_time=0.2,
             ),
             Frame(
-                identifier='calculate_metrics\x00cibuildwheel/utils.py\x007',
+                identifier="calculate_metrics\x00cibuildwheel/utils.py\x007",
                 self_time=0.1,
             ),
             SelfTimeFrame(
                 self_time=0.05,
             ),
-        ]
+        ],
     )
 
     assert frame.time() == approx(0.85)
@@ -139,38 +143,38 @@ def test_aggregate_repeated_calls():
     assert frame.time() == approx(0.85)
     # children should be sorted by time
     assert len(frame.children) == 3
-    assert frame.children[0].function == 'strip_newlines'
+    assert frame.children[0].function == "strip_newlines"
     assert frame.children[0].time() == 0.4
-    assert frame.children[0].children[0].function == 'scan_string'
+    assert frame.children[0].children[0].function == "scan_string"
     assert isinstance(frame.children[1], SelfTimeFrame)
     assert frame.children[1].time() == approx(0.35)
 
 
 def test_remove_irrelevant_nodes():
     frame = Frame(
-        identifier='<module>\x00cibuildwheel/__init__.py\x0012',
+        identifier="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 children=[
                     Frame(
-                        identifier='scan_string\x00cibuildwheel/utils.py\x0054',
+                        identifier="scan_string\x00cibuildwheel/utils.py\x0054",
                         self_time=10,
                     ),
-                ]
+                ],
             ),
             SelfTimeFrame(
                 self_time=0.5,
             ),
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 self_time=0.5,
             ),
             Frame(
-                identifier='calculate_metrics\x00cibuildwheel/utils.py\x007',
+                identifier="calculate_metrics\x00cibuildwheel/utils.py\x007",
                 self_time=0.01,
             ),
-        ]
+        ],
     )
 
     assert frame.time() == approx(11.01)
@@ -180,33 +184,33 @@ def test_remove_irrelevant_nodes():
     assert frame.time() == approx(11.01)
     # check the calculate metrics function was deleted
     assert len(frame.children) == 3
-    assert 'calculate_metrics' not in [f.function for f in frame.children]
+    assert "calculate_metrics" not in [f.function for f in frame.children]
 
 
 def test_remove_unnecessary_self_time_nodes():
     frame = Frame(
-        identifier='<module>\x00cibuildwheel/__init__.py\x0012',
+        identifier="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 children=[
                     SelfTimeFrame(
                         self_time=0.2,
                     ),
-                ]
+                ],
             ),
             SelfTimeFrame(
                 self_time=0.5,
             ),
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 self_time=0.5,
             ),
             Frame(
-                identifier='calculate_metrics\x00cibuildwheel/utils.py\x007',
+                identifier="calculate_metrics\x00cibuildwheel/utils.py\x007",
                 self_time=0.1,
             ),
-        ]
+        ],
     )
 
     assert frame.time() == approx(1.3)
@@ -217,46 +221,46 @@ def test_remove_unnecessary_self_time_nodes():
     assert len(frame.children) == 4
     # check the self time node was deleted
     strip_newlines_frame = frame.children[0]
-    assert strip_newlines_frame.function == 'strip_newlines'
+    assert strip_newlines_frame.function == "strip_newlines"
     assert len(strip_newlines_frame.children) == 0
     assert strip_newlines_frame.self_time == 0.2
 
 
 def test_group_library_frames_processor():
     frame = Frame(
-        identifier='<module>\x00cibuildwheel/__init__.py\x0012',
+        identifier="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
             Frame(
-                identifier='library_function\x00env/lib/python3.6/django/__init__.py\x00997',
+                identifier="library_function\x00env/lib/python3.6/django/__init__.py\x00997",
                 children=[
                     Frame(
-                        identifier='library_inner\x00env/lib/python3.6/django/http.py\x0054',
+                        identifier="library_inner\x00env/lib/python3.6/django/http.py\x0054",
                         children=[
                             Frame(
-                                identifier='library_callback\x00env/lib/python3.6/django/views.py\x0054',
+                                identifier="library_callback\x00env/lib/python3.6/django/views.py\x0054",
                                 children=[
                                     Frame(
-                                        identifier='<module>\x00cibuildwheel/views.py\x0012',
+                                        identifier="<module>\x00cibuildwheel/views.py\x0012",
                                         self_time=0.3,
                                     ),
-                                ]
+                                ],
                             ),
-                        ]
+                        ],
                     ),
-                ]
+                ],
             ),
             SelfTimeFrame(
                 self_time=0.5,
             ),
             Frame(
-                identifier='strip_newlines\x00cibuildwheel/utils.py\x00997',
+                identifier="strip_newlines\x00cibuildwheel/utils.py\x00997",
                 self_time=0.5,
             ),
             Frame(
-                identifier='calculate_metrics\x00cibuildwheel/utils.py\x007',
+                identifier="calculate_metrics\x00cibuildwheel/utils.py\x007",
                 self_time=0.1,
             ),
-        ]
+        ],
     )
 
     assert frame.time() == approx(1.4)
@@ -279,6 +283,6 @@ def test_group_library_frames_processor():
     assert group_root.children[0].children[0].children[0] not in group.frames
 
     old_sys_path = sys.path[:]
-    sys.path.append('env/lib/python3.6')
-    assert group.libraries == ['django']
+    sys.path.append("env/lib/python3.6")
+    assert group.libraries == ["django"]
     sys.path[:] = old_sys_path

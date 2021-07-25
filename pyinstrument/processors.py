@@ -1,25 +1,34 @@
-'''
+"""
 Processors are functions that take a Frame object, and mutate the tree to perform some task.
 
 They can mutate the tree in-place, but also can change the root frame, they should always be
-called like:
+called like::
 
     frame = processor(frame, options=...)
-'''
+"""
+
+from __future__ import annotations
 
 import re
 from operator import methodcaller
-from pyinstrument.frame import FrameGroup, SelfTimeFrame
+from typing import Callable, Union
+
+from pyinstrument.frame import BaseFrame, FrameGroup, SelfTimeFrame
+
+ProcessorType = Callable[..., Union[BaseFrame, None]]
 
 
 def remove_importlib(frame, options):
+    """
+    Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
+    """
     if frame is None:
         return None
 
     for child in frame.children:
         remove_importlib(child, options=options)
 
-        if '<frozen importlib._bootstrap' in child.file_path:
+        if "<frozen importlib._bootstrap" in child.file_path:
             # remove this node, moving the self_time and children up to the parent
             frame.self_time += child.self_time
             frame.add_children(child.children, after=child)
@@ -29,14 +38,14 @@ def remove_importlib(frame, options):
 
 
 def aggregate_repeated_calls(frame, options):
-    '''
+    """
     Converts a timeline into a time-aggregate summary.
 
     Adds together calls along the same call stack, so that repeated calls appear as the same
     frame. Removes time-linearity - frames are sorted according to total time spent.
 
     Useful for outputs that display a summary of execution (e.g. text and html outputs)
-    '''
+    """
     if frame is None:
         return None
 
@@ -65,17 +74,25 @@ def aggregate_repeated_calls(frame, options):
     # sort the children by time
     # it's okay to use the internal _children list, sinde we're not changing the tree
     # structure.
-    frame._children.sort(key=methodcaller('time'), reverse=True)  # pylint: disable=W0212
+    frame._children.sort(key=methodcaller("time"), reverse=True)  # pylint: disable=W0212
 
     return frame
 
 
 def group_library_frames_processor(frame, options):
+    """
+    Groups frames that should be hidden into :class:`FrameGroup` objects,
+    according to ``hide_regex`` and ``show_regex`` in the options dict. If
+    both match, 'show' has precedence.
+
+    Single frames are not grouped, there must be at least two frames in a
+    group.
+    """
     if frame is None:
         return None
 
-    hide_regex = options.get('hide_regex')
-    show_regex = options.get('show_regex')
+    hide_regex = options.get("hide_regex")
+    show_regex = options.get("show_regex")
 
     def should_be_hidden(frame):
         should_show = (show_regex is not None) and re.match(show_regex, frame.file_path)
@@ -96,8 +113,9 @@ def group_library_frames_processor(frame, options):
                 add_frames_to_group(child, group)
 
     for child in frame.children:
-        if not child.group and (should_be_hidden(child)
-                                and any(should_be_hidden(cc) for cc in child.children)):
+        if not child.group and (
+            should_be_hidden(child) and any(should_be_hidden(cc) for cc in child.children)
+        ):
             group = FrameGroup(child)
             add_frames_to_group(child, group)
 
@@ -107,9 +125,9 @@ def group_library_frames_processor(frame, options):
 
 
 def merge_consecutive_self_time(frame, options):
-    '''
-    Combines consecutive 'self time' frames
-    '''
+    """
+    Combines consecutive 'self time' frames.
+    """
     if frame is None:
         return None
 
@@ -134,10 +152,11 @@ def merge_consecutive_self_time(frame, options):
 
 
 def remove_unnecessary_self_time_nodes(frame, options):
-    '''
-    When a frame has only one child, and that is a self-time frame, remove that node, since it's
-    unnecessary - it clutters the output and offers no additional information.
-    '''
+    """
+    When a frame has only one child, and that is a self-time frame, remove
+    that node and move the time to parent, since it's unnecessary - it
+    clutters the output and offers no additional information.
+    """
     if frame is None:
         return None
 
@@ -153,16 +172,16 @@ def remove_unnecessary_self_time_nodes(frame, options):
 
 
 def remove_irrelevant_nodes(frame, options, total_time=None):
-    '''
-    Remove nodes that represent less than e.g. 1% of the output
-    '''
+    """
+    Remove nodes that represent less than e.g. 1% of the output.
+    """
     if frame is None:
         return None
 
     if total_time is None:
         total_time = frame.time()
 
-    filter_threshold = options.get('filter_threshold', 0.01)
+    filter_threshold = options.get("filter_threshold", 0.01)
 
     for child in frame.children:
         proportion_of_total = child.time() / total_time
