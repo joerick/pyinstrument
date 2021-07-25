@@ -1,5 +1,5 @@
 How it works
-------------
+============
 
 Pyinstrument interrupts the program every 1ms[^interval] and records the entire stack at
 that point. It does this using a C extension and `PyEval_SetProfile`, but only
@@ -13,7 +13,7 @@ recording a stackframe, but if there is a long time spent in a single function
 call, it will be recorded at the end of that call. So effectively those
 samples were 'bunched up' and recorded at the end.
 
-### Statistical profiling (not tracing)
+## Statistical profiling (not tracing)
 
 Pyinstrument is a statistical profiler - it doesn't track every
 function call that your program makes. Instead, it's recording the call stack
@@ -35,7 +35,7 @@ using a tracing profiler, code that makes a lot of Python function calls
 invokes the profiler a lot, making it slower. This distorts the
 results, and might lead you to optimise the wrong part of your program!
 
-### Full-stack recording
+## Full-stack recording
 
 The standard Python profilers [`profile`][1] and [`cProfile`][2] show you a
 big list of functions, ordered by the time spent in each function.
@@ -90,7 +90,7 @@ Program: examples/django_example/manage.py runserver --nothreading --noreload
          └─ 0.126 hello_world  django_example/views.py:4
 ```
 
-### 'Wall-clock' time (not CPU time)
+## 'Wall-clock' time (not CPU time)
 
 Pyinstrument records duration using 'wall-clock' time. When you're writing a
 program that downloads data, reads files, and talks to databases, all that
@@ -99,3 +99,39 @@ time is *included* in the tracked time by pyinstrument.
 That's really important when debugging performance problems, since Python is
 often used as a 'glue' language between other services. The problem might not
 be in your program, but you should still be able to find why it's slow.
+
+## Async profiling
+
+pyinstrument can profile async programs that use `async` and `await`. This
+async support works by tracking the 'context' of execution, as provided by the
+built-in [contextvars] module.
+
+[contextvars]: https://docs.python.org/3/library/contextvars.html
+
+When you start a Profiler with the {py:attr}`async_mode <pyinstrument.Profiler.async_mode>` `enabled` or `strict` (not `disabled`), that Profiler is attached to the current async context.
+
+When profiling, pyinstrument keeps an eye on the context. When execution exits
+the context, it captures the `await` stack that caused the context to exit.
+Any time spent outside the context is attributed to the that halted execution
+of the `await`.
+
+Async contexts are inherited, so tasks started when a profiler is active are
+also profiled.
+
+<div class="spacer" style="height: 1em"></div>
+
+![Async context inheritance](img/async-context.svg)
+
+pyinstrument supports async mode with Asyncio and Trio, other `async`/`await`
+frameworks should work as long as they use [contextvars].
+
+[Greenlet] doesn't use `async` and `await`, and alters the Python stack during
+execution, so is not fully supported. However, because greenlet also supports
+[contextvars], we can limit profiling to one green thread, using `strict`
+mode. In `strict` mode, whenever your green thread is halted the time will be
+tracked in an `<out-of-context>` frame. Alternatively, if you want to see
+what's happening when your green thread is halted, you can use
+`async_mode='disabled'` - just be aware that readouts might be misleading if
+multiple tasks are running concurrently.
+
+[greenlet]: https://pypi.org/project/greenlet/
