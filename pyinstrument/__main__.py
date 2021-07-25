@@ -249,7 +249,11 @@ def main():
             code = "run_path(progname, run_name='__main__')"
             globs = {"run_path": runpy.run_path, "progname": progname}
 
-        profiler = Profiler()
+        # there is no point using async mode for command line invocation,
+        # because it will always be capturing the whole program, we never want
+        # any execution to be <out-of-context>, and it avoids duplicate
+        # profiler errors.
+        profiler = Profiler(async_mode="disabled")
 
         profiler.start()
 
