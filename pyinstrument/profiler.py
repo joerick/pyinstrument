@@ -71,12 +71,12 @@ class Profiler:
         Configures how this Profiler tracks time in a program that uses
         async/await.
 
-        ``enable``
+        ``enabled``
             When this profiler sees an ``await``, time is logged in the function
             that awaited, rather than observing other coroutines or the event
             loop.
 
-        ``disable``
+        ``disabled``
             This profiler doesn't attempt to track ``await``. In a program that
             uses async/await, this will interleave other coroutines and event
             loop machinery in the profile. Use this option if async support is
@@ -214,7 +214,9 @@ class Profiler:
         async_state: AsyncState | None,
     ):
         if not self._active_session:
-            raise RuntimeError("Received a call stack without an active session")
+            raise RuntimeError(
+                "Received a call stack without an active session. Please file an issue on pyinstrument Github describing how you made this happen!"
+            )
 
         if (
             async_state
