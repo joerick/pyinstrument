@@ -14,8 +14,8 @@ print a profile report to the console.
 
 ## Python API
 
-The Python API is also available, for writing integrations with Pyinstrument
-with other tools.
+The Python API is also available, for calling pyinstrument directly from
+Python and writing integrations with with other tools.
 
 ### The Profiler object
 
