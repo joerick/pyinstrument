@@ -97,7 +97,7 @@ Changelog
 
           _     ._   __/__   _ _  _  _ _/_   Recorded: 18:30:43  Samples:  2
          /_//_/// /_\ / //_// / //_'/ //     Duration: 1.007     CPU time: 0.001
-        /   _/                      v3.4.2
+        /   _/                      v4.0.0
 
         Program: examples/async_example_simple.py
 
