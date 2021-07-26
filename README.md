@@ -112,7 +112,7 @@ Changelog
 -   Pyinstrument has a [documentation site], including full Python API docs!
 
 [async profiling documentation]: https://pyinstrument.readthedocs.io/en/latest/how-it-works.html#async-profiling
-[async_mode]: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode
+[Profiler.async_mode]: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode
 [documentation site]: https://pyinstrument.readthedocs.io
 
 ### v3.4.2
