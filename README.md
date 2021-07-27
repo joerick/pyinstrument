@@ -52,6 +52,10 @@ Known issues
 Changelog
 ---------
 
+### v4.0.2
+
+-   Fix some packaging issues
+
 ### v4.0.0
 
 -   Async support! Pyinstrument now detects when an async task hits an await,
