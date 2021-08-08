@@ -111,7 +111,11 @@ static int ProfilerState_UpdateContextVar(ProfilerState *self) {
 static double ProfilerState_GetTime(ProfilerState *self) {
     if (self->timer_func != NULL) {
         // when a self->timer_func is set, call that.
+#if PYTHON_VERSION_HEX >= 0x03090000
+        PyObject *result = PyObject_CallNoArgs(self->timer_func);
+#else
         PyObject *result = PyObject_CallObject(self->timer_func, NULL);
+#endif
         if (result == NULL) {
             return -1.0;
         }
@@ -228,6 +232,7 @@ trace_init(void)
     return 0;
 }
 
+#if PY_VERSION_HEX < 0x03090000
 static PyObject *
 call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg)
 {
@@ -256,7 +261,6 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
 
     /* call the Python-level target function */
     result = PyObject_CallObject(pState->target, args);
-
     PyFrame_LocalsToFast(frame, 1);
     if (result == NULL)
         PyTraceBack_Here(frame);
@@ -265,6 +269,30 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
     Py_DECREF(args);
     return result;
 }
+#else
+static PyObject *
+call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg)
+{
+    PyObject *whatstr;
+    PyObject *result;
+
+    whatstr = whatstrings[what];
+    Py_INCREF(whatstr);
+
+    PyFrame_FastToLocals(frame);
+    Py_INCREF(frame);
+
+    PyObject *callargs[4] = { NULL, (PyObject *) frame, whatstr, arg == NULL ? Py_None : arg };
+
+    result = PyObject_Vectorcall(pState->target, callargs + 1, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
+    PyFrame_LocalsToFast(frame, 1);
+    if (result == NULL)
+        PyTraceBack_Here(frame);
+
+
+    return result;
+}
+#endif
 
 //////////////////////
 // Public functions //
