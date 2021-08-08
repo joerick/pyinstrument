@@ -111,7 +111,7 @@ static int ProfilerState_UpdateContextVar(ProfilerState *self) {
 static double ProfilerState_GetTime(ProfilerState *self) {
     if (self->timer_func != NULL) {
         // when a self->timer_func is set, call that.
-        PyObject *result = PyEval_CallObject(self->timer_func, NULL);
+        PyObject *result = PyObject_CallObject(self->timer_func, NULL);
         if (result == NULL) {
             return -1.0;
         }
@@ -255,7 +255,7 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
     PyTuple_SET_ITEM(args, 2, arg);
 
     /* call the Python-level target function */
-    result = PyEval_CallObject(pState->target, args);
+    result = PyObject_CallObject(pState->target, args);
 
     PyFrame_LocalsToFast(frame, 1);
     if (result == NULL)
