@@ -273,22 +273,12 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
 static PyObject *
 call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg)
 {
-    PyObject *whatstr;
-    PyObject *result;
-
-    whatstr = whatstrings[what];
-    Py_INCREF(whatstr);
-
     PyFrame_FastToLocals(frame);
-    Py_INCREF(frame);
-
-    PyObject *callargs[4] = { NULL, (PyObject *) frame, whatstr, arg == NULL ? Py_None : arg };
-
-    result = PyObject_Vectorcall(pState->target, callargs + 1, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
+    PyObject *callargs[4] = { NULL, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg };
+    PyObject *result = PyObject_Vectorcall(pState->target, callargs + 1, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
     PyFrame_LocalsToFast(frame, 1);
     if (result == NULL)
         PyTraceBack_Here(frame);
-
 
     return result;
 }
