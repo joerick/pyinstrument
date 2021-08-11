@@ -55,6 +55,7 @@ def test_remove_importlib():
     assert frame.time() == approx(0.5)
 
     frame = processors.remove_importlib(frame, options={})
+    assert frame
 
     assert frame.self_time == approx(0.2)  # the root gets the self_time from the importlib
     assert frame.time() == approx(0.5)
@@ -91,6 +92,7 @@ def test_merge_consecutive_self_time():
     assert frame.time() == approx(0.55)
 
     frame = processors.merge_consecutive_self_time(frame, options={})
+    assert frame
 
     assert frame.time() == approx(0.55)
     assert len(frame.children) == 4
@@ -140,6 +142,7 @@ def test_aggregate_repeated_calls():
 
     frame = processors.aggregate_repeated_calls(frame, options={})
 
+    assert frame
     assert frame.time() == approx(0.85)
     # children should be sorted by time
     assert len(frame.children) == 3
@@ -181,6 +184,7 @@ def test_remove_irrelevant_nodes():
 
     frame = processors.remove_irrelevant_nodes(frame, options={})
 
+    assert frame
     assert frame.time() == approx(11.01)
     # check the calculate metrics function was deleted
     assert len(frame.children) == 3
@@ -217,6 +221,7 @@ def test_remove_unnecessary_self_time_nodes():
 
     frame = processors.remove_unnecessary_self_time_nodes(frame, options={})
 
+    assert frame
     assert frame.time() == approx(1.3)
     assert len(frame.children) == 4
     # check the self time node was deleted
@@ -267,10 +272,12 @@ def test_group_library_frames_processor():
 
     frame = processors.group_library_frames_processor(frame, options={})
 
+    assert frame
     assert frame.time() == approx(1.4)
     group_root = frame.children[0]
 
     group = group_root.group
+    assert group
     assert group.root == group_root
 
     for frame in group.frames:
