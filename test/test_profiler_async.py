@@ -196,33 +196,30 @@ def test_greenlet():
 
 
 def test_strict_with_greenlet():
-    for _ in range(10000):
-        profiler = Profiler(async_mode="strict")
+    profiler = Profiler(async_mode="strict")
 
-        with fake_time():
-            profiler.start()
+    with fake_time():
+        profiler.start()
 
-            def y(duration):
-                time.sleep(duration)
+        def y(duration):
+            time.sleep(duration)
 
-            y(0.1)
-            greenlet.greenlet(y).switch(0.1)
+        y(0.1)
+        greenlet.greenlet(y).switch(0.1)
 
-            session = profiler.stop()
+        session = profiler.stop()
 
-        profiler.print()
+    profiler.print()
 
-        root_frame = session.root_frame()
-        assert root_frame
+    root_frame = session.root_frame()
+    assert root_frame
 
-        assert root_frame.time() == pytest.approx(0.2, rel=0.1)
+    assert root_frame.time() == pytest.approx(0.2, rel=0.1)
 
-        sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
-        assert len(sleep_frames) == 1
-        assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
+    sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
+    assert len(sleep_frames) == 1
+    assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
 
-        out_of_context_frames = [
-            f for f in walk_frames(root_frame) if isinstance(f, OutOfContextFrame)
-        ]
-        assert len(out_of_context_frames) == 1
-        assert out_of_context_frames[0].time() == pytest.approx(0.1, rel=0.1)
+    out_of_context_frames = [f for f in walk_frames(root_frame) if isinstance(f, OutOfContextFrame)]
+    assert len(out_of_context_frames) == 1
+    assert out_of_context_frames[0].time() == pytest.approx(0.1, rel=0.1)
