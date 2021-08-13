@@ -3,11 +3,9 @@ from __future__ import annotations
 import inspect
 import sys
 import time
-import timeit
 import types
-from contextvars import ContextVar, Token
 from time import process_time
-from typing import IO, List, Optional, Tuple
+from typing import IO, Any
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
@@ -16,6 +14,8 @@ from pyinstrument.stack_sampler import AsyncState, build_call_stack, get_stack_s
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
+# pyright: strict
+
 
 class ActiveProfilerSession:
     frame_records: list[tuple[list[str], float]]
@@ -23,7 +23,7 @@ class ActiveProfilerSession:
     def __init__(
         self,
         start_time: float,
-        start_process_time: float | None,
+        start_process_time: float,
         start_call_stack: list[str],
     ) -> None:
         self.start_time = start_time
@@ -98,7 +98,7 @@ class Profiler:
         """
         return self._last_session
 
-    def start(self, caller_frame: types.FrameType = None):
+    def start(self, caller_frame: types.FrameType | None = None):
         """
         Instructs the profiler to start - to begin observing the program's execution and recording
         frames.
@@ -145,10 +145,7 @@ class Profiler:
 
         get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
 
-        if self._active_session.start_process_time:
-            cpu_time = process_time() - self._active_session.start_process_time
-        else:
-            cpu_time = None
+        cpu_time = process_time() - self._active_session.start_process_time
 
         session = Session(
             frame_records=self._active_session.frame_records,
@@ -203,7 +200,7 @@ class Profiler:
         self.start(caller_frame=inspect.currentframe().f_back)  # type: ignore
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any):
         self.stop()
 
     # pylint: disable=W0613
@@ -280,7 +277,13 @@ class Profiler:
             file=file,
         )
 
-    def output_text(self, unicode=False, color=False, show_all=False, timeline=False) -> str:
+    def output_text(
+        self,
+        unicode: bool = False,
+        color: bool = False,
+        show_all: bool = False,
+        timeline: bool = False,
+    ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
@@ -288,13 +291,13 @@ class Profiler:
             unicode=unicode, color=color, show_all=show_all, timeline=timeline
         ).render(self.last_session)
 
-    def output_html(self, timeline=False) -> str:
+    def output_html(self, timeline: bool = False) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
         return renderers.HTMLRenderer(timeline=timeline).render(self.last_session)
 
-    def open_in_browser(self, timeline=False):
+    def open_in_browser(self, timeline: bool = False):
         """
         Opens the last profile session in your web browser.
         """

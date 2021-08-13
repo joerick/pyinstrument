@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, List
 
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
+from pyinstrument.session import Session
+
+# pyright: strict
+
 
 ProcessorList = List[processors.ProcessorType]
 
@@ -25,7 +29,12 @@ class Renderer:
     Dictionary containing processor options, passed to each processor.
     """
 
-    def __init__(self, show_all=False, timeline=False, processor_options=None):
+    def __init__(
+        self,
+        show_all: bool = False,
+        timeline: bool = False,
+        processor_options: dict[str, Any] | None = None,
+    ):
         """
         :param show_all: Don't hide library frames - show everything that pyinstrument captures.
         :param timeline: Instead of aggregating time, leave the samples in chronological order.
@@ -53,7 +62,7 @@ class Renderer:
             frame = processor(frame, options=self.processor_options)
         return frame
 
-    def render(self, session):
+    def render(self, session: Session) -> str:
         """
         Return a string that contains the rendered form of `frame`.
         """

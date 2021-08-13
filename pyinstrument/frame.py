@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+# pyright: strict
+
 import os
 import sys
 import uuid
 from typing import Sequence
-
-# pyright: strict
 
 
 class BaseFrame:
@@ -84,6 +84,10 @@ class BaseFrame:
         raise NotImplementedError()
 
     @property
+    def identifier(self) -> str:
+        raise NotImplementedError()
+
+    @property
     def function(self) -> str | None:
         raise NotImplementedError()
 
@@ -120,6 +124,7 @@ class Frame(BaseFrame):
     _children: list[BaseFrame]
     _time: float | None
     _await_time: float | None
+    _identifer: str
 
     def __init__(
         self,
@@ -130,7 +135,7 @@ class Frame(BaseFrame):
     ):
         super().__init__(parent=parent, self_time=self_time)
 
-        self.identifier = identifier
+        self._identifier = identifier
         self._children = []
 
         self._time = None
@@ -168,6 +173,10 @@ class Frame(BaseFrame):
         else:
             for frame in frames:
                 self.add_child(frame)
+
+    @property
+    def identifier(self) -> str:
+        return self._identifer
 
     @property
     def children(self) -> Sequence[BaseFrame]:

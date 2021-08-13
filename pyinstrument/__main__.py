@@ -262,8 +262,7 @@ def main():
         except (SystemExit, KeyboardInterrupt):
             pass
 
-        profiler.stop()
-        session = profiler.last_session
+        session = profiler.stop()
 
     if options.output_html:
         options.renderer = "html"

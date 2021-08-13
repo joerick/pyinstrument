@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any
+import os
+from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -11,3 +12,8 @@ else:
             return str
 
     LiteralStr = _LiteralStr()
+
+if TYPE_CHECKING:
+    PathOrStr = Union[str, os.PathLike[str]]
+else:
+    PathOrStr = Union[str, "os.PathLike[str]"]

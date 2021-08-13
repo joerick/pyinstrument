@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import codecs
-import io
 import os
 import tempfile
 import urllib.parse
 import webbrowser
+from typing import Any
 
 from pyinstrument import processors
-from pyinstrument.renderers.base import Renderer
+from pyinstrument.renderers.base import ProcessorList, Renderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
+from pyinstrument.session import Session
+
+# pyright: strict
 
 
 class HTMLRenderer(Renderer):
@@ -15,10 +20,10 @@ class HTMLRenderer(Renderer):
     Renders a rich, interactive web page, as a string of HTML.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
-    def render(self, session):
+    def render(self, session: Session):
         resources_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "html_resources/")
 
         if not os.path.exists(os.path.join(resources_dir, "app.js")):
@@ -54,7 +59,7 @@ class HTMLRenderer(Renderer):
 
         return page
 
-    def open_in_browser(self, session, output_filename=None):
+    def open_in_browser(self, session: Session, output_filename: str | None = None):
         """
         Open the rendered HTML in a webbrowser.
 
@@ -76,13 +81,13 @@ class HTMLRenderer(Renderer):
         webbrowser.open(url)
         return output_filename
 
-    def render_json(self, session):
+    def render_json(self, session: Session):
         json_renderer = JSONRenderer()
         json_renderer.processors = self.processors
         json_renderer.processor_options = self.processor_options
         return json_renderer.render(session)
 
-    def default_processors(self):
+    def default_processors(self) -> ProcessorList:
         return [
             processors.remove_importlib,
             processors.merge_consecutive_self_time,
