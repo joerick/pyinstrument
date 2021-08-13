@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import codecs
 import fnmatch
 import glob
@@ -7,10 +9,12 @@ import runpy
 import shutil
 import sys
 import time
-from typing import Any, List, cast
+from typing import Any, List, Type, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
+from pyinstrument.frame import BaseFrame
+from pyinstrument.processors import ProcessorOptions
 from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.session import Session
 from pyinstrument.util import (
@@ -20,6 +24,8 @@ from pyinstrument.util import (
     object_with_import_path,
 )
 from pyinstrument.vendor import appdirs
+
+# pyright: strict
 
 
 def main():
@@ -31,12 +37,13 @@ def main():
     parser = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
-    def dash_m_callback(option, opt, value, parser):
-        parser.values.module_name = value
+    def dash_m_callback(option: str, opt: str, value: str, parser: optparse.OptionParser):
+        parser.values.module_name = value  # type: ignore
+
         # everything after the -m argument should be passed to that module
-        parser.values.module_args = parser.rargs + parser.largs
-        parser.rargs[:] = []
-        parser.largs[:] = []
+        parser.values.module_args = parser.rargs + parser.largs  # type: ignore
+        parser.rargs[:] = []  # type: ignore
+        parser.largs[:] = []  # type: ignore
 
     parser.add_option(
         "",
@@ -314,7 +321,7 @@ def main():
         print("")
 
 
-def get_renderer_class(renderer):
+def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
     if renderer == "text":
         return renderers.ConsoleRenderer
     elif renderer == "html":
@@ -325,15 +332,15 @@ def get_renderer_class(renderer):
         return object_with_import_path(renderer)
 
 
-def report_dir():
-    data_dir = appdirs.user_data_dir("pyinstrument", "com.github.joerick")
+def report_dir() -> str:
+    data_dir: str = appdirs.user_data_dir("pyinstrument", "com.github.joerick")  # type: ignore
     report_dir = os.path.join(data_dir, "reports")
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)
     return report_dir
 
 
-def load_report(identifier=None):
+def load_report(identifier: str) -> Session:
     """
     Returns the session referred to by identifier
     """
@@ -341,7 +348,7 @@ def load_report(identifier=None):
     return Session.load(path)
 
 
-def save_report(session):
+def save_report(session: Session):
     """
     Saves the session to a temp file, and returns that path.
     Also prunes the number of reports to 10 so there aren't loads building up.
@@ -361,13 +368,18 @@ def save_report(session):
 
 
 # pylint: disable=W0613
-def remove_first_pyinstrument_frame_processor(frame, options):
+def remove_first_pyinstrument_frame_processor(
+    frame: BaseFrame | None, options: ProcessorOptions
+) -> BaseFrame | None:
     """
     The first frame when using the command line is always the __main__ function. I want to remove
     that from the output.
     """
     if frame is None:
         return None
+
+    if frame.file_path is None:
+        return frame
 
     if "pyinstrument" in frame.file_path and len(frame.children) == 1:
         frame = frame.children[0]

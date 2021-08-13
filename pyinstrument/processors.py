@@ -11,24 +11,31 @@ from __future__ import annotations
 
 import re
 from operator import methodcaller
-from typing import Callable, Union
+from typing import Any, Callable, Dict, Union
 
-from pyinstrument.frame import BaseFrame, FrameGroup, SelfTimeFrame
+from pyinstrument.frame import BaseFrame, Frame, FrameGroup, SelfTimeFrame
+
+# pyright: strict
+
 
 ProcessorType = Callable[..., Union[BaseFrame, None]]
+ProcessorOptions = Dict[str, Any]
 
 
-def remove_importlib(frame, options):
+def remove_importlib(frame: BaseFrame | None, options: ProcessorOptions) -> BaseFrame | None:
     """
     Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
     """
     if frame is None:
         return None
 
+    if not isinstance(frame, Frame):
+        return frame
+
     for child in frame.children:
         remove_importlib(child, options=options)
 
-        if "<frozen importlib._bootstrap" in child.file_path:
+        if child.file_path and "<frozen importlib._bootstrap" in child.file_path:
             # remove this node, moving the self_time and children up to the parent
             frame.self_time += child.self_time
             frame.add_children(child.children, after=child)
@@ -37,7 +44,9 @@ def remove_importlib(frame, options):
     return frame
 
 
-def aggregate_repeated_calls(frame, options):
+def aggregate_repeated_calls(
+    frame: BaseFrame | None, options: ProcessorOptions
+) -> BaseFrame | None:
     """
     Converts a timeline into a time-aggregate summary.
 
@@ -49,7 +58,7 @@ def aggregate_repeated_calls(frame, options):
     if frame is None:
         return None
 
-    children_by_identifier = {}
+    children_by_identifier: dict[str, BaseFrame] = {}
 
     # iterate over a copy of the children since it's going to mutate while we're iterating
     for child in frame.children:
@@ -59,6 +68,8 @@ def aggregate_repeated_calls(frame, options):
             # combine the two frames, putting the children and self_time into the aggregate frame.
             aggregate_frame.self_time += child.self_time
             if child.children:
+                if not isinstance(aggregate_frame, Frame):
+                    raise Exception("cannot aggregate children into a DummyFrame")
                 aggregate_frame.add_children(child.children)
 
             # remove this frame, it's been incorporated into aggregate_frame
@@ -74,12 +85,14 @@ def aggregate_repeated_calls(frame, options):
     # sort the children by time
     # it's okay to use the internal _children list, sinde we're not changing the tree
     # structure.
-    frame._children.sort(key=methodcaller("time"), reverse=True)  # pylint: disable=W0212
+    frame._children.sort(key=methodcaller("time"), reverse=True)  # type: ignore # noqa
 
     return frame
 
 
-def group_library_frames_processor(frame, options):
+def group_library_frames_processor(
+    frame: BaseFrame | None, options: ProcessorOptions
+) -> BaseFrame | None:
     """
     Groups frames that should be hidden into :class:`FrameGroup` objects,
     according to ``hide_regex`` and ``show_regex`` in the options dict. If
@@ -91,12 +104,14 @@ def group_library_frames_processor(frame, options):
     if frame is None:
         return None
 
-    hide_regex = options.get("hide_regex")
-    show_regex = options.get("show_regex")
+    hide_regex: str | None = options.get("hide_regex")
+    show_regex: str | None = options.get("show_regex")
 
-    def should_be_hidden(frame):
-        should_show = (show_regex is not None) and re.match(show_regex, frame.file_path)
-        should_hide = (hide_regex is not None) and re.match(hide_regex, frame.file_path)
+    def should_be_hidden(frame: BaseFrame):
+        frame_file_path = frame.file_path or ""
+
+        should_show = (show_regex is not None) and re.match(show_regex, frame_file_path)
+        should_hide = (hide_regex is not None) and re.match(hide_regex, frame_file_path)
 
         # check for explicit user show/hide rules. 'show' has precedence.
         if should_show:
@@ -106,7 +121,7 @@ def group_library_frames_processor(frame, options):
 
         return not frame.is_application_code
 
-    def add_frames_to_group(frame, group):
+    def add_frames_to_group(frame: BaseFrame, group: FrameGroup):
         group.add_frame(frame)
         for child in frame.children:
             if should_be_hidden(child):
@@ -124,7 +139,9 @@ def group_library_frames_processor(frame, options):
     return frame
 
 
-def merge_consecutive_self_time(frame, options):
+def merge_consecutive_self_time(
+    frame: BaseFrame | None, options: ProcessorOptions
+) -> BaseFrame | None:
     """
     Combines consecutive 'self time' frames.
     """
@@ -151,7 +168,9 @@ def merge_consecutive_self_time(frame, options):
     return frame
 
 
-def remove_unnecessary_self_time_nodes(frame, options):
+def remove_unnecessary_self_time_nodes(
+    frame: BaseFrame | None, options: ProcessorOptions
+) -> BaseFrame | None:
     """
     When a frame has only one child, and that is a self-time frame, remove
     that node and move the time to parent, since it's unnecessary - it
@@ -171,7 +190,9 @@ def remove_unnecessary_self_time_nodes(frame, options):
     return frame
 
 
-def remove_irrelevant_nodes(frame, options, total_time=None):
+def remove_irrelevant_nodes(
+    frame: BaseFrame | None, options: ProcessorOptions, total_time: float = 0
+) -> BaseFrame | None:
     """
     Remove nodes that represent less than e.g. 1% of the output.
     """

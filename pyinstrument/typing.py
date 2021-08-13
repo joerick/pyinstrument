@@ -13,7 +13,4 @@ else:
 
     LiteralStr = _LiteralStr()
 
-if TYPE_CHECKING:
-    PathOrStr = Union[str, os.PathLike[str]]
-else:
-    PathOrStr = Union[str, "os.PathLike[str]"]
+PathOrStr = Union[str, "os.PathLike[str]"]

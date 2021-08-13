@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-# pyright: strict
-
 import os
 import sys
 import uuid
 from typing import Sequence
+
+# pyright: strict
 
 
 class BaseFrame:
@@ -161,7 +161,7 @@ class Frame(BaseFrame):
 
         self._invalidate_time_caches()
 
-    def add_children(self, frames: list[BaseFrame], after: BaseFrame | None = None):
+    def add_children(self, frames: Sequence[BaseFrame], after: BaseFrame | None = None):
         """
         Convenience method to add multiple frames at once.
         """

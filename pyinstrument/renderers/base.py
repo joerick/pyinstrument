@@ -56,7 +56,7 @@ class Renderer:
         """
         raise NotImplementedError()
 
-    def preprocess(self, root_frame: BaseFrame) -> BaseFrame | None:
+    def preprocess(self, root_frame: BaseFrame | None) -> BaseFrame | None:
         frame = root_frame
         for processor in self.processors:
             frame = processor(frame, options=self.processor_options)
