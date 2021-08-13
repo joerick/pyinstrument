@@ -168,6 +168,9 @@ def test_profiler_task_isolation(engine):
     assert sum(f.time() for f in await_frames) == pytest.approx(0.5, rel=0.1)
 
 
+PYTHON_3_10_OR_LATER = sys.version_info >= (3, 10)
+
+
 def test_greenlet():
     profiler = Profiler()
 
@@ -189,10 +192,19 @@ def test_greenlet():
 
     assert root_frame.time() == pytest.approx(0.2, rel=0.1)
 
-    sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
-    assert len(sleep_frames) == 2
-    assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
-    assert sleep_frames[1].time() == pytest.approx(0.1, rel=0.1)
+    if PYTHON_3_10_OR_LATER:
+        switch_frames = [f for f in walk_frames(root_frame) if f.function == "greenlet.switch"]
+        assert len(switch_frames) == 1
+        assert switch_frames[0].time() == pytest.approx(0.1, rel=0.1)
+
+        sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
+        assert len(sleep_frames) == 1
+        assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
+    else:
+        sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
+        assert len(sleep_frames) == 2
+        assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
+        assert sleep_frames[1].time() == pytest.approx(0.1, rel=0.1)
 
 
 def test_strict_with_greenlet():
@@ -220,6 +232,10 @@ def test_strict_with_greenlet():
     assert len(sleep_frames) == 1
     assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
 
-    out_of_context_frames = [f for f in walk_frames(root_frame) if isinstance(f, OutOfContextFrame)]
-    assert len(out_of_context_frames) == 1
-    assert out_of_context_frames[0].time() == pytest.approx(0.1, rel=0.1)
+    if PYTHON_3_10_OR_LATER:
+        greenlet_frames = [f for f in walk_frames(root_frame) if f.function == "greenlet.switch"]
+    else:
+        greenlet_frames = [f for f in walk_frames(root_frame) if isinstance(f, OutOfContextFrame)]
+
+    assert len(greenlet_frames) == 1
+    assert greenlet_frames[0].time() == pytest.approx(0.1, rel=0.1)
