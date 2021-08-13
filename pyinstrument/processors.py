@@ -191,7 +191,7 @@ def remove_unnecessary_self_time_nodes(
 
 
 def remove_irrelevant_nodes(
-    frame: BaseFrame | None, options: ProcessorOptions, total_time: float = 0
+    frame: BaseFrame | None, options: ProcessorOptions, total_time: float | None = None
 ) -> BaseFrame | None:
     """
     Remove nodes that represent less than e.g. 1% of the output.

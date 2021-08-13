@@ -124,7 +124,7 @@ class Frame(BaseFrame):
     _children: list[BaseFrame]
     _time: float | None
     _await_time: float | None
-    _identifer: str
+    _identifier: str
 
     def __init__(
         self,
@@ -176,7 +176,7 @@ class Frame(BaseFrame):
 
     @property
     def identifier(self) -> str:
-        return self._identifer
+        return self._identifier
 
     @property
     def children(self) -> Sequence[BaseFrame]:
