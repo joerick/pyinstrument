@@ -1,7 +1,7 @@
 # virtualenv
 env/
 env2/
-env3/
+env3*/
 .Python
 /env
 

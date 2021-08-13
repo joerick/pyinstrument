@@ -16,18 +16,6 @@ class SampleCounter:
         self.count += 1
 
 
-@pytest.fixture(autouse=True)
-def check_sampler_state():
-    assert sys.getprofile() is None
-    assert len(stack_sampler.get_stack_sampler().subscribers) == 0
-
-    yield
-
-    assert sys.getprofile() is None
-    assert len(stack_sampler.get_stack_sampler().subscribers) == 0
-    stack_sampler.thread_locals.__dict__.clear()
-
-
 def test_create():
     sampler = stack_sampler.get_stack_sampler()
     assert sampler is not None
