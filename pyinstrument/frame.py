@@ -3,13 +3,15 @@ from __future__ import annotations
 import os
 import sys
 import uuid
-from typing import List, Sequence
+from typing import Sequence
+
+# pyright: strict
 
 
 class BaseFrame:
     group: FrameGroup | None
 
-    def __init__(self, parent: Frame = None, self_time: float = 0):
+    def __init__(self, parent: Frame | None = None, self_time: float = 0):
         self.parent = parent
         self._self_time = self_time
         self.group = None
@@ -19,8 +21,8 @@ class BaseFrame:
         Removes this frame from its parent, and nulls the parent link
         """
         if self.parent:
-            self.parent._children.remove(self)
-            self.parent._invalidate_time_caches()
+            self.parent._children.remove(self)  # type: ignore
+            self.parent._invalidate_time_caches()  # type: ignore
             self.parent = None
 
     @staticmethod
@@ -59,7 +61,7 @@ class BaseFrame:
         return self._self_time
 
     @self_time.setter
-    def self_time(self, self_time):
+    def self_time(self, self_time: float):
         self._self_time = self_time
         self._invalidate_time_caches()
 
@@ -82,31 +84,35 @@ class BaseFrame:
         raise NotImplementedError()
 
     @property
-    def function(self) -> str:
+    def identifier(self) -> str:
         raise NotImplementedError()
 
     @property
-    def file_path(self) -> str:
+    def function(self) -> str | None:
         raise NotImplementedError()
 
     @property
-    def line_no(self) -> int:
+    def file_path(self) -> str | None:
         raise NotImplementedError()
 
     @property
-    def file_path_short(self) -> str:
+    def line_no(self) -> int | None:
         raise NotImplementedError()
 
     @property
-    def is_application_code(self) -> bool:
+    def file_path_short(self) -> str | None:
         raise NotImplementedError()
 
     @property
-    def code_position_short(self) -> str:
+    def is_application_code(self) -> bool | None:
         raise NotImplementedError()
 
     @property
-    def children(self) -> list[BaseFrame]:
+    def code_position_short(self) -> str | None:
+        raise NotImplementedError()
+
+    @property
+    def children(self) -> Sequence[BaseFrame]:
         raise NotImplementedError()
 
 
@@ -118,17 +124,18 @@ class Frame(BaseFrame):
     _children: list[BaseFrame]
     _time: float | None
     _await_time: float | None
+    _identifier: str
 
     def __init__(
         self,
         identifier: str = "",
-        parent: Frame = None,
-        children: Sequence[BaseFrame] = None,
+        parent: Frame | None = None,
+        children: Sequence[BaseFrame] | None = None,
         self_time: float = 0,
     ):
         super().__init__(parent=parent, self_time=self_time)
 
-        self.identifier = identifier
+        self._identifier = identifier
         self._children = []
 
         self._time = None
@@ -138,7 +145,7 @@ class Frame(BaseFrame):
             for child in children:
                 self.add_child(child)
 
-    def add_child(self, frame: BaseFrame, after: BaseFrame = None):
+    def add_child(self, frame: BaseFrame, after: BaseFrame | None = None):
         """
         Adds a child frame, updating the parent link.
         Optionally, insert the frame in a specific position by passing the frame to insert
@@ -154,7 +161,7 @@ class Frame(BaseFrame):
 
         self._invalidate_time_caches()
 
-    def add_children(self, frames, after=None):
+    def add_children(self, frames: Sequence[BaseFrame], after: BaseFrame | None = None):
         """
         Convenience method to add multiple frames at once.
         """
@@ -168,30 +175,34 @@ class Frame(BaseFrame):
                 self.add_child(frame)
 
     @property
-    def children(self):
+    def identifier(self) -> str:
+        return self._identifier
+
+    @property
+    def children(self) -> Sequence[BaseFrame]:
         # Return an immutable copy (this property should only be mutated using methods)
         # Also, returning a copy avoid problems when mutating while iterating, which happens a lot
         # in processors!
         return tuple(self._children)
 
     @property
-    def function(self):
+    def function(self) -> str | None:
         if self.identifier:
             return self.identifier.split("\x00")[0]
 
     @property
-    def file_path(self):
+    def file_path(self) -> str | None:
         if self.identifier:
             return self.identifier.split("\x00")[1]
 
     @property
-    def line_no(self):
+    def line_no(self) -> int | None:
         if self.identifier:
             return int(self.identifier.split("\x00")[2])
 
     @property
-    def file_path_short(self):
-        """ Return the path resolved against the closest entry in sys.path """
+    def file_path_short(self) -> str | None:
+        """Return the path resolved against the closest entry in sys.path"""
         if not hasattr(self, "_file_path_short"):
             if self.file_path:
                 result = None
@@ -215,7 +226,7 @@ class Frame(BaseFrame):
         return self._file_path_short
 
     @property
-    def is_application_code(self):
+    def is_application_code(self) -> bool | None:
         if self.identifier:
             file_path = self.file_path
 
@@ -241,7 +252,7 @@ class Frame(BaseFrame):
             return True
 
     @property
-    def code_position_short(self):
+    def code_position_short(self) -> str | None:
         if self.identifier:
             return "%s:%i" % (self.file_path_short, self.line_no)
 
@@ -295,20 +306,22 @@ class DummyFrame(BaseFrame):
     """
 
     @property
-    def _children(self):
+    def _children(self) -> list[BaseFrame]:
         return []
 
     @property
-    def children(self):
+    def children(self) -> list[BaseFrame]:
         return []
 
     @property
     def file_path(self):
-        return self.parent.file_path
+        if self.parent:
+            return self.parent.file_path
 
     @property
     def line_no(self):
-        return self.parent.line_no
+        if self.parent:
+            return self.parent.line_no
 
     @property
     def file_path_short(self):
@@ -388,8 +401,11 @@ OUT_OF_CONTEXT_FRAME_IDENTIFIER = "[out-of-context]\x00<out-of-context>\x000"
 
 
 class FrameGroup:
-    def __init__(self, root, **kwargs):
-        super().__init__(**kwargs)
+    _libraries: list[str] | None
+    _frames: list[BaseFrame]
+    _exit_frames: list[BaseFrame] | None
+
+    def __init__(self, root: BaseFrame):
         self.root = root
         self.id = str(uuid.uuid4())
         self._frames = []
@@ -399,24 +415,26 @@ class FrameGroup:
         self.add_frame(root)
 
     @property
-    def libraries(self):
+    def libraries(self) -> list[str]:
         if self._libraries is None:
-            libraries = []
+            libraries: list[str] = []
+
             for frame in self.frames:
-                library = frame.file_path_short.split(os.sep)[0]
-                library, _ = os.path.splitext(library)
-                if library and library not in libraries:
-                    libraries.append(library)
+                if frame.file_path_short:
+                    library = frame.file_path_short.split(os.sep)[0]
+                    library, _ = os.path.splitext(library)
+                    if library and library not in libraries:
+                        libraries.append(library)
             self._libraries = libraries
 
         return self._libraries
 
     @property
-    def frames(self):
+    def frames(self) -> Sequence[BaseFrame]:
         return tuple(self._frames)
 
     # pylint: disable=W0212
-    def add_frame(self, frame):
+    def add_frame(self, frame: BaseFrame):
         if frame.group:
             frame.group._frames.remove(frame)
 
@@ -429,7 +447,7 @@ class FrameGroup:
         Returns a list of frames whose children include a frame outside of the group
         """
         if self._exit_frames is None:
-            exit_frames = []
+            exit_frames: list[BaseFrame] = []
             for frame in self.frames:
                 if any(c.group != self for c in frame.children):
                     exit_frames.append(frame)

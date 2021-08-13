@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-import io
 import json
 from collections import deque
-from os import PathLike
-from typing import List, Tuple
+from typing import Any, List, Tuple, cast
 
-from pyinstrument.frame import AwaitTimeFrame, BaseFrame, DummyFrame, Frame, SelfTimeFrame
+from pyinstrument.frame import BaseFrame, DummyFrame, Frame, SelfTimeFrame
+from pyinstrument.typing import PathOrStr
+
+# pyright: strict
+
 
 ASSERTION_MESSAGE = (
     "Please raise an issue at http://github.com/pyinstrument/issues and "
@@ -20,12 +22,12 @@ class Session:
     def __init__(
         self,
         frame_records: list[FrameRecordType],
-        start_time,
-        duration,
-        sample_count,
-        start_call_stack,
-        program,
-        cpu_time=None,
+        start_time: float,
+        duration: float,
+        sample_count: int,
+        start_call_stack: list[str],
+        program: str,
+        cpu_time: float,
     ):
         """Session()
 
@@ -42,7 +44,7 @@ class Session:
         self.cpu_time = cpu_time
 
     @staticmethod
-    def load(filename: str | PathLike) -> Session:
+    def load(filename: PathOrStr) -> Session:
         """
         Load a previously saved session from disk.
 
@@ -52,7 +54,7 @@ class Session:
         with open(filename) as f:
             return Session.from_json(json.load(f))
 
-    def save(self, filename: str | PathLike) -> None:
+    def save(self, filename: PathOrStr) -> None:
         """
         Saves a Session object to disk, in a JSON format.
 
@@ -73,7 +75,7 @@ class Session:
         }
 
     @staticmethod
-    def from_json(json_dict):
+    def from_json(json_dict: dict[str, Any]):
         return Session(
             frame_records=json_dict["frame_records"],
             start_time=json_dict["start_time"],
@@ -109,7 +111,7 @@ class Session:
             cpu_time=session1.cpu_time + session2.cpu_time,
         )
 
-    def root_frame(self, trim_stem=True) -> BaseFrame | None:
+    def root_frame(self, trim_stem: bool = True) -> BaseFrame | None:
         """
         Parses the internal frame records and returns a tree of :class:`Frame`
         objects. This object can be renderered using a :class:`Renderer`
@@ -119,7 +121,7 @@ class Session:
         """
         root_frame = None
 
-        frame_stack = []
+        frame_stack: list[BaseFrame] = []
 
         for frame_tuple in self.frame_records:
             identifier_stack = frame_tuple[0]
@@ -143,7 +145,7 @@ class Session:
                         assert root_frame is None, ASSERTION_MESSAGE
                         root_frame = frame
                     else:
-                        parent = frame_stack[stack_depth - 1]
+                        parent = cast(Frame, frame_stack[stack_depth - 1])
                         parent.add_child(frame)
 
             # trim any extra frames
@@ -153,8 +155,10 @@ class Session:
             final_frame = frame_stack[-1]
             if isinstance(final_frame, DummyFrame):
                 final_frame.self_time += time
-            else:
+            elif isinstance(final_frame, Frame):
                 final_frame.add_child(SelfTimeFrame(self_time=time))
+            else:
+                raise Exception("unknown frame type")
 
         if root_frame is None:
             return None
@@ -164,7 +168,7 @@ class Session:
 
         return root_frame
 
-    def _trim_stem(self, frame):
+    def _trim_stem(self, frame: BaseFrame):
         # trim the start of the tree before any branches.
         # we also don't want to trim beyond the call to profiler.start()
 

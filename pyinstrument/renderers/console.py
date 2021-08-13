@@ -1,10 +1,14 @@
 import time
+from typing import Any
 
 import pyinstrument
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
-from pyinstrument.renderers.base import Renderer
+from pyinstrument.renderers.base import ProcessorList, Renderer
+from pyinstrument.session import Session
 from pyinstrument.util import truncate
+
+# pyright: strict
 
 
 class ConsoleRenderer(Renderer):
@@ -13,7 +17,7 @@ class ConsoleRenderer(Renderer):
     consoles.
     """
 
-    def __init__(self, unicode=False, color=False, **kwargs):
+    def __init__(self, unicode: bool = False, color: bool = False, **kwargs: Any):
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
@@ -24,7 +28,7 @@ class ConsoleRenderer(Renderer):
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
 
-    def render(self, session):
+    def render(self, session: Session):
         result = self.render_preamble(session)
 
         frame = self.preprocess(session.root_frame())
@@ -41,7 +45,7 @@ class ConsoleRenderer(Renderer):
         return result
 
     # pylint: disable=W1401
-    def render_preamble(self, session):
+    def render_preamble(self, session: Session):
         lines = [
             r"",
             r"  _     ._   __/__   _ _  _  _ _/_  ",
@@ -64,7 +68,7 @@ class ConsoleRenderer(Renderer):
 
         return "\n".join(lines)
 
-    def render_frame(self, frame, indent="", child_indent=""):
+    def render_frame(self, frame: BaseFrame, indent: str = "", child_indent: str = "") -> str:
         if not frame.group or (
             frame.group.root == frame
             or frame.total_self_time > 0.2 * self.root_frame.time()
@@ -124,13 +128,13 @@ class ConsoleRenderer(Renderer):
         else:
             return self.colors.bright_green + self.colors.faint
 
-    def _ansi_color_for_function(self, frame):
+    def _ansi_color_for_function(self, frame: BaseFrame):
         if frame.is_application_code:
             return self.colors.bg_dark_blue_255 + self.colors.white_255
         else:
             return ""
 
-    def default_processors(self):
+    def default_processors(self) -> ProcessorList:
         return [
             processors.remove_importlib,
             processors.merge_consecutive_self_time,

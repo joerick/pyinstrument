@@ -1,26 +1,27 @@
 from __future__ import annotations
 
-import pprint
-import sys
 import threading
 import timeit
 import types
-from collections import namedtuple
-from contextvars import ContextVar, Token
-from time import time
-from typing import Any, Callable, List, NamedTuple, Optional, Union
+from contextvars import ContextVar
+from typing import Any, Callable, List, NamedTuple, Optional
 
 from pyinstrument.low_level.stat_profile import setstatprofile
 from pyinstrument.typing import LiteralStr
 
+# pyright: strict
+
+
 thread_locals = threading.local()
+
+StackSamplerSubscriberTarget = Callable[[List[str], float, Optional["AsyncState"]], None]
 
 
 class StackSamplerSubscriber:
     def __init__(
         self,
         *,
-        target: Callable[[list[str], float, AsyncState | None], None],
+        target: StackSamplerSubscriberTarget,
         desired_interval: float,
         bound_to_async_context: bool,
         async_state: AsyncState | None,
@@ -37,7 +38,7 @@ active_profiler_context_var: ContextVar[object | None] = ContextVar(
 
 
 class StackSampler:
-    """ Manages setstatprofile for Profilers on a single thread """
+    """Manages setstatprofile for Profilers on a single thread"""
 
     subscribers: list[StackSamplerSubscriber]
     current_sampling_interval: float | None
@@ -50,7 +51,12 @@ class StackSampler:
         self.last_profile_time = 0.0
         self.timer_func = None
 
-    def subscribe(self, target, desired_interval, use_async_context):
+    def subscribe(
+        self,
+        target: StackSamplerSubscriberTarget,
+        desired_interval: float,
+        use_async_context: bool,
+    ):
         if use_async_context:
             if active_profiler_context_var.get() is not None:
                 raise RuntimeError(
@@ -68,9 +74,9 @@ class StackSampler:
         )
         self._update()
 
-    def unsubscribe(self, target):
+    def unsubscribe(self, target: StackSamplerSubscriberTarget):
         try:
-            subscriber = next(s for s in self.subscribers if s.target == target)
+            subscriber = next(s for s in self.subscribers if s.target == target)  # type: ignore
         except StopIteration:
             raise StackSampler.SubscriberNotFound()
 
@@ -93,7 +99,7 @@ class StackSampler:
         if self.current_sampling_interval != min_subscribers_interval:
             self._start_sampling(interval=min_subscribers_interval)
 
-    def _start_sampling(self, interval):
+    def _start_sampling(self, interval: float):
         self.current_sampling_interval = interval
         if self.last_profile_time == 0.0:
             self.last_profile_time = self._timer()
@@ -104,7 +110,7 @@ class StackSampler:
         self.current_sampling_interval = None
         self.last_profile_time = 0.0
 
-    def _sample(self, frame, event, arg):
+    def _sample(self, frame: types.FrameType, event: str, arg: Any):
         if event == "context_changed":
             new, old, coroutine_stack = arg
 
@@ -155,7 +161,7 @@ def get_stack_sampler() -> StackSampler:
 
 
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
-    call_stack = []
+    call_stack: list[str] = []
 
     if event == "call":
         # if we're entering a function, the time should be attributed to
