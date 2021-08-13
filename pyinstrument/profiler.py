@@ -10,7 +10,7 @@ from typing import IO, Any
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
 from pyinstrument.session import Session
-from pyinstrument.stack_sampler import AsyncState, build_call_stack, get_stack_sampler
+from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
@@ -143,7 +143,12 @@ class Profiler:
         if not self._active_session:
             raise RuntimeError("This profiler is not currently running.")
 
-        get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
+        try:
+            get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
+        except StackSampler.SubscriberNotFound:
+            raise RuntimeError(
+                "Failed to stop profiling. Make sure that you start/stop profiling on the same thread."
+            )
 
         cpu_time = process_time() - self._active_session.start_process_time
 
@@ -287,21 +292,25 @@ class Profiler:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
-        return renderers.ConsoleRenderer(
-            unicode=unicode, color=color, show_all=show_all, timeline=timeline
-        ).render(self.last_session)
+        return self.output(
+            renderer=renderers.ConsoleRenderer(
+                unicode=unicode, color=color, show_all=show_all, timeline=timeline
+            )
+        )
 
     def output_html(self, timeline: bool = False) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
-        return renderers.HTMLRenderer(timeline=timeline).render(self.last_session)
+        return self.output(renderer=renderers.HTMLRenderer(timeline=timeline))
 
     def open_in_browser(self, timeline: bool = False):
         """
         Opens the last profile session in your web browser.
         """
-        return renderers.HTMLRenderer(timeline=timeline).open_in_browser(self.last_session)
+        session = self._get_last_session_or_fail()
+
+        return renderers.HTMLRenderer(timeline=timeline).open_in_browser(session)
 
     def output(self, renderer: renderers.Renderer) -> str:
         """
@@ -309,4 +318,17 @@ class Profiler:
 
         :param renderer: The renderer to use.
         """
-        return renderer.render(self.last_session)
+        session = self._get_last_session_or_fail()
+
+        return renderer.render(session)
+
+    def _get_last_session_or_fail(self) -> Session:
+        if self.is_running:
+            raise Exception("can't render profile output because this profiler is still running")
+
+        if self.last_session is None:
+            raise Exception(
+                "can't render profile output because this profiler has not completed a profile session yet"
+            )
+
+        return self.last_session

@@ -78,7 +78,7 @@ class StackSampler:
         try:
             subscriber = next(s for s in self.subscribers if s.target == target)  # type: ignore
         except StopIteration:
-            raise ValueError("target not found in subscribers")
+            raise StackSampler.SubscriberNotFound()
 
         if subscriber.bound_to_async_context:
             # (don't need to use context_var.reset() because we verified it was
@@ -146,6 +146,9 @@ class StackSampler:
             return self.timer_func()
         else:
             return timeit.default_timer()
+
+    class SubscriberNotFound(Exception):
+        pass
 
 
 def get_stack_sampler() -> StackSampler:
