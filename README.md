@@ -52,6 +52,12 @@ Known issues
 Changelog
 ---------
 
+### v4.0.3
+
+-   CPython 3.10 support
+-   Improve error messages when trying to use Profiler from multiple threads
+-   Fix crash when rendering sessions that contain a module in a FrameGroup
+
 ### v4.0.2
 
 -   Fix some packaging issues
