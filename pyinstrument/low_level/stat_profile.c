@@ -111,7 +111,11 @@ static int ProfilerState_UpdateContextVar(ProfilerState *self) {
 static double ProfilerState_GetTime(ProfilerState *self) {
     if (self->timer_func != NULL) {
         // when a self->timer_func is set, call that.
-        PyObject *result = PyEval_CallObject(self->timer_func, NULL);
+#if PYTHON_VERSION_HEX >= 0x03090000
+        PyObject *result = PyObject_CallNoArgs(self->timer_func);
+#else
+        PyObject *result = PyObject_CallObject(self->timer_func, NULL);
+#endif
         if (result == NULL) {
             return -1.0;
         }
@@ -231,38 +235,21 @@ trace_init(void)
 static PyObject *
 call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg)
 {
-    PyObject *args;
-    PyObject *whatstr;
-    PyObject *result;
-
-    if (arg == NULL)
-        arg = Py_None;
-
-    args = PyTuple_New(3);
-    if (args == NULL)
-        return NULL;
-
     PyFrame_FastToLocals(frame);
 
-    Py_INCREF(frame);
-    whatstr = whatstrings[what];
-    Py_INCREF(whatstr);
-    if (arg == NULL)
-        arg = Py_None;
-    Py_INCREF(arg);
-    PyTuple_SET_ITEM(args, 0, (PyObject *)frame);
-    PyTuple_SET_ITEM(args, 1, whatstr);
-    PyTuple_SET_ITEM(args, 2, arg);
-
-    /* call the Python-level target function */
-    result = PyEval_CallObject(pState->target, args);
+#if PYTHON_VERSION_HEX >= 0x03090000
+    // vectorcall implemention could be faster, is available in Python 3.9
+    PyObject *callargs[4] = { NULL, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg };
+    PyObject *result = PyObject_Vectorcall(pState->target, callargs + 1, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
+#else
+    PyObject *result = PyObject_CallFunctionObjArgs(pState->target, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg, NULL);
+#endif
 
     PyFrame_LocalsToFast(frame, 1);
+
     if (result == NULL)
         PyTraceBack_Here(frame);
 
-    /* cleanup */
-    Py_DECREF(args);
     return result;
 }
 
