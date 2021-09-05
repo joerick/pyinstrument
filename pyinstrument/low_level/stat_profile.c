@@ -111,7 +111,7 @@ static int ProfilerState_UpdateContextVar(ProfilerState *self) {
 static double ProfilerState_GetTime(ProfilerState *self) {
     if (self->timer_func != NULL) {
         // when a self->timer_func is set, call that.
-#if PYTHON_VERSION_HEX >= 0x03090000
+#if PY_VERSION_HEX >= 0x03090000
         PyObject *result = PyObject_CallNoArgs(self->timer_func);
 #else
         PyObject *result = PyObject_CallObject(self->timer_func, NULL);
@@ -237,7 +237,7 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
 {
     PyFrame_FastToLocals(frame);
 
-#if PYTHON_VERSION_HEX >= 0x03090000
+#if PY_VERSION_HEX >= 0x03090000
     // vectorcall implemention could be faster, is available in Python 3.9
     PyObject *callargs[4] = { NULL, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg };
     PyObject *result = PyObject_Vectorcall(pState->target, callargs + 1, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
@@ -251,6 +251,19 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
         PyTraceBack_Here(frame);
 
     return result;
+}
+
+static PyCodeObject *
+code_from_frame(PyFrameObject* frame)
+{
+#if PY_VERSION_HEX >= 0x03090000
+	return PyFrame_GetCode(frame);
+#else
+	PyCodeObject *result = frame->f_code;
+	Py_XINCREF(result);
+	return result;
+#endif
+
 }
 
 //////////////////////
@@ -314,18 +327,21 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
     }
 
     // if we're returning from a coroutine, add that to the await stack
-    if ((what == WHAT_RETURN) && (frame->f_code->co_flags & 0x80)) {
+    PyCodeObject* code = NULL;
+
+    if ((what == WHAT_RETURN) && ((code = code_from_frame(frame)) != NULL) && (code->co_flags & 0x80)) {
         PyObject *frame_identifier = PyUnicode_FromFormat(
             "%U%c%U%c%i",
-            frame->f_code->co_name,
+            code->co_name,
             0, // NULL char
-            frame->f_code->co_filename,
+            code->co_filename,
             0, // NULL char
-            frame->f_code->co_firstlineno
+            code->co_firstlineno
         );
 
         int status = PyList_Append(pState->await_stack_list, frame_identifier);
         Py_DECREF(frame_identifier);
+	Py_DECREF(code);
 
         if (status == -1) {
             PyEval_SetProfile(NULL, NULL);
