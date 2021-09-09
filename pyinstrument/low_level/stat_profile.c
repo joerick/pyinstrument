@@ -257,11 +257,11 @@ static PyCodeObject *
 code_from_frame(PyFrameObject* frame)
 {
 #if PY_VERSION_HEX >= 0x03090000
-	return PyFrame_GetCode(frame);
+    return PyFrame_GetCode(frame);
 #else
-	PyCodeObject *result = frame->f_code;
-	Py_XINCREF(result);
-	return result;
+    PyCodeObject *result = frame->f_code;
+    Py_XINCREF(result);
+    return result;
 #endif
 
 }
@@ -327,9 +327,9 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
     }
 
     // if we're returning from a coroutine, add that to the await stack
-    PyCodeObject* code = NULL;
+    PyCodeObject* code = code_from_frame(frame);
 
-    if ((what == WHAT_RETURN) && ((code = code_from_frame(frame)) != NULL) && (code->co_flags & 0x80)) {
+    if ((what == WHAT_RETURN) && (code->co_flags & 0x80)) {
         PyObject *frame_identifier = PyUnicode_FromFormat(
             "%U%c%U%c%i",
             code->co_name,
@@ -341,13 +341,15 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
 
         int status = PyList_Append(pState->await_stack_list, frame_identifier);
         Py_DECREF(frame_identifier);
-	Py_DECREF(code);
+        Py_DECREF(code);
 
         if (status == -1) {
             PyEval_SetProfile(NULL, NULL);
             return -1;
         }
     } else {
+        Py_DECREF(code);
+
         // clear the list
         int status = PyList_SetSlice(
             pState->await_stack_list,
