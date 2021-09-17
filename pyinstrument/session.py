@@ -11,7 +11,7 @@ from pyinstrument.typing import PathOrStr
 
 
 ASSERTION_MESSAGE = (
-    "Please raise an issue at http://github.com/pyinstrument/issues and "
+    "Please raise an issue at https://github.com/joerick/pyinstrument/issues and "
     "let me know how you caused this error!"
 )
 
