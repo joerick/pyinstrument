@@ -6,4 +6,4 @@ bump2version <patch/minor/major/num>
 git push && git push --tags
 ```
 
-Deployment to PyPI is performed in Github actions
+Deployment to PyPI is performed in GitHub Actions.
