@@ -238,7 +238,7 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
     PyFrame_FastToLocals(frame);
 
 #if PY_VERSION_HEX >= 0x03090000
-    // vectorcall implemention could be faster, is available in Python 3.9
+    // vectorcall implementation could be faster, is available in Python 3.9
     PyObject *callargs[4] = { NULL, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg };
     PyObject *result = PyObject_Vectorcall(pState->target, callargs + 1, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
 #else
