@@ -1,8 +1,7 @@
 # Releasing
 
 ```
-bump2version <patch/minor/major/num>
-# or, bump2version --new-version x.x.x <patch/minor/major/num>
+bin/bump_version.py
 git push && git push --tags
 ```
 
