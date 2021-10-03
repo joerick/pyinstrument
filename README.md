@@ -52,6 +52,13 @@ Known issues
 Changelog
 ---------
 
+### v4.0.4
+
+-   Fix a packaging issue where a package called 'test' was installed
+    alongside pyinstrument
+-   Use more modern C APIs to resolve deprecation warnings on Python 3.10.
+-   Minor docs fixes
+
 ### v4.0.3
 
 -   CPython 3.10 support
