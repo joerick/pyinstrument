@@ -104,7 +104,7 @@ def test_multiple_contexts():
     assert len(sampler.subscribers) == 2
 
     start = time.time()
-    while time.time() < start + 1 and counter_1.count == 0 and counter_2.count == 0:
+    while time.time() < start + 1 and (counter_1.count == 0 or counter_2.count == 0):
         do_nothing()
 
     assert counter_1.count > 0
