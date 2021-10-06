@@ -165,13 +165,11 @@ def get_stack_sampler() -> StackSampler:
 
 @functools.cache
 def get_qualified_name(code):
-    name = code.co_name
-    refs = gc.get_referrers(code)
-    for obj in refs:
+    for obj in gc.get_referrers(code):
         qualname = getattr(obj, "__qualname__", None)
         if qualname:
             return qualname
-    return name
+    return code.co_name
 
 
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
