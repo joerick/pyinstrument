@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+
+import functools
+import gc
 import threading
 import timeit
 import types
@@ -160,6 +163,17 @@ def get_stack_sampler() -> StackSampler:
     return thread_locals.stack_sampler
 
 
+@functools.cache
+def get_qualified_name(code):
+    name = code.co_name
+    refs = gc.get_referrers(code)
+    for obj in refs:
+        qualname = getattr(obj, "__qualname__", None)
+        if qualname:
+            return qualname
+    return name
+
+
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
     call_stack: list[str] = []
 
@@ -178,10 +192,12 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
         call_stack.append(c_frame_identifier)
 
     while frame is not None:
+        code = frame.f_code
+
         identifier = "%s\x00%s\x00%i" % (
-            frame.f_code.co_name,
-            frame.f_code.co_filename,
-            frame.f_code.co_firstlineno,
+            get_qualified_name(code),
+            code.co_filename,
+            code.co_firstlineno,
         )
         call_stack.append(identifier)
         frame = frame.f_back

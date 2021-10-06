@@ -25,6 +25,25 @@ def long_function_b():
     time.sleep(0.5)
 
 
+class ClassWithMethods:
+    def long_method(self):
+        time.sleep(0.25)
+
+    @staticmethod
+    def long_static_method():
+        time.sleep(0.25)
+
+    @classmethod
+    def long_class_method(cls):
+        time.sleep(0.25)
+
+    def iterate(self):
+        yield self.long_method
+        yield self.long_class_method
+        yield self.long_static_method
+        yield partial(self.long_method)
+
+
 # Tests #
 
 
@@ -107,6 +126,34 @@ def test_two_functions():
     assert frame_a.time() == pytest.approx(0.25, abs=0.1)
     assert frame_b.time() == pytest.approx(0.5, abs=0.2)
 
+
+def test_class_methods():
+    profiler = Profiler()
+
+    with fake_time():
+        profiler.start()
+
+        obj = ClassWithMethods()
+        for func in obj.iterate():
+            func()
+
+        profiler.stop()
+
+    text_output = profiler.output_text()
+    print(text_output)
+
+    # output should be something like:
+    # 1.000 test_class_methods  test/test_profiler.py:130
+    # |- 0.500 ClassWithMethods.long_method  test/test_profiler.py:29
+    # |  `- 0.500 FakeClock.sleep  test/fake_time_util.py:19
+    # |- 0.250 ClassWithMethods.long_class_method  test/test_profiler.py:36
+    # |  `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
+    # `- 0.250 ClassWithMethods.long_static_method  test/test_profiler.py:32
+    #    `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
+
+    assert text_output.count("0.500 ClassWithMethods.long_method") == 1
+    assert text_output.count("0.250 ClassWithMethods.long_class_method") == 1
+    assert text_output.count("0.250 ClassWithMethods.long_static_method") == 1
 
 def test_context_manager():
     with fake_time():
