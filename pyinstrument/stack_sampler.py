@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import functools
 import gc
 import threading
@@ -163,8 +162,8 @@ def get_stack_sampler() -> StackSampler:
     return thread_locals.stack_sampler
 
 
-@functools.cache
-def get_qualified_name(code):
+@functools.lru_cache(maxsize=None)
+def get_qualified_name(code: types.CodeType):
     for obj in gc.get_referrers(code):
         qualname = getattr(obj, "__qualname__", None)
         if qualname:

@@ -155,6 +155,7 @@ def test_class_methods():
     assert text_output.count("0.250 ClassWithMethods.long_class_method") == 1
     assert text_output.count("0.250 ClassWithMethods.long_static_method") == 1
 
+
 def test_context_manager():
     with fake_time():
         with Profiler() as profiler:
