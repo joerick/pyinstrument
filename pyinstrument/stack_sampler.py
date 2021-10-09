@@ -160,6 +160,26 @@ def get_stack_sampler() -> StackSampler:
     return thread_locals.stack_sampler
 
 
+def get_frame_identifier(frame: types.FrameType):
+    prefix = ""
+    # try to find self argument for usual methods
+    self = frame.f_locals.get("self", None)
+    if self and hasattr(self, "__class__"):
+        prefix = "%s." % self.__class__.__qualname__
+    else:
+        # also try to find cls argument for class methods
+        cls = frame.f_locals.get("cls", None)
+        if cls and hasattr(cls, "__qualname__"):
+            prefix = "%s." % cls.__qualname__
+
+    name = "%s%s" % (prefix, frame.f_code.co_name)
+    return "%s\x00%s\x00%i" % (
+        name,
+        frame.f_code.co_filename,
+        frame.f_code.co_firstlineno,
+    )
+
+
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
     call_stack: list[str] = []
 
@@ -178,12 +198,7 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
         call_stack.append(c_frame_identifier)
 
     while frame is not None:
-        identifier = "%s\x00%s\x00%i" % (
-            frame.f_code.co_name,
-            frame.f_code.co_filename,
-            frame.f_code.co_firstlineno,
-        )
-        call_stack.append(identifier)
+        call_stack.append(get_frame_identifier(frame))
         frame = frame.f_back
 
     thread = threading.current_thread()

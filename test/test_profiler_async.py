@@ -189,7 +189,7 @@ def test_greenlet():
 
     assert root_frame.time() == pytest.approx(0.2, rel=0.1)
 
-    sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
+    sleep_frames = [f for f in walk_frames(root_frame) if f.function == "FakeClock.sleep"]
     assert len(sleep_frames) == 2
     assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
     assert sleep_frames[1].time() == pytest.approx(0.1, rel=0.1)
@@ -216,7 +216,7 @@ def test_strict_with_greenlet():
 
     assert root_frame.time() == pytest.approx(0.2, rel=0.1)
 
-    sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
+    sleep_frames = [f for f in walk_frames(root_frame) if f.function == "FakeClock.sleep"]
     assert len(sleep_frames) == 1
     assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
 
