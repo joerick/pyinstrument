@@ -122,6 +122,10 @@ def custom_show_pyinstrument(request):
 PYINSTRUMENT_SHOW_CALLBACK = "%s.custom_show_pyinstrument" % __name__
 ```
 
+You can configure the profile output type using setting's variable `PYINSTRUMENT_RENDERER`.
+Default value is `pyinstrument.renderers.HTMLRenderer`. The supported renderers are
+`pyinstrument.renderers.JSONRenderer`, `pyinstrument.renderers.HTMLRenderer`.
+
 ### Profile a web request in Flask
 
 A simple setup to profile a Flask application is the following:

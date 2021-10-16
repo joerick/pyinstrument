@@ -9,11 +9,28 @@ from django.utils.module_loading import import_string
 
 from pyinstrument import Profiler
 from pyinstrument.renderers.html import HTMLRenderer
+from pyinstrument.renderers import JSONRenderer
 
 try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:
     MiddlewareMixin = object
+
+
+def get_renderer_and_extension(path):
+    """Return the renderer instance and output file extension.
+    """
+    if path:
+        renderer = import_string(path)()
+    else:
+        renderer = HTMLRenderer()
+
+    if isinstance(renderer, HTMLRenderer):
+        return renderer, "html"
+    elif isinstance(renderer, JSONRenderer):
+        return renderer, "json"
+    # should other renderers be discouraged?
+    return render, "txt"
 
 
 class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
@@ -41,8 +58,10 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
         if hasattr(request, "profiler"):
             profile_session = request.profiler.stop()
 
-            renderer = HTMLRenderer()
-            output_html = renderer.render(profile_session)
+            configured_renderer = getattr(settings, 'PYINSTRUMENT_RENDERER', None)
+            renderer, ext = get_renderer_and_extension(configured_renderer)
+
+            output = renderer.render(profile_session)
 
             profile_dir = getattr(settings, "PYINSTRUMENT_PROFILE_DIR", None)
 
@@ -55,10 +74,11 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                 path = path.replace("?", "_qs_")
 
             if profile_dir:
-                filename = "{total_time:.3f}s {path} {timestamp:.0f}.html".format(
+                filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}".format(
                     total_time=profile_session.duration,
                     path=path,
                     timestamp=time.time(),
+                    ext=ext
                 )
 
                 file_path = os.path.join(profile_dir, filename)
@@ -67,10 +87,15 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                     os.mkdir(profile_dir)
 
                 with open(file_path, "w", encoding="utf-8") as f:
-                    f.write(output_html)
+                    f.write(output)
 
             if getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET:
-                return HttpResponse(output_html)
+                if isinstance(renderer, HTMLRenderer):
+                    return HttpResponse(output)
+                else:
+                    renderer = HTMLRenderer()
+                    output = renderer.render(profile_session)
+                    return HttpResponse(output)
             else:
                 return response
         else:
