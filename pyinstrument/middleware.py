@@ -8,8 +8,8 @@ from django.http import HttpResponse
 from django.utils.module_loading import import_string
 
 from pyinstrument import Profiler
-from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.renderers import JSONRenderer
+from pyinstrument.renderers.html import HTMLRenderer
 
 try:
     from django.utils.deprecation import MiddlewareMixin
@@ -18,8 +18,7 @@ except ImportError:
 
 
 def get_renderer_and_extension(path):
-    """Return the renderer instance and output file extension.
-    """
+    """Return the renderer instance and output file extension."""
     if path:
         renderer = import_string(path)()
     else:
@@ -58,7 +57,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
         if hasattr(request, "profiler"):
             profile_session = request.profiler.stop()
 
-            configured_renderer = getattr(settings, 'PYINSTRUMENT_RENDERER', None)
+            configured_renderer = getattr(settings, "PYINSTRUMENT_RENDERER", None)
             renderer, ext = get_renderer_and_extension(configured_renderer)
 
             output = renderer.render(profile_session)
@@ -75,10 +74,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
 
             if profile_dir:
                 filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}".format(
-                    total_time=profile_session.duration,
-                    path=path,
-                    timestamp=time.time(),
-                    ext=ext
+                    total_time=profile_session.duration, path=path, timestamp=time.time(), ext=ext
                 )
 
                 file_path = os.path.join(profile_dir, filename)
