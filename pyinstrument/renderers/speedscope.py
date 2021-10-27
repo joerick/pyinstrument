@@ -103,9 +103,9 @@ class SpeedscopeRenderer(Renderer):
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
-        # Running wall clock time total, required for speedscope
-        # evented profiles
-        self._total_time: float = 0.0
+        # Member holding a running total of wall clock time needed to
+        # compute the times at which events occur
+        self._event_time: float = 0.0
 
         # Map of speedscope frames to speedscope frame indices, needed
         # to construct evented speedscope profiles; exploits LIFO
@@ -153,7 +153,7 @@ class SpeedscopeRenderer(Renderer):
         sframe_index = self._frame_to_index[sframe]
         open_event = SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
-            self._total_time,
+            self._event_time,
             sframe_index
         )
 
@@ -176,11 +176,11 @@ class SpeedscopeRenderer(Renderer):
         # variant also adds a branch & swap for each summand. Pairwise
         # summation isn't an option here because a running total is
         # needed.
-        self._total_time += frame.self_time
+        self._event_time += frame.self_time
 
         close_event = SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
-            self._total_time,
+            self._event_time,
             sframe_index
         )
         event_array.append(encode_speedscope_event(close_event))
