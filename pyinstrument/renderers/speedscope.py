@@ -204,7 +204,7 @@ class SpeedscopeRenderer(Renderer):
         profile_decls.append('"type": %s' % encode_str(profile_type))
 
         profile_name: str = session.program
-        profile_decls.append('"name": %s' % encode_str(session.program))
+        profile_decls.append('"name": %s' % encode_str(profile_name))
 
         unit: str = "seconds"
         profile_decls.append('"unit": %s' % encode_str(unit))
