@@ -157,7 +157,7 @@ class SpeedscopeRenderer(Renderer):
             sframe_index
         )
 
-        event_array: list[str] = [encode_speedscope_event(open_event)]
+        event_array: list[str] = [json.dumps(open_event, cls=SpeedscopeEventEncoder)]
 
         for child in frame.children:
             child_events = self.render_frame(child)
@@ -183,7 +183,7 @@ class SpeedscopeRenderer(Renderer):
             self._event_time,
             sframe_index
         )
-        event_array.append(encode_speedscope_event(close_event))
+        event_array.append(json.dumps(close_event, cls=SpeedscopeEventEncoder))
 
         # Omit enclosing square brackets here; these brackets are applied in
         # the render method
