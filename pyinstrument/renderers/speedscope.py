@@ -241,7 +241,7 @@ class SpeedscopeRenderer(Renderer):
         # keys in insertion order
         shared_decls: list[str] = []
         for sframe in iter(self._frame_to_index):
-            shared_decls.append(encode_speedscope_frame(sframe))
+            shared_decls.append(json.dumps(sframe, cls=SpeedscopeFrameEncoder))
         property_decls.append('"shared": {"frames": [%s]}' % ",".join(shared_decls))
 
         return "{%s}\n" % ",".join(property_decls)
