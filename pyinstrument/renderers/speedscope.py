@@ -28,9 +28,9 @@ class SpeedscopeFrame(NamedTuple):
     it as a dictionary key; a dictionary will be used to track unique
     speedscope frames.
     """
-    name: str
-    file: str
-    line: int
+    name: str | None
+    file: str | None
+    line: int | None
 
 
 class SpeedscopeFrameEncoder(json.JSONEncoder):
