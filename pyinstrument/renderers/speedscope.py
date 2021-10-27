@@ -34,6 +34,17 @@ class SpeedscopeFrame(NamedTuple):
     line: int
 
 
+class SpeedscopeFrameEncoder(json.JSONEncoder):
+    """
+    Encoder used by json.dumps method on SpeedscopeFrame objects to serialize
+    SpeedscopeEvent objects in JSON format.
+    """
+    def default(self, obj):
+        if isinstance(obj, SpeedscopeFrame):
+            return {"name": obj.name, "file": obj.file, "line": obj.line}
+        return json.JSONEncoder.default(self, obj)
+
+
 def encode_speedscope_frame(sframe: SpeedscopeFrame) -> str:
     """Returns a string encoding a SpeedscopeFrame as a JSON object."""
 
