@@ -45,17 +45,6 @@ class SpeedscopeFrameEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def encode_speedscope_frame(sframe: SpeedscopeFrame) -> str:
-    """Returns a string encoding a SpeedscopeFrame as a JSON object."""
-
-    property_decls: list[str] = []
-    property_decls.append('"name": %s' % encode_str(sframe.name))
-    property_decls.append('"file": %s' % encode_str(sframe.file))
-    property_decls.append('"line": %d' % sframe.line)
-
-    return "{%s}" % ",".join(property_decls)
-
-
 class SpeedscopeEventType(Enum):
     """Enum representing the only two types of speedscope frame events"""
     OPEN: str = "O"
