@@ -75,16 +75,6 @@ class SpeedscopeEventEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def encode_speedscope_event(event: SpeedscopeEvent) -> str:
-    """Returns a string encoding a SpeedscopeEvent as a JSON object."""
-
-    property_decls: list[str] = []
-    property_decls.append('"type": %s' % encode_str(event.type.value))
-    property_decls.append('"at": %f' % event.at)
-    property_decls.append('"frame": %d' % event.frame)
-
-    return "{%s}" % ",".join(property_decls)
-
 # Dictionaries in Python 3.7+ track insertion order, and
 # dict.popitem() returns (key, value) pair in reverse insertion order
 # (LIFO)
