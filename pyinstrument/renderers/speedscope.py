@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import time
 from typing import Any, Callable, NamedTuple
-from collections import namedtuple
 from enum import Enum
 
 from pyinstrument import processors
