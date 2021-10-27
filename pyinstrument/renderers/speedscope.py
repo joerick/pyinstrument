@@ -110,10 +110,6 @@ class SpeedscopeRenderer(Renderer):
         information is used to build up the "events" array in
         speedscope-formatted JSON.
 
-        To make recursive construction of the event array easier, the
-        output contains a trailing comma; this trailing comma must be
-        removed in the render method.
-
         This method has two notable side effects:
 
         * it populates the self._frame_to_index dictionary that matches
@@ -130,9 +126,6 @@ class SpeedscopeRenderer(Renderer):
         as many stack frames, which will crash by exceeding the stack
         limit on deep-but-valid call stacks. List comprehensions are
         avoided for similar reasons.
-
-        TODO(oxberry1@llnl.gov): revise this text if the join method works;
-        then there are no trailing commas in output.
         """
 
         # if frame is None, recursion bottoms out; no event frames
