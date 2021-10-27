@@ -39,10 +39,10 @@ class SpeedscopeFrameEncoder(json.JSONEncoder):
     Encoder used by json.dumps method on SpeedscopeFrame objects to serialize
     SpeedscopeEvent objects in JSON format.
     """
-    def default(self, obj):
-        if isinstance(obj, SpeedscopeFrame):
-            return {"name": obj.name, "file": obj.file, "line": obj.line}
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o: Any) -> Any:
+        if isinstance(o, SpeedscopeFrame):
+            return {"name": o.name, "file": o.file, "line": o.line}
+        return json.JSONEncoder.default(self, o)
 
 
 class SpeedscopeEventType(Enum):
@@ -67,12 +67,12 @@ class SpeedscopeEventEncoder(json.JSONEncoder):
     Encoder used by json.dumps method on SpeedscopeEvent objects to
     serialize SpeedscopeEvent objects in JSON format.
     """
-    def default(self, obj):
-        if isinstance(obj, SpeedscopeEvent):
-            return {"type": obj.type, "at": obj.at, "frame": obj.frame}
-        if isinstance(obj, SpeedscopeEventType):
-            return obj.value
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o: Any) -> Any:
+        if isinstance(o, SpeedscopeEvent):
+            return {"type": o.type, "at": o.at, "frame": o.frame}
+        if isinstance(o, SpeedscopeEventType):
+            return o.value
+        return json.JSONEncoder.default(self, o)
 
 
 # Dictionaries in Python 3.7+ track insertion order, and
