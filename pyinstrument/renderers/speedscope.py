@@ -14,8 +14,6 @@ from pyinstrument.session import Session
 # pyright: strict
 
 
-# note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
-
 encode_str: Callable[[str], str] = json.encoder.encode_basestring  # type: ignore
 
 
