@@ -62,6 +62,19 @@ class SpeedscopeEvent(NamedTuple):
     frame: int
 
 
+class SpeedscopeEventEncoder(json.JSONEncoder):
+    """
+    Encoder used by json.dumps method on SpeedscopeEvent objects to
+    serialize SpeedscopeEvent objects in JSON format.
+    """
+    def default(self, obj):
+        if isinstance(obj, SpeedscopeEvent):
+            return {"type": obj.type, "at": obj.at, "frame": obj.frame}
+        if isinstance(obj, SpeedscopeEventType):
+            return obj.value
+        return json.JSONEncoder.default(self, obj)
+
+
 def encode_speedscope_event(event: SpeedscopeEvent) -> str:
     """Returns a string encoding a SpeedscopeEvent as a JSON object."""
 
