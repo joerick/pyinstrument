@@ -45,10 +45,10 @@ def encode_speedscope_frame(sframe: SpeedscopeFrame) -> str:
     return "{%s}" % ",".join(property_decls)
 
 
-# class SpeedscopeEventType(Enum):
-#     """Enum representing two types of speedscope frame events"""
-#     OPEN: str = "O"
-#     CLOSE: str = "C"
+class SpeedscopeEventType(Enum):
+    """Enum representing the only two types of speedscope frame events"""
+    OPEN: str = "O"
+    CLOSE: str = "C"
 
 # Named tuple to store Speedscope event data
 SpeedscopeEvent: NamedTuple = namedtuple(
@@ -60,7 +60,7 @@ def encode_speedscope_event(event: SpeedscopeEvent) -> str:
     """Returns a string encoding a SpeedscopeEvent as a JSON object."""
 
     property_decls: list[str] = []
-    property_decls.append('"type": %s' % encode_str(event.type))
+    property_decls.append('"type": %s' % encode_str(event.type.value))
     property_decls.append('"at": %f' % event.at)
     property_decls.append('"frame": %d' % event.frame)
 
@@ -140,7 +140,7 @@ class SpeedscopeRenderer(Renderer):
 
         sframe_index = self._frame_to_index[sframe]
         open_event = SpeedscopeEvent(
-            "O", #SpeedscopeEventType.OPEN,
+            SpeedscopeEventType.OPEN,
             self._total_time,
             sframe_index
         )
@@ -167,7 +167,7 @@ class SpeedscopeRenderer(Renderer):
         self._total_time += frame.self_time
 
         close_event = SpeedscopeEvent(
-            "C", # SpeedscopeEventType.CLOSED
+            SpeedscopeEventType.CLOSE,
             self._total_time,
             sframe_index
         )
