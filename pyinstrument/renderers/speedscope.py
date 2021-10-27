@@ -50,11 +50,17 @@ class SpeedscopeEventType(Enum):
     OPEN: str = "O"
     CLOSE: str = "C"
 
-# Named tuple to store Speedscope event data
-SpeedscopeEvent: NamedTuple = namedtuple(
-    "SpeedscopeEvent",
-    ("type", "at", "frame")
-)
+
+class SpeedscopeEvent(NamedTuple):
+    """
+    Named tuple to store speedscope's concept of an "event", which
+    corresponds to opening or closing stack frames as functions or
+    methods are entered or exited.
+    """
+    type: SpeedscopeEventType
+    at: float
+    frame: int
+
 
 def encode_speedscope_event(event: SpeedscopeEvent) -> str:
     """Returns a string encoding a SpeedscopeEvent as a JSON object."""
