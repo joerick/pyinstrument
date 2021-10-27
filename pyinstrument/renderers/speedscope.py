@@ -46,8 +46,8 @@ class SpeedscopeFrameEncoder(json.JSONEncoder):
 
 class SpeedscopeEventType(Enum):
     """Enum representing the only two types of speedscope frame events"""
-    OPEN: str = "O"
-    CLOSE: str = "C"
+    OPEN = "O"
+    CLOSE = "C"
 
 
 class SpeedscopeEvent(NamedTuple):
