@@ -20,15 +20,19 @@ encode_str: Callable[[str], str] = json.encoder.encode_basestring  # type: ignor
 def encode_bool(a_bool: bool):
     return "true" if a_bool else "false"
 
-# Named tuple to store data needed for speedscope's concept of a
-# frame, hereafter referred to as a "speedscope frame", as opposed to
-# a "pyinstrument frame". This type must be hashable in order to use
-# it as a dictionary key; a dictionary will be used to track unique
-# speedscope frames.
-SpeedscopeFrame: NamedTuple = namedtuple(
-    "SpeedscopeFrame",
-    ("name", "file", "line")
-)
+
+class SpeedscopeFrame(NamedTuple):
+    """
+    Named tuple to store data needed for speedscope's concept of a
+    frame, hereafter referred to as a "speedscope frame", as opposed to
+    a "pyinstrument frame". This type must be hashable in order to use
+    it as a dictionary key; a dictionary will be used to track unique
+    speedscope frames.
+    """
+    name: str
+    file: str
+    line: int
+
 
 def encode_speedscope_frame(sframe: SpeedscopeFrame) -> str:
     """Returns a string encoding a SpeedscopeFrame as a JSON object."""
