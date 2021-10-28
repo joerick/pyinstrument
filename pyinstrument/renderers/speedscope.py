@@ -203,9 +203,8 @@ class SpeedscopeRenderer(Renderer):
         # Exploits Python 3.7+ dictionary property of iterating over
         # keys in insertion order to build the list of speedscope
         # frames.
-        sframe_list: list[SpeedscopeFrame] = []
-        for sframe in iter(self._frame_to_index):
-            sframe_list.append(sframe)
+        sframe_list: list[SpeedscopeFrame] = [
+            sframe for sframe in iter(self._frame_to_index)]
 
         id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
         name: str = "CPU profile for {} at {}".format(session.program, id_)
