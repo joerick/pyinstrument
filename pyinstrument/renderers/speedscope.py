@@ -210,10 +210,14 @@ class SpeedscopeRenderer(Renderer):
         return "%s\n" % json.dumps(speedscope_file, cls=SpeedscopeEncoder)
 
     def default_processors(self) -> ProcessorList:
+        """
+        Default Processors for speedscope renderer; note that
+        processors.aggregate_repeated_calls is removed because
+        speedscope is a timeline-based format.
+        """
         return [
             processors.remove_importlib,
             processors.merge_consecutive_self_time,
-            processors.aggregate_repeated_calls,
             processors.group_library_frames_processor,
             processors.remove_unnecessary_self_time_nodes,
             processors.remove_irrelevant_nodes,
