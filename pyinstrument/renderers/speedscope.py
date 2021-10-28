@@ -14,12 +14,6 @@ from pyinstrument.session import Session
 # pyright: strict
 
 
-encode_str: Callable[[str], str] = json.encoder.encode_basestring  # type: ignore
-
-
-def encode_bool(a_bool: bool):
-    return "true" if a_bool else "false"
-
 @dataclass(frozen=True, eq=True)
 class SpeedscopeFrame:
     """
@@ -32,17 +26,6 @@ class SpeedscopeFrame:
     name: str | None
     file: str | None
     line: int | None
-
-
-class SpeedscopeFrameEncoder(json.JSONEncoder):
-    """
-    Encoder used by json.dumps method on SpeedscopeFrame objects to serialize
-    SpeedscopeEvent objects in JSON format.
-    """
-    def default(self, o: Any) -> Any:
-        if isinstance(o, SpeedscopeFrame):
-            return o.__dict__
-        return json.JSONEncoder.default(self, o)
 
 
 class SpeedscopeEventType(Enum):
@@ -63,19 +46,6 @@ class SpeedscopeEvent:
     frame: int
 
 
-class SpeedscopeEventEncoder(json.JSONEncoder):
-    """
-    Encoder used by json.dumps method on SpeedscopeEvent objects to
-    serialize SpeedscopeEvent objects in JSON format.
-    """
-    def default(self, o: Any) -> Any:
-        if isinstance(o, SpeedscopeEvent):
-            return o.__dict__
-        if isinstance(o, SpeedscopeEventType):
-            return o.value
-        return json.JSONEncoder.default(self, o)
-
-
 @dataclass
 class SpeedscopeProfile:
     """
@@ -87,21 +57,6 @@ class SpeedscopeProfile:
     start_value: float = 0.0
     type: str = "evented"
     unit: str = "seconds"
-
-
-class SpeedscopeProfileEncoder(json.JSONEncoder):
-    """
-    Encoder used by json.dumps method on SpeedscopeProfile objects to
-    serialize SpeedscopeProfile objects in JSON format.
-    """
-    def default(self, o: Any) -> Any:
-        if isinstance(o, SpeedscopeProfile):
-            return o.__dict__
-        if isinstance(o, SpeedscopeEvent):
-            return SpeedscopeEventEncoder.default(self, o)
-        if isinstance(o, SpeedscopeEventType):
-            return SpeedscopeEventEncoder.default(self, o)
-        return json.JSONEncoder.default(self, o)
 
 
 @dataclass
@@ -165,13 +120,10 @@ class SpeedscopeRenderer(Renderer):
         self._frame_to_index: dict[SpeedscopeFrame, int] = {}
 
 
-    def render_frame(self, frame: BaseFrame | None) -> list[SpeedscopeFrame]:
-        """Renders frame as string by representing it JSON array-formatted
-        string containing the speedscope open frame event, opend and
-        close frame events of all children, and close event, in order,
-        except for the outer enclosing square brackets. This
-        information is used to build up the "events" array in
-        speedscope-formatted JSON.
+    def render_frame(self, frame: BaseFrame | None) -> list[SpeedscopeEvent]:
+        """
+        Builds up a list of speedscope events that are used to populate the
+        "events" array in speedscope-formatted JSON.
 
         This method has two notable side effects:
 
@@ -183,12 +135,7 @@ class SpeedscopeRenderer(Renderer):
         * it accumulates a running total of time elapsed by
           accumulating the self_time spent in each pyinstrument frame;
           this running total is used by speedscope events to construct
-          a flame chart
-
-        This method avoids using the json module because it uses twice
-        as many stack frames, which will crash by exceeding the stack
-        limit on deep-but-valid call stacks. List comprehensions are
-        avoided for similar reasons.
+          a flame chart.
         """
 
         # if frame is None, recursion bottoms out; no event frames
@@ -196,23 +143,29 @@ class SpeedscopeRenderer(Renderer):
         if frame is None:
             return []
 
+        # Otherwise, form a speedscope frame and add it to the frame
+        # to index map if the frame is not already a key in that map.
         sframe = SpeedscopeFrame(frame.function, frame.file_path, frame.line_no)
         if sframe not in self._frame_to_index:
             self._frame_to_index[sframe] = len(self._frame_to_index)
 
+        # Get the frame index and add a speedscope event corresponding
+        # to opening a stack frame.
         sframe_index = self._frame_to_index[sframe]
         open_event = SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
             self._event_time,
             sframe_index
         )
+        events_array: list[SpeedscopeEvent] = [open_event]
 
-        event_array: list[SpeedscopeFrame] = [open_event]
-
+        # Add stack frame open and close events for all child frames
+        # of this frame.
         for child in frame.children:
-            event_array.extend(self.render_frame(child))
+            events_array.extend(self.render_frame(child))
 
-
+        # Update event time for closing this stack frame.
+        #
         # If number of frames approaches 1e16 * desired accuracy
         # level, consider using Neumaier-Kahan summation; improves
         # worst-case relative accuracy of sum from O(num_summands *
@@ -226,45 +179,22 @@ class SpeedscopeRenderer(Renderer):
         # needed.
         self._event_time += frame.self_time
 
+        # Add event closing this stack frame.
         close_event = SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
             self._event_time,
             sframe_index
         )
-        event_array.append(close_event)
+        events_array.append(close_event)
 
-        # Omit enclosing square brackets here; these brackets are applied in
-        # the render method
-        return event_array
+        return events_array
 
     def render(self, session: Session):
         frame = self.preprocess(session.root_frame())
 
-        property_decls: list[str] = []
-
-        # Fields for file
-        schema_url: str = "https://www.speedscope.app/file-format-schema.json"
-        property_decls.append('"$schema": %s' % encode_str(schema_url))
-
-        id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
-        name: str = "CPU profile for {} at {}".format(session.program, id_)
-        property_decls.append('"name": %s' % encode_str(name))
-
-        property_decls.append('"activeProfileIndex": null')
-
-        # TODO(goxberry@gmail.com): figure out how to get version from
-        # pyinstrument and add it here as something like
-        # pyinstrument@4.0.4 ; can't use from pyinstrument import
-        # __version__
-        exporter: str = "pyinstrument"
-        property_decls.append('"exporter": %s' % encode_str(exporter))
-
         sprofile = SpeedscopeProfile(session.program,
                                     self.render_frame(frame),
                                     session.duration)
-        property_decls.append('"profiles": [%s]' %
-                              json.dumps(sprofile, cls=SpeedscopeProfileEncoder))
-
 
         # exploits Python 3.7+ dictionary property of iterating over
         # keys in insertion order
@@ -272,17 +202,11 @@ class SpeedscopeRenderer(Renderer):
         for sframe in iter(self._frame_to_index):
             sframe_list.append(sframe)
 
-        shared_dict = {"frames": sframe_list,}
-        speedscope_file = SpeedscopeFile(name, sprofile, shared_dict)
+        id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
+        name: str = "CPU profile for {} at {}".format(session.program, id_)
+        shared_dict = {"frames": sframe_list}
+        speedscope_file = SpeedscopeFile(name, [sprofile], shared_dict)
 
-        # # exploits Python 3.7+ dictionary property of iterating over
-        # # keys in insertion order
-        # shared_decls: list[str] = []
-        # for sframe in iter(self._frame_to_index):
-        #     shared_decls.append(json.dumps(sframe, cls=SpeedscopeFrameEncoder))
-        # property_decls.append('"shared": {"frames": [%s]}' % ",".join(shared_decls))
-
-        # return "{%s}\n" % ",".join(property_decls)
         return "%s\n" % json.dumps(speedscope_file, cls=SpeedscopeEncoder)
 
     def default_processors(self) -> ProcessorList:
