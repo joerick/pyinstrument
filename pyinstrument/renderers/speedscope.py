@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Dict, Union
 from enum import Enum
 
 from pyinstrument import processors
@@ -68,9 +68,12 @@ class SpeedscopeFile:
     profiles: list[SpeedscopeProfile]
     shared: dict[str, list[SpeedscopeFrame]]
     schema: str = "https://www.speedscope.app/file-format-schema.json"
-    active_profile_index: NoneType = None
+    active_profile_index: None = None
     exporter: str = "pyinstrument"
 
+
+SpeedscopeFrameDictType = Dict[str, Union[str, int, None]]
+SpeedscopeEventDictType = Dict[str, Union[SpeedscopeEventType, float, int]]
 
 class SpeedscopeEncoder(json.JSONEncoder):
     """
@@ -88,7 +91,8 @@ class SpeedscopeEncoder(json.JSONEncoder):
                     "startValue": o.start_value, "endValue": o.end_value,
                     "events": o.events}
         if isinstance(o, (SpeedscopeFrame, SpeedscopeEvent)):
-            return o.__dict__
+            d: SpeedscopeFrameDictType | SpeedscopeEventDictType = o.__dict__
+            return d
         if isinstance(o, SpeedscopeEventType):
             return o.value
         return json.JSONEncoder.default(self, o)
