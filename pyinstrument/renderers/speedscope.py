@@ -34,7 +34,7 @@ class SpeedscopeEventType(Enum):
     CLOSE = "C"
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass
 class SpeedscopeEvent:
     """
     Data class to store speedscope's concept of an "event", which
