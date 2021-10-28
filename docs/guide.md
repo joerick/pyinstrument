@@ -35,8 +35,8 @@ Here are the options you can use:
                             save to <outfile>
       -r RENDERER, --renderer=RENDERER
                             how the report should be rendered. One of: 'text',
-                            'html', 'json', or python import path to a renderer
-                            class
+                            'html', 'json', 'speedscope', or python import path
+                            to a renderer class
       -t, --timeline        render as a timeline - preserve ordering and don't
                             condense repeated calls
       --hide=EXPR           glob-style pattern matching the file paths whose
