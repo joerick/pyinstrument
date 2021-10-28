@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, Callable, NamedTuple
+from dataclasses import dataclass
+from typing import Any, Callable
 from enum import Enum
 
 from pyinstrument import processors
@@ -19,10 +20,10 @@ encode_str: Callable[[str], str] = json.encoder.encode_basestring  # type: ignor
 def encode_bool(a_bool: bool):
     return "true" if a_bool else "false"
 
-
-class SpeedscopeFrame(NamedTuple):
+@dataclass(frozen=True, eq=True)
+class SpeedscopeFrame:
     """
-    Named tuple to store data needed for speedscope's concept of a
+    Data class to store data needed for speedscope's concept of a
     frame, hereafter referred to as a "speedscope frame", as opposed to
     a "pyinstrument frame". This type must be hashable in order to use
     it as a dictionary key; a dictionary will be used to track unique
@@ -40,7 +41,7 @@ class SpeedscopeFrameEncoder(json.JSONEncoder):
     """
     def default(self, o: Any) -> Any:
         if isinstance(o, SpeedscopeFrame):
-            return {"name": o.name, "file": o.file, "line": o.line}
+            return o.__dict__
         return json.JSONEncoder.default(self, o)
 
 
@@ -50,9 +51,10 @@ class SpeedscopeEventType(Enum):
     CLOSE = "C"
 
 
-class SpeedscopeEvent(NamedTuple):
+@dataclass(frozen=True, eq=True)
+class SpeedscopeEvent:
     """
-    Named tuple to store speedscope's concept of an "event", which
+    Data class to store speedscope's concept of an "event", which
     corresponds to opening or closing stack frames as functions or
     methods are entered or exited.
     """
@@ -68,7 +70,7 @@ class SpeedscopeEventEncoder(json.JSONEncoder):
     """
     def default(self, o: Any) -> Any:
         if isinstance(o, SpeedscopeEvent):
-            return {"type": o.type, "at": o.at, "frame": o.frame}
+            return o.__dict__
         if isinstance(o, SpeedscopeEventType):
             return o.value
         return json.JSONEncoder.default(self, o)
