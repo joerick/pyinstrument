@@ -12,3 +12,4 @@ greenlet  # used by a test
 nox
 ipython
 numpy # used by an example
+pre-commit # used to run pre-commit hooks
