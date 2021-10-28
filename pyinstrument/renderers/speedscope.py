@@ -104,10 +104,6 @@ class SpeedscopeProfileEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-# Dictionaries in Python 3.7+ track insertion order, and
-# dict.popitem() returns (key, value) pair in reverse insertion order
-# (LIFO)
-
 class SpeedscopeRenderer(Renderer):
     """
     Outputs a tree of JSON conforming to the speedscope schema documented at
