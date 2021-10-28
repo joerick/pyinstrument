@@ -196,8 +196,9 @@ class SpeedscopeRenderer(Renderer):
                                     self.render_frame(frame),
                                     session.duration)
 
-        # exploits Python 3.7+ dictionary property of iterating over
-        # keys in insertion order
+        # Exploits Python 3.7+ dictionary property of iterating over
+        # keys in insertion order to build the list of speedscope
+        # frames.
         sframe_list: list[SpeedscopeFrame] = []
         for sframe in iter(self._frame_to_index):
             sframe_list.append(sframe)
