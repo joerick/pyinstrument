@@ -234,30 +234,6 @@ class SpeedscopeRenderer(Renderer):
         property_decls.append('"profiles": [%s]' %
                               json.dumps(sprofile, cls=SpeedscopeProfileEncoder))
 
-        # # Fields for profile
-        # profile_decls: list[str] = []
-        # profile_type: str = "evented"
-        # profile_decls.append('"type": %s' % encode_str(profile_type))
-
-        # profile_name: str = session.program
-        # profile_decls.append('"name": %s' % encode_str(profile_name))
-
-        # unit: str = "seconds"
-        # profile_decls.append('"unit": %s' % encode_str(unit))
-
-        # start_value: float = 0.0
-        # profile_decls.append('"startValue": %f' % start_value)
-
-        # end_value: float = session.duration
-        # profile_decls.append('"endValue": %f' % end_value)
-
-        # # use render_frame to build up dictionary of frames for 'shared' field
-        # # via the self._frame_to_index field; have it output the string
-        # # representation of the events array
-        # profile_decls.append('"events": [%s]' % self.render_frame(frame))
-        # profile_string = "{%s}" % ",".join(profile_decls)
-
-        # property_decls.append('"profiles": [%s]' % profile_string)
 
         # exploits Python 3.7+ dictionary property of iterating over
         # keys in insertion order
