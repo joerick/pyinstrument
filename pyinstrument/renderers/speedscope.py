@@ -196,7 +196,9 @@ class SpeedscopeRenderer(Renderer):
     def render(self, session: Session):
         frame = self.preprocess(session.root_frame())
 
-        sprofile = SpeedscopeProfile(session.program,
+        id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
+        name: str = "CPU profile for {} at {}".format(session.program, id_)
+        sprofile = SpeedscopeProfile(name,
                                     self.render_frame(frame),
                                     session.duration)
 
@@ -206,8 +208,6 @@ class SpeedscopeRenderer(Renderer):
         sframe_list: list[SpeedscopeFrame] = [
             sframe for sframe in iter(self._frame_to_index)]
 
-        id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
-        name: str = "CPU profile for {} at {}".format(session.program, id_)
         shared_dict = {"frames": sframe_list}
         speedscope_file = SpeedscopeFile(name, [sprofile], shared_dict)
 
