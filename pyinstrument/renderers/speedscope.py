@@ -104,6 +104,41 @@ class SpeedscopeProfileEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
+@dataclass
+class SpeedscopeFile:
+    """
+    Data class encoding fields in speedscope's JSON file schema
+    """
+    name: str
+    profiles: list[SpeedscopeProfile]
+    shared: dict[str, list[SpeedscopeFrame]]
+    schema: str = "https://www.speedscope.app/file-format-schema.json"
+    active_profile_index: NoneType = None
+    exporter: str = "pyinstrument"
+
+
+class SpeedscopeEncoder(json.JSONEncoder):
+    """
+    Encoder class used by json.dumps to serialize the various
+    speedscope data classes.
+    """
+    def default(self, o: Any) -> Any:
+        if isinstance(o, SpeedscopeFile):
+            return {"$schema": o.schema, "name": o.name,
+                    "activeProfileIndex": o.active_profile_index,
+                    "exporter": o.exporter,
+                    "profiles": o.profiles, "shared": o.shared}
+        if isinstance(o, SpeedscopeProfile):
+            return {"type": o.type, "name": o.name, "unit": o.unit,
+                    "startValue": o.start_value, "endValue": o.end_value,
+                    "events": o.events}
+        if isinstance(o, (SpeedscopeFrame, SpeedscopeEvent)):
+            return o.__dict__
+        if isinstance(o, SpeedscopeEventType):
+            return o.value
+        return json.JSONEncoder.default(self, o)
+
+
 class SpeedscopeRenderer(Renderer):
     """
     Outputs a tree of JSON conforming to the speedscope schema documented at
@@ -233,12 +268,22 @@ class SpeedscopeRenderer(Renderer):
 
         # exploits Python 3.7+ dictionary property of iterating over
         # keys in insertion order
-        shared_decls: list[str] = []
+        sframe_list: list[SpeedscopeFrame] = []
         for sframe in iter(self._frame_to_index):
-            shared_decls.append(json.dumps(sframe, cls=SpeedscopeFrameEncoder))
-        property_decls.append('"shared": {"frames": [%s]}' % ",".join(shared_decls))
+            sframe_list.append(sframe)
 
-        return "{%s}\n" % ",".join(property_decls)
+        shared_dict = {"frames": sframe_list,}
+        speedscope_file = SpeedscopeFile(name, sprofile, shared_dict)
+
+        # # exploits Python 3.7+ dictionary property of iterating over
+        # # keys in insertion order
+        # shared_decls: list[str] = []
+        # for sframe in iter(self._frame_to_index):
+        #     shared_decls.append(json.dumps(sframe, cls=SpeedscopeFrameEncoder))
+        # property_decls.append('"shared": {"frames": [%s]}' % ",".join(shared_decls))
+
+        # return "{%s}\n" % ",".join(property_decls)
+        return "%s\n" % json.dumps(speedscope_file, cls=SpeedscopeEncoder)
 
     def default_processors(self) -> ProcessorList:
         return [
