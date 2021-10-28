@@ -343,7 +343,9 @@ To setup a dev environment:
 
     virtualenv --python=python3 env
     . env/bin/activate
+    pip install --upgrade pip
     pip install -r requirements-dev.txt
+    pre-commit install --install-hooks
 
 To get some sample output:
 
@@ -352,6 +354,10 @@ To get some sample output:
 To run the tests:
 
     pytest
+
+To run CI checks locally:
+
+    pre-commit run --all-files
 
 ### The HTML renderer Vue.js app
 
