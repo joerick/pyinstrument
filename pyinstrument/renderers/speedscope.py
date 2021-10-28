@@ -76,6 +76,34 @@ class SpeedscopeEventEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
+@dataclass
+class SpeedscopeProfile:
+    """
+    Data class to store speedscope's concept of a "profile".
+    """
+    name: str
+    events: list[SpeedscopeEvent]
+    end_value: float
+    start_value: float = 0.0
+    type: str = "evented"
+    unit: str = "seconds"
+
+
+class SpeedscopeProfileEncoder(json.JSONEncoder):
+    """
+    Encoder used by json.dumps method on SpeedscopeProfile objects to
+    serialize SpeedscopeProfile objects in JSON format.
+    """
+    def default(self, o: Any) -> Any:
+        if isinstance(o, SpeedscopeProfile):
+            return o.__dict__
+        if isinstance(o, SpeedscopeEvent):
+            return SpeedscopeEventEncoder.default(self, o)
+        if isinstance(o, SpeedscopeEventType):
+            return SpeedscopeEventEncoder.default(self, o)
+        return json.JSONEncoder.default(self, o)
+
+
 # Dictionaries in Python 3.7+ track insertion order, and
 # dict.popitem() returns (key, value) pair in reverse insertion order
 # (LIFO)
@@ -106,7 +134,7 @@ class SpeedscopeRenderer(Renderer):
         self._frame_to_index: dict[SpeedscopeFrame, int] = {}
 
 
-    def render_frame(self, frame: BaseFrame | None):
+    def render_frame(self, frame: BaseFrame | None) -> list[SpeedscopeFrame]:
         """Renders frame as string by representing it JSON array-formatted
         string containing the speedscope open frame event, opend and
         close frame events of all children, and close event, in order,
@@ -135,7 +163,7 @@ class SpeedscopeRenderer(Renderer):
         # if frame is None, recursion bottoms out; no event frames
         # need to be added
         if frame is None:
-            return ""
+            return []
 
         sframe = SpeedscopeFrame(frame.function, frame.file_path, frame.line_no)
         if sframe not in self._frame_to_index:
@@ -148,12 +176,10 @@ class SpeedscopeRenderer(Renderer):
             sframe_index
         )
 
-        event_array: list[str] = [json.dumps(open_event, cls=SpeedscopeEventEncoder)]
+        event_array: list[SpeedscopeFrame] = [open_event]
 
         for child in frame.children:
-            child_events = self.render_frame(child)
-            if child_events:
-                event_array.append(child_events)
+            event_array.extend(self.render_frame(child))
 
 
         # If number of frames approaches 1e16 * desired accuracy
@@ -174,11 +200,11 @@ class SpeedscopeRenderer(Renderer):
             self._event_time,
             sframe_index
         )
-        event_array.append(json.dumps(close_event, cls=SpeedscopeEventEncoder))
+        event_array.append(close_event)
 
         # Omit enclosing square brackets here; these brackets are applied in
         # the render method
-        return "%s" % ",".join(event_array)
+        return event_array
 
     def render(self, session: Session):
         frame = self.preprocess(session.root_frame())
@@ -202,30 +228,36 @@ class SpeedscopeRenderer(Renderer):
         exporter: str = "pyinstrument"
         property_decls.append('"exporter": %s' % encode_str(exporter))
 
-        # Fields for profile
-        profile_decls: list[str] = []
-        profile_type: str = "evented"
-        profile_decls.append('"type": %s' % encode_str(profile_type))
+        sprofile = SpeedscopeProfile(session.program,
+                                    self.render_frame(frame),
+                                    session.duration)
+        property_decls.append('"profiles": [%s]' %
+                              json.dumps(sprofile, cls=SpeedscopeProfileEncoder))
 
-        profile_name: str = session.program
-        profile_decls.append('"name": %s' % encode_str(profile_name))
+        # # Fields for profile
+        # profile_decls: list[str] = []
+        # profile_type: str = "evented"
+        # profile_decls.append('"type": %s' % encode_str(profile_type))
 
-        unit: str = "seconds"
-        profile_decls.append('"unit": %s' % encode_str(unit))
+        # profile_name: str = session.program
+        # profile_decls.append('"name": %s' % encode_str(profile_name))
 
-        start_value: float = 0.0
-        profile_decls.append('"startValue": %f' % start_value)
+        # unit: str = "seconds"
+        # profile_decls.append('"unit": %s' % encode_str(unit))
 
-        end_value: float = session.duration
-        profile_decls.append('"endValue": %f' % end_value)
+        # start_value: float = 0.0
+        # profile_decls.append('"startValue": %f' % start_value)
 
-        # use render_frame to build up dictionary of frames for 'shared' field
-        # via the self._frame_to_index field; have it output the string
-        # representation of the events array
-        profile_decls.append('"events": [%s]' % self.render_frame(frame))
-        profile_string = "{%s}" % ",".join(profile_decls)
+        # end_value: float = session.duration
+        # profile_decls.append('"endValue": %f' % end_value)
 
-        property_decls.append('"profiles": [%s]' % profile_string)
+        # # use render_frame to build up dictionary of frames for 'shared' field
+        # # via the self._frame_to_index field; have it output the string
+        # # representation of the events array
+        # profile_decls.append('"events": [%s]' % self.render_frame(frame))
+        # profile_string = "{%s}" % ",".join(profile_decls)
+
+        # property_decls.append('"profiles": [%s]' % profile_string)
 
         # exploits Python 3.7+ dictionary property of iterating over
         # keys in insertion order
