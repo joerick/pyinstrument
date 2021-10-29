@@ -99,7 +99,7 @@ you can profile a line or a cell in IPython or Jupyter.
 
 Example:
 ```python
-%load_ext pyinstrument.magic
+%load_ext pyinstrument
 ```
 
 ```

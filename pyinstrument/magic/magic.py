@@ -60,7 +60,7 @@ class PyinstrumentMagic(Magics):
     @line_cell_magic
     def pyinstrument(self, line, cell=None):
         """
-        Run a cell with the pyinstrument statastical profiler.
+        Run a cell with the pyinstrument statistical profiler.
 
         Converts the line/cell's AST to something like:
             try:
