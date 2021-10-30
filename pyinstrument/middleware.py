@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.module_loading import import_string
 
 from pyinstrument import Profiler
-from pyinstrument.renderers import JSONRenderer
+from pyinstrument.renderers import Renderer
 from pyinstrument.renderers.html import HTMLRenderer
 
 try:
@@ -20,16 +20,20 @@ except ImportError:
 def get_renderer_and_extension(path):
     """Return the renderer instance and output file extension."""
     if path:
-        renderer = import_string(path)()
+        try:
+            renderer = import_string(path)()
+        except ImportError as exc:
+            print("Unable to import the class: %s" % path)
+            raise exc
+            sys.exit(-1)
+
     else:
         renderer = HTMLRenderer()
 
-    if isinstance(renderer, HTMLRenderer):
-        return renderer, "html"
-    elif isinstance(renderer, JSONRenderer):
-        return renderer, "json"
-    # should other renderers be discouraged?
-    return render, "txt"
+    if isinstance(renderer, Renderer):
+        return renderer, renderer.output_file_extension
+    else:
+        print("Renderer should subclass: %s" % Renderer)
 
 
 class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
@@ -57,7 +61,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
         if hasattr(request, "profiler"):
             profile_session = request.profiler.stop()
 
-            configured_renderer = getattr(settings, "PYINSTRUMENT_RENDERER", None)
+            configured_renderer = getattr(settings, "PYINSTRUMENT_PROFILE_DIR_RENDERER", None)
             renderer, ext = get_renderer_and_extension(configured_renderer)
 
             output = renderer.render(profile_session)
