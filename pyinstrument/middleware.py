@@ -25,7 +25,6 @@ def get_renderer_and_extension(path):
         except ImportError as exc:
             print("Unable to import the class: %s" % path)
             raise exc
-            sys.exit(-1)
 
     else:
         renderer = HTMLRenderer()
