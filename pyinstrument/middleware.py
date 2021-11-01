@@ -32,7 +32,8 @@ def get_renderer_and_extension(path):
     if isinstance(renderer, Renderer):
         return renderer, renderer.output_file_extension
     else:
-        print("Renderer should subclass: %s" % Renderer)
+        print("Renderer should subclass: %s. Using HTMLRenderer" % Renderer)
+        return HTMLRenderer(), HTMLRenderer.output_file_extension
 
 
 class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
