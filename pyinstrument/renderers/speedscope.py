@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Union
 from enum import Enum
+from typing import Any, Dict, Union
 
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
@@ -23,6 +23,7 @@ class SpeedscopeFrame:
     it as a dictionary key; a dictionary will be used to track unique
     speedscope frames.
     """
+
     name: str | None
     file: str | None
     line: int | None
@@ -30,6 +31,7 @@ class SpeedscopeFrame:
 
 class SpeedscopeEventType(Enum):
     """Enum representing the only two types of speedscope frame events"""
+
     OPEN = "O"
     CLOSE = "C"
 
@@ -41,6 +43,7 @@ class SpeedscopeEvent:
     corresponds to opening or closing stack frames as functions or
     methods are entered or exited.
     """
+
     type: SpeedscopeEventType
     at: float
     frame: int
@@ -51,6 +54,7 @@ class SpeedscopeProfile:
     """
     Data class to store speedscope's concept of a "profile".
     """
+
     name: str
     events: list[SpeedscopeEvent]
     end_value: float
@@ -64,6 +68,7 @@ class SpeedscopeFile:
     """
     Data class encoding fields in speedscope's JSON file schema
     """
+
     name: str
     profiles: list[SpeedscopeProfile]
     shared: dict[str, list[SpeedscopeFrame]]
@@ -75,21 +80,32 @@ class SpeedscopeFile:
 SpeedscopeFrameDictType = Dict[str, Union[str, int, None]]
 SpeedscopeEventDictType = Dict[str, Union[SpeedscopeEventType, float, int]]
 
+
 class SpeedscopeEncoder(json.JSONEncoder):
     """
     Encoder class used by json.dumps to serialize the various
     speedscope data classes.
     """
+
     def default(self, o: Any) -> Any:
         if isinstance(o, SpeedscopeFile):
-            return {"$schema": o.schema, "name": o.name,
-                    "activeProfileIndex": o.active_profile_index,
-                    "exporter": o.exporter,
-                    "profiles": o.profiles, "shared": o.shared}
+            return {
+                "$schema": o.schema,
+                "name": o.name,
+                "activeProfileIndex": o.active_profile_index,
+                "exporter": o.exporter,
+                "profiles": o.profiles,
+                "shared": o.shared,
+            }
         if isinstance(o, SpeedscopeProfile):
-            return {"type": o.type, "name": o.name, "unit": o.unit,
-                    "startValue": o.start_value, "endValue": o.end_value,
-                    "events": o.events}
+            return {
+                "type": o.type,
+                "name": o.name,
+                "unit": o.unit,
+                "startValue": o.start_value,
+                "endValue": o.end_value,
+                "events": o.events,
+            }
         if isinstance(o, (SpeedscopeFrame, SpeedscopeEvent)):
             d: SpeedscopeFrameDictType | SpeedscopeEventDictType = o.__dict__
             return d
@@ -123,7 +139,6 @@ class SpeedscopeRenderer(Renderer):
         # speedscope's schema.
         self._frame_to_index: dict[SpeedscopeFrame, int] = {}
 
-
     def render_frame(self, frame: BaseFrame | None) -> list[SpeedscopeEvent]:
         """
         Builds up a list of speedscope events that are used to populate the
@@ -156,11 +171,7 @@ class SpeedscopeRenderer(Renderer):
         # Get the frame index and add a speedscope event corresponding
         # to opening a stack frame.
         sframe_index = self._frame_to_index[sframe]
-        open_event = SpeedscopeEvent(
-            SpeedscopeEventType.OPEN,
-            self._event_time,
-            sframe_index
-        )
+        open_event = SpeedscopeEvent(SpeedscopeEventType.OPEN, self._event_time, sframe_index)
         events_array: list[SpeedscopeEvent] = [open_event]
 
         # Add stack frame open and close events for all child frames
@@ -184,11 +195,7 @@ class SpeedscopeRenderer(Renderer):
         self._event_time += frame.self_time
 
         # Add event closing this stack frame.
-        close_event = SpeedscopeEvent(
-            SpeedscopeEventType.CLOSE,
-            self._event_time,
-            sframe_index
-        )
+        close_event = SpeedscopeEvent(SpeedscopeEventType.CLOSE, self._event_time, sframe_index)
         events_array.append(close_event)
 
         return events_array
@@ -198,18 +205,17 @@ class SpeedscopeRenderer(Renderer):
 
         id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
         name: str = "CPU profile for {} at {}".format(session.program, id_)
-        sprofile = SpeedscopeProfile(name,
-                                    self.render_frame(frame),
-                                    session.duration)
+        sprofile_list: list[SpeedscopeProfile] = [
+            SpeedscopeProfile(name, self.render_frame(frame), session.duration)
+        ]
 
         # Exploits Python 3.7+ dictionary property of iterating over
         # keys in insertion order to build the list of speedscope
         # frames.
-        sframe_list: list[SpeedscopeFrame] = [
-            sframe for sframe in iter(self._frame_to_index)]
+        sframe_list: list[SpeedscopeFrame] = [sframe for sframe in iter(self._frame_to_index)]
 
         shared_dict = {"frames": sframe_list}
-        speedscope_file = SpeedscopeFile(name, [sprofile], shared_dict)
+        speedscope_file = SpeedscopeFile(name, sprofile_list, shared_dict)
 
         return "%s\n" % json.dumps(speedscope_file, cls=SpeedscopeEncoder)
 
