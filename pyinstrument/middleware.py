@@ -17,8 +17,8 @@ except ImportError:
     MiddlewareMixin = object
 
 
-def get_renderer_and_extension(path):
-    """Return the renderer instance and output file extension."""
+def get_renderer(path) -> Renderer:
+    """Return the renderer instance."""
     if path:
         try:
             renderer = import_string(path)()
@@ -26,14 +26,12 @@ def get_renderer_and_extension(path):
             print("Unable to import the class: %s" % path)
             raise exc
 
+        if not isinstance(renderer, Renderer):
+            raise ValueError(f'Renderer should subclass: {Renderer}')
+        
+        return renderer
     else:
-        renderer = HTMLRenderer()
-
-    if isinstance(renderer, Renderer):
-        return renderer, renderer.output_file_extension
-    else:
-        print("Renderer should subclass: %s. Using HTMLRenderer" % Renderer)
-        return HTMLRenderer(), HTMLRenderer.output_file_extension
+        return HTMLRenderer()
 
 
 class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
@@ -62,7 +60,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
             profile_session = request.profiler.stop()
 
             configured_renderer = getattr(settings, "PYINSTRUMENT_PROFILE_DIR_RENDERER", None)
-            renderer, ext = get_renderer_and_extension(configured_renderer)
+            renderer = get_renderer(configured_renderer)
 
             output = renderer.render(profile_session)
 
@@ -78,7 +76,10 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
 
             if profile_dir:
                 filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}".format(
-                    total_time=profile_session.duration, path=path, timestamp=time.time(), ext=ext
+                    total_time=profile_session.duration, 
+                    path=path, 
+                    timestamp=time.time(),
+                    ext=renderer.output_file_extension,
                 )
 
                 file_path = os.path.join(profile_dir, filename)
