@@ -8,12 +8,30 @@ from django.http import HttpResponse
 from django.utils.module_loading import import_string
 
 from pyinstrument import Profiler
+from pyinstrument.renderers import Renderer
 from pyinstrument.renderers.html import HTMLRenderer
 
 try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:
     MiddlewareMixin = object
+
+
+def get_renderer(path) -> Renderer:
+    """Return the renderer instance."""
+    if path:
+        try:
+            renderer = import_string(path)()
+        except ImportError as exc:
+            print("Unable to import the class: %s" % path)
+            raise exc
+
+        if not isinstance(renderer, Renderer):
+            raise ValueError(f"Renderer should subclass: {Renderer}")
+
+        return renderer
+    else:
+        return HTMLRenderer()
 
 
 class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
@@ -41,8 +59,10 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
         if hasattr(request, "profiler"):
             profile_session = request.profiler.stop()
 
-            renderer = HTMLRenderer()
-            output_html = renderer.render(profile_session)
+            configured_renderer = getattr(settings, "PYINSTRUMENT_PROFILE_DIR_RENDERER", None)
+            renderer = get_renderer(configured_renderer)
+
+            output = renderer.render(profile_session)
 
             profile_dir = getattr(settings, "PYINSTRUMENT_PROFILE_DIR", None)
 
@@ -55,10 +75,11 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                 path = path.replace("?", "_qs_")
 
             if profile_dir:
-                filename = "{total_time:.3f}s {path} {timestamp:.0f}.html".format(
+                filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}".format(
                     total_time=profile_session.duration,
                     path=path,
                     timestamp=time.time(),
+                    ext=renderer.output_file_extension,
                 )
 
                 file_path = os.path.join(profile_dir, filename)
@@ -67,10 +88,15 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                     os.mkdir(profile_dir)
 
                 with open(file_path, "w", encoding="utf-8") as f:
-                    f.write(output_html)
+                    f.write(output)
 
             if getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET:
-                return HttpResponse(output_html)
+                if isinstance(renderer, HTMLRenderer):
+                    return HttpResponse(output)
+                else:
+                    renderer = HTMLRenderer()
+                    output = renderer.render(profile_session)
+                    return HttpResponse(output)
             else:
                 return response
         else:

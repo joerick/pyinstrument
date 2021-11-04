@@ -25,6 +25,8 @@ class JSONRenderer(Renderer):
     Outputs a tree of JSON, containing processed frames.
     """
 
+    output_file_extension = "json"
+
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 

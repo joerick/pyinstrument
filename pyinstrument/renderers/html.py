@@ -20,6 +20,8 @@ class HTMLRenderer(Renderer):
     Renders a rich, interactive web page, as a string of HTML.
     """
 
+    output_file_extension = "html"
+
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
