@@ -27,8 +27,8 @@ def get_renderer(path) -> Renderer:
             raise exc
 
         if not isinstance(renderer, Renderer):
-            raise ValueError(f'Renderer should subclass: {Renderer}')
-        
+            raise ValueError(f"Renderer should subclass: {Renderer}")
+
         return renderer
     else:
         return HTMLRenderer()
@@ -76,8 +76,8 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
 
             if profile_dir:
                 filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}".format(
-                    total_time=profile_session.duration, 
-                    path=path, 
+                    total_time=profile_session.duration,
+                    path=path,
                     timestamp=time.time(),
                     ext=renderer.output_file_extension,
                 )
