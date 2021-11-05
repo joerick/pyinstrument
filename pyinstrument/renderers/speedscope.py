@@ -205,8 +205,13 @@ class SpeedscopeRenderer(Renderer):
 
         id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
         name: str = "CPU profile for {} at {}".format(session.program, id_)
+
+        # Use self._event_time instead of session.duration because there can be
+        # inconsistencies between the two numbers; in the test_speedscope_output
+        # test within test_profiler.py, session.duration is (much) less than
+        # self._event_time (by a factor of at least 150).
         sprofile_list: list[SpeedscopeProfile] = [
-            SpeedscopeProfile(name, self.render_frame(frame), session.duration)
+            SpeedscopeProfile(name, self.render_frame(frame), self._event_time)
         ]
 
         # Exploits Python 3.7+ dictionary property of iterating over
