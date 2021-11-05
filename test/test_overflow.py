@@ -11,7 +11,7 @@ from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer
 
 
 def recurse(depth):
-    if depth == 0:
+    if depth <= 0:
         time.sleep(0.1)
         return
 
