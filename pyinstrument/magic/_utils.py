@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # This file is largely based on https://gist.github.com/Carreau/0f051f57734222da925cd364e59cc17e which is in the public domain
 # This (or something similar) may eventually be moved into IPython
 import ast
@@ -36,22 +38,22 @@ class PrePostAstTransformer(NodeTransformer):
     return_value
     ```
 
-    Thus makind sure that post is always executed even if pre or user code fails.
+    Thus making sure that post is always executed even if pre or user code fails.
     """
 
-    def __init__(self, pre, post):
+    def __init__(self, pre: str | ast.Module, post: str | ast.Module):
         """
         pre and post are either strings, or ast.Modules object that need to be run just before or after
         the user code.
 
         While strings are possible, we suggest using ast.Modules
-        object and mangling the corresponding varaibles names
+        object and mangling the corresponding variable names
         to be invalid python identifiers to avoid name conflicts.
         """
         if isinstance(pre, str):
             pre = parse(pre)
         if isinstance(post, str):
-            pre = parse(post)
+            post = parse(post)
 
         self.pre = pre.body
         self.post = post.body
@@ -69,10 +71,10 @@ class PrePostAstTransformer(NodeTransformer):
             """
             )
         )
-        self.try_ = self.core.body[0].body = []
-        self.fin = self.core.body[0].finalbody = []
+        self.try_ = self.core.body[0].body = []  # type: ignore
+        self.fin = self.core.body[0].finalbody = []  # type: ignore
 
-    def visit_Module(self, node):
+    def visit_Module(self, node: ast.Module):
         if not self.active:
             return node
         self.reset()

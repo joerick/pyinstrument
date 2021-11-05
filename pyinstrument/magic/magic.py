@@ -1,13 +1,15 @@
 from __future__ import print_function
 
 import urllib.parse
+from ast import parse
 
-from .. import Profiler
-from ._utils import PrePostAstTransformer
+from IPython import get_ipython
 from IPython.core.magic import Magics, line_cell_magic, magics_class
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import IFrame, display
-from ast import parse
+
+from .. import Profiler
+from ._utils import PrePostAstTransformer
 
 _active_profiler = None
 
