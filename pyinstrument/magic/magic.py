@@ -48,7 +48,7 @@ class PyinstrumentMagic(Magics):
     @argument(
         "--height",
         "-h",
-        default=600,
+        default=400,
         help="Output height",
     )
     @argument(
@@ -104,6 +104,7 @@ class PyinstrumentMagic(Magics):
             src="data:text/html, " + urllib.parse.quote(html),
             width="100%",
             height=args.height,
+            extras=['style="resize: vertical"'],
         )
         as_text = _active_profiler.output_text(timeline=args.timeline)
         # repr_html may be a bit fragile, but it's been stable for a while
