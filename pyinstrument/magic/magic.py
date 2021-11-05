@@ -15,6 +15,10 @@ _active_profiler = None
 
 
 def _get_active_profiler():
+    """
+    Allows the code inserted into the cell to access the pyinstrument Profiler
+    instance, to start/stop it.
+    """
     return _active_profiler
 
 
@@ -75,7 +79,14 @@ class PyinstrumentMagic(Magics):
         global _active_profiler
         args = parse_argstring(self.pyinstrument, line)
         ip = get_ipython()
+
+        if not ip:
+            raise RuntimeError("couldn't get ipython shell instance")
+
         code = cell or line
+
+        if not code:
+            return
 
         # Turn off the last run (e.g. a user interrupted)
         if _active_profiler and _active_profiler.is_running:
@@ -88,12 +99,13 @@ class PyinstrumentMagic(Magics):
         ip.run_cell(code)
         ip.ast_transformers.remove(self._transformer)
 
-        html = _get_active_profiler().output_html(timeline=args.timeline)
+        html = _active_profiler.output_html(timeline=args.timeline)
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),
             width="100%",
             height=args.height,
         )
-        as_text = _get_active_profiler().output_text(timeline=args.timeline)
+        as_text = _active_profiler.output_text(timeline=args.timeline)
         # repr_html may be a bit fragile, but it's been stable for a while
         display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)
+        _active_profiler = None
