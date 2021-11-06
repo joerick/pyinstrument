@@ -1,9 +1,11 @@
 from test.fake_time_util import fake_time
 
 import pytest
-from IPython.utils.io import capture_output as capture_ipython_output
 
-code = """
+# note: IPython should be imported within each test. Importing it in our tests
+# seems to cause problems with subsequent tests.
+
+cell_code = """
 import time
 
 def function_a():
@@ -24,15 +26,17 @@ def function_e():
 
 function_a()
 """
-from IPython.testing.globalipapp import start_ipython
 
 # Tests #
 
 
+@pytest.mark.ipythonmagic
 def test_magics(ip):
+    from IPython.utils.io import capture_output as capture_ipython_output
+
     with fake_time():
         with capture_ipython_output() as captured:
-            ip.run_cell_magic("pyinstrument", line="", cell=code)
+            ip.run_cell_magic("pyinstrument", line="", cell=cell_code)
 
     assert len(captured.outputs) == 1
     output = captured.outputs[0]
@@ -43,6 +47,7 @@ def test_magics(ip):
     assert "<iframe" in output.data["text/html"]
     assert "function_a" in output.data["text/plain"]
 
+    assert "- 0.200 function_a" in output.data["text/plain"]
     assert "- 0.100 sleep" in output.data["text/plain"]
 
     with fake_time():
@@ -57,6 +62,7 @@ def test_magics(ip):
     assert "- 0.100 sleep" in output.data["text/plain"]
 
 
+@pytest.mark.ipythonmagic
 def test_magic_empty_line(ip):
     # check empty line input
     ip.run_line_magic("pyinstrument", line="")
@@ -67,6 +73,8 @@ def test_magic_empty_line(ip):
 
 @pytest.fixture(scope="module")
 def session_ip():
+    from IPython.testing.globalipapp import start_ipython
+
     yield start_ipython()
 
 
