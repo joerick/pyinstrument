@@ -1,4 +1,3 @@
-import faulthandler
 import inspect
 import sys
 import time
