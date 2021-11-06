@@ -29,6 +29,10 @@ class Renderer:
     Dictionary containing processor options, passed to each processor.
     """
 
+    output_file_extension: str = "txt"
+    """Renderer output file extension with out dot prefix. The default value is `txt`
+    """
+
     def __init__(
         self,
         show_all: bool = False,
