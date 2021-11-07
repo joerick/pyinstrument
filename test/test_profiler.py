@@ -201,6 +201,9 @@ def test_speedscope_output():
             profile_field in speedscope_profile
         ), f"Field named '{profile_field}' not in Speedscope output at 'profiles[0]'"
 
+    # speedscope_profile["endValue"] is not tested because a fake_time mock
+    # timer is used to replace time.time, and this mock causes session.duration
+    # to differ from self._event_time just before exiting SpeedscopeRenderer.render
     start_time_in_seconds = 0.0
     event_time_in_seconds = start_time_in_seconds
     assert speedscope_profile["type"] == "evented"
@@ -311,10 +314,6 @@ def test_speedscope_output():
             f"{speedscope_event_time_in_seconds} != {output_event_time_in_seconds} "
             f"+/- {output_event_time_abs_tol}"
         )
-
-    assert speedscope_profile["endValue"] == pytest.approx(
-        event_time_in_seconds, abs=get_approx_abs_tol(event_time_in_seconds)
-    )
 
 
 def test_empty_profile():
