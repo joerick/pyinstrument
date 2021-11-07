@@ -23,6 +23,7 @@ setup(
     url="https://github.com/joerick/pyinstrument",
     keywords=["profiling", "profile", "profiler", "cpu", "time", "sampling"],
     install_requires=[],
+    extras_require={"jupyter": ["ipython"]},
     include_package_data=True,
     python_requires=">=3.7",
     entry_points={"console_scripts": ["pyinstrument = pyinstrument.__main__:main"]},

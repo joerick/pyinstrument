@@ -11,7 +11,7 @@ from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer
 
 
 def recurse(depth):
-    if depth == 0:
+    if depth <= 0:
         time.sleep(0.1)
         return
 
@@ -50,7 +50,6 @@ def test_console(deep_profiler_session):
     ConsoleRenderer().render(deep_profiler_session)
 
 
-# html now uses the json renderer, so it's xfail too.
 def test_html(deep_profiler_session):
     HTMLRenderer().render(deep_profiler_session)
 

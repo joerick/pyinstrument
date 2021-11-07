@@ -44,6 +44,7 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+        pytest --only-ipython-magic
 
   test-aarch64:
     name: "test (aarch64, ${{ matrix.pyver }})"
@@ -70,4 +71,5 @@ jobs:
             pip install --upgrade pip && \
             pip install -r requirements-dev.txt && \
             pytest && \
+            pytest --only-ipython-magic && \
             deactivate'

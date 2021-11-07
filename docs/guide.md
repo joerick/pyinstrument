@@ -93,6 +93,33 @@ that smaller intervals could affect the performance overhead of profiling.
 save this HTML for later, use
 {meth}`profiler.output_html() <pyinstrument.Profiler.output_html>`.
 
+### Profile code in Jupyter/IPython
+Via [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html),
+you can profile a line or a cell in IPython or Jupyter.
+
+Example:
+```python
+%load_ext pyinstrument
+```
+
+```
+%%pyinstrument
+def a():
+    b()
+    c()
+def b():
+    d()
+def c():
+    d()
+def d():
+    e()
+def e():
+    time.sleep(1)
+a()
+```
+
+To customize options, see `%%pyinstrument??`.
+
 ### Profile a web request in Django
 
 To profile Django web requests, add
