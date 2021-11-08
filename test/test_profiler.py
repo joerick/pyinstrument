@@ -182,138 +182,86 @@ def test_speedscope_output():
     speedscope_frame_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeFrame)])
     for (function_name, frame_index) in distinct_functions_called.items():
         for frame_field in speedscope_frame_fields:
-            assert frame_field in speedscope_frame_list[frame_index], (
-                f"Field named '{frame_field}' not in Speedscope output"
-                f"at 'shared.frames[{frame_index}]'"
-            )
-        frame_index_name = speedscope_frame_list[frame_index]["name"]
-        assert frame_index_name == function_name, (
-            f"Speedscope output 'shared.frames[{frame_index}].name' has value "
-            f"{frame_index_name} != {function_name}"
-        )
+            assert frame_field in speedscope_frame_list[frame_index]
+        assert speedscope_frame_list[frame_index]["name"] == function_name
 
     speedscope_profile_list = output["profiles"]
     assert len(speedscope_profile_list) == 1
     speedscope_profile = speedscope_profile_list[0]
     speedscope_profile_fields = ("type", "name", "unit", "startValue", "endValue", "events")
     for profile_field in speedscope_profile_fields:
-        assert (
-            profile_field in speedscope_profile
-        ), f"Field named '{profile_field}' not in Speedscope output at 'profiles[0]'"
+        assert profile_field in speedscope_profile
 
     # speedscope_profile["endValue"] is not tested because a fake_time mock
     # timer is used to replace time.time, and this mock causes session.duration
     # to differ from self._event_time just before exiting SpeedscopeRenderer.render
-    start_time_in_seconds = 0.0
-    event_time_in_seconds = start_time_in_seconds
     assert speedscope_profile["type"] == "evented"
     assert speedscope_profile["unit"] == "seconds"
-    assert speedscope_profile["startValue"] == start_time_in_seconds
-
-    """Two helper functions for constructing a timeline and testing it"""
-
-    def update_event_time_on_sleep_close(time_increment_in_seconds: float):
-        """Updates running total of event time in seconds and returns updated value"""
-        nonlocal event_time_in_seconds
-        event_time_in_seconds += time_increment_in_seconds
-        return event_time_in_seconds
-
-    def get_approx_abs_tol(time_in_seconds: float):
-        """Computes absolute tolerance for given time value to account for CI time jitter"""
-        uncertainty_per_quarter_second = 0.1
-        absolute_tolerance = (time_in_seconds / 0.25) * uncertainty_per_quarter_second
-        return absolute_tolerance
-
-    speedscope_event_list = speedscope_profile["events"]
-    sleep_a_time_in_seconds = 0.25
-    sleep_b_time_in_seconds = 0.5
+    assert speedscope_profile["startValue"] == 0.0
 
     output_event_tuple = (
         SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
-            event_time_in_seconds,
+            0.0,
             distinct_functions_called["test_speedscope_output"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
-            event_time_in_seconds,
+            0.0,
             distinct_functions_called["long_function_a"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
-            event_time_in_seconds,
+            0.0,
             distinct_functions_called["sleep"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
-            update_event_time_on_sleep_close(sleep_a_time_in_seconds),
+            0.25,
             distinct_functions_called["sleep"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
-            event_time_in_seconds,
+            0.25,
             distinct_functions_called["long_function_a"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
-            event_time_in_seconds,
+            0.25,
             distinct_functions_called["long_function_b"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.OPEN,
-            event_time_in_seconds,
+            0.25,
             distinct_functions_called["sleep"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
-            update_event_time_on_sleep_close(sleep_b_time_in_seconds),
+            0.75,
             distinct_functions_called["sleep"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
-            event_time_in_seconds,
+            0.75,
             distinct_functions_called["long_function_b"],
         ),
         SpeedscopeEvent(
             SpeedscopeEventType.CLOSE,
-            event_time_in_seconds,
+            0.75,
             distinct_functions_called["test_speedscope_output"],
         ),
     )
 
+    speedscope_event_list = speedscope_profile["events"]
     assert len(speedscope_event_list) == len(output_event_tuple)
     speedscope_event_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeEvent)])
     for (event_index, speedscope_event) in enumerate(speedscope_event_list):
         for event_field in speedscope_event_fields:
-            assert event_field in speedscope_event, (
-                f"Speedscope output 'profiles[0].events[{event_index}]' lacks "
-                f"a field named '{event_field}'"
-            )
+            assert event_field in speedscope_event
 
-        output_event_type = output_event_tuple[event_index].type.value
-        speedscope_event_type = speedscope_event["type"]
-        assert speedscope_event["type"] == output_event_tuple[event_index].type.value, (
-            f"Speedscope output 'profiles[0].events[{event_index}].type has "
-            f"value {speedscope_event_type} != {output_event_type}"
-        )
-
-        output_event_frame_index = output_event_tuple[event_index].frame
-        speedscope_event_frame_index = speedscope_event["frame"]
-        assert speedscope_event_frame_index == output_event_frame_index, (
-            f"Speedscope output 'profiles[0].events[{event_index}].frame has "
-            f"value {speedscope_event_frame_index} != {output_event_frame_index}"
-        )
-
-        output_event_time_in_seconds = output_event_tuple[event_index].at
-        output_event_time_abs_tol = get_approx_abs_tol(output_event_time_in_seconds)
-        speedscope_event_time_in_seconds = speedscope_event["at"]
-        assert speedscope_event_time_in_seconds == pytest.approx(
-            output_event_time_in_seconds, abs=output_event_time_abs_tol
-        ), (
-            f"Speedscope output 'profiles[0].events[{event_index}].at has value "
-            f"{speedscope_event_time_in_seconds} != {output_event_time_in_seconds} "
-            f"+/- {output_event_time_abs_tol}"
-        )
+        assert speedscope_event["type"] == output_event_tuple[event_index].type.value
+        assert speedscope_event["frame"] == output_event_tuple[event_index].frame
+        assert speedscope_event["at"] == pytest.approx(output_event_tuple[event_index].at)
 
 
 def test_empty_profile():
