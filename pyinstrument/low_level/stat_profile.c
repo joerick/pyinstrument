@@ -275,6 +275,37 @@ code_from_frame(PyFrameObject* frame)
 #endif
 }
 
+static PyObject *
+_get_first_arg_from_cell_variables(PyFrameObject *frame, PyCodeObject *code) {
+    if (!code->co_cell2arg) {
+        // we don't have args in cell variables
+        return NULL;
+    }
+
+    Py_ssize_t ncells = PyTuple_GET_SIZE(code->co_cellvars);
+
+    for (int i = 0; i < ncells; i++) {
+        if (code->co_cell2arg[i] == CO_CELL_NOT_AN_ARG) {
+            // this cell is not an argument
+            continue;
+        }
+
+        // get the cell value
+        // the cells are after the local variables
+        PyObject *cell = frame->f_localsplus[code->co_nlocals + i];
+
+        // return the value inside the cell
+        if (!PyCell_Check(cell)) {
+            continue;
+        }
+
+        return PyCell_GET(cell);
+    }
+
+    // cell variable not found
+    return NULL;
+}
+
 static const char *
 _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     // This code looks only at the first 'fast' frame local.
@@ -296,7 +327,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         return NULL;
     }
 
-    if (code->co_nlocals == 0 || PyTuple_Size(code->co_varnames) == 0) {
+    if (code->co_nlocals < 1 || PyTuple_Size(code->co_varnames) < 1) {
         return NULL;
     }
 
@@ -305,16 +336,21 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     PyObject *first_var_name = PyTuple_GetItem(code->co_varnames, 0);
     PyObject *first_var = frame->f_localsplus[0];
 
+    if (first_var == NULL) {
+        // Sometimes arguments are in cells, if they're accessible from other scopes, for example
+        // an inner function that captures self. In that case, the local var is NULL, and it's
+        // stored as a cell instead.
+        first_var = _get_first_arg_from_cell_variables(frame, code);
+    }
+
+    if (first_var == NULL) {
+        return NULL;
+    }
+
     if (PyUnicode_Compare(first_var_name, SELF_STRING) == 0) {
         // first arg is called 'self'. get the name of the type.
-        PyObject *typeObj = PyObject_Type(first_var);
-
-        if (PyType_Check(typeObj)) {
-            PyTypeObject *type = (PyTypeObject *)typeObj;
-            result = _PyType_Name(type);
-        }
-
-        Py_DECREF(typeObj);
+        PyTypeObject *type = first_var->ob_type;
+        result = _PyType_Name(type);
     } else if (PyUnicode_Compare(first_var_name, CLS_STRING) == 0) {
         // first arg is called 'cls'. Get its name.
         PyObject *typeObj = first_var;
@@ -358,6 +394,7 @@ _get_frame_identifier(PyFrameObject *frame) {
     }
 
     Py_DECREF(code);
+
     return result;
 }
 
