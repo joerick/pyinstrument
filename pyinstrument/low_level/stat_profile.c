@@ -277,13 +277,6 @@ code_from_frame(PyFrameObject* frame)
 
 static const char *
 _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
-    if (!PyTuple_Check(code->co_varnames)) {
-        // co_varnames must be a tuple
-        return NULL;
-    }
-
-    const char *result = NULL;
-
     // This code looks only at the first 'fast' frame local.
     //
     // A generalisable way to get a local variable would be to look at every
@@ -298,26 +291,37 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         return NULL;
     }
 
-    if (code->co_nlocals > 0 && PyTuple_Size(code->co_varnames) > 0) {
-        PyObject *first_var_name = PyTuple_GetItem(code->co_varnames, 0);
-        PyObject *first_var = frame->f_localsplus[0];
+    if (!PyTuple_Check(code->co_varnames)) {
+        // co_varnames must be a tuple
+        return NULL;
+    }
 
-        if (PyUnicode_Compare(first_var_name, SELF_STRING) == 0) {
-            // first arg is called 'self'. get the class name.
-            PyObject *typeObj = PyObject_Type(first_var);
-            if (PyType_Check(typeObj)) {
-                PyTypeObject *type = (PyTypeObject *)typeObj;
-                result = _PyType_Name(type);
-            }
-            Py_DECREF(typeObj);
-        } else if (PyUnicode_Compare(first_var_name, CLS_STRING) == 0) {
-            // first arg is called 'cls'. Get its name.
-            PyObject *typeObj = first_var;
-            if (PyType_Check(typeObj)) {
-                PyTypeObject *type = (PyTypeObject *)typeObj;
-                result = _PyType_Name(type);
-            }
-            Py_DECREF(typeObj);
+    if (code->co_nlocals == 0 || PyTuple_Size(code->co_varnames) == 0) {
+        return NULL;
+    }
+
+    const char *result = NULL;
+
+    PyObject *first_var_name = PyTuple_GetItem(code->co_varnames, 0);
+    PyObject *first_var = frame->f_localsplus[0];
+
+    if (PyUnicode_Compare(first_var_name, SELF_STRING) == 0) {
+        // first arg is called 'self'. get the name of the type.
+        PyObject *typeObj = PyObject_Type(first_var);
+
+        if (PyType_Check(typeObj)) {
+            PyTypeObject *type = (PyTypeObject *)typeObj;
+            result = _PyType_Name(type);
+        }
+
+        Py_DECREF(typeObj);
+    } else if (PyUnicode_Compare(first_var_name, CLS_STRING) == 0) {
+        // first arg is called 'cls'. Get its name.
+        PyObject *typeObj = first_var;
+
+        if (PyType_Check(typeObj)) {
+            PyTypeObject *type = (PyTypeObject *)typeObj;
+            result = _PyType_Name(type);
         }
     }
 
@@ -331,6 +335,7 @@ _get_frame_identifier(PyFrameObject *frame) {
     const char *class_name = _get_class_name_of_frame(frame, code);
 
     PyObject *result;
+
     if (class_name) {
         result = PyUnicode_FromFormat(
             "%s.%U%c%U%c%i",
