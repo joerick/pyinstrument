@@ -6,7 +6,7 @@ import types
 from contextvars import ContextVar
 from typing import Any, Callable, List, NamedTuple, Optional
 
-from pyinstrument.low_level.stat_profile import setstatprofile
+from pyinstrument.low_level.stat_profile import get_frame_identifier, setstatprofile
 from pyinstrument.typing import LiteralStr
 
 # pyright: strict
@@ -158,26 +158,6 @@ def get_stack_sampler() -> StackSampler:
     if not hasattr(thread_locals, "stack_sampler"):
         thread_locals.stack_sampler = StackSampler()
     return thread_locals.stack_sampler
-
-
-def get_frame_identifier(frame: types.FrameType):
-    prefix = ""
-    # try to find self argument for usual methods
-    self = frame.f_locals.get("self", None)
-    if self and hasattr(self, "__class__"):
-        prefix = "%s." % self.__class__.__qualname__
-    else:
-        # also try to find cls argument for class methods
-        cls = frame.f_locals.get("cls", None)
-        if cls and hasattr(cls, "__qualname__"):
-            prefix = "%s." % cls.__qualname__
-
-    name = "%s%s" % (prefix, frame.f_code.co_name)
-    return "%s\x00%s\x00%i" % (
-        name,
-        frame.f_code.co_filename,
-        frame.f_code.co_firstlineno,
-    )
 
 
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
