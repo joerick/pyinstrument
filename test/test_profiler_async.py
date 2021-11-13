@@ -156,7 +156,8 @@ def test_profiler_task_isolation(engine):
 
     root_frame = profiler_session.root_frame()
     assert root_frame is not None
-    assert root_frame.time() == pytest.approx(0.1 + 0.5, rel=0.1)
+    fake_work_frame = next(f for f in walk_frames(root_frame) if f.function == "async_wait")
+    assert fake_work_frame.time() == pytest.approx(0.1 + 0.5, rel=0.1)
 
     root_frame = processors.aggregate_repeated_calls(root_frame, {})
     assert root_frame
