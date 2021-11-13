@@ -331,37 +331,42 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         return NULL;
     }
 
-    const char *result = NULL;
-
     PyObject *first_var_name = PyTuple_GetItem(code->co_varnames, 0);
+    int first_var_is_self = (PyUnicode_Compare(first_var_name, SELF_STRING) == 0);
+    int first_var_is_cls = (PyUnicode_Compare(first_var_name, CLS_STRING) == 0);
+
+    if (!(first_var_is_self || first_var_is_cls)) {
+        return NULL;
+    }
+
     PyObject *first_var = frame->f_localsplus[0];
 
     if (first_var == NULL) {
-        // Sometimes arguments are in cells, if they're accessible from other scopes, for example
-        // an inner function that captures self. In that case, the local var is NULL, and it's
-        // stored as a cell instead.
+        // Sometimes arguments are in cells, if they're accessible from other
+        // scopes, for example an inner function that captures self. In that
+        // case, the local var is NULL, and it's stored as a cell instead.
         first_var = _get_first_arg_from_cell_variables(frame, code);
     }
 
     if (first_var == NULL) {
+        // not sure why this would happen, but as a failsafe.
         return NULL;
     }
 
-    if (PyUnicode_Compare(first_var_name, SELF_STRING) == 0) {
-        // first arg is called 'self'. get the name of the type.
+    if (first_var_is_self) {
         PyTypeObject *type = first_var->ob_type;
-        result = _PyType_Name(type);
-    } else if (PyUnicode_Compare(first_var_name, CLS_STRING) == 0) {
-        // first arg is called 'cls'. Get its name.
-        PyObject *typeObj = first_var;
-
-        if (PyType_Check(typeObj)) {
-            PyTypeObject *type = (PyTypeObject *)typeObj;
-            result = _PyType_Name(type);
+        return _PyType_Name(type);
+    } else if (first_var_is_cls) {
+        if (!PyType_Check(first_var)) {
+            return NULL;
         }
+        PyTypeObject *type = (PyTypeObject *)first_var;
+        return _PyType_Name(type);
+    } else {
+        assert(false);
     }
 
-    return result;
+    return NULL;
 }
 
 static PyObject *
