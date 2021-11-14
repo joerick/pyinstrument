@@ -1,4 +1,5 @@
 import asyncio
+import dataclasses
 import json
 import time
 from functools import partial
@@ -10,6 +11,7 @@ import trio
 
 from pyinstrument import Profiler, renderers
 from pyinstrument.frame import BaseFrame, Frame
+from pyinstrument.renderers.speedscope import SpeedscopeEvent, SpeedscopeEventType, SpeedscopeFrame
 from pyinstrument.session import Session
 
 from .util import assert_never, busy_wait, flaky_in_ci
@@ -136,6 +138,130 @@ def test_json_output():
 
     assert root_frame["function"] == "test_json_output"
     assert len(root_frame["children"]) == 2
+
+
+def test_speedscope_output():
+    with fake_time():
+        with Profiler() as profiler:
+            long_function_a()
+            long_function_b()
+
+    output_data = profiler.output(renderers.SpeedscopeRenderer())
+
+    output = json.loads(output_data)
+
+    file_level_schema_fields = {
+        "$schema",
+        "name",
+        "exporter",
+        "activeProfileIndex",
+        "profiles",
+        "shared",
+    }
+    for file_field in file_level_schema_fields:
+        assert file_field in output
+
+    assert output["$schema"] == "https://www.speedscope.app/file-format-schema.json"
+    assert "pyinstrument" in output["exporter"]
+    assert output["activeProfileIndex"] is None
+    assert "CPU profile" in output["name"]
+
+    assert "frames" in output["shared"]
+    speedscope_frame_list = output["shared"]["frames"]
+
+    # Distinct functions called stores indices in key-value pairs because function
+    # index lookup needed for Speedscope event list tests. Were we not testing
+    # the event list, the distinct functions called could be stored as a tuple.
+    distinct_functions_called = {
+        "test_speedscope_output": 0,
+        "long_function_a": 1,
+        "sleep": 2,
+        "long_function_b": 3,
+    }
+    assert len(speedscope_frame_list) == len(distinct_functions_called)
+    speedscope_frame_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeFrame)])
+    for (function_name, frame_index) in distinct_functions_called.items():
+        for frame_field in speedscope_frame_fields:
+            assert frame_field in speedscope_frame_list[frame_index]
+        assert speedscope_frame_list[frame_index]["name"] == function_name
+
+    speedscope_profile_list = output["profiles"]
+    assert len(speedscope_profile_list) == 1
+    speedscope_profile = speedscope_profile_list[0]
+    speedscope_profile_fields = ("type", "name", "unit", "startValue", "endValue", "events")
+    for profile_field in speedscope_profile_fields:
+        assert profile_field in speedscope_profile
+
+    # speedscope_profile["endValue"] is not tested because a fake_time mock
+    # timer is used to replace time.time, and this mock causes session.duration
+    # to differ from self._event_time just before exiting SpeedscopeRenderer.render
+    assert speedscope_profile["type"] == "evented"
+    assert speedscope_profile["unit"] == "seconds"
+    assert speedscope_profile["startValue"] == 0.0
+
+    output_event_tuple = (
+        SpeedscopeEvent(
+            SpeedscopeEventType.OPEN,
+            0.0,
+            distinct_functions_called["test_speedscope_output"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.OPEN,
+            0.0,
+            distinct_functions_called["long_function_a"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.OPEN,
+            0.0,
+            distinct_functions_called["sleep"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.CLOSE,
+            0.25,
+            distinct_functions_called["sleep"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.CLOSE,
+            0.25,
+            distinct_functions_called["long_function_a"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.OPEN,
+            0.25,
+            distinct_functions_called["long_function_b"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.OPEN,
+            0.25,
+            distinct_functions_called["sleep"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.CLOSE,
+            0.75,
+            distinct_functions_called["sleep"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.CLOSE,
+            0.75,
+            distinct_functions_called["long_function_b"],
+        ),
+        SpeedscopeEvent(
+            SpeedscopeEventType.CLOSE,
+            0.75,
+            distinct_functions_called["test_speedscope_output"],
+        ),
+    )
+
+    speedscope_event_list = speedscope_profile["events"]
+    assert len(speedscope_event_list) == len(output_event_tuple)
+    speedscope_event_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeEvent)])
+    for (event_index, speedscope_event) in enumerate(speedscope_event_list):
+        for event_field in speedscope_event_fields:
+            assert event_field in speedscope_event
+
+        assert speedscope_event["type"] == output_event_tuple[event_index].type.value
+        assert speedscope_event["frame"] == output_event_tuple[event_index].frame
+        assert speedscope_event["at"] == pytest.approx(output_event_tuple[event_index].at)
 
 
 def test_empty_profile():

@@ -52,6 +52,8 @@ Therefore, rendering can be customised by changing the ``processors`` property. 
 .. autoclass:: pyinstrument.renderers.HTMLRenderer
 
 .. autoclass:: pyinstrument.renderers.JSONRenderer
+
+.. autoclass:: pyinstrument.renderers.SpeedscopeRenderer
 ```
 
 ### Processors

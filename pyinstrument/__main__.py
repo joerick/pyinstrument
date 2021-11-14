@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from __future__ import annotations
 
 import codecs
@@ -82,7 +84,7 @@ def main():
         action="store",
         type="string",
         help=(
-            "how the report should be rendered. One of: 'text', 'html', 'json', or python "
+            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope' or python "
             "import path to a renderer class"
         ),
         default="text",
@@ -328,6 +330,8 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
         return renderers.HTMLRenderer
     elif renderer == "json":
         return renderers.JSONRenderer
+    elif renderer == "speedscope":
+        return renderers.SpeedscopeRenderer
     else:
         return object_with_import_path(renderer)
 
