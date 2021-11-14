@@ -52,6 +52,11 @@ Known issues
 Changelog
 ---------
 
+### v4.1.1
+
+-   Fixed an issue causing PYINSTRUMENT_PROFILE_DIR_RENDERER to output the
+    wrong file extension when used with the speedscope renderer.
+
 ### v4.1.0
 
 -   You can now use pyinstrument natively in an IPython notebook! Just use
