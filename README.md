@@ -343,7 +343,9 @@ To setup a dev environment:
 
     virtualenv --python=python3 env
     . env/bin/activate
+    pip install --upgrade pip
     pip install -r requirements-dev.txt
+    pre-commit install --install-hooks
 
 To get some sample output:
 
@@ -352,6 +354,25 @@ To get some sample output:
 To run the tests:
 
     pytest
+
+To run linting checks locally:
+
+    pre-commit run --all-files
+
+Some of the pre-commit checks, like `isort` or `black`, will auto-fix
+the problems they find. So if the above command returns an error, try
+running it again, it might succeed the second time :)
+
+Running all the checks can be slow, so you can also run checks
+individually, e.g., to format source code that fails `isort` or `black`
+checks:
+
+    pre-commit run --all-files isort
+    pre-commit run --all-files black
+
+To diagnose why `pyright` checks are failing:
+
+    pre-commit run --all-files pyright
 
 ### The HTML renderer Vue.js app
 
