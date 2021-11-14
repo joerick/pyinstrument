@@ -52,6 +52,19 @@ Known issues
 Changelog
 ---------
 
+### v4.1.0
+
+-   You can now use pyinstrument natively in an IPython notebook! Just use
+    `%load_ext pyinstrument` at the top of your notebook, and then
+    `%%pyinstrument` in the cell you want to profile.
+-   Added support for the [speedscope](https://www.speedscope.app/) format.
+    This provides a way to view interactive flamecharts using pyinstrument. To
+    use, profile with `pyinstrument -r speedscope`, and upload to the
+    speedscope web app.
+-   You can now configure renderers for the Django middleware file output,
+    using the `PYINSTRUMENT_PROFILE_DIR_RENDERER` option.
+-   Added wheels for Linux aarch64 (64-bit ARM).
+
 ### v4.0.4
 
 -   Fix a packaging issue where a package called 'test' was installed
