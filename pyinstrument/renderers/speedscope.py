@@ -125,6 +125,8 @@ class SpeedscopeRenderer(Renderer):
 
     """
 
+    output_file_extension = "speedscope.json"
+
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
