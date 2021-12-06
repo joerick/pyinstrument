@@ -41,14 +41,7 @@ class PythonStatProfiler:
 
             # 0x80 == CO_COROUTINE (i.e. defined with 'async def')
             if event == "return" and frame.f_code.co_flags & 0x80:
-                self.await_stack.append(
-                    "%s\x00%s\x00%i"
-                    % (
-                        frame.f_code.co_name,
-                        frame.f_code.co_filename,
-                        frame.f_code.co_firstlineno,
-                    )
-                )
+                self.await_stack.append(get_frame_identifier(frame))
             else:
                 self.await_stack.clear()
 

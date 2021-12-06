@@ -363,7 +363,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         PyTypeObject *type = (PyTypeObject *)first_var;
         return _PyType_Name(type);
     } else {
-        assert(false);
+        Py_FatalError("unreachable code");
     }
 
     return NULL;
