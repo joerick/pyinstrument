@@ -151,7 +151,7 @@ PYINSTRUMENT_SHOW_CALLBACK = "%s.custom_show_pyinstrument" % __name__
 
 You can configure the profile output type using setting's variable `PYINSTRUMENT_PROFILE_DIR_RENDERER`.
 Default value is `pyinstrument.renderers.HTMLRenderer`. The supported renderers are
-`pyinstrument.renderers.JSONRenderer`, `pyinstrument.renderers.HTMLRenderer`, 
+`pyinstrument.renderers.JSONRenderer`, `pyinstrument.renderers.HTMLRenderer`,
 `pyinstrument.renderers.SpeedscopeRenderer`.
 
 ### Profile a web request in Flask
