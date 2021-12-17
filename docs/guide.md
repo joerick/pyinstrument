@@ -104,6 +104,8 @@ Example:
 
 ```
 %%pyinstrument
+import time
+
 def a():
     b()
     c()
