@@ -104,7 +104,7 @@ Example:
 
 ```
 %%pyinstrument
-import time 
+import time
 
 def a():
     b()
