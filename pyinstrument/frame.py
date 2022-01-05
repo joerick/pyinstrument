@@ -65,6 +65,14 @@ class BaseFrame:
         self._self_time = self_time
         self._invalidate_time_caches()
 
+    @property
+    def perc(self) -> float | None:
+        return self._perc
+
+    @perc.setter
+    def perc(self, val: float):
+        self._perc = val
+
     # invalidates the cache for the time() function.
     # called whenever self_time or _children is modified.
     def _invalidate_time_caches(self):
@@ -139,6 +147,7 @@ class Frame(BaseFrame):
         self._children = []
 
         self._time = None
+        self._perc = None
         self._await_time = None
 
         if children:
@@ -291,11 +300,12 @@ class Frame(BaseFrame):
             frame._await_time = None
 
     def __repr__(self):
-        return "Frame(identifier=%s, time=%f, len(children)=%d), group=%r" % (
+        return "Frame(identifier=%s, time=%f, len(children)=%d), group=%r, perc=%r" % (
             self.identifier,
             self.time(),
             len(self.children),
             self.group,
+            self.perc,
         )
 
 
