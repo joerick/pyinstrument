@@ -215,3 +215,32 @@ def remove_irrelevant_nodes(
         remove_irrelevant_nodes(child, options=options, total_time=total_time)
 
     return frame
+
+
+def compute_relative_percentage(
+    frame: BaseFrame | None, options: ProcessorOptions
+) -> BaseFrame | None:
+    """
+    Compute the relative percentage amongst siblings
+    """
+
+    def _compute_layer_percentage(frame: BaseFrame):
+        total_time = frame.time()
+
+        for child in frame.children:
+            child.perc = child.time() / total_time
+            child = _compute_layer_percentage(child)
+
+        if len(frame.children) == 0:
+            frame.perc = 1.0
+
+        return frame
+
+    if frame is None:
+        return None
+
+    frame = _compute_layer_percentage(frame)
+
+    frame.perc = 1.0
+
+    return frame
