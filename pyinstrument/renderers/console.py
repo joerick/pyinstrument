@@ -17,7 +17,13 @@ class ConsoleRenderer(Renderer):
     consoles.
     """
 
-    def __init__(self, unicode: bool = False, color: bool = False, **kwargs: Any):
+    def __init__(
+        self,
+        unicode: bool = False,
+        color: bool = False,
+        show_percentage: bool = False,
+        **kwargs: Any,
+    ):
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
@@ -27,6 +33,7 @@ class ConsoleRenderer(Renderer):
         self.unicode = unicode
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
+        self.show_percentage = show_percentage
 
     def render(self, session: Session):
         result = self.render_preamble(session)
@@ -76,14 +83,26 @@ class ConsoleRenderer(Renderer):
         ):
             time_str = self._ansi_color_for_time(frame) + f"{frame.time():.3f}" + self.colors.end
             function_color = self._ansi_color_for_function(frame)
-            result = "{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
-                indent=indent,
-                time_str=time_str,
-                function_color=function_color,
-                function=frame.function,
-                code_position=frame.code_position_short,
-                c=self.colors,
-            )
+            if not self.show_percentage:
+                result = "{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
+                    indent=indent,
+                    time_str=time_str,
+                    function_color=function_color,
+                    function=frame.function,
+                    code_position=frame.code_position_short,
+                    c=self.colors,
+                )
+            else:
+                perc_str = self._ansi_color_for_time(frame) + f"{frame.perc:.2f}" + self.colors.end
+                result = "{indent}{time_str} ({perc_str}) {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
+                    indent=indent,
+                    time_str=time_str,
+                    perc_str=perc_str,
+                    function_color=function_color,
+                    function=frame.function,
+                    code_position=frame.code_position_short,
+                    c=self.colors,
+                )
             if self.unicode:
                 indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
             else:
@@ -142,6 +161,7 @@ class ConsoleRenderer(Renderer):
             processors.group_library_frames_processor,
             processors.remove_unnecessary_self_time_nodes,
             processors.remove_irrelevant_nodes,
+            processors.compute_relative_percentage,
         ]
 
     class colors_enabled:
