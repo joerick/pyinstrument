@@ -256,8 +256,9 @@ class Profiler:
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        show_percentage: bool = False,
     ):
-        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, show_percentage=False)
 
         Print the captured profile to the console.
 
@@ -266,6 +267,7 @@ class Profiler:
         :param color: Override ANSI color support detection.
         :param show_all: Sets the ``show_all`` parameter on the renderer.
         :param timeline: Sets the ``timeline`` parameter on the renderer.
+        :param show_percentage: Sets the ``show_percentage`` parameter on the renderer.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)
@@ -278,6 +280,7 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                show_percentage=show_percentage,
             ),
             file=file,
         )
@@ -288,13 +291,18 @@ class Profiler:
         color: bool = False,
         show_all: bool = False,
         timeline: bool = False,
+        show_percentage: bool = False,
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
-                unicode=unicode, color=color, show_all=show_all, timeline=timeline
+                unicode=unicode,
+                color=color,
+                show_all=show_all,
+                timeline=timeline,
+                show_percentage=show_percentage,
             )
         )
 
