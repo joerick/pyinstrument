@@ -162,6 +162,14 @@ def main():
         help="show everything",
         default=False,
     )
+    parser.add_option(
+        "",
+        "--show-percentage",
+        dest="show_percentage",
+        action="store_true",
+        help="(text renderer only) show relative percentages alongside timings",
+        default=False,
+    )
 
     parser.add_option(
         "",
@@ -299,7 +307,9 @@ def main():
         unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
         color: Any = options.color if color_override else file_supports_color(f)
 
-        renderer_kwargs.update({"unicode": unicode, "color": color})
+        renderer_kwargs.update(
+            {"unicode": unicode, "color": color, "show_percentage": options.show_percentage}
+        )
 
     renderer_class = get_renderer_class(options.renderer)
     renderer = renderer_class(**renderer_kwargs)
