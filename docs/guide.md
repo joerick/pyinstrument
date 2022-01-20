@@ -186,7 +186,7 @@ creates the html output and returns that instead of the actual response.
 
 ### Profile a web request in ASGI (FastAPI, Starlette)
 
-To profile a web request in an ASGI framework like FastAPI or Starlette, 
+To profile a web request in an ASGI framework like FastAPI or Starlette,
 you can use the following Middleware:
 
 ```python
