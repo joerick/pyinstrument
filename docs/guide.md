@@ -184,6 +184,36 @@ This will check for the `?profile` query param on each request and if found,
 it starts profiling. After each request where the profiler was running it
 creates the html output and returns that instead of the actual response.
 
+### Profile a web request in ASGI (FastAPI, Starlette)
+
+To profile a web request in an ASGI framework like FastAPI or Starlette, 
+you can use the following Middleware:
+
+```python
+from pyinstrument import Profiler
+from starlette.requests import Request
+from starlette.responses import Response
+
+
+class ProfilingMiddleware:
+    def __init__(self, profiler_interval: float = 0.001):
+        self.profiler_interval = profiler_interval
+
+    async def __call__(self, request: Request, call_next: Callable) -> Response:
+        should_profile = 'profile' in request.query_params
+
+        if should_profile:
+            with Profiler(interval=self.profiler_interval) as p:
+                await call_next(request)
+            return Response(p.output_html(), media_type='text/html')
+        else:
+            return await call_next(request)
+```
+
+This checks for the `?profile` query param on each request and if found,
+it starts profiling. After each request where the profiler was running it
+creates the HTML output and returns that instead of the actual response.
+
 ### Profile something else?
 
 I'd love to have more ways to profile using Pyinstrument - e.g. other
