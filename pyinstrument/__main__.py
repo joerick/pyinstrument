@@ -5,6 +5,7 @@ from __future__ import annotations
 import codecs
 import fnmatch
 import glob
+import json
 import optparse
 import os
 import runpy
@@ -25,7 +26,7 @@ from pyinstrument.util import (
     file_supports_unicode,
     object_with_import_path,
 )
-from pyinstrument.vendor import appdirs
+from pyinstrument.vendor import appdirs, keypath
 
 # pyright: strict
 
@@ -230,10 +231,7 @@ def main():
     if options.from_path and sys.platform == "win32":
         parser.error("--from-path is not supported on Windows")
 
-    # create the renderer
-
-    if options.output_html:
-        options.renderer = "html"
+    # open the output file
 
     if options.outfile:
         f = codecs.open(options.outfile, "w", "utf-8")
@@ -242,14 +240,14 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
+    # create the renderer
+
     try:
-        renderer_options = compute_renderer_options(options, output_file=f)
+        renderer = create_renderer(options, output_file=f)
     except OptionsParseError as e:
         parser.error(e.args[0])
         exit(1)
 
-    renderer_class = get_renderer_class(options.renderer)
-    renderer = renderer_class(**renderer_options)
     # remove this frame from the trace
     renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
@@ -361,11 +359,46 @@ def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -
 
         renderer_options.update({"unicode": unicode, "color": color})
 
+    # apply user options
+    if options.renderer_options is not None:
+        for renderer_option in options.renderer_options:
+            key, sep, value = renderer_option.partition("=")
+
+            if sep == "":
+                # we're setting a flag, like `-p unicode`
+                keypath.set_value_at_keypath(renderer_options, key, True)
+            else:
+                # it's a key=value structure
+                try:
+                    # try parsing as a JSON value
+                    parsed_value = json.loads(value)
+                except:
+                    # otherwise treat it as a string
+                    parsed_value = value
+
+                keypath.set_value_at_keypath(renderer_options, key, parsed_value)
+
     return renderer_options
 
 
 class OptionsParseError(Exception):
     pass
+
+
+def create_renderer(options: CommandLineOptions, output_file: TextIO) -> renderers.Renderer:
+    if options.output_html:
+        options.renderer = "html"
+
+    renderer_options = compute_renderer_options(options, output_file=output_file)
+    renderer_class = get_renderer_class(options.renderer)
+
+    try:
+        return renderer_class(**renderer_options)
+    except TypeError as err:
+        # TypeError is probably a bad renderer option, so we produce a nicer error message
+        raise OptionsParseError(
+            f"Failed to create {renderer_class.__name__}. Check your renderer options.\n  {err}\n"
+        )
 
 
 def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
@@ -378,7 +411,17 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
     elif renderer == "speedscope":
         return renderers.SpeedscopeRenderer
     else:
-        return object_with_import_path(renderer)
+        try:
+            return object_with_import_path(renderer)
+        except (ValueError, ModuleNotFoundError, AttributeError) as err:
+            # ValueError means we failed to import this object
+            raise OptionsParseError(
+                f"Failed to find renderer with name {renderer!r}.\n"
+                "Options are text, html, json, speedscope or a Python import path to a Renderer\n"
+                "class.\n"
+                "\n"
+                f"Underlying error: {err}\n"
+            )
 
 
 def report_dir() -> str:
