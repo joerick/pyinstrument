@@ -11,7 +11,7 @@ import runpy
 import shutil
 import sys
 import time
-from typing import Any, List, Type, cast
+from typing import Any, List, TextIO, Type, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
@@ -91,6 +91,19 @@ def main():
     )
 
     parser.add_option(
+        "-p",
+        "--renderer-option",
+        dest="renderer_options",
+        action="append",
+        type="string",
+        help=(
+            "options to pass to the renderer, in the format 'flag_name' or 'option_name=option_value'. "
+            "For example, to set the flag show_percentages, pass '-o show_percentages'. To pass multiple "
+            "options, use the -o flag multiple times."
+        ),
+    )
+
+    parser.add_option(
         "",
         "--html",
         dest="output_html",
@@ -104,6 +117,7 @@ def main():
         "--timeline",
         dest="timeline",
         action="store_true",
+        default=False,
         help="render as a timeline - preserve ordering and don't condense repeated calls",
     )
 
@@ -193,11 +207,16 @@ def main():
         help="(text renderer only) force no color text output",
     )
 
+    # parse the options
+
     if not sys.argv[1:]:
         parser.print_help()
         sys.exit(2)
 
     options, args = parser.parse_args()
+
+    # make command line options type-checked
+    options = cast(CommandLineOptions, options)
     # work around a type checking bug...
     args = cast(List[str], args)
 
@@ -211,24 +230,30 @@ def main():
     if options.from_path and sys.platform == "win32":
         parser.error("--from-path is not supported on Windows")
 
-    if options.hide_fnmatch is not None and options.hide_regex is not None:
-        parser.error("You can‘t specify both --hide and --hide-regex")
+    # create the renderer
 
-    if options.hide_fnmatch is not None:
-        options.hide_regex = fnmatch.translate(options.hide_fnmatch)
+    if options.output_html:
+        options.renderer = "html"
 
-    show_options_used = [
-        options.show_fnmatch is not None,
-        options.show_regex is not None,
-        options.show_all,
-    ]
-    if show_options_used.count(True) > 1:
-        parser.error("You can only specify one of --show, --show-regex and --show-all")
+    if options.outfile:
+        f = codecs.open(options.outfile, "w", "utf-8")
+        should_close_f_after_writing = True
+    else:
+        f = sys.stdout
+        should_close_f_after_writing = False
 
-    if options.show_fnmatch is not None:
-        options.show_regex = fnmatch.translate(options.show_fnmatch)
-    if options.show_all:
-        options.show_regex = r".*"
+    try:
+        renderer_options = compute_renderer_options(options, output_file=f)
+    except OptionsParseError as e:
+        parser.error(e.args[0])
+        exit(1)
+
+    renderer_class = get_renderer_class(options.renderer)
+    renderer = renderer_class(**renderer_options)
+    # remove this frame from the trace
+    renderer.processors.append(remove_first_pyinstrument_frame_processor)
+
+    # get the session - execute code or load from disk
 
     if options.load_prev:
         session = load_report(options.load_prev)
@@ -273,39 +298,7 @@ def main():
 
         session = profiler.stop()
 
-    if options.output_html:
-        options.renderer = "html"
-
-    if options.outfile:
-        f = codecs.open(options.outfile, "w", "utf-8")
-        should_close_f_after_writing = True
-    else:
-        f = sys.stdout
-        should_close_f_after_writing = False
-
-    renderer_kwargs = {
-        "processor_options": {
-            "hide_regex": options.hide_regex,
-            "show_regex": options.show_regex,
-        }
-    }
-
-    if options.timeline is not None:
-        renderer_kwargs["timeline"] = options.timeline
-
-    if options.renderer == "text":
-        unicode_override = options.unicode is not None
-        color_override = options.color is not None
-        unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
-        color: Any = options.color if color_override else file_supports_color(f)
-
-        renderer_kwargs.update({"unicode": unicode, "color": color})
-
-    renderer_class = get_renderer_class(options.renderer)
-    renderer = renderer_class(**renderer_kwargs)
-
-    # remove this frame from the trace
-    renderer.processors.append(remove_first_pyinstrument_frame_processor)
+    # write the output
 
     if isinstance(renderer, HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
@@ -321,6 +314,58 @@ def main():
         print("To view this report with different options, run:")
         print("    pyinstrument --load-prev %s [options]" % report_identifier)
         print("")
+
+
+def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -> dict[str, Any]:
+    # parse show/hide options
+    if options.hide_fnmatch is not None and options.hide_regex is not None:
+        raise OptionsParseError("You can‘t specify both --hide and --hide-regex")
+
+    hide_regex: str | None
+    show_regex: str | None
+    if options.hide_fnmatch is not None:
+        hide_regex = fnmatch.translate(options.hide_fnmatch)
+    else:
+        hide_regex = options.hide_regex
+
+    show_options_used = [
+        options.show_fnmatch is not None,
+        options.show_regex is not None,
+        options.show_all,
+    ]
+    if show_options_used.count(True) > 1:
+        raise OptionsParseError("You can only specify one of --show, --show-regex and --show-all")
+
+    if options.show_fnmatch is not None:
+        show_regex = fnmatch.translate(options.show_fnmatch)
+    elif options.show_all:
+        show_regex = r".*"
+    else:
+        show_regex = options.show_regex
+
+    renderer_options: dict[str, Any] = {
+        "processor_options": {
+            "hide_regex": hide_regex,
+            "show_regex": show_regex,
+        }
+    }
+
+    if options.timeline is not None:
+        renderer_options["timeline"] = options.timeline
+
+    if options.renderer == "text":
+        unicode_override = options.unicode is not None
+        color_override = options.color is not None
+        unicode: Any = options.unicode if unicode_override else file_supports_unicode(output_file)
+        color: Any = options.color if color_override else file_supports_color(output_file)
+
+        renderer_options.update({"unicode": unicode, "color": color})
+
+    return renderer_options
+
+
+class OptionsParseError(Exception):
+    pass
 
 
 def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
@@ -391,6 +436,30 @@ def remove_first_pyinstrument_frame_processor(
         return frame
 
     return frame
+
+
+class CommandLineOptions:
+    """
+    A type that codifies the `options` variable.
+    """
+
+    module_name: str | None
+    module_args: list[str]
+    load_prev: str | None
+    from_path: str | None
+    hide_fnmatch: str | None
+    show_fnmatch: str | None
+    hide_regex: str | None
+    show_regex: str | None
+    show_all: bool
+    output_html: bool
+    outfile: str | None
+    renderer_options: list[str] | None
+
+    unicode: bool | None
+    color: bool | None
+    renderer: str
+    timeline: bool
 
 
 if __name__ == "__main__":
