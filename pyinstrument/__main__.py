@@ -96,11 +96,12 @@ def main():
         "--renderer-option",
         dest="renderer_options",
         action="append",
+        metavar="RENDERER_OPTION",
         type="string",
         help=(
             "options to pass to the renderer, in the format 'flag_name' or 'option_name=option_value'. "
-            "For example, to set the flag show_percentages, pass '-o show_percentages'. To pass multiple "
-            "options, use the -o flag multiple times."
+            "For example, to set the flag show_percentages, pass '-p show_percentages'. To pass multiple "
+            "options, use the -p flag multiple times."
         ),
     )
 
