@@ -74,7 +74,21 @@ def main():
     )
 
     parser.add_option(
-        "-o", "--outfile", dest="outfile", action="store", help="save to <outfile>", default=None
+        "-o", "--outfile",
+        dest="outfile",
+        action="store",
+        help="save rendered output to <outfile>",
+        default=None,
+    )
+
+    parser.add_option(
+        "",
+        "--save-raw-report",
+        dest="raw_report_outfile",
+        action="store",
+        metavar="FILENAME",
+        help="filename to which to save raw report for use with --load-prev",
+        default=None,
     )
 
     parser.add_option(
@@ -315,6 +329,10 @@ def main():
         f.write(renderer.render(session))
         if should_close_f_after_writing:
             f.close()
+
+    if options.raw_report_outfile:
+        session.save(options.raw_report_outfile)
+        return
 
     if options.renderer == "text":
         _, report_identifier = save_report(session)
