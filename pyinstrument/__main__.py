@@ -53,7 +53,7 @@ def main():
         "--load-prev",
         dest="load_prev",
         action="store",
-        metavar="ID",
+        metavar="ID-OR-FILENAME",
         help="instead of running a script, load a previous report",
     )
 
@@ -349,11 +349,15 @@ def report_dir() -> str:
     return report_dir
 
 
-def load_report(identifier: str) -> Session:
+def load_report(identifier_or_path: str) -> Session:
     """
     Returns the session referred to by identifier
     """
-    path = os.path.join(report_dir(), identifier + ".pyisession")
+    path = os.path.join(report_dir(), identifier_or_path + ".pyisession")
+
+    if os.path.exists(identifier_or_path) and not os.path.exists(path):
+        path = identifier_or_path
+
     return Session.load(path)
 
 
