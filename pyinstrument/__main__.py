@@ -192,6 +192,15 @@ def main():
         action="store_false",
         help="(text renderer only) force no color text output",
     )
+    parser.add_option(
+        "",
+        "--filter-threshold",
+        dest="filter_threshold",
+        type="float",
+        metavar="RATIO",
+        default=0.01,
+        help="filter out frames that represent less than this (ratio of total time)",
+    )
 
     if not sys.argv[1:]:
         parser.print_help()
@@ -213,6 +222,9 @@ def main():
 
     if options.hide_fnmatch is not None and options.hide_regex is not None:
         parser.error("You can‘t specify both --hide and --hide-regex")
+
+    if options.filter_threshold < 0 or options.filter_threshold > 1:
+        parser.error(f"Value for --filter-threshold out of range; should be ratio between 0 and 1.")
 
     if options.hide_fnmatch is not None:
         options.hide_regex = fnmatch.translate(options.hide_fnmatch)
@@ -285,6 +297,7 @@ def main():
 
     renderer_kwargs = {
         "processor_options": {
+            "filter_threshold": options.filter_threshold,
             "hide_regex": options.hide_regex,
             "show_regex": options.show_regex,
         }
