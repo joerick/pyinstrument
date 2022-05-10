@@ -24,7 +24,8 @@ def test_renderer_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         main()
 
     mock_renderer_class.assert_called_once()
-    assert mock_renderer_class.call_args.kwargs["time"] == "percent_of_total"
+    args, kwargs = mock_renderer_class.call_args
+    assert kwargs["time"] == "percent_of_total"
 
 
 def test_processor_renderer_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -42,4 +43,5 @@ def test_processor_renderer_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
         main()
 
     mock_renderer_class.assert_called_once()
-    assert mock_renderer_class.call_args.kwargs["processor_options"]["some_option"] == 44
+    args, kwargs = mock_renderer_class.call_args
+    assert kwargs["processor_options"]["some_option"] == 44
