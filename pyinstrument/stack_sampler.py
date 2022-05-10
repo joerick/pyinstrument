@@ -6,7 +6,7 @@ import types
 from contextvars import ContextVar
 from typing import Any, Callable, List, NamedTuple, Optional
 
-from pyinstrument.low_level.stat_profile import setstatprofile
+from pyinstrument.low_level.stat_profile import setstatprofile  # type: ignore
 from pyinstrument.typing import LiteralStr
 
 # pyright: strict
