@@ -94,9 +94,9 @@ def main():
     parser.add_option(
         "-p",
         "--render-option",
-        dest="renderer_options",
+        dest="render_options",
         action="append",
-        metavar="RENDERER_OPTION",
+        metavar="RENDER_OPTION",
         type="string",
         help=(
             "options to pass to the renderer, in the format 'flag_name' or 'option_name=option_value'. "
@@ -315,7 +315,7 @@ def main():
         print("")
 
 
-def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -> dict[str, Any]:
+def compute_render_options(options: CommandLineOptions, output_file: TextIO) -> dict[str, Any]:
     # parse show/hide options
     if options.hide_fnmatch is not None and options.hide_regex is not None:
         raise OptionsParseError("You can‘t specify both --hide and --hide-regex")
@@ -342,7 +342,7 @@ def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -
     else:
         show_regex = options.show_regex
 
-    renderer_options: dict[str, Any] = {
+    render_options: dict[str, Any] = {
         "processor_options": {
             "hide_regex": hide_regex,
             "show_regex": show_regex,
@@ -350,7 +350,7 @@ def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -
     }
 
     if options.timeline is not None:
-        renderer_options["timeline"] = options.timeline
+        render_options["timeline"] = options.timeline
 
     if options.renderer == "text":
         unicode_override = options.unicode is not None
@@ -358,16 +358,16 @@ def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -
         unicode: Any = options.unicode if unicode_override else file_supports_unicode(output_file)
         color: Any = options.color if color_override else file_supports_color(output_file)
 
-        renderer_options.update({"unicode": unicode, "color": color})
+        render_options.update({"unicode": unicode, "color": color})
 
     # apply user options
-    if options.renderer_options is not None:
-        for renderer_option in options.renderer_options:
+    if options.render_options is not None:
+        for renderer_option in options.render_options:
             key, sep, value = renderer_option.partition("=")
 
             if sep == "":
                 # we're setting a flag, like `-p unicode`
-                keypath.set_value_at_keypath(renderer_options, key, True)
+                keypath.set_value_at_keypath(render_options, key, True)
             else:
                 # it's a key=value structure
                 try:
@@ -377,9 +377,9 @@ def compute_renderer_options(options: CommandLineOptions, output_file: TextIO) -
                     # otherwise treat it as a string
                     parsed_value = value
 
-                keypath.set_value_at_keypath(renderer_options, key, parsed_value)
+                keypath.set_value_at_keypath(render_options, key, parsed_value)
 
-    return renderer_options
+    return render_options
 
 
 class OptionsParseError(Exception):
@@ -390,11 +390,11 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
     if options.output_html:
         options.renderer = "html"
 
-    renderer_options = compute_renderer_options(options, output_file=output_file)
+    render_options = compute_render_options(options, output_file=output_file)
     renderer_class = get_renderer_class(options.renderer)
 
     try:
-        return renderer_class(**renderer_options)
+        return renderer_class(**render_options)
     except TypeError as err:
         # TypeError is probably a bad renderer option, so we produce a nicer error message
         raise OptionsParseError(
@@ -498,7 +498,7 @@ class CommandLineOptions:
     show_all: bool
     output_html: bool
     outfile: str | None
-    renderer_options: list[str] | None
+    render_options: list[str] | None
 
     unicode: bool | None
     color: bool | None
