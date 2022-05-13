@@ -194,6 +194,6 @@ class TestCommandLine:
         Session.load(session_file)
 
         # run pyinstrument again to render the output
-        output = subprocess.check_output([*pyinstrument_invocation, f"--load-prev={session_file}"])
+        output = subprocess.check_output([*pyinstrument_invocation, f"--load={session_file}"])
         assert "busy_wait" in str(output)
         assert "do_nothing" in str(output)
