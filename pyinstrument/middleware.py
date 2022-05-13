@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.module_loading import import_string
 
 from pyinstrument import Profiler
-from pyinstrument.renderers import Renderer
+from pyinstrument.renderers import FrameRenderer
 from pyinstrument.renderers.html import HTMLRenderer
 
 try:
@@ -17,7 +17,7 @@ except ImportError:
     MiddlewareMixin = object
 
 
-def get_renderer(path) -> Renderer:
+def get_renderer(path) -> FrameRenderer:
     """Return the renderer instance."""
     if path:
         try:
@@ -26,8 +26,8 @@ def get_renderer(path) -> Renderer:
             print("Unable to import the class: %s" % path)
             raise exc
 
-        if not isinstance(renderer, Renderer):
-            raise ValueError(f"Renderer should subclass: {Renderer}")
+        if not isinstance(renderer, FrameRenderer):
+            raise ValueError(f"Renderer should subclass: {FrameRenderer}")
 
         return renderer
     else:

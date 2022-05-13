@@ -312,7 +312,7 @@ class Profiler:
 
         return renderers.HTMLRenderer(timeline=timeline).open_in_browser(session)
 
-    def output(self, renderer: renderers.Renderer) -> str:
+    def output(self, renderer: renderers.FrameRenderer) -> str:
         """
         Returns the last profile session, as rendered by ``renderer``.
 

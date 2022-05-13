@@ -4,14 +4,14 @@ from typing import Any
 import pyinstrument
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
-from pyinstrument.renderers.base import ProcessorList, Renderer
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList
 from pyinstrument.session import Session
 from pyinstrument.util import truncate
 
 # pyright: strict
 
 
-class ConsoleRenderer(Renderer):
+class ConsoleRenderer(FrameRenderer):
     """
     Produces text-based output, suitable for text files or ANSI-compatible
     consoles.

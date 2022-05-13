@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
-from pyinstrument.renderers.base import ProcessorList, Renderer
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList
 from pyinstrument.session import Session
 
 # pyright: strict
@@ -20,7 +20,7 @@ def encode_bool(a_bool: bool):
     return "true" if a_bool else "false"
 
 
-class JSONRenderer(Renderer):
+class JSONRenderer(FrameRenderer):
     """
     Outputs a tree of JSON, containing processed frames.
     """

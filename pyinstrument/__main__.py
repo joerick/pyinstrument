@@ -17,6 +17,7 @@ import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.frame import BaseFrame
 from pyinstrument.processors import ProcessorOptions
+from pyinstrument.renderers.base import FrameRenderer
 from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.session import Session
 from pyinstrument.util import (
@@ -283,29 +284,31 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
-    renderer_kwargs = {
-        "processor_options": {
+    renderer_class = get_renderer_class(options.renderer)
+    renderer_kwargs: dict[str, Any] = {}
+
+    if issubclass(renderer_class, FrameRenderer):
+        renderer_kwargs["processor_options"] = {
             "hide_regex": options.hide_regex,
             "show_regex": options.show_regex,
         }
-    }
 
-    if options.timeline is not None:
-        renderer_kwargs["timeline"] = options.timeline
+        if options.timeline is not None:
+            renderer_kwargs["timeline"] = options.timeline
 
-    if options.renderer == "text":
-        unicode_override = options.unicode is not None
-        color_override = options.color is not None
-        unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
-        color: Any = options.color if color_override else file_supports_color(f)
+        if options.renderer == "text":
+            unicode_override = options.unicode is not None
+            color_override = options.color is not None
+            unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
+            color: Any = options.color if color_override else file_supports_color(f)
 
-        renderer_kwargs.update({"unicode": unicode, "color": color})
+            renderer_kwargs.update({"unicode": unicode, "color": color})
 
-    renderer_class = get_renderer_class(options.renderer)
     renderer = renderer_class(**renderer_kwargs)
 
-    # remove this frame from the trace
-    renderer.processors.append(remove_first_pyinstrument_frame_processor)
+    if isinstance(renderer, renderers.FrameRenderer):
+        # remove this frame from the trace
+        renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
     if isinstance(renderer, HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
@@ -332,6 +335,8 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
         return renderers.JSONRenderer
     elif renderer == "speedscope":
         return renderers.SpeedscopeRenderer
+    elif renderer == "session":
+        return renderers.SessionRenderer
     else:
         return object_with_import_path(renderer)
 
