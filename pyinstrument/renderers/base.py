@@ -34,7 +34,9 @@ class Renderer:
 
 class FrameRenderer(Renderer):
     """
-    An abstract base class for renderers that use Frame objects.
+    An abstract base class for renderers that process Frame objects using
+    processor functions. Provides a common interface to manipulate the
+    processors before rendering.
     """
 
     processors: ProcessorList
