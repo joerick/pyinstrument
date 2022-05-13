@@ -293,16 +293,16 @@ def main():
             "show_regex": options.show_regex,
         }
 
-        if options.timeline is not None:
-            renderer_kwargs["timeline"] = options.timeline
+    if issubclass(renderer_class, renderers.ConsoleRenderer):
+        unicode_override = options.unicode is not None
+        color_override = options.color is not None
+        unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
+        color: Any = options.color if color_override else file_supports_color(f)
 
-        if options.renderer == "text":
-            unicode_override = options.unicode is not None
-            color_override = options.color is not None
-            unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
-            color: Any = options.color if color_override else file_supports_color(f)
+        renderer_kwargs.update({"unicode": unicode, "color": color})
 
-            renderer_kwargs.update({"unicode": unicode, "color": color})
+    if options.timeline is not None:
+        renderer_kwargs["timeline"] = options.timeline
 
     renderer = renderer_class(**renderer_kwargs)
 
