@@ -94,9 +94,10 @@ def main():
         type="string",
         help=(
             "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope' or python "
-            "import path to a renderer class"
+            "import path to a renderer class. Defaults to the appropriate format for the extension "
+            "if OUTFILE is given, otherwise, defaults to 'text'."
         ),
-        default="text",
+        default=None,
     )
 
     parser.add_option(
@@ -302,6 +303,12 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
+    if options.renderer is None and options.outfile:
+        options.renderer = guess_renderer_from_outfile(options.outfile)
+
+    if options.renderer is None:
+        options.renderer = "text"
+
     renderer_class = get_renderer_class(options.renderer)
     renderer_kwargs: dict[str, Any] = {}
 
@@ -357,6 +364,26 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
         return renderers.SessionRenderer
     else:
         return object_with_import_path(renderer)
+
+
+def guess_renderer_from_outfile(outfile: str) -> str | None:
+    # ignore case of outfile
+    outfile = outfile.lower()
+
+    _, ext = os.path.splitext(outfile)
+
+    if ext == ".txt":
+        return "text"
+    elif ext in [".html", ".htm"]:
+        return "html"
+    elif outfile.endswith(".speedscope.json"):
+        return "speedscope"
+    elif ext == ".json":
+        return "json"
+    elif ext == ".pyisession":
+        return "session"
+    else:
+        return None
 
 
 def report_dir() -> str:
