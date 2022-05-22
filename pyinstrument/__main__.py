@@ -374,7 +374,7 @@ def compute_render_options(options: CommandLineOptions, output_file: TextIO) -> 
                 try:
                     # try parsing as a JSON value
                     parsed_value = json.loads(value)
-                except:
+                except json.JSONDecodeError:
                     # otherwise treat it as a string
                     parsed_value = value
 
