@@ -172,3 +172,28 @@ class TestCommandLine:
         print("process_pyi.stderr", process_pyi.stderr)
         print("process_native.stderr", process_native.stderr)
         assert process_pyi.stderr == process_native.stderr
+
+    def test_session_save_and_load(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        session_file = tmp_path / "session.pyisession"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "--renderer=session",
+                f"--outfile={session_file}",
+                str(busy_wait_py),
+            ]
+        )
+
+        # check it's a valid Session file
+        from pyinstrument.session import Session
+
+        Session.load(session_file)
+
+        # run pyinstrument again to render the output
+        output = subprocess.check_output([*pyinstrument_invocation, f"--load={session_file}"])
+        assert "busy_wait" in str(output)
+        assert "do_nothing" in str(output)
