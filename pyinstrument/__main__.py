@@ -101,7 +101,8 @@ def main():
         help=(
             "options to pass to the renderer, in the format 'flag_name' or 'option_name=option_value'. "
             "For example, to set the option 'time', pass '-p time=percent_of_total'. To pass multiple "
-            "options, use the -p flag multiple times."
+            "options, use the -p option multiple times. You can pass a string or a JSON value as "
+            "option_value, e.g. `-p 'processor_options={\"filter_threshold\": 0}'`"
         ),
     )
 
