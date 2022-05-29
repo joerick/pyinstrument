@@ -18,7 +18,6 @@ import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.frame import BaseFrame
 from pyinstrument.processors import ProcessorOptions
-from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.session import Session
 from pyinstrument.util import (
     file_is_a_tty,
@@ -49,12 +48,20 @@ def main():
         parser.largs[:] = []  # type: ignore
 
     parser.add_option(
+        "--load",
+        dest="load",
+        action="store",
+        metavar="FILENAME",
+        help="instead of running a script, load a profile session from a pyisession file",
+    )
+
+    parser.add_option(
         "",
         "--load-prev",
         dest="load_prev",
         action="store",
-        metavar="ID",
-        help="instead of running a script, load a previous report",
+        metavar="IDENTIFIER",
+        help="instead of running a script, load a previous profile session as specified by an identifier",
     )
 
     parser.add_option(
@@ -86,9 +93,10 @@ def main():
         type="string",
         help=(
             "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope' or python "
-            "import path to a renderer class"
+            "import path to a renderer class. Defaults to the appropriate format for the extension "
+            "if OUTFILE is given, otherwise, defaults to 'text'."
         ),
-        default="text",
+        default=None,
     )
 
     parser.add_option(
@@ -216,16 +224,24 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    options, args = parser.parse_args()
+    options, args = parser.parse_args()  # type: ignore
 
     # make command line options type-checked
     options = cast(CommandLineOptions, options)
     # work around a type checking bug...
     args = cast(List[str], args)
 
-    if args == [] and options.module_name is None and options.load_prev is None:
+    session_options_used = [
+        options.load is not None,
+        options.load_prev is not None,
+        options.module_name is not None,
+        len(args) > 0,
+    ]
+    if session_options_used.count(True) == 0:
         parser.print_help()
         sys.exit(2)
+    if session_options_used.count(True) > 1:
+        parser.error("You can only specify one of --load, --load-prev, -m, or script arguments")
 
     if options.module_name is not None and options.from_path:
         parser.error("The options -m and --from-path are mutually exclusive.")
@@ -250,13 +266,12 @@ def main():
         parser.error(e.args[0])
         exit(1)
 
-    # remove this frame from the trace
-    renderer.processors.append(remove_first_pyinstrument_frame_processor)
-
     # get the session - execute code or load from disk
 
     if options.load_prev:
-        session = load_report(options.load_prev)
+        session = load_report_from_temp_storage(options.load_prev)
+    elif options.load:
+        session = Session.load(options.load)
     else:
         if options.module_name is not None:
             if not (sys.path[0] and os.path.samefile(sys.path[0], ".")):
@@ -298,9 +313,18 @@ def main():
 
         session = profiler.stop()
 
-    # write the output
+    if options.outfile:
+        f = codecs.open(options.outfile, "w", "utf-8")
+        should_close_f_after_writing = True
+    else:
+        f = sys.stdout
+        should_close_f_after_writing = False
 
-    if isinstance(renderer, HTMLRenderer) and not options.outfile and file_is_a_tty(f):
+    if isinstance(renderer, renderers.FrameRenderer):
+        # remove this frame from the trace
+        renderer.processors.append(remove_first_pyinstrument_frame_processor)
+
+    if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
         output_filename = renderer.open_in_browser(session)
         print("stdout is a terminal, so saved profile output to %s" % output_filename)
@@ -310,7 +334,7 @@ def main():
             f.close()
 
     if options.renderer == "text":
-        _, report_identifier = save_report(session)
+        _, report_identifier = save_report_to_temp_storage(session)
         print("To view this report with different options, run:")
         print("    pyinstrument --load-prev %s [options]" % report_identifier)
         print("")
@@ -391,6 +415,12 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
     if options.output_html:
         options.renderer = "html"
 
+    if options.renderer is None and options.outfile:
+        options.renderer = guess_renderer_from_outfile(options.outfile)
+
+    if options.renderer is None:
+        options.renderer = "text"
+
     render_options = compute_render_options(options, output_file=output_file)
     renderer_class = get_renderer_class(options.renderer)
 
@@ -412,6 +442,8 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
         return renderers.JSONRenderer
     elif renderer == "speedscope":
         return renderers.SpeedscopeRenderer
+    elif renderer == "session":
+        return renderers.SessionRenderer
     else:
         try:
             return object_with_import_path(renderer)
@@ -426,6 +458,26 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
             )
 
 
+def guess_renderer_from_outfile(outfile: str) -> str | None:
+    # ignore case of outfile
+    outfile = outfile.lower()
+
+    _, ext = os.path.splitext(outfile)
+
+    if ext == ".txt":
+        return "text"
+    elif ext in [".html", ".htm"]:
+        return "html"
+    elif outfile.endswith(".speedscope.json"):
+        return "speedscope"
+    elif ext == ".json":
+        return "json"
+    elif ext == ".pyisession":
+        return "session"
+    else:
+        return None
+
+
 def report_dir() -> str:
     data_dir: str = appdirs.user_data_dir("pyinstrument", "com.github.joerick")  # type: ignore
     report_dir = os.path.join(data_dir, "reports")
@@ -434,15 +486,18 @@ def report_dir() -> str:
     return report_dir
 
 
-def load_report(identifier: str) -> Session:
+def load_report_from_temp_storage(identifier: str) -> Session:
     """
     Returns the session referred to by identifier
     """
     path = os.path.join(report_dir(), identifier + ".pyisession")
-    return Session.load(path)
+    try:
+        return Session.load(path)
+    except FileNotFoundError:
+        sys.exit(f"pyinstrument: Couldn't find a profile with identifier {identifier}")
 
 
-def save_report(session: Session):
+def save_report_to_temp_storage(session: Session):
     """
     Saves the session to a temp file, and returns that path.
     Also prunes the number of reports to 10 so there aren't loads building up.
@@ -490,6 +545,7 @@ class CommandLineOptions:
 
     module_name: str | None
     module_args: list[str]
+    load: str | None
     load_prev: str | None
     from_path: str | None
     hide_fnmatch: str | None

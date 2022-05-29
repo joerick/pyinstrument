@@ -8,7 +8,7 @@ from typing import Any, Dict, Union
 
 from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
-from pyinstrument.renderers.base import ProcessorList, Renderer
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList
 from pyinstrument.session import Session
 
 # pyright: strict
@@ -114,7 +114,7 @@ class SpeedscopeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-class SpeedscopeRenderer(Renderer):
+class SpeedscopeRenderer(FrameRenderer):
     """
     Outputs a tree of JSON conforming to the speedscope schema documented at
 
