@@ -388,6 +388,9 @@ class OutOfContextFrame(DummyFrame):
     def time(self):
         return self.self_time
 
+    def await_time(self):
+        return 0
+
     @property
     def function(self):
         return "[out-of-context]"
