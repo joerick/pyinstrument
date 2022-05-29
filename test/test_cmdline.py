@@ -5,27 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from .util import BUSY_WAIT_SCRIPT
+
 # this script just does a busywait for 0.25 seconds.
-BUSY_WAIT_SCRIPT = """
-import time, sys
-
-def do_nothing():
-    pass
-
-def busy_wait(duration):
-    end_time = time.time() + duration
-
-    while time.time() < end_time:
-        do_nothing()
-
-def main():
-    print('sys.argv: ', sys.argv)
-    busy_wait(0.25)
-
-
-if __name__ == '__main__':
-    main()
-"""
 
 EXECUTION_DETAILS_SCRIPT = f"""
 #!{sys.executable}

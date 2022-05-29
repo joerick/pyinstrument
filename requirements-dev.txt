@@ -3,7 +3,7 @@ pytest
 flaky
 trio
 django  # used by middleware
-sphinx==4.0.2
+sphinx==4.2.0
 myst-parser==0.15.1
 furo==2021.6.18b36
 sphinxcontrib-programoutput==0.17
@@ -13,3 +13,4 @@ nox
 ipython
 numpy # used by an example
 pre-commit # used to run pre-commit hooks
+sphinx-autobuild==2021.3.14

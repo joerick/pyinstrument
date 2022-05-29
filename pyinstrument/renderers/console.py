@@ -6,6 +6,7 @@ from pyinstrument import processors
 from pyinstrument.frame import BaseFrame
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList
 from pyinstrument.session import Session
+from pyinstrument.typing import LiteralStr
 from pyinstrument.util import truncate
 
 # pyright: strict
@@ -17,16 +18,24 @@ class ConsoleRenderer(FrameRenderer):
     consoles.
     """
 
-    def __init__(self, unicode: bool = False, color: bool = False, **kwargs: Any):
+    def __init__(
+        self,
+        unicode: bool = False,
+        color: bool = False,
+        time: LiteralStr["seconds", "percent_of_total"] = "seconds",
+        **kwargs: Any,
+    ):
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
+        :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
         """
         super().__init__(**kwargs)
 
         self.unicode = unicode
         self.color = color
         self.colors = self.colors_enabled if color else self.colors_disabled
+        self.time = time
 
     def render(self, session: Session):
         result = self.render_preamble(session)
@@ -74,7 +83,14 @@ class ConsoleRenderer(FrameRenderer):
             or frame.total_self_time > 0.2 * self.root_frame.time()
             or frame in frame.group.exit_frames
         ):
-            time_str = self._ansi_color_for_time(frame) + f"{frame.time():.3f}" + self.colors.end
+            if self.time == "percent_of_total":
+                percent = self.frame_proportion_of_total_time(frame) * 100
+                time_str = self._ansi_color_for_time(frame) + f"{percent:.0f}%" + self.colors.end
+            else:
+                time_str = (
+                    self._ansi_color_for_time(frame) + f"{frame.time():.3f}" + self.colors.end
+                )
+
             function_color = self._ansi_color_for_function(frame)
             result = "{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
                 indent=indent,
@@ -84,6 +100,7 @@ class ConsoleRenderer(FrameRenderer):
                 code_position=frame.code_position_short,
                 c=self.colors,
             )
+
             if self.unicode:
                 indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
             else:
@@ -116,8 +133,11 @@ class ConsoleRenderer(FrameRenderer):
 
         return result
 
+    def frame_proportion_of_total_time(self, frame: BaseFrame):
+        return frame.time() / self.root_frame.time()
+
     def _ansi_color_for_time(self, frame: BaseFrame):
-        proportion_of_total = frame.time() / self.root_frame.time()
+        proportion_of_total = self.frame_proportion_of_total_time(frame)
 
         if proportion_of_total > 0.6:
             return self.colors.red

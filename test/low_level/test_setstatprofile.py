@@ -46,6 +46,6 @@ def test_internal_object_compatibility(setstatprofile):
     print(str(profile_state))
     print(profile_state)
     print(type(profile_state))
-    print(type(profile_state).__name__)
+    print(type(profile_state).__name__)  # type: ignore
 
     setstatprofile(None)
