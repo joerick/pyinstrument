@@ -229,14 +229,15 @@ PROFILING = True  # Set this from a settings model
 
 if PROFILING:
     @app.middleware("http")
+    from pyinstrument import Profiler
     async def profile_request(request: Request, call_next):
         profiling = request.query_params.get("profile", False)
         if profiling:
-            profile = FastApiProfiler(interval=settings.profiling_interval)
-            profile.start()
+            profiler = Profiler(interval=settings.profiling_interval, async_mode="enabled")
+            profiler.start()
             await call_next(request)
-            profile.stop()
-            return HTMLResponse(profile.get_result_html())
+            profiler.stop()
+            return HTMLResponse(profiler.output_html())
         else:
             return await call_next(request)
 
