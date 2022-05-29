@@ -1,12 +1,9 @@
-import textwrap
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
 from pyinstrument.__main__ import main
 from pyinstrument.renderers.base import FrameRenderer
-from pyinstrument.renderers.console import ConsoleRenderer
 
 from .util import BUSY_WAIT_SCRIPT
 
