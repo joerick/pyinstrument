@@ -341,7 +341,9 @@ def main():
         print("")
 
 
-def compute_render_options(options: CommandLineOptions, output_file: TextIO) -> dict[str, Any]:
+def compute_render_options(
+    options: CommandLineOptions, renderer_class: Type[renderers.Renderer], output_file: TextIO
+) -> dict[str, Any]:
     # parse show/hide options
     if options.hide_fnmatch is not None and options.hide_regex is not None:
         raise OptionsParseError("You can‘t specify both --hide and --hide-regex")
@@ -368,23 +370,24 @@ def compute_render_options(options: CommandLineOptions, output_file: TextIO) -> 
     else:
         show_regex = options.show_regex
 
-    render_options: dict[str, Any] = {
-        "processor_options": {
+    render_options: dict[str, Any] = {}
+
+    if issubclass(renderer_class, renderers.FrameRenderer):
+        render_options["processor_options"] = {
             "hide_regex": hide_regex,
             "show_regex": show_regex,
         }
-    }
 
-    if options.timeline is not None:
-        render_options["timeline"] = options.timeline
-
-    if options.renderer == "text":
+    if issubclass(renderer_class, renderers.ConsoleRenderer):
         unicode_override = options.unicode is not None
         color_override = options.color is not None
         unicode: Any = options.unicode if unicode_override else file_supports_unicode(output_file)
         color: Any = options.color if color_override else file_supports_color(output_file)
 
         render_options.update({"unicode": unicode, "color": color})
+
+    if options.timeline:
+        render_options["timeline"] = True
 
     # apply user options
     if options.render_options is not None:
@@ -422,8 +425,10 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
     if options.renderer is None:
         options.renderer = "text"
 
-    render_options = compute_render_options(options, output_file=output_file)
     renderer_class = get_renderer_class(options.renderer)
+    render_options = compute_render_options(
+        options, renderer_class=renderer_class, output_file=output_file
+    )
 
     try:
         return renderer_class(**render_options)
