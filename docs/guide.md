@@ -247,8 +247,13 @@ To invoke, make any request to your application with the GET parameter `profile=
 
 ### Profile Pytest tests
 
-Pyinstrument can be invoked via the command-line to run pytest, but you will see a consolidated report for the test suite.
-To instrument specific tests, create and auto-use fixture in `conftest.py` in your test folder:
+Pyinstrument can be invoked via the command-line to run pytest, giving you a consolidated report for the test suite.
+
+```
+pyinstrument -m pytest [pytest-args...]
+```
+
+Or, to instrument specific tests, create and auto-use fixture in `conftest.py` in your test folder:
 
 ```python
 from pathlib import Path
