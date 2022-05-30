@@ -93,6 +93,32 @@ that smaller intervals could affect the performance overhead of profiling.
 save this HTML for later, use
 {meth}`profiler.output_html() <pyinstrument.Profiler.output_html>`.
 
+### Profile pytest tests
+
+Tests written with `pytest` can also be profiled.
+
+Example:
+
+The tests are written to `test.py`:
+```python
+from time import sleep
+
+import pytest
+
+def my_function(value_1: int, value_2: int) -> int:
+    sleep(1)
+    return value_1 + value_2
+    
+@pytest.mark.parametrize("value_1,value_2,expected", [(1, 2, 3), (1, -2, -1)])
+def test_my_function(value_1: int, value_2: int, expected: int) -> None:
+    assert my_function(value_1, value_2) == expected
+```
+
+To profile this test, use:
+```
+pyinstrument -m pytest test.py
+```
+
 ### Profile code in Jupyter/IPython
 Via [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html),
 you can profile a line or a cell in IPython or Jupyter.
