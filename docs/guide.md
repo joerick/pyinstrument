@@ -186,50 +186,22 @@ creates the html output and returns that instead of the actual response.
 
 ### Profile a web request in FastAPI
 
-To profile call stacks in FastAPI, you can write a middleware extension for pyinstrument.
+To profile call stacks in FastAPI, you can write a middleware extension for
+pyinstrument.
 
-The following class will instrument the code called for a web request and output text or HTML.
+Create an async function and decorate with `app.middleware('http')` where
+app is the name of your FastAPI application instance.
+
+Make sure you configure a setting to only make this available when required.
 
 ```python
-import time
-
 from pyinstrument import Profiler
 
 
-class FastApiProfiler:
-    def __init__(
-        self,
-        interval: float = 0.0001,
-    ):
-        self._profiler = Profiler(interval=interval, async_mode="enabled")
-
-    def start(self) -> None:
-        self._profiler.start()
-        self._begin = time.perf_counter()
-
-    def stop(self):
-        self._profiler.stop()
-        self._end = time.perf_counter()
-
-    def get_result_html(self) -> str:
-        return self._profiler.output_html()
-
-    def get_result_text(self, color=True) -> str:
-        return self._profiler.output_text(color=color)
-
-```
-
-To enable this middleware, create an async function and decorate with `app.middleware('http')` where
-app is the name of your FastAPI application instance.
-
-Make sure you configure a setting to only make this available when required:
-
-```python
 PROFILING = True  # Set this from a settings model
 
 if PROFILING:
     @app.middleware("http")
-    from pyinstrument import Profiler
     async def profile_request(request: Request, call_next):
         profiling = request.query_params.get("profile", False)
         if profiling:
@@ -240,20 +212,22 @@ if PROFILING:
             return HTMLResponse(profiler.output_html())
         else:
             return await call_next(request)
-
 ```
 
-To invoke, make any request to your application with the GET parameter `profile=1` and it will print the HTML result from pyinstrument.
+To invoke, make any request to your application with the GET parameter
+`profile=1` and it will print the HTML result from pyinstrument.
 
 ### Profile Pytest tests
 
-Pyinstrument can be invoked via the command-line to run pytest, giving you a consolidated report for the test suite.
+Pyinstrument can be invoked via the command-line to run pytest, giving you a
+consolidated report for the test suite.
 
 ```
 pyinstrument -m pytest [pytest-args...]
 ```
 
-Or, to instrument specific tests, create and auto-use fixture in `conftest.py` in your test folder:
+Or, to instrument specific tests, create and auto-use fixture in `conftest.py`
+in your test folder:
 
 ```python
 from pathlib import Path
@@ -278,9 +252,10 @@ def auto_profile(request):
         f_html.write(profiler.output_html())
 ```
 
-This will generate a HTML file for each test node in your test suite inside the `.profiles` directory.
+This will generate a HTML file for each test node in your test suite inside
+the `.profiles` directory.
 
 ### Profile something else?
 
-I'd love to have more ways to profile using Pyinstrument - e.g. other
-web frameworks. PRs are encouraged!
+I'd love to have more ways to profile using Pyinstrument - e.g. other web
+frameworks. PRs are encouraged!
