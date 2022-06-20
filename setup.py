@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 
 from setuptools import Extension, find_packages, setup
 
-with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
-    long_description = f.read()
+PROJECT_ROOT = Path(__file__).parent
+long_description = (PROJECT_ROOT / "README.md").read_text(encoding="utf8")
 
 setup(
     name="pyinstrument",
