@@ -184,7 +184,78 @@ This will check for the `?profile` query param on each request and if found,
 it starts profiling. After each request where the profiler was running it
 creates the html output and returns that instead of the actual response.
 
+### Profile a web request in FastAPI
+
+To profile call stacks in FastAPI, you can write a middleware extension for
+pyinstrument.
+
+Create an async function and decorate with `app.middleware('http')` where
+app is the name of your FastAPI application instance.
+
+Make sure you configure a setting to only make this available when required.
+
+```python
+from pyinstrument import Profiler
+
+
+PROFILING = True  # Set this from a settings model
+
+if PROFILING:
+    @app.middleware("http")
+    async def profile_request(request: Request, call_next):
+        profiling = request.query_params.get("profile", False)
+        if profiling:
+            profiler = Profiler(interval=settings.profiling_interval, async_mode="enabled")
+            profiler.start()
+            await call_next(request)
+            profiler.stop()
+            return HTMLResponse(profiler.output_html())
+        else:
+            return await call_next(request)
+```
+
+To invoke, make any request to your application with the GET parameter
+`profile=1` and it will print the HTML result from pyinstrument.
+
+### Profile Pytest tests
+
+Pyinstrument can be invoked via the command-line to run pytest, giving you a
+consolidated report for the test suite.
+
+```
+pyinstrument -m pytest [pytest-args...]
+```
+
+Or, to instrument specific tests, create and auto-use fixture in `conftest.py`
+in your test folder:
+
+```python
+from pathlib import Path
+import pytest
+from pyinstrument import Profiler
+
+TESTS_ROOT = Path.cwd()
+
+@pytest.fixture(autouse=True)
+def auto_profile(request):
+    PROFILE_ROOT = (TESTS_ROOT / ".profiles")
+    # Turn profiling on
+    profiler = Profiler()
+    profiler.start()
+
+    yield  # Run test
+
+    profiler.stop()
+    PROFILE_ROOT.mkdir(exist_ok=True)
+    results_file = PROFILE_ROOT / f"{request.node.name}.html"
+    with open(results_file, "w", encoding="utf-8") as f_html:
+        f_html.write(profiler.output_html())
+```
+
+This will generate a HTML file for each test node in your test suite inside
+the `.profiles` directory.
+
 ### Profile something else?
 
-I'd love to have more ways to profile using Pyinstrument - e.g. other
-web frameworks. PRs are encouraged!
+I'd love to have more ways to profile using Pyinstrument - e.g. other web
+frameworks. PRs are encouraged!

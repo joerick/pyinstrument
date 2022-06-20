@@ -3,12 +3,12 @@ import importlib
 import os
 import sys
 import warnings
-from typing import IO
+from typing import IO, Any, AnyStr
 
 from pyinstrument.vendor.decorator import decorator
 
 
-def object_with_import_path(import_path):
+def object_with_import_path(import_path: str) -> Any:
     if "." not in import_path:
         raise ValueError("Can't import '%s', it is not a valid import path" % import_path)
     module_path, object_name = import_path.rsplit(".", 1)
@@ -50,7 +50,7 @@ def deprecated_option(option_name, message=""):
     return decorator(caller)
 
 
-def file_supports_color(file_obj: IO) -> bool:
+def file_supports_color(file_obj: IO[AnyStr]) -> bool:
     """
     Returns True if the running system's terminal supports color.
 
@@ -65,7 +65,7 @@ def file_supports_color(file_obj: IO) -> bool:
     return supported_platform and is_a_tty
 
 
-def file_supports_unicode(file_obj: IO) -> bool:
+def file_supports_unicode(file_obj: IO[AnyStr]) -> bool:
     encoding = getattr(file_obj, "encoding", None)
     if not encoding:
         return False
@@ -75,5 +75,5 @@ def file_supports_unicode(file_obj: IO) -> bool:
     return "utf" in codec_info.name
 
 
-def file_is_a_tty(file_obj: IO) -> bool:
+def file_is_a_tty(file_obj: IO[AnyStr]) -> bool:
     return hasattr(file_obj, "isatty") and file_obj.isatty()

@@ -16,6 +16,8 @@ your code - make it faster. To get the biggest speed increase you should
 [focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
 Pyinstrument helps you find it!
 
+> ☕️ Not sure where to start? Check out this [video tutorial from calmcode.io](https://calmcode.io/pyinstrument/introduction.html)!
+
 <!-- MARK intro end -->
 
 Installation

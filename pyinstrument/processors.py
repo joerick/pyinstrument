@@ -95,8 +95,18 @@ def group_library_frames_processor(
 ) -> BaseFrame | None:
     """
     Groups frames that should be hidden into :class:`FrameGroup` objects,
-    according to ``hide_regex`` and ``show_regex`` in the options dict. If
-    both match, 'show' has precedence.
+    according to ``hide_regex`` and ``show_regex`` in the options dict, as
+    applied to the file path of the source code of the frame. If both match,
+    'show' has precedence.
+    Options:
+
+    ``hide_regex``
+      regular expression, which if matches the file path, hides the frame in a
+      frame group.
+
+    ``show_regex``
+      regular expression, which if matches the file path, ensures the frame is
+      not hidden
 
     Single frames are not grouped, there must be at least two frames in a
     group.
@@ -194,7 +204,11 @@ def remove_irrelevant_nodes(
     frame: BaseFrame | None, options: ProcessorOptions, total_time: float | None = None
 ) -> BaseFrame | None:
     """
-    Remove nodes that represent less than e.g. 1% of the output.
+    Remove nodes that represent less than e.g. 1% of the output. Options:
+
+    ``filter_threshold``
+      sets the minimum duration of a frame to be included in the output.
+      Default: 0.01.
     """
     if frame is None:
         return None
