@@ -13,6 +13,12 @@
 
 #endif
 
+#if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
+#define PyFrame_GETBACK(f) PyFrame_GetBack(f)
+#else
+#define PyFrame_GETBACK(f) f->f_back
+#endif
+
 /*
 These timer functions are mostly stolen from timemodule.c
 */
@@ -298,8 +304,8 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
 
         if (old_context_var_value != pState->last_context_var_value) {
             PyFrameObject *context_change_frame;
-            if (what == WHAT_CALL && frame->f_back) {
-                context_change_frame = frame->f_back;
+            if (what == WHAT_CALL && PyFrame_GETBACK(frame)) {
+                context_change_frame = PyFrame_GETBACK(frame);
             } else {
                 context_change_frame = frame;
             }
