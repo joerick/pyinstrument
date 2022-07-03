@@ -2,7 +2,7 @@ import warnings
 
 from pyinstrument.profiler import Profiler
 
-__version__ = "4.1.1"
+__version__ = "4.2.0"
 
 # enable deprecation warnings
 warnings.filterwarnings("once", ".*", DeprecationWarning, r"pyinstrument\..*")

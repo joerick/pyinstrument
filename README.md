@@ -54,6 +54,43 @@ Known issues
 Changelog
 ---------
 
+### v4.2.0
+
+-   Adds a command-line option `-p` `--render-option` that allows arbitrary
+    setting of render options. This lets you set options like
+    `filter_threshold` from the command line, by doing something like
+    `pyinstrument -p processor_options.filter_threshold=0`.
+
+    Here's the help output for the option:
+    ```
+      -p RENDER_OPTION, --render-option=RENDER_OPTION
+                        options to pass to the renderer, in the format
+                        'flag_name' or 'option_name=option_value'. For
+                        example, to set the option 'time', pass '-p
+                        time=percent_of_total'. To pass multiple options, use
+                        the -p option multiple times. You can set processor
+                        options using dot-syntax, like '-p
+                        processor_options.filter_threshold=0'. option_value is
+                        parsed as a JSON value or a string.
+    ```
+-   Adds the ability to view times in the console output as percentages,
+    rather than absolute times. Use the ConsoleRenderer option
+    `time='percent_of_total'`, or on the command line, use `-p`, like
+    `pyinstrument -p time=percent_of_total`.
+-   Adds command line options for loading and saving pyinstrument sessions.
+    You can save the raw data for a pyinstrument session with `-r session`,
+    like `pyinstrument -r session -o session.pyisession myscript.py`. Loading
+    is via `--load`, e.g. `pyinstrument --load session.pyisession`.
+-   Command line output format is inferred from the `-o` output file
+    extension. So if you do `pyinstrument -o profile.html myscript.py`, you
+    don't need to supply `-r html`, pyinstrument will automatically use the
+    HTML renderer. Or if you do
+    `pyinstrument -o profile.pyisession myscript.py`, it will save a raw
+    session object.
+-   Adds [usage examples for FastAPI and pytest](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi) to the documentation.
+-   Fixes a bug causing NotImplementedError when using `async_mode=strict`.
+-   Adds support for Python 3.11
+
 ### v4.1.1
 
 -   Fixed an issue causing PYINSTRUMENT_PROFILE_DIR_RENDERER to output the
