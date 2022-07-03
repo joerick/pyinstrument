@@ -16,7 +16,7 @@
 #if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
 #define PyFrame_GETBACK(f) PyFrame_GetBack(f)
 #else
-#define PyFrame_GETBACK(f) f->f_back
+#define PyFrame_GETBACK(f) (Py_XINCREF(f->f_back), f->f_back)
 #endif
 
 /*
@@ -303,9 +303,11 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
         }
 
         if (old_context_var_value != pState->last_context_var_value) {
-            PyFrameObject *context_change_frame;
-            if (what == WHAT_CALL && PyFrame_GETBACK(frame)) {
-                context_change_frame = PyFrame_GETBACK(frame);
+            PyFrameObject *context_change_frame; // borrowed reference
+            PyFrameObject *parent_frame = PyFrame_GETBACK(frame); // strong reference, maybe null
+
+            if (what == WHAT_CALL && parent_frame) {
+                context_change_frame = parent_frame;
             } else {
                 context_change_frame = frame;
             }
@@ -320,6 +322,7 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
             result = call_target(pState, context_change_frame, WHAT_CONTEXT_CHANGED, context_change_arg);
 
             Py_DECREF(context_change_arg);
+            Py_XDECREF(parent_frame);
 
             if (result == NULL) {
                 PyEval_SetProfile(NULL, NULL);

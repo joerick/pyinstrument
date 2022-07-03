@@ -11,6 +11,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.pyd
 
 # distribution
 dist/
