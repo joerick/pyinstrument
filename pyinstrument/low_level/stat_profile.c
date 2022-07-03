@@ -16,7 +16,12 @@
 #if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
 #define PyFrame_GETBACK(f) PyFrame_GetBack(f)
 #else
-#define PyFrame_GETBACK(f) (Py_XINCREF(f->f_back), f->f_back)
+static PyFrameObject *
+_PyFrame_GetBack(PyFrameObject *frame) {
+    Py_XINCREF(frame->f_back);
+    return frame->f_back;
+}
+#define PyFrame_GETBACK(f) _PyFrame_GetBack(f)
 #endif
 
 /*
