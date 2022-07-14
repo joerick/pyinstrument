@@ -183,6 +183,10 @@ def remove_irrelevant_nodes(
     if total_time is None:
         total_time = frame.time
 
+        # prevent divide by zero
+        if total_time <= 0:
+            total_time = 1e-44
+
     filter_threshold = options.get("filter_threshold", 0.01)
 
     for child in frame.children:

@@ -117,7 +117,10 @@ class ConsoleRenderer(Renderer):
         return result
 
     def _ansi_color_for_time(self, frame: Frame):
-        proportion_of_total = frame.time / self.root_frame.time
+        try:
+            proportion_of_total = frame.time / self.root_frame.time
+        except ZeroDivisionError:
+            return ""
 
         if proportion_of_total > 0.6:
             return self.colors.red

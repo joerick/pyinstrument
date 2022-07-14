@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextvars
 import sys
 import timeit
@@ -60,7 +62,12 @@ purposes. Not used in normal execution.
 """
 
 
-def setstatprofile(target, interval=0.001, context_var=None, timer_func=None):
+def setstatprofile(
+    target: Callable[[types.FrameType, str, Any], Any] | None,
+    interval: float = 0.001,
+    context_var: contextvars.ContextVar[object | None] | None = None,
+    timer_func: Callable[[], float] | None = None,
+) -> None:
     if target:
         profiler = PythonStatProfiler(
             target=target,

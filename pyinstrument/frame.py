@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 import sys
 import uuid
@@ -44,6 +45,7 @@ class Frame:
 
     parent: Frame | None
     group: FrameGroup | None
+    time: float
 
     # tracks the time from frames that were deleted during processing
     absorbed_time: float
@@ -59,9 +61,9 @@ class Frame:
         identifier = frame_info_get_identifier(identifier_or_frame_info)
         self.identifier = identifier
         self.parent = None
-        self.time = 0
+        self.time = 0.0
         self.group = None
-        self.absorbed_time = 0
+        self.absorbed_time = 0.0
 
         self._identifier_parts = identifier.split("\x00")
         self.attributes = {}
@@ -121,26 +123,17 @@ class Frame:
 
         return self_time
 
-    def await_self_time(self) -> float:
-        raise NotImplementedError()
-
     @property
     def function(self) -> str:
         return self._identifier_parts[0]
 
     @property
     def file_path(self) -> str | None:
-        if self.is_synthetic and self.parent:
-            return self.parent.file_path
-
         if len(self._identifier_parts) > 1:
             return self._identifier_parts[1]
 
     @property
     def line_no(self) -> int | None:
-        if self.is_synthetic and self.parent:
-            return self.parent.line_no
-
         if len(self._identifier_parts) > 2:
             return int(self._identifier_parts[2])
 
@@ -255,6 +248,7 @@ class Frame:
         return tuple(self._children)
 
     def await_time(self) -> float:
+        # i'd rather this was a property, but properties use twice as many stack frames
         await_time = 0
 
         if self.identifier == AWAIT_FRAME_IDENTIFIER:
@@ -264,6 +258,20 @@ class Frame:
             await_time += child.await_time()
 
         return await_time
+
+    def self_check(self, recursive: bool = True) -> None:
+        """
+        Checks that the frame is valid.
+        """
+        if self.identifier in LEAF_ONLY_IDENTIFIERS:
+            assert len(self._children) == 0
+
+        calculated_time = sum(child.time for child in self.children) + self.absorbed_time
+        assert math.isclose(calculated_time, self.time)
+
+        if recursive:
+            for child in self.children:
+                child.self_check(recursive=True)
 
     def __repr__(self):
         return "Frame(identifier=%s, time=%f, len(children)=%d), group=%r" % (

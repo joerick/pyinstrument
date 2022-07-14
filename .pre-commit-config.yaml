@@ -34,7 +34,7 @@ repos:
         language: node
         pass_filenames: false
         types: [python]
-        additional_dependencies: ['pyright@1.1.134']
+        additional_dependencies: ['pyright@1.1.260']
     -   id: build
         name: build js bundle
         entry: bin/build_js_bundle.py --force

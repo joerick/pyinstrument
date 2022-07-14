@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextvars
 import time
 
@@ -14,7 +16,9 @@ def test_context_type(setstatprofile):
         setstatprofile(None)
 
 
-profiler_context_var = contextvars.ContextVar("profiler_context_var", default=None)
+profiler_context_var: contextvars.ContextVar[object | None] = contextvars.ContextVar(
+    "profiler_context_var", default=None
+)
 
 
 @parametrize_setstatprofile

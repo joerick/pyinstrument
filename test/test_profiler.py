@@ -110,15 +110,15 @@ def test_two_functions():
     assert frame.function == "test_two_functions"
     assert len(frame.children) == 2
 
-    frame_b, frame_a = sorted(frame.children, key=lambda f: f.time(), reverse=True)
+    frame_b, frame_a = sorted(frame.children, key=lambda f: f.time, reverse=True)
 
     assert frame_a.function == "long_function_a"
     assert frame_b.function == "long_function_b"
 
     # busy CI runners can be slow to wake up from the sleep. So we relax the
     # ranges a bit
-    assert frame_a.time() == pytest.approx(0.25, abs=0.1)
-    assert frame_b.time() == pytest.approx(0.5, abs=0.2)
+    assert frame_a.time == pytest.approx(0.25, abs=0.1)
+    assert frame_b.time == pytest.approx(0.5, abs=0.2)
 
 
 def test_class_methods():
