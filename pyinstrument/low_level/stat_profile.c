@@ -370,7 +370,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 }
 
 static PyObject *
-_get_frame_identifier(PyFrameObject *frame) {
+_get_frame_info(PyFrameObject *frame) {
     PyCodeObject *code = code_from_frame(frame);
 
     const char *class_name = _get_class_name_of_frame(frame, code);
@@ -467,7 +467,7 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
     PyCodeObject* code = code_from_frame(frame);
 
     if ((what == WHAT_RETURN) && (code->co_flags & 0x80)) {
-        PyObject *frame_identifier = _get_frame_identifier(frame);
+        PyObject *frame_identifier = _get_frame_info(frame);
 
         int status = PyList_Append(pState->await_stack_list, frame_identifier);
         Py_DECREF(frame_identifier);
@@ -577,21 +577,21 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-get_frame_identifier(PyObject *m, PyObject *const *args, Py_ssize_t nargs)
+get_frame_info(PyObject *m, PyObject *const *args, Py_ssize_t nargs)
 {
     if (nargs != 1) {
-        PyErr_SetString(PyExc_TypeError, "get_frame_identifier takes exactly 1 argument");
+        PyErr_SetString(PyExc_TypeError, "get_frame_info takes exactly 1 argument");
         return NULL;
     }
 
     if (!PyFrame_Check(args[0])) {
-        PyErr_SetString(PyExc_TypeError, "get_frame_identifier should be called with a Frame object");
+        PyErr_SetString(PyExc_TypeError, "get_frame_info should be called with a Frame object");
         return NULL;
     }
 
     PyFrameObject *frame = (PyFrameObject *)args[0];
 
-    return _get_frame_identifier(frame);
+    return _get_frame_info(frame);
 }
 
 
@@ -604,7 +604,7 @@ static PyMethodDef module_methods[] = {
      "Sets the statistical profiler callback. The function in the same manner as setprofile, but "
      "instead of being called every on every call and return, the function is called every "
      "<interval> seconds with the current stack."},
-    {"get_frame_identifier", (PyCFunction)get_frame_identifier, METH_FASTCALL,
+    {"get_frame_info", (PyCFunction)get_frame_info, METH_FASTCALL,
      "Returns the frame identifier string for the given Frame object."},
     {NULL}  /* Sentinel */
 };

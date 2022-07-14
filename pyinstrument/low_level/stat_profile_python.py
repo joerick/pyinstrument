@@ -4,6 +4,8 @@ import timeit
 import types
 from typing import Any, Callable, List, Optional, Type
 
+from attr import has
+
 
 class PythonStatProfiler:
     await_stack: List[str]
@@ -41,7 +43,7 @@ class PythonStatProfiler:
 
             # 0x80 == CO_COROUTINE (i.e. defined with 'async def')
             if event == "return" and frame.f_code.co_flags & 0x80:
-                self.await_stack.append(get_frame_identifier(frame))
+                self.await_stack.append(get_frame_info(frame))
             else:
                 self.await_stack.clear()
 
@@ -71,21 +73,28 @@ def setstatprofile(target, interval=0.001, context_var=None, timer_func=None):
         sys.setprofile(None)
 
 
-def get_frame_identifier(frame: types.FrameType) -> str:
-    prefix = ""
-    # try to find self argument for usual methods
+def get_frame_info(frame: types.FrameType) -> str:
+    frame_info = "%s\x00%s\x00%i" % (
+        frame.f_code.co_name,
+        frame.f_code.co_filename,
+        frame.f_code.co_firstlineno,
+    )
+
+    class_name = None
+    # try to find self argument for methods
     self = frame.f_locals.get("self", None)
-    if self and hasattr(self, "__class__"):
-        prefix = "%s." % self.__class__.__qualname__
+    if self and hasattr(self, "__class__") and hasattr(self.__class__, "__qualname__"):
+        class_name = self.__class__.__qualname__
     else:
         # also try to find cls argument for class methods
         cls = frame.f_locals.get("cls", None)
         if cls and hasattr(cls, "__qualname__"):
-            prefix = "%s." % cls.__qualname__
+            class_name = cls.__qualname__
 
-    name = "%s%s" % (prefix, frame.f_code.co_name)
-    return "%s\x00%s\x00%i" % (
-        name,
-        frame.f_code.co_filename,
-        frame.f_code.co_firstlineno,
-    )
+    if class_name:
+        frame_info += "\x01c%s" % class_name
+
+    if frame.f_lineno is not None:
+        frame_info += "\x01l%i" % frame.f_lineno
+
+    return frame_info

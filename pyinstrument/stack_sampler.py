@@ -6,7 +6,7 @@ import types
 from contextvars import ContextVar
 from typing import Any, Callable, List, NamedTuple, Optional
 
-from pyinstrument.low_level.stat_profile import get_frame_identifier, setstatprofile
+from pyinstrument.low_level.stat_profile_python import get_frame_info, setstatprofile
 from pyinstrument.typing import LiteralStr
 
 # pyright: strict
@@ -178,7 +178,7 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
         call_stack.append(c_frame_identifier)
 
     while frame is not None:
-        call_stack.append(get_frame_identifier(frame))
+        call_stack.append(get_frame_info(frame))
         frame = frame.f_back
 
     thread = threading.current_thread()

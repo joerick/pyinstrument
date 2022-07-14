@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, List
 
 from pyinstrument import processors
-from pyinstrument.frame import BaseFrame
+from pyinstrument.frame import Frame
 from pyinstrument.session import Session
 
 # pyright: strict
@@ -56,7 +56,7 @@ class Renderer:
         """
         raise NotImplementedError()
 
-    def preprocess(self, root_frame: BaseFrame | None) -> BaseFrame | None:
+    def preprocess(self, root_frame: Frame | None) -> Frame | None:
         frame = root_frame
         for processor in self.processors:
             frame = processor(frame, options=self.processor_options)

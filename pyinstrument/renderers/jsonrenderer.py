@@ -4,7 +4,7 @@ import json
 from typing import Any, Callable
 
 from pyinstrument import processors
-from pyinstrument.frame import BaseFrame
+from pyinstrument.frame import Frame
 from pyinstrument.renderers.base import ProcessorList, Renderer
 from pyinstrument.session import Session
 
@@ -28,7 +28,7 @@ class JSONRenderer(Renderer):
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
-    def render_frame(self, frame: BaseFrame | None):
+    def render_frame(self, frame: Frame | None):
         if frame is None:
             return "null"
         # we don't use the json module because it uses 2x stack frames, so
@@ -39,7 +39,7 @@ class JSONRenderer(Renderer):
         property_decls.append('"file_path_short": %s' % encode_str(frame.file_path_short or ""))
         property_decls.append('"file_path": %s' % encode_str(frame.file_path or ""))
         property_decls.append('"line_no": %d' % frame.line_no)
-        property_decls.append('"time": %f' % frame.time())
+        property_decls.append('"time": %f' % frame.time)
         property_decls.append('"await_time": %f' % frame.await_time())
         property_decls.append(
             '"is_application_code": %s' % encode_bool(frame.is_application_code or False)

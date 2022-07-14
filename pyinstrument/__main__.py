@@ -13,7 +13,7 @@ from typing import Any, List, Type, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import BaseFrame
+from pyinstrument.frame import Frame
 from pyinstrument.processors import ProcessorOptions
 from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.session import Session
@@ -197,7 +197,7 @@ def main():
 
     options, args = parser.parse_args()
     # work around a type checking bug...
-    args = cast(List[str], args)
+    args = cast(List[str], args)  # type: ignore
 
     if args == [] and options.module_name is None and options.load_prev is None:
         parser.print_help()
@@ -369,8 +369,8 @@ def save_report(session: Session):
 
 # pylint: disable=W0613
 def remove_first_pyinstrument_frame_processor(
-    frame: BaseFrame | None, options: ProcessorOptions
-) -> BaseFrame | None:
+    frame: Frame | None, options: ProcessorOptions
+) -> Frame | None:
     """
     The first frame when using the command line is always the __main__ function. I want to remove
     that from the output.

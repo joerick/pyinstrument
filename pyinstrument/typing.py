@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing_extensions import Literal, assert_never
 
     LiteralStr = Literal
 else:
@@ -13,4 +13,10 @@ else:
 
     LiteralStr = _LiteralStr()
 
+    def assert_never(value: Any):
+        raise ValueError(value)
+
+
 PathOrStr = Union[str, "os.PathLike[str]"]
+
+__all__ = ["PathOrStr", "LiteralStr", "assert_never"]

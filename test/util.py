@@ -6,7 +6,7 @@ from typing import Generator, Generic, Iterable, Iterator, NoReturn, Optional, T
 import trio
 from flaky import flaky
 
-from pyinstrument.frame import BaseFrame
+from pyinstrument.frame import Frame
 from pyinstrument.profiler import Profiler
 
 if "CI" in os.environ:
@@ -32,7 +32,7 @@ def busy_wait(duration):
         do_nothing()
 
 
-def walk_frames(frame: BaseFrame) -> Generator[BaseFrame, None, None]:
+def walk_frames(frame: Frame) -> Generator[Frame, None, None]:
     yield frame
 
     for f in frame.children:

@@ -9,7 +9,7 @@ import pytest
 import trio
 
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import BaseFrame, Frame
+from pyinstrument.frame import Frame
 from pyinstrument.session import Session
 
 from .util import assert_never, busy_wait, flaky_in_ci

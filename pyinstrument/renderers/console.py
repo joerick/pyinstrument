@@ -3,7 +3,7 @@ from typing import Any
 
 import pyinstrument
 from pyinstrument import processors
-from pyinstrument.frame import BaseFrame
+from pyinstrument.frame import Frame
 from pyinstrument.renderers.base import ProcessorList, Renderer
 from pyinstrument.session import Session
 from pyinstrument.util import truncate
@@ -68,13 +68,13 @@ class ConsoleRenderer(Renderer):
 
         return "\n".join(lines)
 
-    def render_frame(self, frame: BaseFrame, indent: str = "", child_indent: str = "") -> str:
+    def render_frame(self, frame: Frame, indent: str = "", child_indent: str = "") -> str:
         if not frame.group or (
             frame.group.root == frame
-            or frame.total_self_time > 0.2 * self.root_frame.time()
+            or frame.total_self_time > 0.2 * self.root_frame.time
             or frame in frame.group.exit_frames
         ):
-            time_str = self._ansi_color_for_time(frame) + f"{frame.time():.3f}" + self.colors.end
+            time_str = self._ansi_color_for_time(frame) + f"{frame.time:.3f}" + self.colors.end
             function_color = self._ansi_color_for_function(frame)
             result = "{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
                 indent=indent,
@@ -116,8 +116,8 @@ class ConsoleRenderer(Renderer):
 
         return result
 
-    def _ansi_color_for_time(self, frame: BaseFrame):
-        proportion_of_total = frame.time() / self.root_frame.time()
+    def _ansi_color_for_time(self, frame: Frame):
+        proportion_of_total = frame.time / self.root_frame.time
 
         if proportion_of_total > 0.6:
             return self.colors.red
@@ -128,7 +128,7 @@ class ConsoleRenderer(Renderer):
         else:
             return self.colors.bright_green + self.colors.faint
 
-    def _ansi_color_for_function(self, frame: BaseFrame):
+    def _ansi_color_for_function(self, frame: Frame):
         if frame.is_application_code:
             return self.colors.bg_dark_blue_255 + self.colors.white_255
         else:
