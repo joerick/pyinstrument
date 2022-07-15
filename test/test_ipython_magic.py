@@ -48,7 +48,7 @@ def test_magics(ip):
     assert "function_a" in output.data["text/plain"]
 
     assert "- 0.200 function_a" in output.data["text/plain"]
-    assert "- 0.100 sleep" in output.data["text/plain"]
+    assert "- 0.100 FakeClock.sleep" in output.data["text/plain"]
 
     with fake_time():
         with capture_ipython_output() as captured:
@@ -59,7 +59,7 @@ def test_magics(ip):
     output = captured.outputs[0]
 
     assert "function_a" in output.data["text/plain"]
-    assert "- 0.100 sleep" in output.data["text/plain"]
+    assert "- 0.100 FakeClock.sleep" in output.data["text/plain"]
 
 
 @pytest.mark.ipythonmagic
