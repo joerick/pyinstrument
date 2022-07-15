@@ -4,7 +4,7 @@ import math
 import os
 import sys
 import uuid
-from typing import Dict, Sequence
+from typing import Sequence
 
 from pyinstrument.frame_info import (
     ATTRIBUTE_MARKER_CLASS_NAME,
@@ -203,7 +203,7 @@ class Frame:
             return "%s:%i" % (self.file_path_short, self.line_no)
 
     _children: list[Frame]
-    attributes: Dict[str, float]
+    attributes: dict[str, float]
 
     def add_child(self, frame: Frame, after: Frame | None = None):
         """

@@ -222,7 +222,7 @@ def test_speedscope_output():
         "long_function_b": 3,
     }
     assert len(speedscope_frame_list) == len(distinct_functions_called)
-    speedscope_frame_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeFrame)])
+    speedscope_frame_fields = tuple(field.name for field in dataclasses.fields(SpeedscopeFrame))
     for (function_name, frame_index) in distinct_functions_called.items():
         for frame_field in speedscope_frame_fields:
             assert frame_field in speedscope_frame_list[frame_index]
@@ -297,7 +297,7 @@ def test_speedscope_output():
 
     speedscope_event_list = speedscope_profile["events"]
     assert len(speedscope_event_list) == len(output_event_tuple)
-    speedscope_event_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeEvent)])
+    speedscope_event_fields = tuple(field.name for field in dataclasses.fields(SpeedscopeEvent))
     for (event_index, speedscope_event) in enumerate(speedscope_event_list):
         for event_field in speedscope_event_fields:
             assert event_field in speedscope_event

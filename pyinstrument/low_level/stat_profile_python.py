@@ -6,11 +6,9 @@ import timeit
 import types
 from typing import Any, Callable, List, Optional, Type
 
-from attr import has
-
 
 class PythonStatProfiler:
-    await_stack: List[str]
+    await_stack: list[str]
 
     def __init__(self, target, interval, context_var, timer_func):
         self.target = target

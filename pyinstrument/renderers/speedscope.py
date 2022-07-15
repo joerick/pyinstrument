@@ -210,7 +210,7 @@ class SpeedscopeRenderer(FrameRenderer):
         frame = self.preprocess(session.root_frame())
 
         id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
-        name: str = "CPU profile for {} at {}".format(session.program, id_)
+        name: str = f"CPU profile for {session.program} at {id_}"
 
         sprofile_list: list[SpeedscopeProfile] = [
             SpeedscopeProfile(name, self.render_frame(frame), session.duration)

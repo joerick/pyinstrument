@@ -85,13 +85,13 @@ class TestCommandLine:
             [*pyinstrument_invocation, str(program_path), "arg1", "arg2"],
             stderr=subprocess.PIPE,
             check=True,
-            universal_newlines=True,
+            text=True,
         )
         process_native = subprocess.run(
             [sys.executable, str(program_path), "arg1", "arg2"],
             stderr=subprocess.PIPE,
             check=True,
-            universal_newlines=True,
+            text=True,
         )
 
         print("process_pyi.stderr", process_pyi.stderr)
@@ -108,14 +108,14 @@ class TestCommandLine:
             # stderr=subprocess.PIPE,
             check=True,
             cwd=tmp_path,
-            universal_newlines=True,
+            text=True,
         )
         process_native = subprocess.run(
             [sys.executable, "-m", "test_module", "arg1", "arg2"],
             # stderr=subprocess.PIPE,
             check=True,
             cwd=tmp_path,
-            universal_newlines=True,
+            text=True,
         )
 
         print("process_pyi.stderr", process_pyi.stderr)
@@ -142,13 +142,13 @@ class TestCommandLine:
             ],
             stderr=subprocess.PIPE,
             check=True,
-            universal_newlines=True,
+            text=True,
         )
         process_native = subprocess.run(
             ["pyi_test_program", "arg1", "arg2"],
             stderr=subprocess.PIPE,
             check=True,
-            universal_newlines=True,
+            text=True,
         )
 
         print("process_pyi.stderr", process_pyi.stderr)

@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from __future__ import annotations
 
 import codecs
@@ -12,7 +10,7 @@ import runpy
 import shutil
 import sys
 import time
-from typing import Any, List, TextIO, Type, cast
+from typing import Any, List, TextIO, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
@@ -342,7 +340,7 @@ def main():
 
 
 def compute_render_options(
-    options: CommandLineOptions, renderer_class: Type[renderers.Renderer], output_file: TextIO
+    options: CommandLineOptions, renderer_class: type[renderers.Renderer], output_file: TextIO
 ) -> dict[str, Any]:
     # parse show/hide options
     if options.hide_fnmatch is not None and options.hide_regex is not None:
@@ -439,7 +437,7 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
         )
 
 
-def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
+def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
     if renderer == "text":
         return renderers.ConsoleRenderer
     elif renderer == "html":

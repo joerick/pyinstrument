@@ -43,7 +43,7 @@ class StackSampler:
     subscribers: list[StackSamplerSubscriber]
     current_sampling_interval: float | None
     last_profile_time: float
-    timer_func: Optional[Callable[[], float]]
+    timer_func: Callable[[], float] | None
 
     def __init__(self) -> None:
         self.subscribers = []
