@@ -373,32 +373,48 @@ static PyObject *
 _get_frame_info(PyFrameObject *frame) {
     PyCodeObject *code = code_from_frame(frame);
 
+    PyObject *class_name_attribute;
+
     const char *class_name = _get_class_name_of_frame(frame, code);
-
-    PyObject *result;
-
-    if (class_name) {
-        result = PyUnicode_FromFormat(
-            "%s.%U%c%U%c%i",
-            class_name,
-            code->co_name,
-            0, // NULL char
-            code->co_filename,
-            0, // NULL char
-            code->co_firstlineno
-        );
+    if (class_name == NULL) {
+        class_name_attribute = PyUnicode_New(0, 127); // empty string
     } else {
-        result = PyUnicode_FromFormat(
-            "%U%c%U%c%i",
-            code->co_name,
-            0, // NULL char
-            code->co_filename,
-            0, // NULL char
-            code->co_firstlineno
+        class_name_attribute = PyUnicode_FromFormat(
+            "%c%c%s",
+            1, // 0x01 char denotes 'attribute'
+            'c', // 'c' char denotes 'class name'
+            class_name
         );
     }
 
+    PyObject *line_number_attribute;
+
+    int line_number = PyFrame_GetLineNumber(frame);
+    if (line_number < 1) {
+        line_number_attribute = PyUnicode_New(0, 127);
+    } else {
+        line_number_attribute = PyUnicode_FromFormat(
+            "%c%c%d",
+            1,
+            'l', // 'l' char denotes 'line number'
+            line_number
+        );
+    }
+
+    PyObject *result = PyUnicode_FromFormat(
+        "%U%c%U%c%i%U%U",
+        code->co_name,
+        0, // NULL char
+        code->co_filename,
+        0, // NULL char
+        code->co_firstlineno,
+        class_name_attribute,
+        line_number_attribute
+    );
+
     Py_DECREF(code);
+    Py_DECREF(class_name_attribute);
+    Py_DECREF(line_number_attribute);
 
     return result;
 }

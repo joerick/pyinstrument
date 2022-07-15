@@ -6,7 +6,11 @@ import sys
 import uuid
 from typing import Dict, Sequence
 
-from pyinstrument.frame_info import frame_info_get_identifier, parse_frame_info
+from pyinstrument.frame_info import (
+    ATTRIBUTE_MARKER_CLASS_NAME,
+    frame_info_get_identifier,
+    parse_frame_info,
+)
 
 # pyright: strict
 
@@ -259,15 +263,47 @@ class Frame:
 
         return await_time
 
+    def get_attribute_value(self, attribute_marker: str) -> str | None:
+        """
+        Returns the value of the attribute. If multiple values are present,
+        the most commonly observed one is returned.
+        """
+        # Attributes are recorded as a dict, with the key representing an
+        # observation, and the value representing the duration that it was
+        # observed. the first character of the observation is the 'marker' -
+        # the type of the attribute, the rest is data.
+        matching_attributes = [
+            a_tuple
+            for a_tuple in self.attributes.items()
+            if a_tuple[0].startswith(attribute_marker)
+        ]
+
+        if len(matching_attributes) == 0:
+            return None
+
+        top_attribute, _ = max(matching_attributes, key=lambda a: a[1])
+
+        # strip off the marker, return the data
+        return top_attribute[1:]
+
+    @property
+    def class_name(self):
+        return self.get_attribute_value(ATTRIBUTE_MARKER_CLASS_NAME)
+
     def self_check(self, recursive: bool = True) -> None:
         """
         Checks that the frame is valid.
         """
         if self.identifier in LEAF_ONLY_IDENTIFIERS:
             assert len(self._children) == 0
+            # leaf frames have time that isn't attributable to their
+            # children, so we don't check that.
+            return
 
         calculated_time = sum(child.time for child in self.children) + self.absorbed_time
-        assert math.isclose(calculated_time, self.time)
+        assert math.isclose(
+            calculated_time, self.time
+        ), f"Frame time mismatch, should be {calculated_time}, was {self.time}, {self.children}"
 
         if recursive:
             for child in self.children:

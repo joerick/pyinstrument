@@ -57,12 +57,14 @@ def test_remove_importlib():
     )
 
     calculate_frame_tree_times(frame)
+    frame.self_check()
 
     assert frame.total_self_time == 0.0
     assert frame.time == approx(0.5)
 
     frame = processors.remove_importlib(frame, options={})
     assert frame
+    frame.self_check()
 
     assert frame.total_self_time == approx(0.2)  # the root gets the self_time from the importlib
     assert frame.time == approx(0.5)
@@ -96,11 +98,13 @@ def test_merge_consecutive_self_time():
     )
 
     calculate_frame_tree_times(frame)
+    frame.self_check()
 
     assert frame.time == approx(0.55)
 
     frame = processors.merge_consecutive_self_time(frame, options={})
     assert frame
+    frame.self_check()
 
     assert frame.time == approx(0.55)
     assert len(frame.children) == 4
@@ -141,12 +145,14 @@ def test_aggregate_repeated_calls():
     )
 
     calculate_frame_tree_times(frame)
+    frame.self_check()
 
     assert frame.time == approx(0.8)
 
     frame = processors.aggregate_repeated_calls(frame, options={})
 
     assert frame
+    frame.self_check()
     assert frame.time == approx(0.8)
     # children should be sorted by time
     assert len(frame.children) == 3
@@ -184,12 +190,14 @@ def test_remove_irrelevant_nodes():
     )
 
     calculate_frame_tree_times(frame)
+    frame.self_check()
 
     assert frame.time == approx(11.01)
 
     frame = processors.remove_irrelevant_nodes(frame, options={})
 
     assert frame
+    frame.self_check()
     assert frame.time == approx(11.01)
     # check the calculate metrics function was deleted
     assert len(frame.children) == 3
@@ -218,12 +226,14 @@ def test_remove_unnecessary_self_time_nodes():
         ],
     )
     calculate_frame_tree_times(frame)
+    frame.self_check()
 
     assert frame.time == approx(1.3)
 
     frame = processors.remove_unnecessary_self_time_nodes(frame, options={})
 
     assert frame
+    frame.self_check()
     assert frame.time == approx(1.3)
     assert len(frame.children) == 4
     # check the self time node was deleted
@@ -270,12 +280,14 @@ def test_group_library_frames_processor():
         ],
     )
     calculate_frame_tree_times(frame)
+    frame.self_check()
 
     assert frame.time == approx(1.4)
 
     frame = processors.group_library_frames_processor(frame, options={})
 
     assert frame
+    frame.self_check()
     assert frame.time == approx(1.4)
     group_root = frame.children[0]
 

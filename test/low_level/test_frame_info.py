@@ -28,14 +28,14 @@ class AClass:
         return getter_function(frame)
 
 
-def test_frame_identifier():
+def test_frame_info():
     frame = inspect.currentframe()
 
     assert frame
     assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
 
 
-def test_frame_identifiers():
+def test_frame_info_with_classes():
     instance = AClass()
 
     test_functions = [

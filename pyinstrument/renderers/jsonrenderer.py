@@ -35,10 +35,10 @@ class JSONRenderer(Renderer):
         # crashes on deep but valid call stacks
 
         property_decls: list[str] = []
-        property_decls.append('"function": %s' % encode_str(frame.function or ""))
+        property_decls.append('"function": %s' % encode_str(frame.function))
         property_decls.append('"file_path_short": %s' % encode_str(frame.file_path_short or ""))
         property_decls.append('"file_path": %s' % encode_str(frame.file_path or ""))
-        property_decls.append('"line_no": %d' % frame.line_no)
+        property_decls.append('"line_no": %d' % (frame.line_no or 0))
         property_decls.append('"time": %f' % frame.time)
         property_decls.append('"await_time": %f' % frame.await_time())
         property_decls.append(
@@ -53,6 +53,9 @@ class JSONRenderer(Renderer):
 
         if frame.group:
             property_decls.append('"group_id": %s' % encode_str(frame.group.id))
+
+        if frame.class_name:
+            property_decls.append('"class_name": %s' % encode_str(frame.class_name))
 
         return "{%s}" % ",".join(property_decls)
 

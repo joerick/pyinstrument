@@ -75,12 +75,19 @@ class ConsoleRenderer(Renderer):
             or frame in frame.group.exit_frames
         ):
             time_str = self._ansi_color_for_time(frame) + f"{frame.time:.3f}" + self.colors.end
-            function_color = self._ansi_color_for_function(frame)
-            result = "{indent}{time_str} {function_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
+            name_color = self._ansi_color_for_name(frame)
+
+            class_name = frame.class_name
+            if class_name:
+                name = f"{class_name}.{frame.function}"
+            else:
+                name = frame.function
+
+            result = "{indent}{time_str} {name_color}{name}{c.end}  {c.faint}{code_position}{c.end}\n".format(
                 indent=indent,
                 time_str=time_str,
-                function_color=function_color,
-                function=frame.function,
+                name_color=name_color,
+                name=name,
                 code_position=frame.code_position_short,
                 c=self.colors,
             )
@@ -131,7 +138,7 @@ class ConsoleRenderer(Renderer):
         else:
             return self.colors.bright_green + self.colors.faint
 
-    def _ansi_color_for_function(self, frame: Frame):
+    def _ansi_color_for_name(self, frame: Frame):
         if frame.is_application_code:
             return self.colors.bg_dark_blue_255 + self.colors.white_255
         else:
