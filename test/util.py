@@ -6,7 +6,7 @@ from typing import Generator, Generic, Iterable, Iterator, NoReturn, Optional, T
 import trio
 from flaky import flaky
 
-from pyinstrument.frame import LEAF_ONLY_IDENTIFIERS, Frame
+from pyinstrument.frame import SYNTHETIC_LEAF_IDENTIFIERS, Frame
 from pyinstrument.profiler import Profiler
 
 if "CI" in os.environ:
@@ -56,7 +56,7 @@ def calculate_frame_tree_times(frame: Frame):
     child_time_sum = 0.0
 
     for child in frame.children:
-        if child.identifier not in LEAF_ONLY_IDENTIFIERS:
+        if child.identifier not in SYNTHETIC_LEAF_IDENTIFIERS:
             calculate_frame_tree_times(child)
 
         child_time_sum += child.time

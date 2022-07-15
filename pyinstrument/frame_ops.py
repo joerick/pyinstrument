@@ -53,7 +53,7 @@ def build_frame_tree(frame_records: Sequence[FrameRecordType]) -> Frame | None:
 
         final_frame = frame_stack[-1]
 
-        if not final_frame.is_synthetic:
+        if not final_frame.is_synthetic_leaf:
             # record the self-time
             final_frame.add_child(
                 Frame(identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time)

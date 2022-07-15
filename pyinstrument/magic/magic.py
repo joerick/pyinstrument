@@ -3,7 +3,7 @@ from __future__ import print_function
 import urllib.parse
 from ast import parse
 
-from IPython import get_ipython
+from IPython import get_ipython  # type: ignore
 from IPython.core.magic import Magics, line_cell_magic, magics_class
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import IFrame, display

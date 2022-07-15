@@ -33,7 +33,7 @@ SYNTHETIC_FRAME_IDENTIFIERS = frozenset(
 
 # these identifiers can have no children - correspondingly, they can have time
 # that is not the sum of their children's time
-LEAF_ONLY_IDENTIFIERS = frozenset(
+SYNTHETIC_LEAF_IDENTIFIERS = frozenset(
     [
         AWAIT_FRAME_IDENTIFIER,
         SELF_TIME_FRAME_IDENTIFIER,
@@ -212,7 +212,7 @@ class Frame:
         this one after.
         """
 
-        if self.identifier in LEAF_ONLY_IDENTIFIERS:
+        if self.identifier in SYNTHETIC_LEAF_IDENTIFIERS:
             raise ValueError("Cannot add children to a leaf-only frame")
 
         frame.remove_from_parent()
@@ -238,11 +238,11 @@ class Frame:
 
     @property
     def is_synthetic(self) -> bool:
-        return self.identifier in [
-            SELF_TIME_FRAME_IDENTIFIER,
-            OUT_OF_CONTEXT_FRAME_IDENTIFIER,
-            AWAIT_FRAME_IDENTIFIER,
-        ]
+        return self.identifier in SYNTHETIC_FRAME_IDENTIFIERS
+
+    @property
+    def is_synthetic_leaf(self) -> bool:
+        return self.identifier in SYNTHETIC_LEAF_IDENTIFIERS
 
     @property
     def children(self) -> Sequence[Frame]:
@@ -294,7 +294,7 @@ class Frame:
         """
         Checks that the frame is valid.
         """
-        if self.identifier in LEAF_ONLY_IDENTIFIERS:
+        if self.identifier in SYNTHETIC_LEAF_IDENTIFIERS:
             assert len(self._children) == 0
             # leaf frames have time that isn't attributable to their
             # children, so we don't check that.

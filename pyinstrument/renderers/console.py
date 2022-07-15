@@ -87,9 +87,7 @@ class ConsoleRenderer(FrameRenderer):
                 percent = self.frame_proportion_of_total_time(frame) * 100
                 time_str = self._ansi_color_for_time(frame) + f"{percent:.0f}%" + self.colors.end
             else:
-                time_str = (
-                    self._ansi_color_for_time(frame) + f"{frame.time():.3f}" + self.colors.end
-                )
+                time_str = self._ansi_color_for_time(frame) + f"{frame.time:.3f}" + self.colors.end
 
             name_color = self._ansi_color_for_name(frame)
 
@@ -140,10 +138,10 @@ class ConsoleRenderer(FrameRenderer):
 
         return result
 
-    def frame_proportion_of_total_time(self, frame: BaseFrame):
-        return frame.time() / self.root_frame.time()
+    def frame_proportion_of_total_time(self, frame: Frame):
+        return frame.time / self.root_frame.time
 
-    def _ansi_color_for_time(self, frame: BaseFrame):
+    def _ansi_color_for_time(self, frame: Frame):
         proportion_of_total = self.frame_proportion_of_total_time(frame)
 
         if proportion_of_total > 0.6:
