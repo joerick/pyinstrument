@@ -286,6 +286,35 @@ code_from_frame(PyFrameObject* frame)
 #endif
 }
 
+#if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
+static const char *
+_get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
+    return NULL;
+    PyObject *locals = PyFrame_GetLocals(frame);
+    if (!PyDict_Check(locals)) { return NULL; }
+    PyObject *self = PyDict_GetItem(locals, SELF_STRING);
+
+    if (self) {
+        Py_DECREF(locals);
+        return _PyType_Name(self->ob_type);
+    }
+
+    PyObject *cls = PyDict_GetItem(locals, CLS_STRING);
+
+    if (cls) {
+        Py_DECREF(locals);
+        if (!PyType_Check(cls)) {
+            return NULL;
+        }
+        PyTypeObject *type = (PyTypeObject *)cls;
+        return _PyType_Name(type);
+    }
+
+    Py_DECREF(locals);
+
+    return NULL;
+}
+#else
 static PyObject *
 _get_first_arg_from_cell_variables(PyFrameObject *frame, PyCodeObject *code) {
     if (!code->co_cell2arg) {
@@ -379,6 +408,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 
     return NULL;
 }
+#endif
 
 static PyObject *
 _get_frame_info(PyFrameObject *frame) {
