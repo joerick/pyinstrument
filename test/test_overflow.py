@@ -5,13 +5,13 @@ import time
 import pytest
 
 from pyinstrument import Profiler
-from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer
+from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer, SpeedscopeRenderer
 
 # Utilities
 
 
 def recurse(depth):
-    if depth == 0:
+    if depth <= 0:
         time.sleep(0.1)
         return
 
@@ -50,10 +50,13 @@ def test_console(deep_profiler_session):
     ConsoleRenderer().render(deep_profiler_session)
 
 
-# html now uses the json renderer, so it's xfail too.
 def test_html(deep_profiler_session):
     HTMLRenderer().render(deep_profiler_session)
 
 
 def test_json(deep_profiler_session):
     JSONRenderer().render(deep_profiler_session)
+
+
+def test_speedscope(deep_profiler_session):
+    SpeedscopeRenderer().render(deep_profiler_session)

@@ -62,3 +62,25 @@ def calculate_frame_tree_times(frame: Frame):
         child_time_sum += child.time
 
     frame.time = child_time_sum + frame.absorbed_time
+
+
+BUSY_WAIT_SCRIPT = """
+import time, sys
+
+def do_nothing():
+    pass
+
+def busy_wait(duration):
+    end_time = time.time() + duration
+
+    while time.time() < end_time:
+        do_nothing()
+
+def main():
+    print('sys.argv: ', sys.argv)
+    busy_wait(0.25)
+
+
+if __name__ == '__main__':
+    main()
+"""

@@ -44,7 +44,7 @@ Rendering has two steps:
 Therefore, rendering can be customised by changing the ``processors`` property. For example, you can disable time-aggregation (making the profile into a timeline) by removing {func}`aggregate_repeated_calls`.
 
 ```{eval-rst}
-.. autoclass:: pyinstrument.renderers.Renderer
+.. autoclass:: pyinstrument.renderers.FrameRenderer
     :members:
 
 .. autoclass:: pyinstrument.renderers.ConsoleRenderer
@@ -52,6 +52,8 @@ Therefore, rendering can be customised by changing the ``processors`` property. 
 .. autoclass:: pyinstrument.renderers.HTMLRenderer
 
 .. autoclass:: pyinstrument.renderers.JSONRenderer
+
+.. autoclass:: pyinstrument.renderers.SpeedscopeRenderer
 ```
 
 ### Processors

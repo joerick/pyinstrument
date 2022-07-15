@@ -1,17 +1,15 @@
-import distutils
 import os
-import subprocess
-import sys
+from pathlib import Path
 
 from setuptools import Extension, find_packages, setup
 
-with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
-    long_description = f.read()
+PROJECT_ROOT = Path(__file__).parent
+long_description = (PROJECT_ROOT / "README.md").read_text(encoding="utf8")
 
 setup(
     name="pyinstrument",
     packages=find_packages(include=["pyinstrument", "pyinstrument.*"]),
-    version="4.0.4",
+    version="4.2.0",
     ext_modules=[
         Extension(
             "pyinstrument.low_level.stat_profile",
@@ -26,6 +24,7 @@ setup(
     url="https://github.com/joerick/pyinstrument",
     keywords=["profiling", "profile", "profiler", "cpu", "time", "sampling"],
     install_requires=[],
+    extras_require={"jupyter": ["ipython"]},
     include_package_data=True,
     python_requires=">=3.7",
     entry_points={"console_scripts": ["pyinstrument = pyinstrument.__main__:main"]},

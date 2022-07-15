@@ -17,6 +17,28 @@ class Renderer:
     Abstract base class for renderers.
     """
 
+    output_file_extension: str = "txt"
+    """
+    Renderer output file extension without dot prefix. The default value is `txt`
+    """
+
+    def __init__(self):
+        pass
+
+    def render(self, session: Session) -> str:
+        """
+        Return a string that contains the rendered form of `frame`.
+        """
+        raise NotImplementedError()
+
+
+class FrameRenderer(Renderer):
+    """
+    An abstract base class for renderers that process Frame objects using
+    processor functions. Provides a common interface to manipulate the
+    processors before rendering.
+    """
+
     processors: ProcessorList
     """
     Processors installed on this renderer. This property is defined on the

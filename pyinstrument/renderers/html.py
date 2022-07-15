@@ -8,17 +8,19 @@ import webbrowser
 from typing import Any
 
 from pyinstrument import processors
-from pyinstrument.renderers.base import ProcessorList, Renderer
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument.session import Session
 
 # pyright: strict
 
 
-class HTMLRenderer(Renderer):
+class HTMLRenderer(FrameRenderer):
     """
     Renders a rich, interactive web page, as a string of HTML.
     """
+
+    output_file_extension = "html"
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)

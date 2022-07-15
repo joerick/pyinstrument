@@ -1,21 +1,23 @@
+# coding: utf-8
+
 from __future__ import annotations
 
 import codecs
 import fnmatch
 import glob
+import json
 import optparse
 import os
 import runpy
 import shutil
 import sys
 import time
-from typing import Any, List, Type, cast
+from typing import Any, List, TextIO, Type, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
 from pyinstrument.frame import Frame
 from pyinstrument.processors import ProcessorOptions
-from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.session import Session
 from pyinstrument.util import (
     file_is_a_tty,
@@ -23,7 +25,7 @@ from pyinstrument.util import (
     file_supports_unicode,
     object_with_import_path,
 )
-from pyinstrument.vendor import appdirs
+from pyinstrument.vendor import appdirs, keypath
 
 # pyright: strict
 
@@ -46,12 +48,20 @@ def main():
         parser.largs[:] = []  # type: ignore
 
     parser.add_option(
+        "--load",
+        dest="load",
+        action="store",
+        metavar="FILENAME",
+        help="instead of running a script, load a profile session from a pyisession file",
+    )
+
+    parser.add_option(
         "",
         "--load-prev",
         dest="load_prev",
         action="store",
-        metavar="ID",
-        help="instead of running a script, load a previous report",
+        metavar="IDENTIFIER",
+        help="instead of running a script, load a previous profile session as specified by an identifier",
     )
 
     parser.add_option(
@@ -82,10 +92,27 @@ def main():
         action="store",
         type="string",
         help=(
-            "how the report should be rendered. One of: 'text', 'html', 'json', or python "
-            "import path to a renderer class"
+            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope' or python "
+            "import path to a renderer class. Defaults to the appropriate format for the extension "
+            "if OUTFILE is given, otherwise, defaults to 'text'."
         ),
-        default="text",
+        default=None,
+    )
+
+    parser.add_option(
+        "-p",
+        "--render-option",
+        dest="render_options",
+        action="append",
+        metavar="RENDER_OPTION",
+        type="string",
+        help=(
+            "options to pass to the renderer, in the format 'flag_name' or 'option_name=option_value'. "
+            "For example, to set the option 'time', pass '-p time=percent_of_total'. To pass multiple "
+            "options, use the -p option multiple times. You can set processor options using dot-syntax, "
+            "like '-p processor_options.filter_threshold=0'. option_value is parsed as a JSON value or "
+            "a string."
+        ),
     )
 
     parser.add_option(
@@ -102,6 +129,7 @@ def main():
         "--timeline",
         dest="timeline",
         action="store_true",
+        default=False,
         help="render as a timeline - preserve ordering and don't condense repeated calls",
     )
 
@@ -191,17 +219,30 @@ def main():
         help="(text renderer only) force no color text output",
     )
 
+    # parse the options
+
     if not sys.argv[1:]:
         parser.print_help()
         sys.exit(2)
 
-    options, args = parser.parse_args()
+    options, args = parser.parse_args()  # type: ignore
+
+    # make command line options type-checked
+    options = cast(CommandLineOptions, options)
     # work around a type checking bug...
     args = cast(List[str], args)  # type: ignore
 
-    if args == [] and options.module_name is None and options.load_prev is None:
+    session_options_used = [
+        options.load is not None,
+        options.load_prev is not None,
+        options.module_name is not None,
+        len(args) > 0,
+    ]
+    if session_options_used.count(True) == 0:
         parser.print_help()
         sys.exit(2)
+    if session_options_used.count(True) > 1:
+        parser.error("You can only specify one of --load, --load-prev, -m, or script arguments")
 
     if options.module_name is not None and options.from_path:
         parser.error("The options -m and --from-path are mutually exclusive.")
@@ -209,27 +250,29 @@ def main():
     if options.from_path and sys.platform == "win32":
         parser.error("--from-path is not supported on Windows")
 
-    if options.hide_fnmatch is not None and options.hide_regex is not None:
-        parser.error("You can‘t specify both --hide and --hide-regex")
+    # open the output file
 
-    if options.hide_fnmatch is not None:
-        options.hide_regex = fnmatch.translate(options.hide_fnmatch)
+    if options.outfile:
+        f = codecs.open(options.outfile, "w", "utf-8")
+        should_close_f_after_writing = True
+    else:
+        f = sys.stdout
+        should_close_f_after_writing = False
 
-    show_options_used = [
-        options.show_fnmatch is not None,
-        options.show_regex is not None,
-        options.show_all,
-    ]
-    if show_options_used.count(True) > 1:
-        parser.error("You can only specify one of --show, --show-regex and --show-all")
+    # create the renderer
 
-    if options.show_fnmatch is not None:
-        options.show_regex = fnmatch.translate(options.show_fnmatch)
-    if options.show_all:
-        options.show_regex = r".*"
+    try:
+        renderer = create_renderer(options, output_file=f)
+    except OptionsParseError as e:
+        parser.error(e.args[0])
+        exit(1)
+
+    # get the session - execute code or load from disk
 
     if options.load_prev:
-        session = load_report(options.load_prev)
+        session = load_report_from_temp_storage(options.load_prev)
+    elif options.load:
+        session = Session.load(options.load)
     else:
         if options.module_name is not None:
             if not (sys.path[0] and os.path.samefile(sys.path[0], ".")):
@@ -271,9 +314,6 @@ def main():
 
         session = profiler.stop()
 
-    if options.output_html:
-        options.renderer = "html"
-
     if options.outfile:
         f = codecs.open(options.outfile, "w", "utf-8")
         should_close_f_after_writing = True
@@ -281,31 +321,11 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
-    renderer_kwargs = {
-        "processor_options": {
-            "hide_regex": options.hide_regex,
-            "show_regex": options.show_regex,
-        }
-    }
+    if isinstance(renderer, renderers.FrameRenderer):
+        # remove this frame from the trace
+        renderer.processors.append(remove_first_pyinstrument_frame_processor)
 
-    if options.timeline is not None:
-        renderer_kwargs["timeline"] = options.timeline
-
-    if options.renderer == "text":
-        unicode_override = options.unicode is not None
-        color_override = options.color is not None
-        unicode: Any = options.unicode if unicode_override else file_supports_unicode(f)
-        color: Any = options.color if color_override else file_supports_color(f)
-
-        renderer_kwargs.update({"unicode": unicode, "color": color})
-
-    renderer_class = get_renderer_class(options.renderer)
-    renderer = renderer_class(**renderer_kwargs)
-
-    # remove this frame from the trace
-    renderer.processors.append(remove_first_pyinstrument_frame_processor)
-
-    if isinstance(renderer, HTMLRenderer) and not options.outfile and file_is_a_tty(f):
+    if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
         output_filename = renderer.open_in_browser(session)
         print("stdout is a terminal, so saved profile output to %s" % output_filename)
@@ -315,10 +335,108 @@ def main():
             f.close()
 
     if options.renderer == "text":
-        _, report_identifier = save_report(session)
+        _, report_identifier = save_report_to_temp_storage(session)
         print("To view this report with different options, run:")
         print("    pyinstrument --load-prev %s [options]" % report_identifier)
         print("")
+
+
+def compute_render_options(
+    options: CommandLineOptions, renderer_class: Type[renderers.Renderer], output_file: TextIO
+) -> dict[str, Any]:
+    # parse show/hide options
+    if options.hide_fnmatch is not None and options.hide_regex is not None:
+        raise OptionsParseError("You can‘t specify both --hide and --hide-regex")
+
+    hide_regex: str | None
+    show_regex: str | None
+    if options.hide_fnmatch is not None:
+        hide_regex = fnmatch.translate(options.hide_fnmatch)
+    else:
+        hide_regex = options.hide_regex
+
+    show_options_used = [
+        options.show_fnmatch is not None,
+        options.show_regex is not None,
+        options.show_all,
+    ]
+    if show_options_used.count(True) > 1:
+        raise OptionsParseError("You can only specify one of --show, --show-regex and --show-all")
+
+    if options.show_fnmatch is not None:
+        show_regex = fnmatch.translate(options.show_fnmatch)
+    elif options.show_all:
+        show_regex = r".*"
+    else:
+        show_regex = options.show_regex
+
+    render_options: dict[str, Any] = {}
+
+    if issubclass(renderer_class, renderers.FrameRenderer):
+        render_options["processor_options"] = {
+            "hide_regex": hide_regex,
+            "show_regex": show_regex,
+        }
+
+    if issubclass(renderer_class, renderers.ConsoleRenderer):
+        unicode_override = options.unicode is not None
+        color_override = options.color is not None
+        unicode: Any = options.unicode if unicode_override else file_supports_unicode(output_file)
+        color: Any = options.color if color_override else file_supports_color(output_file)
+
+        render_options.update({"unicode": unicode, "color": color})
+
+    if options.timeline:
+        render_options["timeline"] = True
+
+    # apply user options
+    if options.render_options is not None:
+        for renderer_option in options.render_options:
+            key, sep, value = renderer_option.partition("=")
+
+            if sep == "":
+                # we're setting a flag, like `-p unicode`
+                keypath.set_value_at_keypath(render_options, key, True)
+            else:
+                # it's a key=value structure
+                try:
+                    # try parsing as a JSON value
+                    parsed_value = json.loads(value)
+                except json.JSONDecodeError:
+                    # otherwise treat it as a string
+                    parsed_value = value
+
+                keypath.set_value_at_keypath(render_options, key, parsed_value)
+
+    return render_options
+
+
+class OptionsParseError(Exception):
+    pass
+
+
+def create_renderer(options: CommandLineOptions, output_file: TextIO) -> renderers.Renderer:
+    if options.output_html:
+        options.renderer = "html"
+
+    if options.renderer is None and options.outfile:
+        options.renderer = guess_renderer_from_outfile(options.outfile)
+
+    if options.renderer is None:
+        options.renderer = "text"
+
+    renderer_class = get_renderer_class(options.renderer)
+    render_options = compute_render_options(
+        options, renderer_class=renderer_class, output_file=output_file
+    )
+
+    try:
+        return renderer_class(**render_options)
+    except TypeError as err:
+        # TypeError is probably a bad renderer option, so we produce a nicer error message
+        raise OptionsParseError(
+            f"Failed to create {renderer_class.__name__}. Check your renderer options.\n  {err}\n"
+        )
 
 
 def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
@@ -328,8 +446,42 @@ def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
         return renderers.HTMLRenderer
     elif renderer == "json":
         return renderers.JSONRenderer
+    elif renderer == "speedscope":
+        return renderers.SpeedscopeRenderer
+    elif renderer == "session":
+        return renderers.SessionRenderer
     else:
-        return object_with_import_path(renderer)
+        try:
+            return object_with_import_path(renderer)
+        except (ValueError, ModuleNotFoundError, AttributeError) as err:
+            # ValueError means we failed to import this object
+            raise OptionsParseError(
+                f"Failed to find renderer with name {renderer!r}.\n"
+                "Options are text, html, json, speedscope or a Python import path to a Renderer\n"
+                "class.\n"
+                "\n"
+                f"Underlying error: {err}\n"
+            )
+
+
+def guess_renderer_from_outfile(outfile: str) -> str | None:
+    # ignore case of outfile
+    outfile = outfile.lower()
+
+    _, ext = os.path.splitext(outfile)
+
+    if ext == ".txt":
+        return "text"
+    elif ext in [".html", ".htm"]:
+        return "html"
+    elif outfile.endswith(".speedscope.json"):
+        return "speedscope"
+    elif ext == ".json":
+        return "json"
+    elif ext == ".pyisession":
+        return "session"
+    else:
+        return None
 
 
 def report_dir() -> str:
@@ -340,15 +492,18 @@ def report_dir() -> str:
     return report_dir
 
 
-def load_report(identifier: str) -> Session:
+def load_report_from_temp_storage(identifier: str) -> Session:
     """
     Returns the session referred to by identifier
     """
     path = os.path.join(report_dir(), identifier + ".pyisession")
-    return Session.load(path)
+    try:
+        return Session.load(path)
+    except FileNotFoundError:
+        sys.exit(f"pyinstrument: Couldn't find a profile with identifier {identifier}")
 
 
-def save_report(session: Session):
+def save_report_to_temp_storage(session: Session):
     """
     Saves the session to a temp file, and returns that path.
     Also prunes the number of reports to 10 so there aren't loads building up.
@@ -387,6 +542,31 @@ def remove_first_pyinstrument_frame_processor(
         return frame
 
     return frame
+
+
+class CommandLineOptions:
+    """
+    A type that codifies the `options` variable.
+    """
+
+    module_name: str | None
+    module_args: list[str]
+    load: str | None
+    load_prev: str | None
+    from_path: str | None
+    hide_fnmatch: str | None
+    show_fnmatch: str | None
+    hide_regex: str | None
+    show_regex: str | None
+    show_all: bool
+    output_html: bool
+    outfile: str | None
+    render_options: list[str] | None
+
+    unicode: bool | None
+    color: bool | None
+    renderer: str
+    timeline: bool
 
 
 if __name__ == "__main__":

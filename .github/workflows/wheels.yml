@@ -11,14 +11,22 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.archs }} for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-10.15]
+        archs: [auto]
+        include:
+          - os: ubuntu-20.04
+            archs: aarch64
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: ${{ matrix.archs == 'aarch64' }}
+        uses: docker/setup-qemu-action@v2
 
       - uses: actions/setup-python@v2
         name: Install Python
@@ -26,9 +34,10 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.1.1
+        uses: joerick/cibuildwheel@v2.8.0
         env:
           CIBW_SKIP: pp*
+          CIBW_ARCHS: ${{matrix.archs}}
           CIBW_ARCHS_MACOS: auto universal2
 
       - uses: actions/upload-artifact@v2

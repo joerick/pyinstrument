@@ -16,6 +16,8 @@ your code - make it faster. To get the biggest speed increase you should
 [focus on the slowest part of your program](https://en.wikipedia.org/wiki/Amdahl%27s_law).
 Pyinstrument helps you find it!
 
+> ☕️ Not sure where to start? Check out this [video tutorial from calmcode.io](https://calmcode.io/pyinstrument/introduction.html)!
+
 <!-- MARK intro end -->
 
 Installation
@@ -51,6 +53,61 @@ Known issues
 
 Changelog
 ---------
+
+### v4.2.0
+
+-   Adds a command-line option `-p` `--render-option` that allows arbitrary
+    setting of render options. This lets you set options like
+    `filter_threshold` from the command line, by doing something like
+    `pyinstrument -p processor_options.filter_threshold=0`.
+
+    Here's the help output for the option:
+    ```
+      -p RENDER_OPTION, --render-option=RENDER_OPTION
+                        options to pass to the renderer, in the format
+                        'flag_name' or 'option_name=option_value'. For
+                        example, to set the option 'time', pass '-p
+                        time=percent_of_total'. To pass multiple options, use
+                        the -p option multiple times. You can set processor
+                        options using dot-syntax, like '-p
+                        processor_options.filter_threshold=0'. option_value is
+                        parsed as a JSON value or a string.
+    ```
+-   Adds the ability to view times in the console output as percentages,
+    rather than absolute times. Use the ConsoleRenderer option
+    `time='percent_of_total'`, or on the command line, use `-p`, like
+    `pyinstrument -p time=percent_of_total`.
+-   Adds command line options for loading and saving pyinstrument sessions.
+    You can save the raw data for a pyinstrument session with `-r session`,
+    like `pyinstrument -r session -o session.pyisession myscript.py`. Loading
+    is via `--load`, e.g. `pyinstrument --load session.pyisession`.
+-   Command line output format is inferred from the `-o` output file
+    extension. So if you do `pyinstrument -o profile.html myscript.py`, you
+    don't need to supply `-r html`, pyinstrument will automatically use the
+    HTML renderer. Or if you do
+    `pyinstrument -o profile.pyisession myscript.py`, it will save a raw
+    session object.
+-   Adds [usage examples for FastAPI and pytest](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi) to the documentation.
+-   Fixes a bug causing NotImplementedError when using `async_mode=strict`.
+-   Adds support for Python 3.11
+
+### v4.1.1
+
+-   Fixed an issue causing PYINSTRUMENT_PROFILE_DIR_RENDERER to output the
+    wrong file extension when used with the speedscope renderer.
+
+### v4.1.0
+
+-   You can now use pyinstrument natively in an IPython notebook! Just use
+    `%load_ext pyinstrument` at the top of your notebook, and then
+    `%%pyinstrument` in the cell you want to profile.
+-   Added support for the [speedscope](https://www.speedscope.app/) format.
+    This provides a way to view interactive flamecharts using pyinstrument. To
+    use, profile with `pyinstrument -r speedscope`, and upload to the
+    speedscope web app.
+-   You can now configure renderers for the Django middleware file output,
+    using the `PYINSTRUMENT_PROFILE_DIR_RENDERER` option.
+-   Added wheels for Linux aarch64 (64-bit ARM).
 
 ### v4.0.4
 
@@ -343,7 +400,9 @@ To setup a dev environment:
 
     virtualenv --python=python3 env
     . env/bin/activate
+    pip install --upgrade pip
     pip install -r requirements-dev.txt
+    pre-commit install --install-hooks
 
 To get some sample output:
 
@@ -352,6 +411,25 @@ To get some sample output:
 To run the tests:
 
     pytest
+
+To run linting checks locally:
+
+    pre-commit run --all-files
+
+Some of the pre-commit checks, like `isort` or `black`, will auto-fix
+the problems they find. So if the above command returns an error, try
+running it again, it might succeed the second time :)
+
+Running all the checks can be slow, so you can also run checks
+individually, e.g., to format source code that fails `isort` or `black`
+checks:
+
+    pre-commit run --all-files isort
+    pre-commit run --all-files black
+
+To diagnose why `pyright` checks are failing:
+
+    pre-commit run --all-files pyright
 
 ### The HTML renderer Vue.js app
 

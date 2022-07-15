@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # Optional: Official actions have moving tags like v1;
+      # if you use those, you don't need updates.
+      - dependency-name: "actions/*"
