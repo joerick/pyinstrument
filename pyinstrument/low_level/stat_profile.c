@@ -289,8 +289,8 @@ code_from_frame(PyFrameObject* frame)
 #if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
 static const char *
 _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
-    return NULL;
     PyObject *locals = PyFrame_GetLocals(frame);
+
     if (!PyDict_Check(locals)) { return NULL; }
     PyObject *self = PyDict_GetItem(locals, SELF_STRING);
 
