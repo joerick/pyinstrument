@@ -125,7 +125,7 @@ To customize options, see `%%pyinstrument??`.
 ### Profile a web request in Django
 
 To profile Django web requests, add
-`pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE_CLASSES` in your
+`pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE` in your
 `settings.py`.
 
 Once installed, add `?profile` to the end of a request URL to activate the
