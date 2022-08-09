@@ -188,7 +188,7 @@ class TestCommandLine:
             [
                 *pyinstrument_invocation,
                 "--interval",
-                "0.005",
+                "0.002",
                 str(busy_wait_py),
             ]
         )
