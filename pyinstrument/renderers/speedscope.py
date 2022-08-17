@@ -230,6 +230,7 @@ class SpeedscopeRenderer(FrameRenderer):
         """
         return [
             processors.remove_importlib,
+        	processors.remove_hidden,
             processors.merge_consecutive_self_time,
             processors.group_library_frames_processor,
             processors.remove_unnecessary_self_time_nodes,

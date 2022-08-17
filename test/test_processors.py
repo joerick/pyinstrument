@@ -10,6 +10,7 @@ all_processors = [
     processors.group_library_frames_processor,
     processors.merge_consecutive_self_time,
     processors.remove_importlib,
+    processors.remove_hidden,
     processors.remove_unnecessary_self_time_nodes,
     processors.remove_irrelevant_nodes,
 ]

@@ -44,6 +44,28 @@ def remove_importlib(frame: BaseFrame | None, options: ProcessorOptions) -> Base
     return frame
 
 
+def remove_hidden(frame: BaseFrame | None, options: ProcessorOptions) -> BaseFrame | None:
+    """
+    Removes hidden (eg __tracebackhide__==True) frames that clutter the output.
+    """
+    if frame is None:
+        return None
+
+    if not isinstance(frame, Frame):
+        return frame
+
+    for child in frame.children:
+        remove_hidden(child, options=options)
+
+        if child.hidden:
+            # remove this node, moving the self_time and children up to the parent
+            frame.self_time += child.self_time
+            frame.add_children(child.children, after=child)
+            child.remove_from_parent()
+
+    return frame
+
+
 def aggregate_repeated_calls(
     frame: BaseFrame | None, options: ProcessorOptions
 ) -> BaseFrame | None:
