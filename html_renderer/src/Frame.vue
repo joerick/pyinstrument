@@ -96,11 +96,14 @@ export default {
           minimumFractionDigits: 3,
           maximumFractionDigits: 3,
         });
+      } else if (appState.timeFormat === 'proportion') {
+        return `${(this.frame.proportionOfTotal * 100).toLocaleString(undefined, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })}%`;
+      } else {
+        throw new Error("unknown timeFormat");
       }
-      return `${(this.frame.proportionOfTotal * 100).toLocaleString(undefined, {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })}%`;
     },
     groupLibrarySummary() {
       if (!this.frame.group) {
