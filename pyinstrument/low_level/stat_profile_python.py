@@ -41,12 +41,14 @@ class PythonStatProfiler:
 
             # 0x80 == CO_COROUTINE (i.e. defined with 'async def')
             if event == "return" and frame.f_code.co_flags & 0x80:
+                hidden = frame.f_locals.get("__tracebackhide__", False)
                 self.await_stack.append(
-                    "%s\x00%s\x00%i"
+                    "%s\x00%s\x00%i\x00%i"
                     % (
                         frame.f_code.co_name,
                         frame.f_code.co_filename,
                         frame.f_code.co_firstlineno,
+                        hidden,
                     )
                 )
             else:

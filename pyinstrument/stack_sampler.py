@@ -170,24 +170,27 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
     elif event == "c_return" or event == "c_exception":
         # if we're exiting a C function, we should add a frame before
         # any Python frames that attributes the time to that C function
-        c_frame_identifier = "%s\x00%s\x00%i" % (
+        c_frame_identifier = "%s\x00%s\x00%i\x00%i" % (
             getattr(arg, "__qualname__", arg.__name__),
             "<built-in>",
             0,
+            False,
         )
         call_stack.append(c_frame_identifier)
 
     while frame is not None:
-        identifier = "%s\x00%s\x00%i" % (
+        hidden = frame.f_locals.get("__tracebackhide__", False)
+        identifier = "%s\x00%s\x00%i\x00%i" % (
             frame.f_code.co_name,
             frame.f_code.co_filename,
             frame.f_code.co_firstlineno,
+            hidden,
         )
         call_stack.append(identifier)
         frame = frame.f_back
 
     thread = threading.current_thread()
-    thread_identifier = "%s\x00%s\x00%i" % (thread.name, "<thread>", thread.ident)
+    thread_identifier = "%s\x00%s\x00%i\x00%i" % (thread.name, "<thread>", thread.ident, True)
     call_stack.append(thread_identifier)
 
     # we iterated from the leaf to the root, we actually want the call stack

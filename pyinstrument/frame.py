@@ -100,6 +100,10 @@ class BaseFrame:
         raise NotImplementedError()
 
     @property
+    def hidden(self) -> bool | None:
+        raise NotImplementedError()
+
+    @property
     def file_path_short(self) -> str | None:
         raise NotImplementedError()
 
@@ -199,6 +203,11 @@ class Frame(BaseFrame):
     def line_no(self) -> int | None:
         if self.identifier:
             return int(self.identifier.split("\x00")[2])
+
+    @property
+    def hidden(self) -> bool | None:
+        if self.identifier:
+            return bool(int(self.identifier.split("\x00")[3]))
 
     @property
     def file_path_short(self) -> str | None:
@@ -324,6 +333,11 @@ class DummyFrame(BaseFrame):
             return self.parent.line_no
 
     @property
+    def hidden(self):
+        if self.parent:
+            return self.parent.hidden
+
+    @property
     def file_path_short(self):
         return ""
 
@@ -377,7 +391,7 @@ class AwaitTimeFrame(DummyFrame):
         return "[await]"
 
 
-AWAIT_FRAME_IDENTIFIER = "[await]\x00<await>\x000"
+AWAIT_FRAME_IDENTIFIER = "[await]\x00<await>\x000\x000"
 
 
 class OutOfContextFrame(DummyFrame):
@@ -400,7 +414,7 @@ class OutOfContextFrame(DummyFrame):
         return "[out-of-context]"
 
 
-OUT_OF_CONTEXT_FRAME_IDENTIFIER = "[out-of-context]\x00<out-of-context>\x000"
+OUT_OF_CONTEXT_FRAME_IDENTIFIER = "[out-of-context]\x00<out-of-context>\x000\x000"
 
 
 class FrameGroup:

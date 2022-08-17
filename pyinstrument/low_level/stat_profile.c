@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <frameobject.h>
+// #include <stdio.h>
 
 ////////////////////////////
 // Version/Platform shims //
@@ -343,15 +344,38 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
     // if we're returning from a coroutine, add that to the await stack
     PyCodeObject* code = code_from_frame(frame);
 
+    PyFrame_FastToLocals(frame);
+    int tracebackhide = 0;
+    if (frame->f_locals != NULL) {
+        PyObject *key;
+        char* keystr = "__tracebackhide__";
+        key = Py_BuildValue("s", keystr);
+        tracebackhide = PyDict_Contains(frame->f_locals, key);
+    }
+
+    // if (frame->f_locals != NULL) {
+    //     PyObject *key, *val;
+    //     Py_ssize_t pos = 0;
+    //     while (PyDict_Next(frame->f_locals, &pos, &key, &val)) {
+    //         const char *keystr = PyUnicode_AsUTF8(key);
+    //         printf("c __locals__ key: %s", keystr);
+    //     }
+    // }
+
     if ((what == WHAT_RETURN) && (code->co_flags & 0x80)) {
         PyObject *frame_identifier = PyUnicode_FromFormat(
-            "%U%c%U%c%i",
+            "%U%c%U%c%i%c%i",
             code->co_name,
             0, // NULL char
             code->co_filename,
             0, // NULL char
-            code->co_firstlineno
+            code->co_firstlineno,
+            0, // NULL char
+            tracebackhide
         );
+
+        // const char *identstr = PyUnicode_AsUTF8(frame_identifier);
+        // printf("cframe: %s\n", identstr);
 
         int status = PyList_Append(pState->await_stack_list, frame_identifier);
         Py_DECREF(frame_identifier);
