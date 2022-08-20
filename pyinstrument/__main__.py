@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from __future__ import annotations
 
 import codecs
@@ -12,11 +10,11 @@ import runpy
 import shutil
 import sys
 import time
-from typing import Any, List, TextIO, Type, cast
+from typing import Any, List, TextIO, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import BaseFrame
+from pyinstrument.frame import Frame
 from pyinstrument.processors import ProcessorOptions
 from pyinstrument.session import Session
 from pyinstrument.util import (
@@ -244,7 +242,7 @@ def main():
     # make command line options type-checked
     options = cast(CommandLineOptions, options)
     # work around a type checking bug...
-    args = cast(List[str], args)
+    args = cast(List[str], args)  # type: ignore
 
     session_options_used = [
         options.load is not None,
@@ -356,7 +354,7 @@ def main():
 
 
 def compute_render_options(
-    options: CommandLineOptions, renderer_class: Type[renderers.Renderer], output_file: TextIO
+    options: CommandLineOptions, renderer_class: type[renderers.Renderer], output_file: TextIO
 ) -> dict[str, Any]:
     # parse show/hide options
     if options.hide_fnmatch is not None and options.hide_regex is not None:
@@ -453,7 +451,7 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
         )
 
 
-def get_renderer_class(renderer: str) -> Type[renderers.Renderer]:
+def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
     if renderer == "text":
         return renderers.ConsoleRenderer
     elif renderer == "html":
@@ -538,8 +536,8 @@ def save_report_to_temp_storage(session: Session):
 
 # pylint: disable=W0613
 def remove_first_pyinstrument_frame_processor(
-    frame: BaseFrame | None, options: ProcessorOptions
-) -> BaseFrame | None:
+    frame: Frame | None, options: ProcessorOptions
+) -> Frame | None:
     """
     The first frame when using the command line is always the __main__ function. I want to remove
     that from the output.

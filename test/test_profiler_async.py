@@ -12,7 +12,7 @@ import trio._core._run
 import trio.lowlevel
 
 from pyinstrument import processors, stack_sampler
-from pyinstrument.frame import AwaitTimeFrame, OutOfContextFrame
+from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER, Frame
 from pyinstrument.profiler import Profiler
 from pyinstrument.session import Session
 
@@ -52,12 +52,12 @@ async def test_sleep():
     root_frame = session.root_frame()
     assert root_frame
 
-    assert root_frame.time() == pytest.approx(0.2, rel=0.1)
+    assert root_frame.time == pytest.approx(0.2, rel=0.1)
     assert root_frame.await_time() == pytest.approx(0.2, rel=0.1)
 
     sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "sleep")
-    assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
-    assert sleep_frame.time() == pytest.approx(0.2, rel=0.1)
+    assert sleep_frame.time == pytest.approx(0.2, rel=0.1)
+    assert sleep_frame.time == pytest.approx(0.2, rel=0.1)
 
 
 def test_sleep_trio():
@@ -73,12 +73,12 @@ def test_sleep_trio():
         root_frame = session.root_frame()
         assert root_frame
 
-        assert root_frame.time() == pytest.approx(0.2)
+        assert root_frame.time == pytest.approx(0.2)
         assert root_frame.await_time() == pytest.approx(0.2)
 
         sleep_frame = next(f for f in walk_frames(root_frame) if f.function == "sleep")
-        assert sleep_frame.time() == pytest.approx(0.2)
-        assert sleep_frame.time() == pytest.approx(0.2)
+        assert sleep_frame.time == pytest.approx(0.2)
+        assert sleep_frame.time == pytest.approx(0.2)
 
     with fake_time_trio() as fake_clock:
         trio.run(run, clock=fake_clock.trio_clock)
@@ -157,15 +157,15 @@ def test_profiler_task_isolation(engine):
     root_frame = profiler_session.root_frame()
     assert root_frame is not None
     fake_work_frame = next(f for f in walk_frames(root_frame) if f.function == "async_wait")
-    assert fake_work_frame.time() == pytest.approx(0.1 + 0.5, rel=0.1)
+    assert fake_work_frame.time == pytest.approx(0.1 + 0.5, rel=0.1)
 
     root_frame = processors.aggregate_repeated_calls(root_frame, {})
     assert root_frame
 
-    await_frames = [f for f in walk_frames(root_frame) if isinstance(f, AwaitTimeFrame)]
+    await_frames = [f for f in walk_frames(root_frame) if f.identifier == AWAIT_FRAME_IDENTIFIER]
 
-    assert sum(f.self_time for f in await_frames) == pytest.approx(0.5, rel=0.1)
-    assert sum(f.time() for f in await_frames) == pytest.approx(0.5, rel=0.1)
+    assert sum(f.await_time() for f in await_frames) == pytest.approx(0.5, rel=0.1)
+    assert sum(f.time for f in await_frames) == pytest.approx(0.5, rel=0.1)
 
 
 def test_greenlet():
@@ -187,12 +187,12 @@ def test_greenlet():
     root_frame = session.root_frame()
     assert root_frame
 
-    assert root_frame.time() == pytest.approx(0.2, rel=0.1)
+    assert root_frame.time == pytest.approx(0.2, rel=0.1)
 
     sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
     assert len(sleep_frames) == 2
-    assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
-    assert sleep_frames[1].time() == pytest.approx(0.1, rel=0.1)
+    assert sleep_frames[0].time == pytest.approx(0.1, rel=0.1)
+    assert sleep_frames[1].time == pytest.approx(0.1, rel=0.1)
 
 
 def test_strict_with_greenlet():
@@ -214,13 +214,15 @@ def test_strict_with_greenlet():
     root_frame = session.root_frame()
     assert root_frame
 
-    assert root_frame.time() == pytest.approx(0.2, rel=0.1)
+    assert root_frame.time == pytest.approx(0.2, rel=0.1)
 
     sleep_frames = [f for f in walk_frames(root_frame) if f.function == "sleep"]
     assert len(sleep_frames) == 1
-    assert sleep_frames[0].time() == pytest.approx(0.1, rel=0.1)
+    assert sleep_frames[0].time == pytest.approx(0.1, rel=0.1)
 
-    greenlet_frames = [f for f in walk_frames(root_frame) if isinstance(f, OutOfContextFrame)]
+    greenlet_frames = [
+        f for f in walk_frames(root_frame) if f.identifier == OUT_OF_CONTEXT_FRAME_IDENTIFIER
+    ]
 
     assert len(greenlet_frames) == 1
-    assert greenlet_frames[0].time() == pytest.approx(0.1, rel=0.1)
+    assert greenlet_frames[0].time == pytest.approx(0.1, rel=0.1)

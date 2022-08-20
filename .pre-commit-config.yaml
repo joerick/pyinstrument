@@ -14,7 +14,7 @@ repos:
         name: isort (python)
 
 -   repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.6.0
     hooks:
       - id: black
         language_version: python3
@@ -34,12 +34,20 @@ repos:
         language: node
         pass_filenames: false
         types: [python]
-        additional_dependencies: ['pyright@1.1.245']
+        additional_dependencies: ['pyright@1.1.260']
     -   id: build
         name: build js bundle
         entry: bin/build_js_bundle.py --force
         files: html_renderer/.*
         language: node
         pass_filenames: false
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.37.1
+    hooks:
+    -   id: pyupgrade
+        args: [--py37-plus]
+        stages: [manual]
+        exclude: ^pyinstrument/vendor/
 
 exclude: ^pyinstrument/renderers/html_resources/app.js$|^pyinstrument/vendor

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from collections import deque
-from typing import Any, List, Tuple, cast
+from typing import Any
 
-from pyinstrument.frame import BaseFrame, DummyFrame, Frame, SelfTimeFrame
+from pyinstrument.frame import Frame
+from pyinstrument.frame_info import frame_info_get_identifier
+from pyinstrument.frame_ops import FrameRecordType, build_frame_tree
 from pyinstrument.typing import PathOrStr
 
 # pyright: strict
@@ -14,8 +16,6 @@ ASSERTION_MESSAGE = (
     "Please raise an issue at https://github.com/joerick/pyinstrument/issues and "
     "let me know how you caused this error!"
 )
-
-FrameRecordType = Tuple[List[str], float]
 
 
 class Session:
@@ -111,7 +111,7 @@ class Session:
             cpu_time=session1.cpu_time + session2.cpu_time,
         )
 
-    def root_frame(self, trim_stem: bool = True) -> BaseFrame | None:
+    def root_frame(self, trim_stem: bool = True) -> Frame | None:
         """
         Parses the internal frame records and returns a tree of :class:`Frame`
         objects. This object can be renderered using a :class:`Renderer`
@@ -119,46 +119,7 @@ class Session:
 
         :rtype: A :class:`Frame` object, or None if the session is empty.
         """
-        root_frame = None
-
-        frame_stack: list[BaseFrame] = []
-
-        for frame_tuple in self.frame_records:
-            identifier_stack = frame_tuple[0]
-            time = frame_tuple[1]
-
-            stack_depth = 0
-
-            # now we must create a stack of frame objects and assign this time to the leaf
-            for stack_depth, frame_identifier in enumerate(identifier_stack):
-                if stack_depth < len(frame_stack):
-                    if frame_identifier != frame_stack[stack_depth].identifier:
-                        # trim any frames after and including this one
-                        del frame_stack[stack_depth:]
-
-                if stack_depth >= len(frame_stack):
-                    frame = BaseFrame.new_subclass_with_identifier(frame_identifier)
-                    frame_stack.append(frame)
-
-                    if stack_depth == 0:
-                        # There should only be one root frame, as far as I know
-                        assert root_frame is None, ASSERTION_MESSAGE
-                        root_frame = frame
-                    else:
-                        parent = cast(Frame, frame_stack[stack_depth - 1])
-                        parent.add_child(frame)
-
-            # trim any extra frames
-            del frame_stack[stack_depth + 1 :]
-
-            # assign the time to the final frame in the stack
-            final_frame = frame_stack[-1]
-            if isinstance(final_frame, DummyFrame):
-                final_frame.self_time += time
-            elif isinstance(final_frame, Frame):
-                final_frame.add_child(SelfTimeFrame(self_time=time))
-            else:
-                raise Exception("unknown frame type")
+        root_frame = build_frame_tree(self.frame_records)
 
         if root_frame is None:
             return None
@@ -168,16 +129,17 @@ class Session:
 
         return root_frame
 
-    def _trim_stem(self, frame: BaseFrame):
+    def _trim_stem(self, frame: Frame):
         # trim the start of the tree before any branches.
         # we also don't want to trim beyond the call to profiler.start()
 
-        start_stack = deque(self.start_call_stack)
+        start_stack = deque(frame_info_get_identifier(info) for info in self.start_call_stack)
+
         if start_stack.popleft() != frame.identifier:
             # the frame doesn't match where the profiler was started. Don't trim.
             return frame
 
-        while frame.self_time == 0 and len(frame.children) == 1:
+        while frame.total_self_time == 0 and len(frame.children) == 1:
             # check child matches the start_call_stack, otherwise stop descending
             if len(start_stack) == 0 or frame.children[0].identifier != start_stack.popleft():
                 break

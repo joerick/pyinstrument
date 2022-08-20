@@ -17,7 +17,7 @@ def test_context_type(setstatprofile):
         setstatprofile(None)
 
 
-profiler_context_var: contextvars.ContextVar[Any] = contextvars.ContextVar(
+profiler_context_var: contextvars.ContextVar[object | None] = contextvars.ContextVar(
     "profiler_context_var", default=None
 )
 

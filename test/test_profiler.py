@@ -10,7 +10,7 @@ import pytest
 import trio
 
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import BaseFrame, Frame
+from pyinstrument.frame import Frame
 from pyinstrument.renderers.speedscope import SpeedscopeEvent, SpeedscopeEventType, SpeedscopeFrame
 from pyinstrument.session import Session
 
@@ -25,6 +25,19 @@ def long_function_a():
 
 def long_function_b():
     time.sleep(0.5)
+
+
+class ClassWithMethods:
+    def long_method(self):
+        time.sleep(0.25)
+
+    @staticmethod
+    def long_static_method():
+        time.sleep(0.25)
+
+    @classmethod
+    def long_class_method(cls):
+        time.sleep(0.25)
 
 
 # Tests #
@@ -99,15 +112,45 @@ def test_two_functions():
     assert frame.function == "test_two_functions"
     assert len(frame.children) == 2
 
-    frame_b, frame_a = sorted(frame.children, key=lambda f: f.time(), reverse=True)
+    frame_b, frame_a = sorted(frame.children, key=lambda f: f.time, reverse=True)
 
     assert frame_a.function == "long_function_a"
     assert frame_b.function == "long_function_b"
 
     # busy CI runners can be slow to wake up from the sleep. So we relax the
     # ranges a bit
-    assert frame_a.time() == pytest.approx(0.25, abs=0.1)
-    assert frame_b.time() == pytest.approx(0.5, abs=0.2)
+    assert frame_a.time == pytest.approx(0.25, abs=0.1)
+    assert frame_b.time == pytest.approx(0.5, abs=0.2)
+
+
+def test_class_methods():
+    profiler = Profiler()
+
+    with fake_time():
+        profiler.start()
+
+        obj = ClassWithMethods()
+        obj.long_method()
+        obj.long_class_method()
+        obj.long_static_method()
+        partial(obj.long_method)()
+
+        profiler.stop()
+
+    text_output = profiler.output_text()
+    print(text_output)
+
+    # output should be something like:
+    # 1.000 test_class_methods  test/test_profiler.py:124
+    # |- 0.500 ClassWithMethods.long_method  test/test_profiler.py:29
+    # |  `- 0.500 FakeClock.sleep  test/fake_time_util.py:19
+    # |- 0.250 ClassWithMethods.long_class_method  test/test_profiler.py:36
+    # |  `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
+    # `- 0.250 long_static_method  test/test_profiler.py:32
+    #    `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
+    assert text_output.count("0.500 ClassWithMethods.long_method") == 1
+    assert text_output.count("0.250 ClassWithMethods.long_class_method") == 1
+    assert text_output.count("0.250 long_static_method") == 1
 
 
 def test_context_manager():
@@ -179,7 +222,7 @@ def test_speedscope_output():
         "long_function_b": 3,
     }
     assert len(speedscope_frame_list) == len(distinct_functions_called)
-    speedscope_frame_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeFrame)])
+    speedscope_frame_fields = tuple(field.name for field in dataclasses.fields(SpeedscopeFrame))
     for (function_name, frame_index) in distinct_functions_called.items():
         for frame_field in speedscope_frame_fields:
             assert frame_field in speedscope_frame_list[frame_index]
@@ -254,7 +297,7 @@ def test_speedscope_output():
 
     speedscope_event_list = speedscope_profile["events"]
     assert len(speedscope_event_list) == len(output_event_tuple)
-    speedscope_event_fields = tuple([field.name for field in dataclasses.fields(SpeedscopeEvent)])
+    speedscope_event_fields = tuple(field.name for field in dataclasses.fields(SpeedscopeEvent))
     for (event_index, speedscope_event) in enumerate(speedscope_event_list):
         for event_field in speedscope_event_fields:
             assert event_field in speedscope_event

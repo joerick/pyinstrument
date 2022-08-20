@@ -215,6 +215,9 @@ static ProfilerState *ProfilerState_New(void) {
 
 static PyObject *whatstrings[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
+static PyObject *SELF_STRING = NULL;
+static PyObject *CLS_STRING = NULL;
+
 #define WHAT_CALL 0
 #define WHAT_EXCEPTION 1
 #define WHAT_LINE 2
@@ -240,6 +243,13 @@ trace_init(void)
             whatstrings[i] = name;
         }
     }
+
+    SELF_STRING = PyUnicode_InternFromString("self");
+    if (SELF_STRING == NULL) return -1;
+
+    CLS_STRING = PyUnicode_InternFromString("cls");
+    if (CLS_STRING == NULL) return -1;
+
     return 0;
 }
 
@@ -274,7 +284,207 @@ code_from_frame(PyFrameObject* frame)
     Py_XINCREF(result);
     return result;
 #endif
+}
 
+#if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
+static const char *
+_get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
+    PyObject *localsNames = PyCode_GetVarnames(code);
+
+    if (localsNames == NULL) {
+        return NULL;
+    }
+
+    PyObject *firstArgName = PyTuple_GET_ITEM(localsNames, 0);
+
+    if (firstArgName == NULL) {
+        return NULL;
+    }
+
+
+    int has_self = PyUnicode_Compare(firstArgName, SELF_STRING) == 0;
+    int has_cls = PyUnicode_Compare(firstArgName, CLS_STRING) == 0;
+
+    Py_DECREF(localsNames);
+
+    if (!has_self && !has_cls) {
+        // PyFrame_GetLocals is expensive and changes the frame, so we don't
+        // want to call it unless we have to.
+        return NULL;
+    }
+
+    const char *result = NULL;
+
+    PyObject *locals = PyFrame_GetLocals(frame);
+
+    if (!PyDict_Check(locals)) {
+        Py_DECREF(locals);
+        return NULL;
+    }
+
+    if (has_self) {
+        PyObject *self = PyDict_GetItem(locals, SELF_STRING);
+        if (self) {
+            result = _PyType_Name(self->ob_type);
+        }
+    }
+    else if (has_cls) {
+        PyObject *cls = PyDict_GetItem(locals, CLS_STRING);
+        if (cls) {
+            if (PyType_Check(cls)) {
+                PyTypeObject *type = (PyTypeObject *)cls;
+                result = _PyType_Name(type);
+            }
+        }
+    }
+
+    Py_DECREF(locals);
+    return result;
+}
+#else
+static PyObject *
+_get_first_arg_from_cell_variables(PyFrameObject *frame, PyCodeObject *code) {
+    if (!code->co_cell2arg) {
+        // we don't have args in cell variables
+        return NULL;
+    }
+
+    Py_ssize_t ncells = PyTuple_GET_SIZE(code->co_cellvars);
+
+    for (int i = 0; i < ncells; i++) {
+        if (code->co_cell2arg[i] == CO_CELL_NOT_AN_ARG) {
+            // this cell is not an argument
+            continue;
+        }
+
+        // get the cell value
+        // the cells are after the local variables
+        PyObject *cell = frame->f_localsplus[code->co_nlocals + i];
+
+        // return the value inside the cell
+        if (!PyCell_Check(cell)) {
+            continue;
+        }
+
+        return PyCell_GET(cell);
+    }
+
+    // cell variable not found
+    return NULL;
+}
+
+static const char *
+_get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
+    // This code looks only at the first 'fast' frame local.
+    //
+    // A generalisable way to get a local variable would be to look at every
+    // local for one with the name 'self' or 'cls'. And such a general method
+    // should also prefer f_locals, if it exists.
+    //
+    // But, function args are always be the first locals, self/cls is always
+    // be the first arg, and f_localsplus is always set, even if f_locals
+    // exists. So we only look at the first f_localsplus entry.
+
+    if (code->co_argcount < 1) {
+        return NULL;
+    }
+
+    if (!PyTuple_Check(code->co_varnames)) {
+        // co_varnames must be a tuple
+        return NULL;
+    }
+
+    if (code->co_nlocals < 1 || PyTuple_Size(code->co_varnames) < 1) {
+        return NULL;
+    }
+
+    PyObject *first_var_name = PyTuple_GetItem(code->co_varnames, 0);
+    int first_var_is_self = (PyUnicode_Compare(first_var_name, SELF_STRING) == 0);
+    int first_var_is_cls = (PyUnicode_Compare(first_var_name, CLS_STRING) == 0);
+
+    if (!(first_var_is_self || first_var_is_cls)) {
+        return NULL;
+    }
+
+    PyObject *first_var = frame->f_localsplus[0];
+
+    if (first_var == NULL) {
+        // Sometimes arguments are in cells, if they're accessible from other
+        // scopes, for example an inner function that captures self. In that
+        // case, the local var is NULL, and it's stored as a cell instead.
+        first_var = _get_first_arg_from_cell_variables(frame, code);
+    }
+
+    if (first_var == NULL) {
+        // not sure why this would happen, but as a failsafe.
+        return NULL;
+    }
+
+    if (first_var_is_self) {
+        PyTypeObject *type = first_var->ob_type;
+        return _PyType_Name(type);
+    } else if (first_var_is_cls) {
+        if (!PyType_Check(first_var)) {
+            return NULL;
+        }
+        PyTypeObject *type = (PyTypeObject *)first_var;
+        return _PyType_Name(type);
+    } else {
+        Py_FatalError("unreachable code");
+    }
+
+    return NULL;
+}
+#endif
+
+static PyObject *
+_get_frame_info(PyFrameObject *frame) {
+    PyCodeObject *code = code_from_frame(frame);
+
+    PyObject *class_name_attribute;
+
+    const char *class_name = _get_class_name_of_frame(frame, code);
+    if (class_name == NULL) {
+        class_name_attribute = PyUnicode_New(0, 127); // empty string
+    } else {
+        class_name_attribute = PyUnicode_FromFormat(
+            "%c%c%s",
+            1, // 0x01 char denotes 'attribute'
+            'c', // 'c' char denotes 'class name'
+            class_name
+        );
+    }
+
+    PyObject *line_number_attribute;
+
+    int line_number = PyFrame_GetLineNumber(frame);
+    if (line_number < 1) {
+        line_number_attribute = PyUnicode_New(0, 127);
+    } else {
+        line_number_attribute = PyUnicode_FromFormat(
+            "%c%c%d",
+            1,
+            'l', // 'l' char denotes 'line number'
+            line_number
+        );
+    }
+
+    PyObject *result = PyUnicode_FromFormat(
+        "%U%c%U%c%i%U%U",
+        code->co_name,
+        0, // NULL char
+        code->co_filename,
+        0, // NULL char
+        code->co_firstlineno,
+        class_name_attribute,
+        line_number_attribute
+    );
+
+    Py_DECREF(code);
+    Py_DECREF(class_name_attribute);
+    Py_DECREF(line_number_attribute);
+
+    return result;
 }
 
 //////////////////////
@@ -344,14 +554,7 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
     PyCodeObject* code = code_from_frame(frame);
 
     if ((what == WHAT_RETURN) && (code->co_flags & 0x80)) {
-        PyObject *frame_identifier = PyUnicode_FromFormat(
-            "%U%c%U%c%i",
-            code->co_name,
-            0, // NULL char
-            code->co_filename,
-            0, // NULL char
-            code->co_firstlineno
-        );
+        PyObject *frame_identifier = _get_frame_info(frame);
 
         int status = PyList_Append(pState->await_stack_list, frame_identifier);
         Py_DECREF(frame_identifier);
@@ -423,9 +626,6 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
             return NULL;
         }
 
-        if (trace_init() == -1)
-            return NULL;
-
         pState = ProfilerState_New();
         ProfilerState_SetTarget(pState, target);
 
@@ -462,15 +662,37 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+
+static PyObject *
+get_frame_info(PyObject *m, PyObject *const *args, Py_ssize_t nargs)
+{
+    if (nargs != 1) {
+        PyErr_SetString(PyExc_TypeError, "get_frame_info takes exactly 1 argument");
+        return NULL;
+    }
+
+    if (!PyFrame_Check(args[0])) {
+        PyErr_SetString(PyExc_TypeError, "get_frame_info should be called with a Frame object");
+        return NULL;
+    }
+
+    PyFrameObject *frame = (PyFrameObject *)args[0];
+
+    return _get_frame_info(frame);
+}
+
+
 ///////////////////////////
 // Module initialization //
 ///////////////////////////
 
 static PyMethodDef module_methods[] = {
     {"setstatprofile", (PyCFunction)setstatprofile, METH_VARARGS | METH_KEYWORDS,
-     "Sets the statistal profiler callback. The function in the same manner as setprofile, but "
+     "Sets the statistical profiler callback. The function in the same manner as setprofile, but "
      "instead of being called every on every call and return, the function is called every "
      "<interval> seconds with the current stack."},
+    {"get_frame_info", (PyCFunction)get_frame_info, METH_FASTCALL,
+     "Returns the frame identifier string for the given Frame object."},
     {NULL}  /* Sentinel */
 };
 
@@ -485,6 +707,9 @@ PyMODINIT_FUNC PyInit_stat_profile(void)
         -1,
         module_methods
     };
+
+    if (trace_init() == -1)
+        return NULL;
 
     return PyModule_Create(&moduledef);
 }

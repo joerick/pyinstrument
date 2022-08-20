@@ -6,7 +6,7 @@ import types
 from contextvars import ContextVar
 from typing import Any, Callable, List, NamedTuple, Optional
 
-from pyinstrument.low_level.stat_profile import setstatprofile  # type: ignore
+from pyinstrument.low_level.stat_profile import get_frame_info, setstatprofile
 from pyinstrument.typing import LiteralStr
 
 # pyright: strict
@@ -43,7 +43,7 @@ class StackSampler:
     subscribers: list[StackSamplerSubscriber]
     current_sampling_interval: float | None
     last_profile_time: float
-    timer_func: Optional[Callable[[], float]]
+    timer_func: Callable[[], float] | None
 
     def __init__(self) -> None:
         self.subscribers = []
@@ -178,12 +178,7 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
         call_stack.append(c_frame_identifier)
 
     while frame is not None:
-        identifier = "%s\x00%s\x00%i" % (
-            frame.f_code.co_name,
-            frame.f_code.co_filename,
-            frame.f_code.co_firstlineno,
-        )
-        call_stack.append(identifier)
+        call_stack.append(get_frame_info(frame))
         frame = frame.f_back
 
     thread = threading.current_thread()

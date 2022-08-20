@@ -3,7 +3,7 @@ import importlib
 import os
 import sys
 import warnings
-from typing import IO, Any, AnyStr
+from typing import IO, Any, AnyStr, Callable
 
 from pyinstrument.vendor.decorator import decorator
 
@@ -17,14 +17,14 @@ def object_with_import_path(import_path: str) -> Any:
     return getattr(module, object_name)
 
 
-def truncate(string: str, max_length: int):
+def truncate(string: str, max_length: int) -> str:
     if len(string) > max_length:
         return string[0 : max_length - 3] + "..."
     return string
 
 
 @decorator
-def deprecated(func, *args, **kwargs):
+def deprecated(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
     """Marks a function as deprecated."""
     warnings.warn(
         f"{func} is deprecated and should no longer be used.",
@@ -34,7 +34,7 @@ def deprecated(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
-def deprecated_option(option_name, message=""):
+def deprecated_option(option_name: str, message: str = "") -> Any:
     """Marks an option as deprecated."""
 
     def caller(func, *args, **kwargs):
