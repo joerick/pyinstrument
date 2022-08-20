@@ -289,30 +289,57 @@ code_from_frame(PyFrameObject* frame)
 #if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
 static const char *
 _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
-    PyObject *locals = PyFrame_GetLocals(frame);
+    PyObject *localsNames = PyCode_GetVarnames(code);
 
-    if (!PyDict_Check(locals)) { return NULL; }
-    PyObject *self = PyDict_GetItem(locals, SELF_STRING);
-
-    if (self) {
-        Py_DECREF(locals);
-        return _PyType_Name(self->ob_type);
+    if (localsNames == NULL) {
+        return NULL;
     }
 
-    PyObject *cls = PyDict_GetItem(locals, CLS_STRING);
+    PyObject *firstArgName = PyTuple_GET_ITEM(localsNames, 0);
 
-    if (cls) {
+    if (firstArgName == NULL) {
+        return NULL;
+    }
+
+
+    int has_self = PyUnicode_Compare(firstArgName, SELF_STRING) == 0;
+    int has_cls = PyUnicode_Compare(firstArgName, CLS_STRING) == 0;
+
+    Py_DECREF(localsNames);
+
+    if (!has_self && !has_cls) {
+        // PyFrame_GetLocals is expensive and changes the frame, so we don't
+        // want to call it unless we have to.
+        return NULL;
+    }
+
+    const char *result = NULL;
+
+    PyObject *locals = PyFrame_GetLocals(frame);
+
+    if (!PyDict_Check(locals)) {
         Py_DECREF(locals);
-        if (!PyType_Check(cls)) {
-            return NULL;
+        return NULL;
+    }
+
+    if (has_self) {
+        PyObject *self = PyDict_GetItem(locals, SELF_STRING);
+        if (self) {
+            result = _PyType_Name(self->ob_type);
         }
-        PyTypeObject *type = (PyTypeObject *)cls;
-        return _PyType_Name(type);
+    }
+    else if (has_cls) {
+        PyObject *cls = PyDict_GetItem(locals, CLS_STRING);
+        if (cls) {
+            if (PyType_Check(cls)) {
+                PyTypeObject *type = (PyTypeObject *)cls;
+                result = _PyType_Name(type);
+            }
+        }
     }
 
     Py_DECREF(locals);
-
-    return NULL;
+    return result;
 }
 #else
 static PyObject *
