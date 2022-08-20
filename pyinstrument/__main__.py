@@ -218,6 +218,20 @@ def main():
         action="store_false",
         help="(text renderer only) force no color text output",
     )
+    parser.add_option(
+        "-i",
+        "--interval",
+        action="store",
+        type=float,
+        help=(
+            "Minimum time, in seconds, between each stack sample. Smaller values "
+            "allow resolving shorter duration function calls but conversely incur a "
+            "greater runtime and memory consumption overhead. For longer running "
+            "scripts, setting a larger interval can help control the rate at which "
+            "the memory required to store the stack samples increases."
+        ),
+        default=0.001,
+    )
 
     # parse the options
 
@@ -303,7 +317,7 @@ def main():
         # because it will always be capturing the whole program, we never want
         # any execution to be <out-of-context>, and it avoids duplicate
         # profiler errors.
-        profiler = Profiler(async_mode="disabled")
+        profiler = Profiler(interval=options.interval, async_mode="disabled")
 
         profiler.start()
 
@@ -567,6 +581,7 @@ class CommandLineOptions:
     color: bool | None
     renderer: str
     timeline: bool
+    interval: float
 
 
 if __name__ == "__main__":
