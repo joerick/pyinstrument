@@ -8,6 +8,7 @@ export default class Frame {
     this.filePath = jsonObject.file_path;
     this.lineNo = jsonObject.line_no;
     this.time = jsonObject.time;
+    this.totalTime = this.parent ? this.parent.totalTime : this.time;
     this.isApplicationCode = jsonObject.is_application_code
 
     if (jsonObject.group_id) {
@@ -26,18 +27,6 @@ export default class Frame {
   }
 
   get proportionOfTotal() {
-    if (this.parent) {
-      return this.parent.proportionOfTotal * this.proportionOfParent;
-    } else {
-      return 1.0;
-    }
-  }
-
-  get proportionOfParent() {
-    if (this.parent) {
-      return this.time / this.parent.time;
-    } else {
-      return 1.0;
-    }
+    return this.time / this.totalTime;
   }
 }

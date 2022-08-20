@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Header :session="session" v-if="session" />
+    <Header :session="session" v-if="session" @change="updateTimeFormat"/>
     <div class="spacer" style="height: 20px;"></div>
     <div class="margins">
       <Frame v-if="rootFrame"
@@ -55,6 +55,9 @@ export default {
       link.rel = 'shortcut icon';
       link.href = image;
       document.getElementsByTagName('head')[0].appendChild(link);
+    },
+    updateTimeFormat(timeFormat) {
+      appState.setTimeFormat(timeFormat);
     }
   },
   computed: {

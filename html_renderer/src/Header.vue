@@ -4,10 +4,21 @@
       <div class="row">
         <div class="title">pyinstrument</div>
         <div class="metrics">
+          <label class="metric-label" for="absolute">Absolute time</label>
+          <input type="radio" @change="$emit('change', 'absolute')"
+            id="absolute"
+            name="time-format" checked>
+
           <div class="metric-label">Recorded:</div>
           <div class="metric-value">{{startTime}}</div>
           <div class="metric-label">Duration:</div>
           <div class="metric-value">{{duration}} seconds</div>
+
+          <label class="metric-label" for="proportion">Proportional time</label>
+          <input type="radio" @change="$emit('change', 'proportion')"
+            id="proportion"
+            name="time-format">
+
           <div class="metric-label">Samples:</div>
           <div class="metric-value">{{session.sample_count}}</div>
           <div class="metric-label">CPU time:</div>
@@ -55,7 +66,7 @@ export default {
 }
 .metrics {
   display: grid;
-  grid-template-columns: auto auto auto auto;
+  grid-template-columns: auto auto auto auto auto auto;
   font-size: 14px;
   text-transform: uppercase;
   grid-gap: 1px 8px;
