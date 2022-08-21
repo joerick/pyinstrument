@@ -91,10 +91,19 @@ export default {
       return `${this.frame.filePathShort}:${this.frame.lineNo.toString().padEnd(4, ' ')}`
     },
     formattedTime() {
-      return this.frame.time.toLocaleString(undefined, {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
-      })
+      if (appState.timeFormat === "absolute") {
+        return this.frame.time.toLocaleString(undefined, {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3,
+        });
+      } else if (appState.timeFormat === 'proportion') {
+        return `${(this.frame.proportionOfTotal * 100).toLocaleString(undefined, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })}%`;
+      } else {
+        throw new Error("unknown timeFormat");
+      }
     },
     groupLibrarySummary() {
       if (!this.frame.group) {
@@ -111,16 +120,17 @@ export default {
       let color = undefined;
       let fontWeight = undefined;
 
-      if (this.frame.proportionOfTotal > 0.6) {
+      let proportion = this.frame.proportionOfTotal;
+      if (proportion > 0.6) {
         color = '#FF4159';
         fontWeight = 600;
-      } else if (this.frame.proportionOfTotal > 0.3) {
+      } else if (proportion > 0.3) {
         color = '#F5A623'
         fontWeight = 600;
-      } else if (this.frame.proportionOfTotal > 0.2) {
+      } else if (proportion > 0.2) {
         color = '#D8CB2A'
         fontWeight = 600;
-      } else if (this.frame.proportionOfTotal > 0.0) {
+      } else if (proportion > 0.0) {
         color = '#7ED321'
         fontWeight = 500;
       }

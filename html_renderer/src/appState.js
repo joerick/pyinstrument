@@ -2,7 +2,8 @@ import Vue from 'vue';
 
 class AppState {
   constructor() {
-    this.visibleGroups = {}
+    this.visibleGroups = {};
+    this.timeFormat = "absolute";
   }
 
   isGroupVisible(group) {
@@ -11,6 +12,10 @@ class AppState {
 
   setGroupVisibility(group, visible) {
     Vue.set(this.visibleGroups, group.id, visible);
+  }
+
+  setTimeFormat(timeFormat) {
+    this.timeFormat = timeFormat;
   }
 }
 
