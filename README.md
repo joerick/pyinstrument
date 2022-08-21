@@ -54,6 +54,17 @@ Known issues
 Changelog
 ---------
 
+### v4.3.0
+
+_21 August 2022_
+
+-   Adds buttons in the HTML output to switch between absolute and
+    proportional (percentage) time.
+-   Adds a command line flag `--interval` (seconds, default 0.001) to change the interval that
+    pyinstrument samples a program. This is useful for long-running programs,
+    where increasing the interval reduces the memory overhead.
+-   Includes wheels for CPython 3.11.
+
 ### v4.2.0
 
 -   Adds a command-line option `-p` `--render-option` that allows arbitrary
