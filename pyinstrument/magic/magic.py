@@ -1,3 +1,5 @@
+import asyncio
+import threading
 import urllib.parse
 from ast import parse
 
@@ -94,7 +96,10 @@ class PyinstrumentMagic(Magics):
 
         _active_profiler = Profiler(interval=args.interval, async_mode=args.async_mode)
         ip.ast_transformers.append(self._transformer)
-        ip.run_cell(code)
+        if args.async_mode == 'disabled':
+            ip.run_cell(code)
+        else:
+            self.run_cell_async(ip, code)
         ip.ast_transformers.remove(self._transformer)
 
         html = _active_profiler.output_html(timeline=args.timeline)
@@ -110,3 +115,22 @@ class PyinstrumentMagic(Magics):
 
         assert not _active_profiler.is_running
         _active_profiler = None
+
+    def run_cell_async(self, ip, code):
+        # This is a bit of a hack, but it's the only way to get the cell to run
+        # asynchronously. We need to run the cell in a separate thread, and then
+        # wait for it to finish.
+        #
+        # Please keep an eye on this issue to see if there's a better way:
+        # https://github.com/ipython/ipython/issues/11314
+        old_loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        try:
+            threading.Thread(target=loop.run_forever).start()
+            asyncio.set_event_loop(loop)
+            coro = ip.run_cell_async(code)
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            return future.result().result
+        finally:
+            loop.call_soon_threadsafe(loop.stop)
+            asyncio.set_event_loop(old_loop)
