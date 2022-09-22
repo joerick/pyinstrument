@@ -42,7 +42,7 @@ class PyinstrumentMagic(Magics):
     )
     @argument(
         "--async_mode",
-        default="enabled",
+        default="disabled",
         help="Configures how this Profiler tracks time in a program that uses async/await. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode",
     )
     @argument(
