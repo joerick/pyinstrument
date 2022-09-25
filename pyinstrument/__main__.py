@@ -6,6 +6,7 @@ import glob
 import json
 import optparse
 import os
+import re
 import runpy
 import shutil
 import sys
@@ -335,7 +336,7 @@ def main():
 
     if isinstance(renderer, renderers.FrameRenderer):
         # remove this frame from the trace
-        renderer.processors.append(remove_first_pyinstrument_frame_processor)
+        renderer.processors.append(remove_first_pyinstrument_frames_processor)
 
     if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
@@ -535,25 +536,43 @@ def save_report_to_temp_storage(session: Session):
 
 
 # pylint: disable=W0613
-def remove_first_pyinstrument_frame_processor(
+def remove_first_pyinstrument_frames_processor(
     frame: Frame | None, options: ProcessorOptions
 ) -> Frame | None:
     """
-    The first frame when using the command line is always the __main__ function. I want to remove
-    that from the output.
+    The first few frames when using the command line are the __main__ of
+    pyinstrument, the eval, and the 'runpy' module. I want to remove that from
+    the output.
     """
     if frame is None:
         return None
 
-    if frame.file_path is None:
-        return frame
+    def should_be_trimmed(frame: Frame):
+        if not frame.file_path:
+            return False
+        if len(frame.children) != 1:
+            return False
 
-    if "pyinstrument" in frame.file_path and len(frame.children) == 1:
-        frame = frame.children[0]
-        frame.remove_from_parent()
-        return frame
+        if re.match(r".*pyinstrument[/\\]__main__.py", frame.file_path):
+            return True
 
-    return frame
+        if re.match(r".*runpy.py", frame.file_path):
+            return True
+
+        # the exec frame is recognised by the fact that the only child is a
+        # runpy frame
+        if "<string>" in frame.file_path and should_be_trimmed(frame.children[0]):
+            return True
+
+        return False
+
+    result = frame
+
+    while should_be_trimmed(result):
+        result = result.children[0]
+        result.remove_from_parent()
+
+    return result
 
 
 class CommandLineOptions:
