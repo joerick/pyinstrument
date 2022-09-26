@@ -559,6 +559,9 @@ def remove_first_pyinstrument_frames_processor(
         if re.match(r".*runpy.py", frame.file_path):
             return True
 
+        if "<frozen runpy>" in frame.file_path:
+            return True
+
         # the exec frame is recognised by the fact that the only child is a
         # runpy frame
         if "<string>" in frame.file_path and should_be_trimmed(frame.children[0]):

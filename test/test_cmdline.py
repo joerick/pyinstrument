@@ -204,6 +204,7 @@ class TestCommandLine:
         output = subprocess.check_output(
             [
                 *pyinstrument_invocation,
+                "--show-all",
                 str(busy_wait_py),
             ],
             universal_newlines=True,
