@@ -209,6 +209,9 @@ class TestCommandLine:
             universal_newlines=True,
         )
 
+        print("Output:")
+        print(output)
+
         first_profiling_line = re.search(r"^\d+(\.\d+)?\s+([^\s]+)\s+(.*)", output, re.MULTILINE)
         assert first_profiling_line
 
