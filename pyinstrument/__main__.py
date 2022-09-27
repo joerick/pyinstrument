@@ -334,10 +334,6 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
-    if isinstance(renderer, renderers.FrameRenderer):
-        # remove this frame from the trace
-        renderer.processors.append(remove_first_pyinstrument_frames_processor)
-
     if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
         output_filename = renderer.open_in_browser(session)
@@ -533,49 +529,6 @@ def save_report_to_temp_storage(session: Session):
     path = os.path.join(report_dir(), identifier + ".pyisession")
     session.save(path)
     return path, identifier
-
-
-# pylint: disable=W0613
-def remove_first_pyinstrument_frames_processor(
-    frame: Frame | None, options: ProcessorOptions
-) -> Frame | None:
-    """
-    The first few frames when using the command line are the __main__ of
-    pyinstrument, the eval, and the 'runpy' module. I want to remove that from
-    the output.
-    """
-    if frame is None:
-        return None
-
-    def should_be_trimmed(frame: Frame):
-        if not frame.file_path:
-            return False
-        if len(frame.children) != 1:
-            return False
-
-        if re.match(r".*pyinstrument[/\\]__main__.py", frame.file_path):
-            return True
-
-        if re.match(r".*runpy.py", frame.file_path):
-            return True
-
-        if "<frozen runpy>" in frame.file_path:
-            return True
-
-        # the exec frame is recognised by the fact that the only child is a
-        # runpy frame
-        if "<string>" in frame.file_path and should_be_trimmed(frame.children[0]):
-            return True
-
-        return False
-
-    result = frame
-
-    while should_be_trimmed(result):
-        result = result.children[0]
-        result.remove_from_parent()
-
-    return result
 
 
 class CommandLineOptions:
