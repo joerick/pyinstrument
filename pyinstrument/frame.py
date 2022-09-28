@@ -142,6 +142,11 @@ class Frame:
             return int(self._identifier_parts[2])
 
     @property
+    def hidden(self) -> int | None:
+        if len(self._identifier_parts) > 3:
+            return int(self._identifier_parts[3])
+
+    @property
     def file_path_short(self) -> str | None:
         """Return the path resolved against the closest entry in sys.path"""
         if self.is_synthetic and self.parent:
