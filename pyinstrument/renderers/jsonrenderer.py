@@ -80,6 +80,7 @@ class JSONRenderer(FrameRenderer):
     def default_processors(self) -> ProcessorList:
         return [
             processors.remove_importlib,
+            processors.remove_hidden,
             processors.merge_consecutive_self_time,
             processors.aggregate_repeated_calls,
             processors.group_library_frames_processor,
