@@ -213,3 +213,66 @@ def remove_irrelevant_nodes(
         remove_irrelevant_nodes(child, options=options, total_time=total_time)
 
     return frame
+
+
+# pylint: disable=W0613
+def remove_first_pyinstrument_frames_processor(
+    frame: Frame | None, options: ProcessorOptions
+) -> Frame | None:
+    """
+    The first few frames when using the command line are the __main__ of
+    pyinstrument, the eval, and the 'runpy' module. I want to remove that from
+    the output.
+    """
+    if frame is None:
+        return None
+
+    # the initial pyinstrument frame
+    def is_initial_pyinstrument_frame(frame: Frame):
+        return (
+            frame.file_path is not None
+            and re.match(r".*pyinstrument[/\\]__main__.py", frame.file_path)
+            and len(frame.children) > 0
+        )
+
+    def is_exec_frame(frame: Frame):
+        return (
+            frame.proportion_of_parent > 0.8
+            and frame.file_path is not None
+            and "<string>" in frame.file_path
+            and len(frame.children) > 0
+        )
+
+    def is_runpy_frame(frame: Frame):
+        return (
+            frame.proportion_of_parent > 0.8
+            and frame.file_path is not None
+            and (re.match(r".*runpy.py", frame.file_path) or "<frozen runpy>" in frame.file_path)
+            and len(frame.children) > 0
+        )
+
+    result = frame
+
+    if not is_initial_pyinstrument_frame(result):
+        return frame
+
+    result = result.children[0]
+
+    if not is_exec_frame(result):
+        return frame
+
+    result = result.children[0]
+
+    if not is_runpy_frame(result):
+        return frame
+
+    # at this point we know we've matched the first few frames of a command
+    # line invocation. We'll trim some runpy frames and return.
+
+    while is_runpy_frame(result):
+        result = result.children[0]
+
+    # remove this frame from the parent to make it the new root frame
+    result.remove_from_parent()
+
+    return result

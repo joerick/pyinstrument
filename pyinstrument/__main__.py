@@ -14,8 +14,6 @@ from typing import Any, List, TextIO, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import Frame
-from pyinstrument.processors import ProcessorOptions
 from pyinstrument.session import Session
 from pyinstrument.util import (
     file_is_a_tty,
@@ -333,10 +331,6 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
-    if isinstance(renderer, renderers.FrameRenderer):
-        # remove this frame from the trace
-        renderer.processors.append(remove_first_pyinstrument_frame_processor)
-
     if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
         output_filename = renderer.open_in_browser(session)
@@ -532,28 +526,6 @@ def save_report_to_temp_storage(session: Session):
     path = os.path.join(report_dir(), identifier + ".pyisession")
     session.save(path)
     return path, identifier
-
-
-# pylint: disable=W0613
-def remove_first_pyinstrument_frame_processor(
-    frame: Frame | None, options: ProcessorOptions
-) -> Frame | None:
-    """
-    The first frame when using the command line is always the __main__ function. I want to remove
-    that from the output.
-    """
-    if frame is None:
-        return None
-
-    if frame.file_path is None:
-        return frame
-
-    if "pyinstrument" in frame.file_path and len(frame.children) == 1:
-        frame = frame.children[0]
-        frame.remove_from_parent()
-        return frame
-
-    return frame
 
 
 class CommandLineOptions:

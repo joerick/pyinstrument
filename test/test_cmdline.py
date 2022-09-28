@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -195,3 +196,28 @@ class TestCommandLine:
 
         assert "busy_wait" in str(output)
         assert "do_nothing" in str(output)
+
+    def test_invocation_machinery_is_trimmed(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        output = subprocess.check_output(
+            [
+                *pyinstrument_invocation,
+                "--show-all",
+                str(busy_wait_py),
+            ],
+            universal_newlines=True,
+        )
+
+        print("Output:")
+        print(output)
+
+        first_profiling_line = re.search(r"^\d+(\.\d+)?\s+([^\s]+)\s+(.*)", output, re.MULTILINE)
+        assert first_profiling_line
+
+        function_name = first_profiling_line.group(2)
+        location = first_profiling_line.group(3)
+
+        assert function_name == "<module>"
+        assert "busy_wait.py" in location

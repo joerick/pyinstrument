@@ -167,6 +167,7 @@ class ConsoleRenderer(FrameRenderer):
             processors.group_library_frames_processor,
             processors.remove_unnecessary_self_time_nodes,
             processors.remove_irrelevant_nodes,
+            processors.remove_first_pyinstrument_frames_processor,
         ]
 
     class colors_enabled:
