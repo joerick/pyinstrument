@@ -435,6 +435,34 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 
     return NULL;
 }
+
+static const int
+_get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
+    if (code->co_argcount < 1) {
+        return NULL;
+    }
+
+    if (!PyTuple_Check(code->co_varnames)) {
+        // co_varnames must be a tuple
+        return NULL;
+    }
+
+    int tracebackhide = 0;
+    PyObject *key;
+    char* keystr = "__tracebackhide__";
+    key = Py_BuildValue("s", keystr);
+
+    Py_ssize_t nvar = PyTuple_Size(code->co_varnames);
+    // TODO: the logic for this loop isn't quite right yet
+    for (int i = 0; i < nvar; i++) {
+        if (code->co_varnames[i] == key) {
+            tracebackhide = 1;
+            return tracebackhide;
+        }
+    }
+
+    return tracebackhide;
+}
 #endif
 
 static PyObject *
@@ -469,15 +497,18 @@ _get_frame_info(PyFrameObject *frame) {
         );
     }
 
+    int tracebackhide = _get_tracebackhide(frame, code);
+
     PyObject *result = PyUnicode_FromFormat(
-        "%U%c%U%c%i%U%U",
+        "%U%c%U%c%i%U%U%i",
         code->co_name,
         0, // NULL char
         code->co_filename,
         0, // NULL char
         code->co_firstlineno,
         class_name_attribute,
-        line_number_attribute
+        line_number_attribute,
+        tracebackhide
     );
 
     Py_DECREF(code);
