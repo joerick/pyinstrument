@@ -13,6 +13,12 @@ from ._utils import PrePostAstTransformer
 
 _active_profiler = None
 
+_ASYNCIO_HTML_WARNING = """
+To enable asyncio mode, use <pre>%%pyinstrument --async_mode=enabled</pre><br>
+Note that due to IPython limitations this will run in a separate thread!
+""".strip()
+_ASYNCIO_TEXT_WARNING = _ASYNCIO_HTML_WARNING.replace("<pre>", "`").replace("</pre>", "`").replace("<br>", "\n")
+
 
 def _get_active_profiler():
     """
@@ -102,7 +108,15 @@ class PyinstrumentMagic(Magics):
             self.run_cell_async(ip, code)
         ip.ast_transformers.remove(self._transformer)
 
-        html = _active_profiler.output_html(timeline=args.timeline)
+        try:
+            html = _active_profiler.output_html(timeline=args.timeline)
+        except Exception as exception:
+            display({
+                "text/plain": _ASYNCIO_TEXT_WARNING,
+                "text/html": _ASYNCIO_HTML_WARNING,
+            }, raw=True)
+            return
+
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),
             width="100%",
