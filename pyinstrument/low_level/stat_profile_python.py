@@ -79,10 +79,12 @@ def setstatprofile(
 
 
 def get_frame_info(frame: types.FrameType) -> str:
-    frame_info = "%s\x00%s\x00%i" % (
+    hidden = frame.f_locals.get("__tracebackhide__", False)
+    frame_info = "%s\x00%s\x00%i\x00%i" % (
         frame.f_code.co_name,
         frame.f_code.co_filename,
         frame.f_code.co_firstlineno,
+        hidden,
     )
 
     class_name = None
