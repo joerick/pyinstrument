@@ -6,7 +6,6 @@ import glob
 import json
 import optparse
 import os
-import re
 import runpy
 import shutil
 import sys
@@ -15,8 +14,6 @@ from typing import Any, List, TextIO, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import Frame
-from pyinstrument.processors import ProcessorOptions
 from pyinstrument.session import Session
 from pyinstrument.util import (
     file_is_a_tty,
