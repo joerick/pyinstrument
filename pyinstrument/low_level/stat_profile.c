@@ -436,32 +436,34 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     return NULL;
 }
 
+/**
+ * returns `1` if any variable named `"__trackbackhide__"` is defined in frame
+ * locals, returns `0` otherwise
+ */
 static const int
 _get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
     if (code->co_argcount < 1) {
-        return NULL;
+        return 0;
     }
 
-    if (!PyTuple_Check(code->co_varnames)) {
-        // co_varnames must be a tuple
-        return NULL;
+    if (!PySequence_Check(code->co_varnames)) {
+        // co_varnames must be a sequence
+        return 0;
     }
 
-    int tracebackhide = 0;
-    PyObject *key;
     char* keystr = "__tracebackhide__";
-    key = Py_BuildValue("s", keystr);
+    PyObject *key = Py_BuildValue("s", keystr);
+    // TODO: would it be faster to just loop over co_varnames directly using PyTuple_GetItem?
+    int tracebackhide = PySequence_Contains(code->co_varnames, key);
 
-    Py_ssize_t nvar = PyTuple_Size(code->co_varnames);
-    // TODO: the logic for this loop isn't quite right yet
-    for (int i = 0; i < nvar; i++) {
-        if (code->co_varnames[i] == key) {
-            tracebackhide = 1;
-            return tracebackhide;
-        }
+    Py_DECREF(key);
+
+    if (tracebackhide < 0) {
+        // in this case the PySequence_Contains function encountered an error
+        Py_FatalError("could not determine names of frame local variables");
+    } else {
+        return tracebackhide;
     }
-
-    return tracebackhide;
 }
 #endif
 
@@ -497,10 +499,22 @@ _get_frame_info(PyFrameObject *frame) {
         );
     }
 
+    PyObject *frame_hidden_attribute;
+
     int tracebackhide = _get_tracebackhide(frame, code);
+    if (tracebackhide < 0) {
+        frame_hidden_attribute = PyUnicode_New(0, 127);
+    } else {
+        frame_hidden_attribute = PyUnicode_FromFormat(
+            "%c%c%d",
+            1,
+            'h', // 'h' char denotes 'frame hidden'
+            tracebackhide
+        );
+    }
 
     PyObject *result = PyUnicode_FromFormat(
-        "%U%c%U%c%i%U%U%i",
+        "%U%c%U%c%i%U%U%U",
         code->co_name,
         0, // NULL char
         code->co_filename,
@@ -508,12 +522,13 @@ _get_frame_info(PyFrameObject *frame) {
         code->co_firstlineno,
         class_name_attribute,
         line_number_attribute,
-        tracebackhide
+        frame_hidden_attribute
     );
 
     Py_DECREF(code);
     Py_DECREF(class_name_attribute);
     Py_DECREF(line_number_attribute);
+    Py_DECREF(frame_hidden_attribute);
 
     return result;
 }
