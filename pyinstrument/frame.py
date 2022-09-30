@@ -8,6 +8,7 @@ from typing import Sequence
 
 from pyinstrument.frame_info import (
     ATTRIBUTE_MARKER_CLASS_NAME,
+    ATTRIBUTE_MARKER_FRAME_HIDDEN,
     frame_info_get_identifier,
     parse_frame_info,
 )
@@ -140,11 +141,6 @@ class Frame:
     def line_no(self) -> int | None:
         if len(self._identifier_parts) > 2:
             return int(self._identifier_parts[2])
-
-    @property
-    def hidden(self) -> int | None:
-        if len(self._identifier_parts) > 3:
-            return int(self._identifier_parts[3])
 
     @property
     def file_path_short(self) -> str | None:
@@ -292,8 +288,14 @@ class Frame:
         return top_attribute[1:]
 
     @property
-    def class_name(self):
+    def class_name(self) -> str | None:
         return self.get_attribute_value(ATTRIBUTE_MARKER_CLASS_NAME)
+
+    @property
+    def hidden(self) -> int | None:
+        hidden = self.get_attribute_value(ATTRIBUTE_MARKER_FRAME_HIDDEN)
+
+        return None if hidden is None else int(hidden)
 
     def self_check(self, recursive: bool = True) -> None:
         """
