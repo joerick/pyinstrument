@@ -11,6 +11,7 @@ ALL_PROCESSORS = [
     processors.group_library_frames_processor,
     processors.merge_consecutive_self_time,
     processors.remove_importlib,
+    processors.remove_hidden,
     processors.remove_unnecessary_self_time_nodes,
     processors.remove_irrelevant_nodes,
 ]
@@ -77,6 +78,56 @@ def test_remove_importlib():
     assert frame.children[2].file_path == "sympy/polys/polyfuncs.py"
     assert frame.children[3].file_path == "sympy/polys/partfrac.py"
     assert frame.children[4].file_path == "sympy/polys/numberfields.py"
+
+
+def test_remove_hidden():
+    frame = Frame(
+        identifier_or_frame_info="<module>\x00sympy/__init__.py\x0012\x01h0",
+        children=[
+            Frame(
+                identifier_or_frame_info="_handle_fromlist\x00../foo.py\x00997\x01h1",
+                children=[
+                    self_time_frame(0.15),
+                    Frame(
+                        identifier_or_frame_info="_find_and_load\x00../foo.py\x00997\x01h1",
+                        children=[
+                            self_time_frame(0.05),
+                            Frame(
+                                identifier_or_frame_info="<module>\x00sympy/polys/polyfuncs.py\x001\x01h0",
+                                children=[self_time_frame(0.05)],
+                            ),
+                            Frame(
+                                identifier_or_frame_info="<module>\x00sympy/polys/partfrac.py\x001\x01h0",
+                                children=[self_time_frame(0.2)],
+                            ),
+                        ],
+                    ),
+                    Frame(
+                        identifier_or_frame_info="<module>\x00sympy/polys/numberfields.py\x001\x01h0",
+                        children=[self_time_frame(0.05)],
+                    ),
+                ],
+            )
+        ],
+    )
+
+    calculate_frame_tree_times(frame)
+    frame.self_check()
+
+    assert frame.total_self_time == 0.0
+    assert frame.time == approx(0.5)
+
+    frame = processors.remove_hidden(frame, options={})
+    assert frame
+    frame.self_check()
+
+    assert frame.total_self_time == approx(0.2)  # the root gets the self_time from the importlib
+    assert frame.time == approx(0.5)
+    assert len(frame.children) == 5
+    assert frame.children[0].identifier == SELF_TIME_FRAME_IDENTIFIER
+    assert frame.children[0].time == 0.15
+    assert frame.children[1].identifier == SELF_TIME_FRAME_IDENTIFIER
+    assert frame.children[1].time == 0.05
 
 
 def test_merge_consecutive_self_time():
