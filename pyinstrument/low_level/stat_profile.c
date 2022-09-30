@@ -341,7 +341,41 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     Py_DECREF(locals);
     return result;
 }
+
+/**
+ * returns `1` if any variable named `"__trackbackhide__"` is defined in frame
+ * locals, returns `0` otherwise
+ */
+static const int
+_get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
+    PyObject *localsNames = PyCode_GetVarnames(code);
+
+    if (localsNames == NULL) {
+        return 0;
+    }
+
+    if (!PySequence_Check(localsNames)) {
+        // localsNames must be a sequence
+        return 0;
+    }
+
+    char* keystr = "__tracebackhide__";
+    PyObject *key = Py_BuildValue("s", keystr);
+    int tracebackhide = PySequence_Contains(localsNames, key);
+
+    Py_DECREF(key);
+    Py_DECREF(localsNames);
+
+    if (tracebackhide < 0) {
+        // in this case the PySequence_Contains function encountered an error
+        Py_FatalError("could not determine names of frame local variables");
+    } else {
+        return tracebackhide;
+    }
+}
+
 #else
+
 static PyObject *
 _get_first_arg_from_cell_variables(PyFrameObject *frame, PyCodeObject *code) {
     if (!code->co_cell2arg) {
