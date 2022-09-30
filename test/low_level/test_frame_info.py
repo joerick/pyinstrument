@@ -6,11 +6,15 @@ from pyinstrument.low_level import stat_profile_python
 
 class AClass:
     def get_frame_info_for_a_method(self, getter_function):
+        __tracebackhide__ = True
+
         frame = inspect.currentframe()
         assert frame
         return getter_function(frame)
 
     def get_frame_info_with_cell_variable(self, getter_function):
+        __tracebackhide__ = True
+
         frame = inspect.currentframe()
         assert frame
 
@@ -45,6 +49,7 @@ def test_frame_info_with_classes():
     ]
 
     for test_function in test_functions:
-        assert test_function(stat_profile_c.get_frame_info) == test_function(
-            stat_profile_python.get_frame_info
-        )
+        c_frame_info = test_function(stat_profile_c.get_frame_info)
+        py_frame_info = test_function(stat_profile_python.get_frame_info)
+
+        assert c_frame_info == py_frame_info
