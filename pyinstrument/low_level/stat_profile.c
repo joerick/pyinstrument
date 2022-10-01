@@ -476,7 +476,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
  */
 static const int
 _get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
-    if (code->co_argcount < 1) {
+    if (code->co_nlocals < 1) {
         return 0;
     }
 
