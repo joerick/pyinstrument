@@ -17,7 +17,9 @@ _ASYNCIO_HTML_WARNING = """
 To enable asyncio mode, use <pre>%%pyinstrument --async_mode=enabled</pre><br>
 Note that due to IPython limitations this will run in a separate thread!
 """.strip()
-_ASYNCIO_TEXT_WARNING = _ASYNCIO_HTML_WARNING.replace("<pre>", "`").replace("</pre>", "`").replace("<br>", "\n")
+_ASYNCIO_TEXT_WARNING = (
+    _ASYNCIO_HTML_WARNING.replace("<pre>", "`").replace("</pre>", "`").replace("<br>", "\n")
+)
 
 
 def _get_active_profiler():
@@ -102,20 +104,30 @@ class PyinstrumentMagic(Magics):
 
         _active_profiler = Profiler(interval=args.interval, async_mode=args.async_mode)
         ip.ast_transformers.append(self._transformer)
-        if args.async_mode == 'disabled':
-            ip.run_cell(code)
+        if args.async_mode == "disabled":
+            cell_result = ip.run_cell(code)
         else:
-            self.run_cell_async(ip, code)
+            cell_result = self.run_cell_async(ip, code)
         ip.ast_transformers.remove(self._transformer)
 
-        try:
-            html = _active_profiler.output_html(timeline=args.timeline)
-        except Exception as exception:
-            display({
-                "text/plain": _ASYNCIO_TEXT_WARNING,
-                "text/html": _ASYNCIO_HTML_WARNING,
-            }, raw=True)
+        if (
+            args.async_mode == "disabled"
+            and cell_result.error_in_exec
+            and isinstance(cell_result.error_in_exec, RuntimeError)
+            and "event loop is already running" in str(cell_result.error_in_exec)
+        ):
+            # if the cell is async, the Magic doesn't work, raising the above
+            # exception instead. We display a warning and return.
+            display(
+                {
+                    "text/plain": _ASYNCIO_TEXT_WARNING,
+                    "text/html": _ASYNCIO_HTML_WARNING,
+                },
+                raw=True,
+            )
             return
+
+        html = _active_profiler.output_html(timeline=args.timeline)
 
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),
