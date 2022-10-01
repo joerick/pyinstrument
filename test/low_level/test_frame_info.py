@@ -13,16 +13,19 @@ class AClass:
         return getter_function(frame)
 
     def get_frame_info_with_cell_variable(self, getter_function):
-        __tracebackhide__ = True
-
-        frame = inspect.currentframe()
-        assert frame
-
         def an_inner_function():
+            __tracebackhide__ = True
+
+            frame = inspect.currentframe()
+            assert frame
+
             # reference self to make it a cell variable
             if self:
                 pass
 
+            return frame
+
+        frame = an_inner_function()
         return getter_function(frame)
 
     @classmethod
@@ -33,6 +36,8 @@ class AClass:
 
 
 def test_frame_info():
+    __tracebackhide__ = True
+
     frame = inspect.currentframe()
 
     assert frame
