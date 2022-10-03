@@ -1,3 +1,5 @@
+import asyncio
+import threading
 import urllib.parse
 from ast import parse
 
@@ -10,6 +12,14 @@ from .. import Profiler
 from ._utils import PrePostAstTransformer
 
 _active_profiler = None
+
+_ASYNCIO_HTML_WARNING = """
+To enable asyncio mode, use <pre>%%pyinstrument --async_mode=enabled</pre><br>
+Note that due to IPython limitations this will run in a separate thread!
+""".strip()
+_ASYNCIO_TEXT_WARNING = (
+    _ASYNCIO_HTML_WARNING.replace("<pre>", "`").replace("</pre>", "`").replace("<br>", "\n")
+)
 
 
 def _get_active_profiler():
@@ -40,7 +50,7 @@ class PyinstrumentMagic(Magics):
     )
     @argument(
         "--async_mode",
-        default="enabled",
+        default="disabled",
         help="Configures how this Profiler tracks time in a program that uses async/await. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode",
     )
     @argument(
@@ -94,10 +104,31 @@ class PyinstrumentMagic(Magics):
 
         _active_profiler = Profiler(interval=args.interval, async_mode=args.async_mode)
         ip.ast_transformers.append(self._transformer)
-        ip.run_cell(code)
+        if args.async_mode == "disabled":
+            cell_result = ip.run_cell(code)
+        else:
+            cell_result = self.run_cell_async(ip, code)
         ip.ast_transformers.remove(self._transformer)
 
+        if (
+            args.async_mode == "disabled"
+            and cell_result.error_in_exec
+            and isinstance(cell_result.error_in_exec, RuntimeError)
+            and "event loop is already running" in str(cell_result.error_in_exec)
+        ):
+            # if the cell is async, the Magic doesn't work, raising the above
+            # exception instead. We display a warning and return.
+            display(
+                {
+                    "text/plain": _ASYNCIO_TEXT_WARNING,
+                    "text/html": _ASYNCIO_HTML_WARNING,
+                },
+                raw=True,
+            )
+            return
+
         html = _active_profiler.output_html(timeline=args.timeline)
+
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),
             width="100%",
@@ -110,3 +141,22 @@ class PyinstrumentMagic(Magics):
 
         assert not _active_profiler.is_running
         _active_profiler = None
+
+    def run_cell_async(self, ip, code):
+        # This is a bit of a hack, but it's the only way to get the cell to run
+        # asynchronously. We need to run the cell in a separate thread, and then
+        # wait for it to finish.
+        #
+        # Please keep an eye on this issue to see if there's a better way:
+        # https://github.com/ipython/ipython/issues/11314
+        old_loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        try:
+            threading.Thread(target=loop.run_forever).start()
+            asyncio.set_event_loop(loop)
+            coro = ip.run_cell_async(code)
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            return future.result().result
+        finally:
+            loop.call_soon_threadsafe(loop.stop)
+            asyncio.set_event_loop(old_loop)
