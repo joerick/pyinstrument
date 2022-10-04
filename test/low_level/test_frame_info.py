@@ -6,26 +6,19 @@ from pyinstrument.low_level import stat_profile_python
 
 class AClass:
     def get_frame_info_for_a_method(self, getter_function):
-        __tracebackhide__ = True
-
         frame = inspect.currentframe()
         assert frame
         return getter_function(frame)
 
     def get_frame_info_with_cell_variable(self, getter_function):
+        frame = inspect.currentframe()
+        assert frame
+
         def an_inner_function():
-            __tracebackhide__ = True
-
-            frame = inspect.currentframe()
-            assert frame
-
             # reference self to make it a cell variable
             if self:
                 pass
 
-            return frame
-
-        frame = an_inner_function()
         return getter_function(frame)
 
     @classmethod
@@ -36,7 +29,29 @@ class AClass:
 
 
 def test_frame_info():
+    frame = inspect.currentframe()
+
+    assert frame
+    assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
+
+
+def test_frame_info_hide_true():
     __tracebackhide__ = True
+
+    frame = inspect.currentframe()
+
+    assert frame
+    assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
+
+
+def test_frame_info_hide_false():
+    """to avoid calling FastToLocals on the c side,
+    __tracebackhide__ = True
+    and
+    __tracebackhide__ = False
+    are treated the same. All that matters is that the var is defined
+    """
+    __tracebackhide__ = False
 
     frame = inspect.currentframe()
 
