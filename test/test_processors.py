@@ -11,7 +11,7 @@ ALL_PROCESSORS = [
     processors.group_library_frames_processor,
     processors.merge_consecutive_self_time,
     processors.remove_importlib,
-    processors.remove_hidden,
+    processors.remove_tracebackhide,
     processors.remove_unnecessary_self_time_nodes,
     processors.remove_irrelevant_nodes,
 ]
@@ -117,7 +117,7 @@ def test_remove_hidden():
     assert frame.total_self_time == 0.0
     assert frame.time == approx(0.5)
 
-    frame = processors.remove_hidden(frame, options={})
+    frame = processors.remove_tracebackhide(frame, options={})
     assert frame
     frame.self_check()
 

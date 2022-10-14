@@ -37,21 +37,24 @@ def remove_importlib(frame: Frame | None, options: ProcessorOptions) -> Frame | 
 
     return frame
 
-def remove_hidden(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
+
+def remove_tracebackhide(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
     """
-    Removes hidden (eg __tracebackhide__==True) frames that clutter the output.
+    Removes frames that have set a local `__tracebackhide__` (e.g.
+    `__tracebackhide__ = True`), to hide them from the output.
     """
     if frame is None:
         return None
 
     for child in frame.children:
-        remove_hidden(child, options=options)
+        remove_tracebackhide(child, options=options)
 
-        if child.hidden:
+        if child.has_tracebackhide:
             # remove this node, moving the self_time and children up to the parent
             delete_frame_from_tree(child, replace_with="children")
 
     return frame
+
 
 def aggregate_repeated_calls(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
     """
