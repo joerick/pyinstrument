@@ -217,6 +217,7 @@ static PyObject *whatstrings[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NUL
 
 static PyObject *SELF_STRING = NULL;
 static PyObject *CLS_STRING = NULL;
+static PyObject *TRACEBACKHIDE_STRING = NULL;
 
 #define WHAT_CALL 0
 #define WHAT_EXCEPTION 1
@@ -250,6 +251,9 @@ trace_init(void)
     CLS_STRING = PyUnicode_InternFromString("cls");
     if (CLS_STRING == NULL) return -1;
 
+    TRACEBACKHIDE_STRING = PyUnicode_InternFromString("__tracebackhide__");
+    if (TRACEBACKHIDE_STRING == NULL) return -1;
+
     return 0;
 }
 
@@ -281,6 +285,18 @@ code_from_frame(PyFrameObject* frame)
     return PyFrame_GetCode(frame);
 #else
     PyCodeObject *result = frame->f_code;
+    Py_XINCREF(result);
+    return result;
+#endif
+}
+
+static PyObject *
+local_names_from_code(PyCodeObject *code)
+{
+#if PY_VERSION_HEX >= 0x030b0000
+    return PyCode_GetVarnames(code);
+#else
+    PyObject *result = code->co_varnames;
     Py_XINCREF(result);
     return result;
 #endif
@@ -340,38 +356,6 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 
     Py_DECREF(locals);
     return result;
-}
-
-/**
- * returns `1` if any variable named `"__trackbackhide__"` is defined in frame
- * locals, returns `0` otherwise
- */
-static const int
-_get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
-    PyObject *localsNames = PyCode_GetVarnames(code);
-
-    if (localsNames == NULL) {
-        return 0;
-    }
-
-    if (!PySequence_Check(localsNames)) {
-        // localsNames must be a sequence
-        return 0;
-    }
-
-    char* keystr = "__tracebackhide__";
-    PyObject *key = Py_BuildValue("s", keystr);
-    int tracebackhide = PySequence_Contains(localsNames, key);
-
-    Py_DECREF(key);
-    Py_DECREF(localsNames);
-
-    if (tracebackhide < 0) {
-        // in this case the PySequence_Contains function encountered an error
-        Py_FatalError("could not determine names of frame local variables");
-    } else {
-        return tracebackhide;
-    }
 }
 
 #else
@@ -470,27 +454,29 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     return NULL;
 }
 
+#endif
+
+
 /**
  * returns `1` if any variable named `"__trackbackhide__"` is defined in frame
  * locals, returns `0` otherwise
  */
 static const int
 _get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
-    if (code->co_nlocals < 1) {
+    PyObject *locals_names = local_names_from_code(code);
+
+    if (locals_names == NULL) {
         return 0;
     }
 
-    if (!PySequence_Check(code->co_varnames)) {
-        // co_varnames must be a sequence
+    if (!PySequence_Check(locals_names)) {
+        // locals_names must be a sequence
         return 0;
     }
 
-    char* keystr = "__tracebackhide__";
-    PyObject *key = Py_BuildValue("s", keystr);
-    // TODO: would it be faster to just loop over co_varnames directly using PyTuple_GetItem?
-    int tracebackhide = PySequence_Contains(code->co_varnames, key);
+    int tracebackhide = PySequence_Contains(locals_names, TRACEBACKHIDE_STRING);
 
-    Py_DECREF(key);
+    Py_DECREF(locals_names);
 
     if (tracebackhide < 0) {
         // in this case the PySequence_Contains function encountered an error
@@ -499,7 +485,6 @@ _get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
         return tracebackhide;
     }
 }
-#endif
 
 static PyObject *
 _get_frame_info(PyFrameObject *frame) {
