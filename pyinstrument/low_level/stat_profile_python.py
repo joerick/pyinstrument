@@ -104,7 +104,7 @@ def get_frame_info(frame: types.FrameType) -> str:
     if frame.f_lineno is not None:
         frame_info += "\x01l%i" % frame.f_lineno
 
-    if frame_hidden is not None:
+    if frame_hidden:
         frame_info += "\x01h%i" % frame_hidden
 
     return frame_info

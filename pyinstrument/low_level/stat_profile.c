@@ -521,14 +521,14 @@ _get_frame_info(PyFrameObject *frame) {
     PyObject *frame_hidden_attribute;
 
     int tracebackhide = _get_tracebackhide(frame, code);
-    if (tracebackhide < 0) {
+    if (tracebackhide <= 0) {
         frame_hidden_attribute = PyUnicode_New(0, 127);
     } else {
         frame_hidden_attribute = PyUnicode_FromFormat(
-            "%c%c%d",
+            "%c%c%c",
             1,
             'h', // 'h' char denotes 'frame hidden'
-            tracebackhide
+            '1' // '1' char denotes 'true'
         );
     }
 
