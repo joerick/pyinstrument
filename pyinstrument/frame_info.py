@@ -8,7 +8,7 @@ ATTRIBUTES_SEP = "\x01"
 
 ATTRIBUTE_MARKER_CLASS_NAME = "c"
 ATTRIBUTE_MARKER_LINE_NUMBER = "l"
-ATTRIBUTE_MARKER_FRAME_TRACEBACKHIDE = "h"
+ATTRIBUTE_MARKER_TRACEBACKHIDE = "h"
 
 
 def parse_frame_info(frame_info: str) -> Tuple[str, List[str]]:
