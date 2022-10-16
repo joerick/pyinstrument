@@ -2,6 +2,7 @@
 pytest
 flaky
 trio
+click
 django  # used by middleware
 sphinx==4.2.0
 myst-parser==0.15.1
