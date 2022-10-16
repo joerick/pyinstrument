@@ -217,6 +217,7 @@ static PyObject *whatstrings[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NUL
 
 static PyObject *SELF_STRING = NULL;
 static PyObject *CLS_STRING = NULL;
+static PyObject *TRACEBACKHIDE_STRING = NULL;
 
 #define WHAT_CALL 0
 #define WHAT_EXCEPTION 1
@@ -250,6 +251,9 @@ trace_init(void)
     CLS_STRING = PyUnicode_InternFromString("cls");
     if (CLS_STRING == NULL) return -1;
 
+    TRACEBACKHIDE_STRING = PyUnicode_InternFromString("__tracebackhide__");
+    if (TRACEBACKHIDE_STRING == NULL) return -1;
+
     return 0;
 }
 
@@ -281,6 +285,18 @@ code_from_frame(PyFrameObject* frame)
     return PyFrame_GetCode(frame);
 #else
     PyCodeObject *result = frame->f_code;
+    Py_XINCREF(result);
+    return result;
+#endif
+}
+
+static PyObject *
+local_names_from_code(PyCodeObject *code)
+{
+#if PY_VERSION_HEX >= 0x030b0000
+    return PyCode_GetVarnames(code);
+#else
+    PyObject *result = code->co_varnames;
     Py_XINCREF(result);
     return result;
 #endif
@@ -341,7 +357,9 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     Py_DECREF(locals);
     return result;
 }
+
 #else
+
 static PyObject *
 _get_first_arg_from_cell_variables(PyFrameObject *frame, PyCodeObject *code) {
     if (!code->co_cell2arg) {
@@ -435,7 +453,38 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 
     return NULL;
 }
+
 #endif
+
+
+/**
+ * returns `1` if any variable named `"__trackbackhide__"` is defined in frame
+ * locals, returns `0` otherwise
+ */
+static const int
+_get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
+    PyObject *locals_names = local_names_from_code(code);
+
+    if (locals_names == NULL) {
+        return 0;
+    }
+
+    if (!PySequence_Check(locals_names)) {
+        // locals_names must be a sequence
+        return 0;
+    }
+
+    int tracebackhide = PySequence_Contains(locals_names, TRACEBACKHIDE_STRING);
+
+    Py_DECREF(locals_names);
+
+    if (tracebackhide < 0) {
+        // in this case the PySequence_Contains function encountered an error
+        Py_FatalError("could not determine names of frame local variables");
+    } else {
+        return tracebackhide;
+    }
+}
 
 static PyObject *
 _get_frame_info(PyFrameObject *frame) {
@@ -469,20 +518,36 @@ _get_frame_info(PyFrameObject *frame) {
         );
     }
 
+    PyObject *frame_hidden_attribute;
+
+    int tracebackhide = _get_tracebackhide(frame, code);
+    if (tracebackhide <= 0) {
+        frame_hidden_attribute = PyUnicode_New(0, 127);
+    } else {
+        frame_hidden_attribute = PyUnicode_FromFormat(
+            "%c%c%c",
+            1,
+            'h', // 'h' char denotes 'frame hidden'
+            '1' // '1' char denotes 'true'
+        );
+    }
+
     PyObject *result = PyUnicode_FromFormat(
-        "%U%c%U%c%i%U%U",
+        "%U%c%U%c%i%U%U%U",
         code->co_name,
         0, // NULL char
         code->co_filename,
         0, // NULL char
         code->co_firstlineno,
         class_name_attribute,
-        line_number_attribute
+        line_number_attribute,
+        frame_hidden_attribute
     );
 
     Py_DECREF(code);
     Py_DECREF(class_name_attribute);
     Py_DECREF(line_number_attribute);
+    Py_DECREF(frame_hidden_attribute);
 
     return result;
 }

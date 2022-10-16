@@ -35,6 +35,30 @@ def test_frame_info():
     assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
 
 
+def test_frame_info_hide_true():
+    __tracebackhide__ = True
+
+    frame = inspect.currentframe()
+
+    assert frame
+    assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
+
+
+def test_frame_info_hide_false():
+    """to avoid calling FastToLocals on the c side,
+    __tracebackhide__ = True
+    and
+    __tracebackhide__ = False
+    are treated the same. All that matters is that the var is defined
+    """
+    __tracebackhide__ = False
+
+    frame = inspect.currentframe()
+
+    assert frame
+    assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
+
+
 def test_frame_info_with_classes():
     instance = AClass()
 
@@ -45,6 +69,7 @@ def test_frame_info_with_classes():
     ]
 
     for test_function in test_functions:
-        assert test_function(stat_profile_c.get_frame_info) == test_function(
-            stat_profile_python.get_frame_info
-        )
+        c_frame_info = test_function(stat_profile_c.get_frame_info)
+        py_frame_info = test_function(stat_profile_python.get_frame_info)
+
+        assert c_frame_info == py_frame_info

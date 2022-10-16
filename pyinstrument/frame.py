@@ -8,6 +8,7 @@ from typing import Sequence
 
 from pyinstrument.frame_info import (
     ATTRIBUTE_MARKER_CLASS_NAME,
+    ATTRIBUTE_MARKER_TRACEBACKHIDE,
     frame_info_get_identifier,
     parse_frame_info,
 )
@@ -287,8 +288,15 @@ class Frame:
         return top_attribute[1:]
 
     @property
-    def class_name(self):
+    def class_name(self) -> str | None:
         return self.get_attribute_value(ATTRIBUTE_MARKER_CLASS_NAME)
+
+    @property
+    def has_tracebackhide(self) -> bool:
+        """
+        Returns whether this frame has a `__tracebackhide__` variable.
+        """
+        return self.get_attribute_value(ATTRIBUTE_MARKER_TRACEBACKHIDE) == "1"
 
     def self_check(self, recursive: bool = True) -> None:
         """

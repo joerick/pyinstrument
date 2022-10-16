@@ -24,6 +24,8 @@ build
 .pytest_cache
 
 # editor
+*.code-workspace
+.history
 .vscode
 
 # docs

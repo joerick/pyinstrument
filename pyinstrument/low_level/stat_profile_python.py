@@ -96,10 +96,15 @@ def get_frame_info(frame: types.FrameType) -> str:
         if cls and hasattr(cls, "__qualname__"):
             class_name = cls.__qualname__
 
+    frame_hidden = "__tracebackhide__" in frame.f_locals
+
     if class_name:
         frame_info += "\x01c%s" % class_name
 
     if frame.f_lineno is not None:
         frame_info += "\x01l%i" % frame.f_lineno
+
+    if frame_hidden:
+        frame_info += "\x01h%i" % frame_hidden
 
     return frame_info
