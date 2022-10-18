@@ -34,7 +34,7 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.10.2
+        uses: joerick/cibuildwheel@v2.11.1
         env:
           CIBW_SKIP: pp*
           CIBW_ARCHS: ${{matrix.archs}}
