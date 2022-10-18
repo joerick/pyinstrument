@@ -10,6 +10,7 @@ export default class Frame {
     this.time = jsonObject.time;
     this.totalTime = this.parent ? this.parent.totalTime : this.time;
     this.isApplicationCode = jsonObject.is_application_code
+    this.className = jsonObject.class_name;
 
     if (jsonObject.group_id) {
       const groupId = jsonObject.group_id;

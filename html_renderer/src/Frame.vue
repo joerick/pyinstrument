@@ -15,7 +15,7 @@
            :style="timeStyle">
         {{formattedTime}}
       </div>
-      <div class="name">{{frame.function}}</div>
+      <div class="name">{{name}}</div>
       <div class="spacer" style="flex: 1"></div>
       <div class="code-position">
         {{codePosition}}
@@ -69,6 +69,13 @@ export default {
     }
   },
   computed: {
+    name() {
+      if (this.frame.className) {
+        return `${this.frame.className}.${this.frame.function}`;
+      } else {
+        return this.frame.function
+      }
+    },
     isVisible() {
       if (!this.frame.group) {
         return true;
