@@ -58,7 +58,7 @@ Changelog
 
 _5 November 2022_
 
--   Adds the class name to methods in the console output (#203)
+-   Adds the class name to methods in the console & HTML outputs (#203)
 -   Fix a bug that caused pyinstrument machinery to appear at the start of a profile (#215)
 -   Frames that set a `__traceback_hide__` local variable will now be removed from the output (#217)
 -   Jupyter/IPython magic now supports async/await, if you run with a `--async_mode=enabled` flag. (#212)
