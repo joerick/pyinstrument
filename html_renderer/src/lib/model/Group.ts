@@ -1,12 +1,16 @@
-export default class Group {
-  frames = []
+import type Frame from './Frame';
 
-  constructor(id, rootFrame) {
+export default class Group {
+  id: string;
+  rootFrame: Frame;
+  frames: Frame[] = []
+
+  constructor(id: string, rootFrame: Frame) {
     this.id = id;
     this.rootFrame = rootFrame;
   }
 
-  addFrame(frame) {
+  addFrame(frame: Frame) {
     this.frames.push(frame);
   }
 
@@ -32,10 +36,10 @@ export default class Group {
   }
 
   get libraries() {
-    const libraries = [];
+    const libraries: string[] = [];
 
     for (const frame of this.frames) {
-      const library = /^[^\\/.]*/.exec(frame.filePathShort)[0]
+      const library = /^[^\\/.]*/.exec(frame.filePathShort)![0]
       if (!libraries.includes(library)) {
         libraries.push(library);
       }

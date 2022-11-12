@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro:400,600|Source+Sans+Pro:400,600');
+
+html, body {
+    background-color: #303538;
+    color: white;
+    padding: 0;
+    margin: 0;
+}
+
+.margins {
+    padding: 0 30px;
+}
