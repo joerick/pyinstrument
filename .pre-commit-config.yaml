@@ -23,8 +23,9 @@ repos:
     rev: v2.1.0
     hooks:
       - id: codespell
+        exclude: "\\.(json)$"
         args:
-          - --ignore-words-list=vas --skip="*.js"
+          - --ignore-words-list=vas
 
 -   repo: local
     hooks:

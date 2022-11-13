@@ -1,14 +1,14 @@
 import os
 from pathlib import Path
 
-from setuptools import Extension, find_packages, setup
+from setuptools import Extension, find_namespace_packages, setup
 
 PROJECT_ROOT = Path(__file__).parent
 long_description = (PROJECT_ROOT / "README.md").read_text(encoding="utf8")
 
 setup(
     name="pyinstrument",
-    packages=find_packages(include=["pyinstrument", "pyinstrument.*"]),
+    packages=find_namespace_packages(include=["pyinstrument*"]),
     version="4.4.0",
     ext_modules=[
         Extension(

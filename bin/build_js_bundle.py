@@ -8,6 +8,7 @@ import sys
 
 HTML_RENDERER_DIR = "html_renderer"
 JS_BUNDLE = "pyinstrument/renderers/html_resources/app.js"
+CSS_BUNDLE = "pyinstrument/renderers/html_resources/app.css"
 
 if __name__ == "__main__":
     # chdir to root of repo
@@ -42,4 +43,5 @@ if __name__ == "__main__":
     subprocess.check_call("npm ci", cwd=HTML_RENDERER_DIR, shell=True)
     subprocess.check_call("npm run build", cwd=HTML_RENDERER_DIR, shell=True)
 
-    shutil.copyfile(HTML_RENDERER_DIR + "/dist/js/app.js", JS_BUNDLE)
+    shutil.copyfile(HTML_RENDERER_DIR + "/dist/pyinstrument-html.iife.js", JS_BUNDLE)
+    shutil.copyfile(HTML_RENDERER_DIR + "/dist/style.css", CSS_BUNDLE)

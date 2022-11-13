@@ -55,6 +55,9 @@ jobs:
         with:
           python-version: '3.8'
 
+      - name: Check manifest
+        run: pipx run check-manifest
+
       - name: Build sdist
         run: python setup.py sdist
 
