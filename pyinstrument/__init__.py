@@ -2,7 +2,7 @@ import warnings
 
 from pyinstrument.profiler import Profiler
 
-__all__ = ["Profiler"]
+__all__ = ["__version__", "Profiler", "load_ipython_extension"]
 __version__ = "4.4.0"
 
 # enable deprecation warnings
