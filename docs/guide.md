@@ -217,6 +217,42 @@ if PROFILING:
 To invoke, make any request to your application with the GET parameter
 `profile=1` and it will print the HTML result from pyinstrument.
 
+### Profile a web request in Falcon
+
+For profile call stacks in Falcon, you can write a middleware extension using
+pyinstrument.
+
+Create a middleware class and start the profiler at `process_request` and stop it at `process_response`.
+The middleware can be added to the app.
+
+Make sure you configure a setting to only make this available when required.
+
+```python
+from pyinstrument import Profiler
+import falcon
+
+class ProfilerMiddleware:
+    def __init__(self, interval=0.01):
+        self.profiler = Profiler(interval=interval)
+
+    def process_request(self, req, resp):
+        self.profiler.start()
+
+    def process_response(self, req, resp, resource, req_succeeded):
+        self.profiler.stop()
+        self.profiler.open_in_browser()
+
+PROFILING = True  # Set this from a settings model
+
+app = falcon.App()
+if PROFILING:
+    app.add_middleware(ProfilerMiddleware())
+```
+
+To invoke, make any request to your application and it launch a new window
+printing the HTML result from pyinstrument.
+
+
 ### Profile Pytest tests
 
 Pyinstrument can be invoked via the command-line to run pytest, giving you a
