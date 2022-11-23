@@ -1,5 +1,6 @@
 from pyinstrument import Profiler
 import time
+from datetime import datetime
 
 try:
     import falcon
@@ -18,7 +19,9 @@ class ProfilerMiddleware:
 
     def process_response(self, req, resp, resource, req_succeeded):
         self.profiler.stop()
-        self.profiler.open_in_browser()     # Autoloads the file in default browser
+        filename = f"{self.filename}-{datetime.now().strftime('%m%d%Y-%H%M%S')}.html"
+        with open(filename, "w") as file:
+            file.write(self.profiler.output_html())
 
 
 class HelloResource:
