@@ -68,7 +68,17 @@ class FrameRenderer(Renderer):
         self.processor_options = processor_options or {}
 
         if show_all:
-            self.processors.remove(processors.group_library_frames_processor)
+            for p in (
+                processors.group_library_frames_processor,
+                processors.remove_importlib,
+                processors.remove_irrelevant_nodes,
+                processors.remove_tracebackhide,
+                processors.remove_unnecessary_self_time_nodes,
+
+                # always hide the outer pyinstrument cruft frames
+                # processors.remove_first_pyinstrument_frames_processor,
+            ):
+                self.processors.remove(p)
         if timeline:
             self.processors.remove(processors.aggregate_repeated_calls)
 
