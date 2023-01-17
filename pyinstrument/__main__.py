@@ -392,13 +392,10 @@ def compute_render_options(
 
         render_options.update({"unicode": unicode, "color": color})
 
-    # add in any top-level options
-    for opt in (
-        "show_all",
-        "timeline",
-    ):
-        if getattr(options, opt):
-            render_options[opt] = True
+    if options.timeline:
+        render_options["timeline"] = True
+    if options.show_all:
+        render_options["show_all"] = True
 
     # apply user options
     if options.render_options is not None:
