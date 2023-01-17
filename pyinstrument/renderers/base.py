@@ -73,7 +73,9 @@ class FrameRenderer(Renderer):
                 processors.remove_importlib,
                 processors.remove_irrelevant_nodes,
                 processors.remove_tracebackhide,
-                processors.remove_unnecessary_self_time_nodes,
+
+                # always hide the inner pyinstrument cruft frames
+                # processors.remove_unnecessary_self_time_nodes,
 
                 # always hide the outer pyinstrument cruft frames
                 # processors.remove_first_pyinstrument_frames_processor,
