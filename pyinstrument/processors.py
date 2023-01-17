@@ -86,8 +86,6 @@ def group_library_frames_processor(frame: Frame | None, options: ProcessorOption
     def should_be_hidden(frame: Frame):
         frame_file_path = frame.file_path or ""
 
-        # should_show = False
-        # should_hide = True
         should_show = (show_regex is not None) and re.match(show_regex, frame_file_path)
         should_hide = (hide_regex is not None) and re.match(hide_regex, frame_file_path)
 
