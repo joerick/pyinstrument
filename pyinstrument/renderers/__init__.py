@@ -4,3 +4,4 @@ from pyinstrument.renderers.html import HTMLRenderer
 from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument.renderers.session import SessionRenderer
 from pyinstrument.renderers.speedscope import SpeedscopeRenderer
+from pyinstrument.renderers.profrenderer import ProfRenderer

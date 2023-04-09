@@ -5,7 +5,7 @@ import time
 import pytest
 
 from pyinstrument import Profiler
-from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer, SpeedscopeRenderer
+from pyinstrument.renderers import ConsoleRenderer, HTMLRenderer, JSONRenderer, SpeedscopeRenderer, ProfRenderer
 
 # Utilities
 
@@ -60,3 +60,6 @@ def test_json(deep_profiler_session):
 
 def test_speedscope(deep_profiler_session):
     SpeedscopeRenderer().render(deep_profiler_session)
+
+def test_prof(deep_profiler_session):
+    ProfRenderer().render(deep_profiler_session)

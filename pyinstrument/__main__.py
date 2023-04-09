@@ -88,9 +88,9 @@ def main():
         action="store",
         type="string",
         help=(
-            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope' or python "
-            "import path to a renderer class. Defaults to the appropriate format for the extension "
-            "if OUTFILE is given, otherwise, defaults to 'text'."
+            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', 'prof', "
+            "or python import path to a renderer class. Defaults to the appropriate format "
+            "for the extension if OUTFILE is given, otherwise, defaults to 'text'."
         ),
         default=None,
     )
@@ -325,7 +325,12 @@ def main():
         session = profiler.stop()
 
     if options.outfile:
-        f = codecs.open(options.outfile, "w", "utf-8")
+        if should_close_f_after_writing:
+            f.close()
+        if isinstance(renderer, renderers.ProfRenderer):
+            f = open(options.outfile, "wb")
+        else:
+            f = codecs.open(options.outfile, "w", "utf-8")
         should_close_f_after_writing = True
     else:
         f = sys.stdout
@@ -458,6 +463,8 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
         return renderers.SpeedscopeRenderer
     elif renderer == "session":
         return renderers.SessionRenderer
+    elif renderer == "prof":
+        return renderers.ProfRenderer
     else:
         try:
             return object_with_import_path(renderer)
@@ -465,8 +472,8 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
             # ValueError means we failed to import this object
             raise OptionsParseError(
                 f"Failed to find renderer with name {renderer!r}.\n"
-                "Options are text, html, json, speedscope or a Python import path to a Renderer\n"
-                "class.\n"
+                "Options are text, html, json, speedscope, prof or a Python\n"
+                "import path to a Rendererclass.\n"
                 "\n"
                 f"Underlying error: {err}\n"
             )
@@ -488,6 +495,8 @@ def guess_renderer_from_outfile(outfile: str) -> str | None:
         return "json"
     elif ext == ".pyisession":
         return "session"
+    elif ext == ".prof":
+        return "prof"
     else:
         return None
 
