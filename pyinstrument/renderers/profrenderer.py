@@ -27,15 +27,13 @@ class ProfRenderer(FrameRenderer):
             return {}
 
         key = (frame.file_path or "", frame.line_no or 0, frame.function)
+        # Format is (call_time, number_calls, total_time, cumulative_time, callers)
         val = [-1, -1, frame.time, frame.total_self_time, {}]
         if frame.parent:
             p = frame.parent
             val[-1][(p.file_path or "", p.line_no or 0, p.function)] = val[:-1]
         if key in stats:
             return
-            for i in range(4):
-                val[i] = val[i] + stats[key][i]
-            val[-1].update(stats[key][-1])
         stats[key] = tuple(val)
         for child in frame.children:
             if not frame.is_synthetic:

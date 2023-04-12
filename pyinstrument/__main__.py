@@ -473,7 +473,7 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
             raise OptionsParseError(
                 f"Failed to find renderer with name {renderer!r}.\n"
                 "Options are text, html, json, speedscope, prof or a Python\n"
-                "import path to a Rendererclass.\n"
+                "import path to a Renderer class.\n"
                 "\n"
                 f"Underlying error: {err}\n"
             )
