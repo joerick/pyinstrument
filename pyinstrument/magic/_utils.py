@@ -60,7 +60,6 @@ class PrePostAstTransformer(NodeTransformer):
         self.active = True
 
     def reset(self):
-
         self.core = parse(
             dedent(
                 """

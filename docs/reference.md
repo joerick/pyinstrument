@@ -39,7 +39,7 @@ Renderers transform a tree of {class}`Frame` objects into some form of output.
 Rendering has two steps:
 
 1. First, the renderer will 'preprocess' the Frame tree, applying each processor in the ``processor`` property, in turn.
-2. The resulting tree is renderered into the desired format.
+2. The resulting tree is rendered into the desired format.
 
 Therefore, rendering can be customised by changing the ``processors`` property. For example, you can disable time-aggregation (making the profile into a timeline) by removing {func}`aggregate_repeated_calls`.
 
