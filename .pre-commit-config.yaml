@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -8,34 +8,47 @@ repos:
     -   id: check-added-large-files
 
 -   repo: https://github.com/pycqa/isort
-    rev: 5.8.0
+    rev: 5.12.0
     hooks:
       - id: isort
         name: isort (python)
 
 -   repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 23.3.0
     hooks:
       - id: black
         language_version: python3
 
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.1.0
+    rev: v2.2.4
     hooks:
       - id: codespell
         exclude: "\\.(json)$"
         args:
           - --ignore-words-list=vas
 
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.304
+    hooks:
+    - id: pyright
+      additional_dependencies:
+      - pytest
+      - ipython
+      - django
+      - flask
+      - trio
+      - flaky
+      - numpy
+      - nox
+      - ascii_graph
+      - requests
+      - greenlet
+      - types-click
+      - types-requests
+
+
 -   repo: local
     hooks:
-    -   id: pyright
-        name: pyright
-        entry: pyright --venv-path .
-        language: node
-        pass_filenames: false
-        types: [python]
-        additional_dependencies: ['pyright@1.1.260']
     -   id: build
         name: build js bundle
         entry: bin/build_js_bundle.py --force
@@ -44,7 +57,7 @@ repos:
         pass_filenames: false
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.1
+    rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: [--py37-plus]

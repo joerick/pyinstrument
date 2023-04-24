@@ -60,7 +60,7 @@ else:
 
 
 
-def user_data_dir(appname=None, appauthor=None, version=None, roaming=False):
+def user_data_dir(appname=None, appauthor=None, version=None, roaming=False) -> str:
     r"""Return full path to the user-specific data dir for this application.
 
         "appname" is the name of application.

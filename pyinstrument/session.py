@@ -83,7 +83,7 @@ class Session:
             sample_count=json_dict["sample_count"],
             start_call_stack=json_dict["start_call_stack"],
             program=json_dict["program"],
-            cpu_time=json_dict["cpu_time"],
+            cpu_time=json_dict["cpu_time"] or 0,
         )
 
     @staticmethod
@@ -114,7 +114,7 @@ class Session:
     def root_frame(self, trim_stem: bool = True) -> Frame | None:
         """
         Parses the internal frame records and returns a tree of :class:`Frame`
-        objects. This object can be renderered using a :class:`Renderer`
+        objects. This object can be rendered using a :class:`Renderer`
         object.
 
         :rtype: A :class:`Frame` object, or None if the session is empty.

@@ -32,7 +32,7 @@ function_a()
 
 @pytest.mark.ipythonmagic
 def test_magics(ip):
-    from IPython.utils.io import capture_output as capture_ipython_output
+    from IPython.utils.capture import capture_output as capture_ipython_output
 
     with fake_time():
         with capture_ipython_output() as captured:

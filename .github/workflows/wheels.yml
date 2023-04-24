@@ -8,6 +8,12 @@ on:
 
   pull_request:
     branches: [ main ]
+    # only run on pull requests that change a C file or build system
+    paths:
+    - '**.c'
+    - setup.py
+    - setup.cfg
+    - pyproject.toml
 
 jobs:
   build_wheels:

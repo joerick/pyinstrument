@@ -19,6 +19,8 @@ async def say(what, when, profile=False):
     if profile:
         p = pyinstrument.Profiler()
         p.start()
+    else:
+        p = None
 
     busy_wait(0.1)
     sleep_start = time.time()
@@ -27,7 +29,7 @@ async def say(what, when, profile=False):
     busy_wait(0.1)
 
     print(what)
-    if profile:
+    if p:
         p.stop()
         p.print(show_all=True)
 
