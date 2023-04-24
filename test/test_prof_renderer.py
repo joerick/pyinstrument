@@ -1,10 +1,10 @@
-from pstats import Stats
-import pytest
 import time
+from pstats import Stats
+
+import pytest
 
 from pyinstrument import Profiler
 from pyinstrument.renderers import ProfRenderer
-
 
 
 def a():

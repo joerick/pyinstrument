@@ -11,7 +11,6 @@ from pyinstrument.session import Session
 # pyright: strict
 
 
-
 class ProfRenderer(FrameRenderer):
     """
     Outputs a marshaled dict, containing processed frames.
@@ -42,7 +41,6 @@ class ProfRenderer(FrameRenderer):
 
     def render(self, session: Session):
         frame = self.preprocess(session.root_frame())
-
 
         stats = {}
         self.render_frame(frame, stats)
