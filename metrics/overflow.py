@@ -1,6 +1,6 @@
 from pyinstrument import Profiler
 
-p = Profiler(use_signal=False)
+p = Profiler()
 
 p.start()
 

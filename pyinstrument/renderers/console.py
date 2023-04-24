@@ -67,8 +67,7 @@ class ConsoleRenderer(FrameRenderer):
         )
         lines[2] += f" Duration: {session.duration:<9.3f}"
         lines[1] += f" Samples:  {session.sample_count}"
-        if session.cpu_time is not None:
-            lines[2] += f" CPU time: {session.cpu_time:.3f}"
+        lines[2] += f" CPU time: {session.cpu_time:.3f}"
 
         lines.append("")
         lines.append("Program: %s" % session.program)

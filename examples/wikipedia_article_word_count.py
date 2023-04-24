@@ -3,7 +3,7 @@ import json
 try:
     from urllib.request import urlopen
 except ImportError:
-    from urllib2 import urlopen
+    from urllib2 import urlopen  # type: ignore
 
 import collections
 import operator

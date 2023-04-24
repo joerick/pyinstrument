@@ -83,7 +83,7 @@ class Session:
             sample_count=json_dict["sample_count"],
             start_call_stack=json_dict["start_call_stack"],
             program=json_dict["program"],
-            cpu_time=json_dict["cpu_time"],
+            cpu_time=json_dict["cpu_time"] or 0,
         )
 
     @staticmethod

@@ -491,7 +491,7 @@ def guess_renderer_from_outfile(outfile: str) -> str | None:
 
 
 def report_dir() -> str:
-    data_dir: str = appdirs.user_data_dir("pyinstrument", "com.github.joerick")  # type: ignore
+    data_dir = appdirs.user_data_dir("pyinstrument", "com.github.joerick")  # type: ignore
     report_dir = os.path.join(data_dir, "reports")
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)
@@ -549,7 +549,7 @@ class CommandLineOptions:
 
     unicode: bool | None
     color: bool | None
-    renderer: str
+    renderer: str | None
     timeline: bool
     interval: float
 

@@ -27,15 +27,28 @@ repos:
         args:
           - --ignore-words-list=vas
 
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.304
+    hooks:
+    - id: pyright
+      additional_dependencies:
+      - pytest
+      - ipython
+      - django
+      - flask
+      - trio
+      - flaky
+      - numpy
+      - nox
+      - ascii_graph
+      - requests
+      - greenlet
+      - types-click
+      - types-requests
+
+
 -   repo: local
     hooks:
-    -   id: pyright
-        name: pyright
-        entry: pyright --venv-path .
-        language: node
-        pass_filenames: false
-        types: [python]
-        additional_dependencies: ['pyright@1.1.260']
     -   id: build
         name: build js bundle
         entry: bin/build_js_bundle.py --force
