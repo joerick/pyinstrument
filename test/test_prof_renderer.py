@@ -42,7 +42,7 @@ def profiler_session():
 def test_prof_renderer(profiler_session, tmp_path):
     fname = tmp_path / "test.prof"
     prof = ProfRenderer().render(profiler_session)
-    with open(fname, "wb", encoding="utf-8", errors="surrogateescape") as fid:
+    with open(fname, "w", encoding="utf-8", errors="surrogateescape") as fid:
         fid.write(prof)
     stats = Stats(str(fname))
     # Sanity check
