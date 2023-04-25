@@ -17,6 +17,7 @@ class ProfRenderer(FrameRenderer):
     """
 
     output_file_extension = "prof"
+    output_is_binary = True
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
@@ -45,7 +46,9 @@ class ProfRenderer(FrameRenderer):
         stats = {}
         self.render_frame(frame, stats)
 
-        return marshal.dumps(stats)
+        # marshal.dumps returns bytes, so we need to decode it to a string
+        # using surrogateescape
+        return marshal.dumps(stats).decode(encoding="utf-8", errors="surrogateescape")
 
     def default_processors(self) -> ProcessorList:
         return [

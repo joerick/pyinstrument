@@ -42,8 +42,8 @@ def profiler_session():
 def test_prof_renderer(profiler_session, tmp_path):
     fname = tmp_path / "test.prof"
     prof = ProfRenderer().render(profiler_session)
-    with open(fname, "wb") as fid:
+    with open(fname, "wb", encoding="utf-8", errors="surrogateescape") as fid:
         fid.write(prof)
     stats = Stats(str(fname))
     # Sanity check
-    assert stats.total_tt > 0
+    assert stats.total_tt > 0  # type: ignore

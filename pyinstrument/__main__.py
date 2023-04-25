@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import codecs
 import fnmatch
 import glob
 import json
@@ -263,7 +262,7 @@ def main():
     # open the output file
 
     if options.outfile:
-        f = codecs.open(options.outfile, "w", "utf-8")
+        f = open(options.outfile, "w", encoding="utf-8", errors="surrogateescape")
         should_close_f_after_writing = True
     else:
         f = sys.stdout
@@ -275,6 +274,12 @@ def main():
         renderer = create_renderer(options, output_file=f)
     except OptionsParseError as e:
         parser.error(e.args[0])
+        exit(1)
+
+    if renderer.output_is_binary and not options.outfile and file_is_a_tty(f):
+        parser.error(
+            "Can't write binary output to a terminal. Redirect to a file or use --outfile."
+        )
         exit(1)
 
     # get the session - execute code or load from disk
@@ -323,18 +328,6 @@ def main():
             pass
 
         session = profiler.stop()
-
-    if options.outfile:
-        if should_close_f_after_writing:
-            f.close()
-        if isinstance(renderer, renderers.ProfRenderer):
-            f = open(options.outfile, "wb")
-        else:
-            f = codecs.open(options.outfile, "w", "utf-8")
-        should_close_f_after_writing = True
-    else:
-        f = sys.stdout
-        should_close_f_after_writing = False
 
     if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
