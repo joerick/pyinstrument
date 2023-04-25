@@ -120,11 +120,13 @@ class Frame:
         The total amount of self time in this frame (including self time recorded by SelfTimeFrame
         children, and await time from AwaitTimeFrame children)
         """
-        self_time = 0
 
-        for child in self.children:
-            if child.identifier in (SELF_TIME_FRAME_IDENTIFIER, AWAIT_FRAME_IDENTIFIER):
-                self_time += child.time
+        # self time is time in this frame, minus time in children
+        self_time = self.time
+        real_children = [c for c in self.children if not c.is_synthetic]
+
+        for child in real_children:
+            self_time -= child.time
 
         return self_time
 
