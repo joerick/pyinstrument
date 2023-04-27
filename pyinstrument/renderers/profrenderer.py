@@ -53,7 +53,19 @@ class ProfRenderer(FrameRenderer):
         cumulative_time += frame.time
 
         if frame.parent:
-            callers[self.frame_key(frame.parent)] = (-1, -1, frame.total_self_time, frame.time)
+            parent_key = self.frame_key(frame.parent)
+            if parent_key not in callers:
+                p_call_time = -1
+                p_number_calls = -1
+                p_total_time = 0
+                p_cumulative_time = 0
+            else:
+                p_call_time, p_number_calls, p_total_time, p_cumulative_time = callers[parent_key]
+
+            p_total_time += frame.total_self_time
+            p_cumulative_time += frame.time
+
+            callers[parent_key] = p_call_time, p_number_calls, p_total_time, p_cumulative_time
 
         stats[key] = (call_time, number_calls, total_time, cumulative_time, callers)
 
