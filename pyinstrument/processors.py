@@ -22,6 +22,40 @@ ProcessorType = Callable[..., Union[Frame, None]]
 ProcessorOptions = Dict[str, Any]
 
 
+def remove_importlib(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
+    """
+    Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
+    """
+    if frame is None:
+        return None
+
+    for child in frame.children:
+        remove_importlib(child, options=options)
+
+        if child.file_path and "<frozen importlib._bootstrap" in child.file_path:
+            delete_frame_from_tree(child, replace_with="children")
+
+    return frame
+
+
+def remove_tracebackhide(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
+    """
+    Removes frames that have set a local `__tracebackhide__` (e.g.
+    `__tracebackhide__ = True`), to hide them from the output.
+    """
+    if frame is None:
+        return None
+
+    for child in frame.children:
+        remove_tracebackhide(child, options=options)
+
+        if child.has_tracebackhide:
+            # remove this node, moving the self_time and children up to the parent
+            delete_frame_from_tree(child, replace_with="children")
+
+    return frame
+
+
 def aggregate_repeated_calls(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
     """
     Converts a timeline into a time-aggregate summary.
@@ -144,6 +178,61 @@ def merge_consecutive_self_time(
 
     return frame
 
+
+def remove_unnecessary_self_time_nodes(
+    frame: Frame | None, options: ProcessorOptions
+) -> Frame | None:
+    """
+    When a frame has only one child, and that is a self-time frame, remove
+    that node and move the time to parent, since it's unnecessary - it
+    clutters the output and offers no additional information.
+    """
+    if frame is None:
+        return None
+
+    if len(frame.children) == 1 and frame.children[0].identifier == SELF_TIME_FRAME_IDENTIFIER:
+        delete_frame_from_tree(frame.children[0], replace_with="nothing")
+
+    for child in frame.children:
+        remove_unnecessary_self_time_nodes(child, options=options)
+
+    return frame
+
+
+def remove_irrelevant_nodes(
+    frame: Frame | None, options: ProcessorOptions, total_time: float | None = None
+) -> Frame | None:
+    """
+    Remove nodes that represent less than e.g. 1% of the output. Options:
+
+    ``filter_threshold``
+      sets the minimum duration of a frame to be included in the output.
+      Default: 0.01.
+    """
+    if frame is None:
+        return None
+
+    if total_time is None:
+        total_time = frame.time
+
+        # prevent divide by zero
+        if total_time <= 0:
+            total_time = 1e-44
+
+    filter_threshold = options.get("filter_threshold", 0.01)
+
+    for child in frame.children:
+        proportion_of_total = child.time / total_time
+
+        if proportion_of_total < filter_threshold:
+            delete_frame_from_tree(child, replace_with="nothing")
+
+    for child in frame.children:
+        remove_irrelevant_nodes(child, options=options, total_time=total_time)
+
+    return frame
+
+
 # pylint: disable=W0613
 def remove_first_pyinstrument_frames_processor(
     frame: Frame | None, options: ProcessorOptions
@@ -205,87 +294,3 @@ def remove_first_pyinstrument_frames_processor(
     result.remove_from_parent()
 
     return result
-
-def remove_importlib(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
-    """
-    Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
-    """
-    if frame is None:
-        return None
-
-    for child in frame.children:
-        remove_importlib(child, options=options)
-
-        if child.file_path and "<frozen importlib._bootstrap" in child.file_path:
-            delete_frame_from_tree(child, replace_with="children")
-
-    return frame
-
-def remove_irrelevant_nodes(
-    frame: Frame | None, options: ProcessorOptions, total_time: float | None = None
-) -> Frame | None:
-    """
-    Remove nodes that represent less than e.g. 1% of the output. Options:
-
-    ``filter_threshold``
-      sets the minimum duration of a frame to be included in the output.
-      Default: 0.01.
-    """
-    if frame is None:
-        return None
-
-    if total_time is None:
-        total_time = frame.time
-
-        # prevent divide by zero
-        if total_time <= 0:
-            total_time = 1e-44
-
-    filter_threshold = options.get("filter_threshold", 0.01)
-
-    for child in frame.children:
-        proportion_of_total = child.time / total_time
-
-        if proportion_of_total < filter_threshold:
-            delete_frame_from_tree(child, replace_with="nothing")
-
-    for child in frame.children:
-        remove_irrelevant_nodes(child, options=options, total_time=total_time)
-
-    return frame
-
-def remove_tracebackhide(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
-    """
-    Removes frames that have set a local `__tracebackhide__` (e.g.
-    `__tracebackhide__ = True`), to hide them from the output.
-    """
-    if frame is None:
-        return None
-
-    for child in frame.children:
-        remove_tracebackhide(child, options=options)
-
-        if child.has_tracebackhide:
-            # remove this node, moving the self_time and children up to the parent
-            delete_frame_from_tree(child, replace_with="children")
-
-    return frame
-
-def remove_unnecessary_self_time_nodes(
-    frame: Frame | None, options: ProcessorOptions
-) -> Frame | None:
-    """
-    When a frame has only one child, and that is a self-time frame, remove
-    that node and move the time to parent, since it's unnecessary - it
-    clutters the output and offers no additional information.
-    """
-    if frame is None:
-        return None
-
-    if len(frame.children) == 1 and frame.children[0].identifier == SELF_TIME_FRAME_IDENTIFIER:
-        delete_frame_from_tree(frame.children[0], replace_with="nothing")
-
-    for child in frame.children:
-        remove_unnecessary_self_time_nodes(child, options=options)
-
-    return frame

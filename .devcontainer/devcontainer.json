@@ -39,9 +39,8 @@
 	"features": {
 		"git": "latest",
 		"github-cli": "latest",
-		"node": "16",
-		"python": "3.10",
 		"sshd": "latest",
-		"ghcr.io/guiyomh/features/vim": "0.0.1"
+		"node": "16",
+		"python": "3.10"
 	}
 }
