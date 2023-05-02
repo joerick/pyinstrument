@@ -1,5 +1,6 @@
 import time
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 import pyinstrument
 from pyinstrument import processors
@@ -22,6 +23,7 @@ class ConsoleRenderer(FrameRenderer):
         self,
         unicode: bool = False,
         color: bool = False,
+        flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         **kwargs: Any,
     ):
@@ -34,6 +36,7 @@ class ConsoleRenderer(FrameRenderer):
 
         self.unicode = unicode
         self.color = color
+        self.flat = flat
         self.colors = self.colors_enabled if color else self.colors_disabled
         self.time = time
 
@@ -48,7 +51,10 @@ class ConsoleRenderer(FrameRenderer):
 
         self.root_frame = frame
 
-        result += self.render_frame(self.root_frame)
+        if self.flat:
+            result += self.render_frame_flat(self.root_frame)
+        else:
+            result += self.render_frame(self.root_frame)
         result += "\n"
 
         return result
@@ -83,10 +89,14 @@ class ConsoleRenderer(FrameRenderer):
             or frame in frame.group.exit_frames
         ):
             if self.time == "percent_of_total":
-                percent = self.frame_proportion_of_total_time(frame) * 100
-                time_str = self._ansi_color_for_time(frame) + f"{percent:.0f}%" + self.colors.end
+                percent = self.frame_proportion_of_total_time(frame.time) * 100
+                time_str = (
+                    self._ansi_color_for_time(frame.time) + f"{percent:.0f}%" + self.colors.end
+                )
             else:
-                time_str = self._ansi_color_for_time(frame) + f"{frame.time:.3f}" + self.colors.end
+                time_str = (
+                    self._ansi_color_for_time(frame.time) + f"{frame.time:.3f}" + self.colors.end
+                )
 
             name_color = self._ansi_color_for_name(frame)
 
@@ -137,11 +147,60 @@ class ConsoleRenderer(FrameRenderer):
 
         return result
 
-    def frame_proportion_of_total_time(self, frame: Frame):
-        return frame.time / self.root_frame.time
+    def render_frame_flat(self, frame: Frame) -> str:
+        @dataclass(frozen=True, eq=True)
+        class FrameDesc:
+            code_position_short: Optional[str]
+            function: str
 
-    def _ansi_color_for_time(self, frame: Frame):
-        proportion_of_total = self.frame_proportion_of_total_time(frame)
+        def walk(frame: Frame):
+            frame_desc = FrameDesc(frame.code_position_short, frame.function)
+            frame_desc_to_excl_time[frame_desc] = (
+                frame_desc_to_excl_time.get(frame_desc, 0) + frame.exclusive_time
+            )
+            frame_desc_to_frame[frame_desc] = frame
+
+            for child in frame.children:
+                walk(child)
+
+        frame_desc_to_excl_time: Dict[FrameDesc, float] = {}
+        frame_desc_to_frame: Dict[FrameDesc, Frame] = {}
+
+        walk(frame)
+
+        cost_list: List[Tuple[FrameDesc, float]] = sorted(
+            frame_desc_to_excl_time.items(), key=(lambda item: item[1]), reverse=True
+        )
+
+        res = ""
+
+        for frame_desc, excl_time in cost_list:
+            if self.time == "percent_of_total":
+                val = excl_time / frame.time * 100
+                unit = "%"
+            else:
+                val = excl_time
+                unit = "s"
+
+            color = self._ansi_color_for_time(excl_time)
+
+            res += "{color}{val:.3f}{unit}{c.end} {name_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
+                color=color,
+                val=val,
+                unit=unit,
+                c=self.colors,
+                name_color=self._ansi_color_for_name(frame_desc_to_frame[frame_desc]),
+                function=frame_desc.function,
+                code_position=frame_desc.code_position_short,
+            )
+
+        return res
+
+    def frame_proportion_of_total_time(self, time: float):
+        return time / self.root_frame.time
+
+    def _ansi_color_for_time(self, time: float):
+        proportion_of_total = self.frame_proportion_of_total_time(time)
 
         if proportion_of_total > 0.6:
             return self.colors.red

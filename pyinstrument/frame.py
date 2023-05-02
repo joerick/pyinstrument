@@ -129,6 +129,14 @@ class Frame:
         return self_time
 
     @property
+    def exclusive_time(self) -> float:
+        excl_time = self.time
+        for child in self.children:
+            excl_time -= child.time
+
+        return excl_time
+
+    @property
     def function(self) -> str:
         return self._identifier_parts[0]
 
