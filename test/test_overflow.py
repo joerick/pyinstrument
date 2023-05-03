@@ -9,7 +9,7 @@ from pyinstrument.renderers import (
     ConsoleRenderer,
     HTMLRenderer,
     JSONRenderer,
-    ProfRenderer,
+    PstatRenderer,
     SpeedscopeRenderer,
 )
 
@@ -69,4 +69,4 @@ def test_speedscope(deep_profiler_session):
 
 
 def test_prof(deep_profiler_session):
-    ProfRenderer().render(deep_profiler_session)
+    PstatRenderer().render(deep_profiler_session)

@@ -457,7 +457,7 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
     elif renderer == "session":
         return renderers.SessionRenderer
     elif renderer == "prof":
-        return renderers.ProfRenderer
+        return renderers.PstatRenderer
     else:
         try:
             return object_with_import_path(renderer)

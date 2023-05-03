@@ -16,9 +16,10 @@ FrameValue = Tuple[float, int, float, float, Dict[FrameKey, CallerValue]]
 StatsDict = Dict[FrameKey, FrameValue]
 
 
-class ProfRenderer(FrameRenderer):
+class PstatRenderer(FrameRenderer):
     """
-    Outputs a marshaled dict, containing processed frames.
+    Outputs a marshaled dict, containing processed frames in pstat format,
+    suitable for processing by gprof2dot and snakeviz.
     """
 
     output_file_extension = "prof"
