@@ -155,34 +155,34 @@ class ConsoleRenderer(FrameRenderer):
 
         def walk(frame: Frame):
             frame_desc = FrameDesc(frame.code_position_short, frame.function)
-            frame_desc_to_excl_time[frame_desc] = (
-                frame_desc_to_excl_time.get(frame_desc, 0) + frame.exclusive_time
+            frame_desc_to_self_time[frame_desc] = (
+                frame_desc_to_self_time.get(frame_desc, 0) + frame.total_self_time
             )
             frame_desc_to_frame[frame_desc] = frame
 
             for child in frame.children:
                 walk(child)
 
-        frame_desc_to_excl_time: Dict[FrameDesc, float] = {}
+        frame_desc_to_self_time: Dict[FrameDesc, float] = {}
         frame_desc_to_frame: Dict[FrameDesc, Frame] = {}
 
         walk(frame)
 
         cost_list: List[Tuple[FrameDesc, float]] = sorted(
-            frame_desc_to_excl_time.items(), key=(lambda item: item[1]), reverse=True
+            frame_desc_to_self_time.items(), key=(lambda item: item[1]), reverse=True
         )
 
         res = ""
 
-        for frame_desc, excl_time in cost_list:
+        for frame_desc, self_time in cost_list:
             if self.time == "percent_of_total":
-                val = excl_time / frame.time * 100
+                val = self_time / frame.time * 100
                 unit = "%"
             else:
-                val = excl_time
+                val = self_time
                 unit = "s"
 
-            color = self._ansi_color_for_time(excl_time)
+            color = self._ansi_color_for_time(self_time)
 
             res += "{color}{val:.3f}{unit}{c.end} {name_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
                 color=color,
