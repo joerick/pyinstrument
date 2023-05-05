@@ -1,11 +1,12 @@
 import time
 from pstats import Stats
+from test.fake_time_util import fake_time
+from typing import Any
 
 import pytest
 
 from pyinstrument import Profiler
 from pyinstrument.renderers import PstatsRenderer
-from test.fake_time_util import fake_time
 
 
 def a():
@@ -46,9 +47,9 @@ def test_pstats_renderer(profiler_session, tmp_path):
     prof = PstatsRenderer().render(profiler_session)
     with open(fname, "w", encoding="utf-8", errors="surrogateescape") as fid:
         fid.write(prof)
-    stats = Stats(str(fname))
+    stats: Any = Stats(str(fname))
     # Sanity check
-    assert stats.total_tt > 0  # type: ignore
+    assert stats.total_tt > 0
     # The graph is
     # a() -> b() -> d() -> e() -> time.sleep()
     #    \-> c() /
@@ -62,14 +63,14 @@ def test_pstats_renderer(profiler_session, tmp_path):
     #   values are the same as stats but without callers
 
     # check the time of d
-    d_key = [k for k in stats.stats.keys() if k[2] == 'd'][0]
+    d_key = [k for k in stats.stats.keys() if k[2] == "d"][0]
     d_val = stats.stats[d_key]
     d_cumtime = d_val[3]
     assert d_cumtime == pytest.approx(2)
 
     # check d's callers times are split
-    b_key = [k for k in stats.stats.keys() if k[2] == 'b'][0]
-    c_key = [k for k in stats.stats.keys() if k[2] == 'c'][0]
+    b_key = [k for k in stats.stats.keys() if k[2] == "b"][0]
+    c_key = [k for k in stats.stats.keys() if k[2] == "c"][0]
     d_callers = d_val[4]
     b_cumtime = d_callers[b_key][3]
     c_cumtime = d_callers[c_key][3]
@@ -77,7 +78,7 @@ def test_pstats_renderer(profiler_session, tmp_path):
     assert c_cumtime == pytest.approx(1)
 
     # check the time of e
-    e_key = [k for k in stats.stats.keys() if k[2] == 'e'][0]
+    e_key = [k for k in stats.stats.keys() if k[2] == "e"][0]
     e_val = stats.stats[e_key]
     e_cumtime = e_val[3]
     assert e_cumtime == pytest.approx(2)
