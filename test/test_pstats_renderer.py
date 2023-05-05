@@ -53,15 +53,31 @@ def test_pstats_renderer(profiler_session, tmp_path):
     # a() -> b() -> d() -> e() -> time.sleep()
     #    \-> c() /
     # so make sure d has callers of b, c, and that the times make sense
-    d = [k for k in stats.stats.keys() if 'd' in k]
-    assert len(d) == 1
-    val = stats.stats[d[0]]
-    d_ttime = val[3]
-    b = [k for k in stats.stats.keys() if 'b' in k]
-    c = [k for k in stats.stats.keys() if 'c' in k]
-    assert len(b) == 1
-    assert len(c) == 1
-    b_ttime = val[4][b[0]][3]
-    c_ttime = val[4][c[0]][3]
-    assert b_ttime - c_ttime == pytest.approx(0)
-    assert b_ttime + c_ttime == pytest.approx(d_ttime)
+
+    # in stats,
+    #   keys are tuples (file_path, line, func)
+    #   values are tuples (calltime, numcalls, selftime, cumtime, callers)
+    # in callers,
+    #   keys are the same as in stats
+    #   values are the same as stats but without callers
+
+    # check the time of d
+    d_key = [k for k in stats.stats.keys() if k[2] == 'd'][0]
+    d_val = stats.stats[d_key]
+    d_cumtime = d_val[3]
+    assert d_cumtime == pytest.approx(2)
+
+    # check d's callers times are split
+    b_key = [k for k in stats.stats.keys() if k[2] == 'b'][0]
+    c_key = [k for k in stats.stats.keys() if k[2] == 'c'][0]
+    d_callers = d_val[4]
+    b_cumtime = d_callers[b_key][3]
+    c_cumtime = d_callers[c_key][3]
+    assert b_cumtime == pytest.approx(1)
+    assert c_cumtime == pytest.approx(1)
+
+    # check the time of e
+    e_key = [k for k in stats.stats.keys() if k[2] == 'e'][0]
+    e_val = stats.stats[e_key]
+    e_cumtime = e_val[3]
+    assert e_cumtime == pytest.approx(2)
