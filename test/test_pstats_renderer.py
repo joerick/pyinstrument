@@ -5,6 +5,7 @@ import pytest
 
 from pyinstrument import Profiler
 from pyinstrument.renderers import PstatsRenderer
+from test.fake_time_util import fake_time
 
 
 def a():
@@ -30,13 +31,14 @@ def e():
 
 @pytest.fixture(scope="module")
 def profiler_session():
-    profiler = Profiler()
-    profiler.start()
+    with fake_time():
+        profiler = Profiler()
+        profiler.start()
 
-    a()
+        a()
 
-    profiler.stop()
-    return profiler.last_session
+        profiler.stop()
+        return profiler.last_session
 
 
 def test_pstats_renderer(profiler_session, tmp_path):
@@ -61,5 +63,5 @@ def test_pstats_renderer(profiler_session, tmp_path):
     assert len(c) == 1
     b_ttime = val[4][b[0]][3]
     c_ttime = val[4][c[0]][3]
-    assert b_ttime - c_ttime == pytest.approx(0, abs=0.001)
-    assert b_ttime + c_ttime == pytest.approx(d_ttime, abs=0.001)
+    assert b_ttime - c_ttime == pytest.approx(0)
+    assert b_ttime + c_ttime == pytest.approx(d_ttime)
