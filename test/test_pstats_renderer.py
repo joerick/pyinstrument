@@ -4,7 +4,7 @@ from pstats import Stats
 import pytest
 
 from pyinstrument import Profiler
-from pyinstrument.renderers import PstatRenderer
+from pyinstrument.renderers import PstatsRenderer
 
 
 def a():
@@ -39,9 +39,9 @@ def profiler_session():
     return profiler.last_session
 
 
-def test_prof_renderer(profiler_session, tmp_path):
+def test_pstats_renderer(profiler_session, tmp_path):
     fname = tmp_path / "test.prof"
-    prof = PstatRenderer().render(profiler_session)
+    prof = PstatsRenderer().render(profiler_session)
     with open(fname, "w", encoding="utf-8", errors="surrogateescape") as fid:
         fid.write(prof)
     stats = Stats(str(fname))
