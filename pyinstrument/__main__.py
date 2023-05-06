@@ -394,6 +394,8 @@ def compute_render_options(
 
     if options.timeline:
         render_options["timeline"] = True
+    if options.show_all:
+        render_options["show_all"] = True
 
     # apply user options
     if options.render_options is not None:
