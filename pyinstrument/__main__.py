@@ -20,7 +20,16 @@ from pyinstrument.util import (
     file_supports_unicode,
     object_with_import_path,
 )
-from pyinstrument.vendor import appdirs, keypath
+
+try:
+    from pyinstrument.vendor import appdirs
+except ImportError:
+    import appdirs
+
+try:
+    from pyinstrument.vendor import keypath
+except ImportError:
+    import keypath
 
 # pyright: strict
 
