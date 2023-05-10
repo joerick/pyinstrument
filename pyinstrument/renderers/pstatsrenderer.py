@@ -22,7 +22,7 @@ class PstatsRenderer(FrameRenderer):
     suitable for processing by gprof2dot and snakeviz.
     """
 
-    output_file_extension = "prof"
+    output_file_extension = "pstats"
     output_is_binary = True
 
     def __init__(self, **kwargs: Any):

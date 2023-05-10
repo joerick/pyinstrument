@@ -43,10 +43,10 @@ def profiler_session():
 
 
 def test_pstats_renderer(profiler_session, tmp_path):
-    fname = tmp_path / "test.prof"
-    prof = PstatsRenderer().render(profiler_session)
+    fname = tmp_path / "test.pstats"
+    pstats = PstatsRenderer().render(profiler_session)
     with open(fname, "w", encoding="utf-8", errors="surrogateescape") as fid:
-        fid.write(prof)
+        fid.write(pstats)
     stats: Any = Stats(str(fname))
     # Sanity check
     assert stats.total_tt > 0

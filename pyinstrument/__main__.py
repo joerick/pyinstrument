@@ -87,7 +87,7 @@ def main():
         action="store",
         type="string",
         help=(
-            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', 'prof', "
+            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', 'pstats', "
             "or python import path to a renderer class. Defaults to the appropriate format "
             "for the extension if OUTFILE is given, otherwise, defaults to 'text'."
         ),
@@ -456,7 +456,7 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
         return renderers.SpeedscopeRenderer
     elif renderer == "session":
         return renderers.SessionRenderer
-    elif renderer == "prof":
+    elif renderer == "pstats":
         return renderers.PstatsRenderer
     else:
         try:
@@ -465,7 +465,7 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
             # ValueError means we failed to import this object
             raise OptionsParseError(
                 f"Failed to find renderer with name {renderer!r}.\n"
-                "Options are text, html, json, speedscope, prof or a Python\n"
+                "Options are text, html, json, speedscope, pstats or a Python\n"
                 "import path to a Renderer class.\n"
                 "\n"
                 f"Underlying error: {err}\n"
@@ -488,8 +488,8 @@ def guess_renderer_from_outfile(outfile: str) -> str | None:
         return "json"
     elif ext == ".pyisession":
         return "session"
-    elif ext == ".prof":
-        return "prof"
+    elif ext == ".pstats":
+        return "pstats"
     else:
         return None
 
