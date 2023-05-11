@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import codecs
 import fnmatch
 import glob
 import json
@@ -88,9 +87,9 @@ def main():
         action="store",
         type="string",
         help=(
-            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope' or python "
-            "import path to a renderer class. Defaults to the appropriate format for the extension "
-            "if OUTFILE is given, otherwise, defaults to 'text'."
+            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', 'pstats', "
+            "or python import path to a renderer class. Defaults to the appropriate format "
+            "for the extension if OUTFILE is given, otherwise, defaults to 'text'."
         ),
         default=None,
     )
@@ -263,7 +262,7 @@ def main():
     # open the output file
 
     if options.outfile:
-        f = codecs.open(options.outfile, "w", "utf-8")
+        f = open(options.outfile, "w", encoding="utf-8", errors="surrogateescape")
         should_close_f_after_writing = True
     else:
         f = sys.stdout
@@ -275,6 +274,12 @@ def main():
         renderer = create_renderer(options, output_file=f)
     except OptionsParseError as e:
         parser.error(e.args[0])
+        exit(1)
+
+    if renderer.output_is_binary and not options.outfile and file_is_a_tty(f):
+        parser.error(
+            "Can't write binary output to a terminal. Redirect to a file or use --outfile."
+        )
         exit(1)
 
     # get the session - execute code or load from disk
@@ -323,13 +328,6 @@ def main():
             pass
 
         session = profiler.stop()
-
-    if options.outfile:
-        f = codecs.open(options.outfile, "w", "utf-8")
-        should_close_f_after_writing = True
-    else:
-        f = sys.stdout
-        should_close_f_after_writing = False
 
     if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
         # don't write HTML to a TTY, open in browser instead
@@ -458,6 +456,8 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
         return renderers.SpeedscopeRenderer
     elif renderer == "session":
         return renderers.SessionRenderer
+    elif renderer == "pstats":
+        return renderers.PstatsRenderer
     else:
         try:
             return object_with_import_path(renderer)
@@ -465,8 +465,8 @@ def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
             # ValueError means we failed to import this object
             raise OptionsParseError(
                 f"Failed to find renderer with name {renderer!r}.\n"
-                "Options are text, html, json, speedscope or a Python import path to a Renderer\n"
-                "class.\n"
+                "Options are text, html, json, speedscope, pstats or a Python\n"
+                "import path to a Renderer class.\n"
                 "\n"
                 f"Underlying error: {err}\n"
             )
@@ -488,6 +488,8 @@ def guess_renderer_from_outfile(outfile: str) -> str | None:
         return "json"
     elif ext == ".pyisession":
         return "session"
+    elif ext == ".pstats":
+        return "pstats"
     else:
         return None
 

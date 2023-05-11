@@ -22,6 +22,11 @@ class Renderer:
     Renderer output file extension without dot prefix. The default value is `txt`
     """
 
+    output_is_binary: bool = False
+    """
+    Whether the output of this renderer is binary data. The default value is `False`.
+    """
+
     def __init__(self):
         pass
 
