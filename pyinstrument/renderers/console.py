@@ -153,18 +153,21 @@ class ConsoleRenderer(FrameRenderer):
             code_position_short: Optional[str]
             function: str
 
+
         def walk(frame: Frame):
             frame_desc = FrameDesc(frame.code_position_short, frame.function)
             frame_desc_to_self_time[frame_desc] = (
                 frame_desc_to_self_time.get(frame_desc, 0) + frame.total_self_time
             )
             frame_desc_to_frame[frame_desc] = frame
+            frame_desc_to_ncalls[frame_desc] = frame_desc_to_ncalls.get(frame_desc, 0) + 1
 
             for child in frame.children:
                 walk(child)
 
         frame_desc_to_self_time: Dict[FrameDesc, float] = {}
         frame_desc_to_frame: Dict[FrameDesc, Frame] = {}
+        frame_desc_to_ncalls: Dict[FrameDesc, int] = {}
 
         walk(frame)
 
@@ -184,7 +187,7 @@ class ConsoleRenderer(FrameRenderer):
 
             color = self._ansi_color_for_time(self_time)
 
-            res += "{color}{val:.3f}{unit}{c.end} {name_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
+            res += "{color}{val:.3f}{unit}{c.end} {name_color}{function}{c.end}  {c.faint}{code_position}{c.end} {ncalls}\n".format(
                 color=color,
                 val=val,
                 unit=unit,
@@ -192,6 +195,7 @@ class ConsoleRenderer(FrameRenderer):
                 name_color=self._ansi_color_for_name(frame_desc_to_frame[frame_desc]),
                 function=frame_desc.function,
                 code_position=frame_desc.code_position_short,
+                ncalls=frame_desc_to_ncalls[frame_desc],
             )
 
         return res
