@@ -1,6 +1,5 @@
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import pyinstrument
 from pyinstrument import processors
@@ -148,33 +147,28 @@ class ConsoleRenderer(FrameRenderer):
         return result
 
     def render_frame_flat(self, frame: Frame) -> str:
-        @dataclass(frozen=True, eq=True)
-        class FrameDesc:
-            code_position_short: Optional[str]
-            function: str
-
         def walk(frame: Frame):
-            frame_desc = FrameDesc(frame.code_position_short, frame.function)
-            frame_desc_to_self_time[frame_desc] = (
-                frame_desc_to_self_time.get(frame_desc, 0) + frame.total_self_time
+            frame_id_to_time[frame.identifier] = (
+                frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
             )
-            frame_desc_to_frame[frame_desc] = frame
+
+            frame_id_to_frame[frame.identifier] = frame
 
             for child in frame.children:
                 walk(child)
 
-        frame_desc_to_self_time: Dict[FrameDesc, float] = {}
-        frame_desc_to_frame: Dict[FrameDesc, Frame] = {}
+        frame_id_to_time: Dict[str, float] = {}
+        frame_id_to_frame: Dict[str, Frame] = {}
 
         walk(frame)
 
-        cost_list: List[Tuple[FrameDesc, float]] = sorted(
-            frame_desc_to_self_time.items(), key=(lambda item: item[1]), reverse=True
+        cost_list: List[Tuple[str, float]] = sorted(
+            frame_id_to_time.items(), key=(lambda item: item[1]), reverse=True
         )
 
         res = ""
 
-        for frame_desc, self_time in cost_list:
+        for frame_id, self_time in cost_list:
             if self.time == "percent_of_total":
                 val = self_time / frame.time * 100
                 unit = "%"
@@ -189,9 +183,9 @@ class ConsoleRenderer(FrameRenderer):
                 val=val,
                 unit=unit,
                 c=self.colors,
-                name_color=self._ansi_color_for_name(frame_desc_to_frame[frame_desc]),
-                function=frame_desc.function,
-                code_position=frame_desc.code_position_short,
+                name_color=self._ansi_color_for_name(frame_id_to_frame[frame_id]),
+                function=frame_id_to_frame[frame_id].function,
+                code_position=frame_id_to_frame[frame_id].code_position_short,
             )
 
         return res
