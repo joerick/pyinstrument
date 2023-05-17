@@ -25,7 +25,7 @@ class ConsoleRenderer(FrameRenderer):
         flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         **kwargs: Any,
-    ):
+    ) -> None:
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
@@ -39,7 +39,7 @@ class ConsoleRenderer(FrameRenderer):
         self.colors = self.colors_enabled if color else self.colors_disabled
         self.time = time
 
-    def render(self, session: Session):
+    def render(self, session: Session) -> str:
         result = self.render_preamble(session)
 
         frame = self.preprocess(session.root_frame())
@@ -59,7 +59,7 @@ class ConsoleRenderer(FrameRenderer):
         return result
 
     # pylint: disable=W1401
-    def render_preamble(self, session: Session):
+    def render_preamble(self, session: Session) -> str:
         lines = [
             r"",
             r"  _     ._   __/__   _ _  _  _ _/_  ",
@@ -88,31 +88,11 @@ class ConsoleRenderer(FrameRenderer):
             or frame in frame.group.exit_frames
         ):
             if self.time == "percent_of_total":
-                percent = self.frame_proportion_of_total_time(frame.time) * 100
-                time_str = (
-                    self._ansi_color_for_time(frame.time) + f"{percent:.0f}%" + self.colors.end
-                )
+                val = self.frame_proportion_of_total_time(frame.time) * 100
             else:
-                time_str = (
-                    self._ansi_color_for_time(frame.time) + f"{frame.time:.3f}" + self.colors.end
-                )
+                val = frame.time
 
-            name_color = self._ansi_color_for_name(frame)
-
-            class_name = frame.class_name
-            if class_name:
-                name = f"{class_name}.{frame.function}"
-            else:
-                name = frame.function
-
-            result = "{indent}{time_str} {name_color}{name}{c.end}  {c.faint}{code_position}{c.end}\n".format(
-                indent=indent,
-                time_str=time_str,
-                name_color=name_color,
-                name=name,
-                code_position=frame.code_position_short,
-                c=self.colors,
-            )
+            result = f"{indent}{self.frame_description(frame, val, self._ansi_color_for_time(frame.time))}"
 
             if self.unicode:
                 indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
@@ -171,29 +151,39 @@ class ConsoleRenderer(FrameRenderer):
         for frame_id, self_time in cost_list:
             if self.time == "percent_of_total":
                 val = self_time / frame.time * 100
-                unit = "%"
             else:
                 val = self_time
-                unit = "s"
 
-            color = self._ansi_color_for_time(self_time)
-
-            res += "{color}{val:.3f}{unit}{c.end} {name_color}{function}{c.end}  {c.faint}{code_position}{c.end}\n".format(
-                color=color,
-                val=val,
-                unit=unit,
-                c=self.colors,
-                name_color=self._ansi_color_for_name(frame_id_to_frame[frame_id]),
-                function=frame_id_to_frame[frame_id].function,
-                code_position=frame_id_to_frame[frame_id].code_position_short,
+            res += self.frame_description(
+                frame_id_to_frame[frame_id], val, self._ansi_color_for_time(self_time)
             )
 
         return res
 
-    def frame_proportion_of_total_time(self, time: float):
+    def frame_description(self, frame: Frame, time: float, time_color: str) -> str:
+        if self.time == "percent_of_total":
+            unit = "%"
+        else:
+            unit = "s"
+
+        value_str = f"{time_color}{time:.3f}{unit}{self.colors.end}"
+
+        class_name = frame.class_name
+        if class_name:
+            function_name = f"{class_name}.{frame.function}"
+        else:
+            function_name = frame.function
+        function_color = self._ansi_color_for_name(frame)
+        function_str = f"{function_color}{function_name}{self.colors.end}"
+
+        code_position_str = f"{self.colors.faint}{frame.code_position_short}{self.colors.end}"
+
+        return value_str + " " + function_str + " " + code_position_str + "\n"
+
+    def frame_proportion_of_total_time(self, time: float) -> float:
         return time / self.root_frame.time
 
-    def _ansi_color_for_time(self, time: float):
+    def _ansi_color_for_time(self, time: float) -> str:
         proportion_of_total = self.frame_proportion_of_total_time(time)
 
         if proportion_of_total > 0.6:
@@ -205,7 +195,7 @@ class ConsoleRenderer(FrameRenderer):
         else:
             return self.colors.bright_green + self.colors.faint
 
-    def _ansi_color_for_name(self, frame: Frame):
+    def _ansi_color_for_name(self, frame: Frame) -> str:
         if frame.is_application_code:
             return self.colors.bg_dark_blue_255 + self.colors.white_255
         else:
