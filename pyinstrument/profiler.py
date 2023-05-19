@@ -152,12 +152,16 @@ class Profiler:
 
         cpu_time = process_time() - self._active_session.start_process_time
 
+        import psutil
+
+        cmdline = " ".join(psutil.Process().cmdline())
+
         session = Session(
             frame_records=self._active_session.frame_records,
             start_time=self._active_session.start_time,
             duration=time.time() - self._active_session.start_time,
             sample_count=len(self._active_session.frame_records),
-            program=" ".join(sys.argv),
+            program=cmdline,
             start_call_stack=self._active_session.start_call_stack,
             cpu_time=cpu_time,
         )

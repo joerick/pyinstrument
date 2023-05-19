@@ -23,7 +23,7 @@ setup(
     author_email="joerick@mac.com",
     url="https://github.com/joerick/pyinstrument",
     keywords=["profiling", "profile", "profiler", "cpu", "time", "sampling"],
-    install_requires=[],
+    install_requires=["psutil"],
     extras_require={"jupyter": ["ipython"]},
     include_package_data=True,
     python_requires=">=3.7",
