@@ -22,6 +22,11 @@ class Renderer:
     Renderer output file extension without dot prefix. The default value is `txt`
     """
 
+    output_is_binary: bool = False
+    """
+    Whether the output of this renderer is binary data. The default value is `False`.
+    """
+
     def __init__(self):
         pass
 
@@ -68,7 +73,18 @@ class FrameRenderer(Renderer):
         self.processor_options = processor_options or {}
 
         if show_all:
-            self.processors.remove(processors.group_library_frames_processor)
+            for p in (
+                processors.group_library_frames_processor,
+                processors.remove_importlib,
+                processors.remove_irrelevant_nodes,
+                processors.remove_tracebackhide,
+                # note: we're not removing these processors
+                # processors.remove_unnecessary_self_time_nodes,
+                #    (still hide the inner pyinstrument synthetic frames)
+                # processors.remove_first_pyinstrument_frames_processor,
+                #    (still hide the outer pyinstrument calling frames)
+            ):
+                self.processors.remove(p)
         if timeline:
             self.processors.remove(processors.aggregate_repeated_calls)
 
