@@ -1,16 +1,21 @@
-from pyinstrument import Profiler
 import time
 from datetime import datetime
 
+from pyinstrument import Profiler
+
 try:
     import falcon
+
     PROFILING = True  # Use environment variable for setting it
 except ImportError:
     print("This example requires falcon.")
     print("Install using `pip install falcon`.")
     exit(1)
 
+
 class ProfilerMiddleware:
+    filename = "pyinstrument-profile"
+
     def __init__(self, interval=0.01):
         self.profiler = Profiler(interval=interval)
 
@@ -33,4 +38,4 @@ class HelloResource:
 app = falcon.App()
 if PROFILING:
     app.add_middleware(ProfilerMiddleware())
-app.add_route('/', HelloResource())
+app.add_route("/", HelloResource())

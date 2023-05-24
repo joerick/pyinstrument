@@ -45,6 +45,7 @@ repos:
       - greenlet
       - types-click
       - types-requests
+      - falcon
 
 
 -   repo: local
