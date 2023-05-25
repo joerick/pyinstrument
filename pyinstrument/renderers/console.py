@@ -92,7 +92,7 @@ class ConsoleRenderer(FrameRenderer):
             else:
                 val = frame.time
 
-            result = f"{indent}{self.frame_description(frame, val, self._ansi_color_for_time(frame.time))}"
+            result = f"{indent}{self.frame_description(frame, val, self._ansi_color_for_time(frame.time))}\n"
 
             if self.unicode:
                 indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
@@ -146,7 +146,7 @@ class ConsoleRenderer(FrameRenderer):
             frame_id_to_time.items(), key=(lambda item: item[1]), reverse=True
         )
 
-        res = ""
+        result = ""
 
         for frame_id, self_time in cost_list:
             if self.time == "percent_of_total":
@@ -154,11 +154,12 @@ class ConsoleRenderer(FrameRenderer):
             else:
                 val = self_time
 
-            res += self.frame_description(
+            result += self.frame_description(
                 frame_id_to_frame[frame_id], val, self._ansi_color_for_time(self_time)
             )
+            result += "\n"
 
-        return res
+        return result
 
     def frame_description(self, frame: Frame, time: float, time_color: str) -> str:
         if self.time == "percent_of_total":
@@ -178,7 +179,7 @@ class ConsoleRenderer(FrameRenderer):
 
         code_position_str = f"{self.colors.faint}{frame.code_position_short}{self.colors.end}"
 
-        return value_str + " " + function_str + " " + code_position_str + "\n"
+        return f"{value_str} {function_str}  {code_position_str}"
 
     def frame_proportion_of_total_time(self, time: float) -> float:
         return time / self.root_frame.time
