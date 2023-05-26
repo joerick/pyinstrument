@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 import pyinstrument
 from pyinstrument import processors
 from pyinstrument.frame import Frame
-from pyinstrument.renderers.base import FrameRenderer, ProcessorList
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import truncate
@@ -39,8 +39,12 @@ class ConsoleRenderer(FrameRenderer):
         self.unicode = unicode
         self.color = color
         self.flat = flat
-        self.colors = self.colors_enabled if color else self.colors_disabled
         self.time = time
+
+        if self.flat and self.timeline:
+            raise Renderer.MisconfigurationError("Cannot use timeline and flat options together.")
+
+        self.colors = self.colors_enabled if color else self.colors_disabled
 
     def render(self, session: Session) -> str:
         result = self.render_preamble(session)

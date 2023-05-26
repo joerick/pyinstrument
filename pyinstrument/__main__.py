@@ -438,7 +438,7 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
 
     try:
         return renderer_class(**render_options)
-    except TypeError as err:
+    except (TypeError, renderers.Renderer.MisconfigurationError) as err:
         # TypeError is probably a bad renderer option, so we produce a nicer error message
         raise OptionsParseError(
             f"Failed to create {renderer_class.__name__}. Check your renderer options.\n  {err}\n"

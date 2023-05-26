@@ -36,6 +36,9 @@ class Renderer:
         """
         raise NotImplementedError()
 
+    class MisconfigurationError(Exception):
+        pass
+
 
 class FrameRenderer(Renderer):
     """
