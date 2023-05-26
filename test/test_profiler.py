@@ -64,9 +64,9 @@ def test_collapses_multiple_calls_by_default():
     # |- 0.500 long_function_a  test/test_profiler.py:17
     # |- 0.500 long_function_b  test/test_profiler.py:20
 
-    assert text_output.count("1.500s test_collapses_multiple_calls_by_default") == 1
-    assert text_output.count("0.500s long_function_a") == 1
-    assert text_output.count("1.000s long_function_b") == 1
+    assert text_output.count("1.500 test_collapses_multiple_calls_by_default") == 1
+    assert text_output.count("0.500 long_function_a") == 1
+    assert text_output.count("1.000 long_function_b") == 1
 
 
 def test_profiler_retains_multiple_calls():
@@ -148,9 +148,9 @@ def test_class_methods():
     # |  `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
     # `- 0.250 long_static_method  test/test_profiler.py:32
     #    `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
-    assert text_output.count("0.500s ClassWithMethods.long_method") == 1
-    assert text_output.count("0.250s ClassWithMethods.long_class_method") == 1
-    assert text_output.count("0.250s long_static_method") == 1
+    assert text_output.count("0.500 ClassWithMethods.long_method") == 1
+    assert text_output.count("0.250 ClassWithMethods.long_class_method") == 1
+    assert text_output.count("0.250 long_static_method") == 1
 
 
 def test_context_manager():
