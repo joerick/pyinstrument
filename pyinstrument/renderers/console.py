@@ -1,3 +1,4 @@
+from __future__ import annotations
 import time
 from typing import Any, Dict, List, Tuple
 
@@ -88,12 +89,7 @@ class ConsoleRenderer(FrameRenderer):
             or frame.total_self_time > 0.2 * self.root_frame.time
             or frame in frame.group.exit_frames
         ):
-            if self.time == "percent_of_total":
-                val = self.frame_proportion_of_total_time(frame.time) * 100
-            else:
-                val = frame.time
-
-            result = f"{indent}{self.frame_description(frame, val, self._ansi_color_for_time(frame.time))}\n"
+            result = f"{indent}{self.frame_description(frame)}\n"
 
             if self.unicode:
                 indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
@@ -143,32 +139,29 @@ class ConsoleRenderer(FrameRenderer):
 
         walk(frame)
 
-        cost_list: List[Tuple[str, float]] = sorted(
+        id_time_pairs: List[Tuple[str, float]] = sorted(
             frame_id_to_time.items(), key=(lambda item: item[1]), reverse=True
         )
 
+
         result = ""
 
-        for frame_id, self_time in cost_list:
-            if self.time == "percent_of_total":
-                val = self_time / frame.time * 100
-            else:
-                val = self_time
-
-            result += self.frame_description(
-                frame_id_to_frame[frame_id], val, self._ansi_color_for_time(self_time)
-            )
+        for frame_id, self_time in id_time_pairs:
+            result += self.frame_description(frame_id_to_frame[frame_id], override_time=self_time)
             result += "\n"
 
         return result
 
-    def frame_description(self, frame: Frame, time: float, time_color: str) -> str:
-        if self.time == "percent_of_total":
-            unit = "%"
-        else:
-            unit = "s"
+    def frame_description(self, frame: Frame, *, override_time: float | None = None) -> str:
+        time = override_time if override_time is not None else frame.time
+        time_color = self._ansi_color_for_time(time)
 
-        value_str = f"{time_color}{time:.3f}{unit}{self.colors.end}"
+        if self.time == "percent_of_total":
+            time_str = f"{self.frame_proportion_of_total_time(time) * 100:.1f}%"
+        else:
+            time_str = f"{time:.3f}"
+
+        value_str = f"{time_color}{time_str}{self.colors.end}"
 
         class_name = frame.class_name
         if class_name:
