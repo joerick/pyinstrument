@@ -30,6 +30,7 @@ class ConsoleRenderer(FrameRenderer):
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
         :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
+        :param flat: Display a flat profile instead of a call graph.
         """
         super().__init__(**kwargs)
 
