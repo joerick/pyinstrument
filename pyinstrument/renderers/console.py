@@ -143,6 +143,8 @@ class ConsoleRenderer(FrameRenderer):
             frame_id_to_time.items(), key=(lambda item: item[1]), reverse=True
         )
 
+        # remove nodes that represent less than 0.1% of the total time
+        id_time_pairs = [pair for pair in id_time_pairs if pair[1] / self.root_frame.time > 0.001]
 
         result = ""
 
