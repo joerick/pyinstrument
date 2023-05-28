@@ -36,6 +36,9 @@ class Renderer:
         """
         raise NotImplementedError()
 
+    class MisconfigurationError(Exception):
+        pass
+
 
 class FrameRenderer(Renderer):
     """
@@ -56,6 +59,9 @@ class FrameRenderer(Renderer):
     Dictionary containing processor options, passed to each processor.
     """
 
+    show_all: bool
+    timeline: bool
+
     def __init__(
         self,
         show_all: bool = False,
@@ -71,6 +77,9 @@ class FrameRenderer(Renderer):
         # add to and manipulate them before calling render()
         self.processors = self.default_processors()
         self.processor_options = processor_options or {}
+
+        self.show_all = show_all
+        self.timeline = timeline
 
         if show_all:
             for p in (
