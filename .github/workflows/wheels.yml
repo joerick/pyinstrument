@@ -46,6 +46,7 @@ jobs:
           CIBW_SKIP: pp*
           CIBW_ARCHS: ${{matrix.archs}}
           CIBW_ARCHS_MACOS: auto universal2
+          CIBW_PRERELEASE_PYTHONS: True
 
       - uses: actions/upload-artifact@v2
         with:
