@@ -54,6 +54,15 @@ Known issues
 Changelog
 ---------
 
+### v4.5.0
+
+_5 June 2023_
+
+-   Adds a flat mode to the console renderer, which can be enabled by passing `-p flat` on the command line. This mode shows the heaviest frame as measured by self-time, which can be useful in some codebases. (#240)
+-   Adds the ability to save `pstats` files. This is the file format used by cprofile in the stdlib. It's less detailed than pyinstrument profiles, but it's compatible with more tools. (#236)
+-   Fixes a detail of the `--show-all` option - pyinstrument will no longer remove Python-internal frames when this option is supplied. (#239)
+-   Internally to the HTML renderer, it now uses Svelte to render the frontend, meaning profile HTML files bundle less javascript and so are smaller. (#222)
+
 ### v4.4.0
 
 _5 November 2022_
