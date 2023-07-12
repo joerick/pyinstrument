@@ -204,6 +204,7 @@ class Frame:
     def code_position_short(self) -> str | None:
         if self.file_path_short and self.line_no:
             return "%s:%i" % (self.file_path_short, self.line_no)
+        return self.file_path_short
 
     _children: list[Frame]
     attributes: dict[str, float]
