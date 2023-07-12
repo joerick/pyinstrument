@@ -361,13 +361,17 @@ class FrameGroup:
     def frames(self) -> Sequence[Frame]:
         return tuple(self._frames)
 
-    # pylint: disable=W0212
     def add_frame(self, frame: Frame):
         if frame.group:
-            frame.group._frames.remove(frame)
+            frame.group.remove_frame(frame)
 
         self._frames.append(frame)
         frame.group = self
+
+    def remove_frame(self, frame: Frame):
+        assert frame.group is self
+        self._frames.remove(frame)
+        frame.group = None
 
     @property
     def exit_frames(self):
