@@ -151,24 +151,29 @@ class Frame:
             return self.parent.file_path_short
 
         if not hasattr(self, "_file_path_short"):
+            result = None
+
             if self.file_path:
-                result = None
+                if len(self.file_path.split(os.sep)) == 1:
+                    # probably not a file path at all, more likely <built-in>
+                    # or similar
+                    result = self.file_path
+                else:
+                    for path in sys.path:
+                        # On Windows, if self.file_path and path are on
+                        # different drives, relpath will result in exception,
+                        # because it cannot compute a relpath in this case.
+                        # The root cause is that on Windows, there is no root
+                        # dir like '/' on Linux.
+                        try:
+                            candidate = os.path.relpath(self.file_path, path)
+                        except ValueError:
+                            continue
 
-                for path in sys.path:
-                    # On Windows, if self.file_path and path are on different drives, relpath
-                    # will result in exception, because it cannot compute a relpath in this case.
-                    # The root cause is that on Windows, there is no root dir like '/' on Linux.
-                    try:
-                        candidate = os.path.relpath(self.file_path, path)
-                    except ValueError:
-                        continue
+                        if not result or (len(candidate.split(os.sep)) < len(result.split(os.sep))):
+                            result = candidate
 
-                    if not result or (len(candidate.split(os.sep)) < len(result.split(os.sep))):
-                        result = candidate
-
-                self._file_path_short = result
-            else:
-                self._file_path_short = None
+            self._file_path_short = result
 
         return self._file_path_short
 
