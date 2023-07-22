@@ -1,1 +1,1 @@
--e .[test,bin,jupyter,docs,examples,types]
+-e .[test,bin,docs,examples,types]
