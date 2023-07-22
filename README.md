@@ -54,6 +54,14 @@ Known issues
 Changelog
 ---------
 
+### v4.5.1
+
+_22 July 2023_
+
+-   Fix a bug that caused `[X frames hidden]` in the output when frames were deleted due to `__tracebackhide__` (#255)
+-   Fix a bug causing built-in code to display the filepath `None` in the console output (#254)
+-   Some docs improvements (#251)
+
 ### v4.5.0
 
 _5 June 2023_
