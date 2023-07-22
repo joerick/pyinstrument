@@ -24,7 +24,35 @@ setup(
     url="https://github.com/joerick/pyinstrument",
     keywords=["profiling", "profile", "profiler", "cpu", "time", "sampling"],
     install_requires=[],
-    extras_require={"jupyter": ["ipython"]},
+    extras_require={
+        "test": [
+            "pytest",
+            "flaky",
+            "trio",
+            "greenlet>=1.1.3",
+            "pytest-asyncio==0.12.0",  # pinned to an older version due to an incompatibility with flaky
+            "sphinx-autobuild==2021.3.14",
+        ],
+        "bin": [
+            "click",
+            "nox",
+        ],
+        "jupyter": ["ipython"],
+        "docs": [
+            "sphinx==4.2.0",
+            "myst-parser==0.15.1",
+            "furo==2021.6.18b36",
+            "sphinxcontrib-programoutput==0.17",
+        ],
+        "examples": [
+            "numpy",
+            "django",
+            "ascii_graph @ https://github.com/nyurik/py-ascii-graph/archive/refs/heads/fix-python310.zip",
+        ],
+        "types": [
+            "typing_extensions",
+        ],
+    },
     include_package_data=True,
     python_requires=">=3.7",
     entry_points={"console_scripts": ["pyinstrument = pyinstrument.__main__:main"]},
