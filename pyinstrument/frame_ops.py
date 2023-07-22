@@ -97,6 +97,11 @@ def delete_frame_from_tree(
     parent.absorbed_time += frame.absorbed_time
 
     frame.remove_from_parent()
+    # in this call, recursive is true, even when replace_with is 'children'.
+    # When replace_with is 'self_time' or 'nothing', that's what we want. But
+    # when it's 'children', by now, the children have been removed and added
+    # to the parent, so recursive is irrelevant.
+    remove_frame_from_groups(frame, recursive=True)
 
 
 def combine_frames(frame: Frame, into: Frame):
@@ -119,3 +124,24 @@ def combine_frames(frame: Frame, into: Frame):
 
     into.add_children(frame.children)
     frame.remove_from_parent()
+    remove_frame_from_groups(frame, recursive=False)
+
+
+def remove_frame_from_groups(frame: Frame, recursive: bool):
+    """
+    Removes frame from any groups that it is a member of. Should be used when
+    removing a frame from a tree, so groups don't keep references to removed
+    frames.
+    """
+    if recursive and frame.children:
+        for child in frame.children:
+            remove_frame_from_groups(child, recursive=True)
+
+    if frame.group:
+        group = frame.group
+        group.remove_frame(frame)
+
+        if len(group.frames) == 1:
+            # a group with only one frame is meaningless, we'll remove it
+            # entirely.
+            group.remove_frame(group.frames[0])
