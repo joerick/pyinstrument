@@ -58,6 +58,16 @@ Here are the options you can use:
 **Protip:** `-r html` will give you a interactive profile report as HTML - you
 can really explore this way!
 
+### Profile a Python CLI command
+
+For profiling an installed Python script via the
+["console_script" entry point](https://packaging.python.org/en/latest/specifications/entry-points/#use-for-scripts),
+call Pyinstrument directly from the command line with the `--from-path` flag.
+Instead of writing `cli-script`, type `pyinstrument --from-path cli-script`.
+Your script will run as normal, and at the end (or when you press `^C`),
+Pyinstrument will output a colored summary showing where most of the time was
+spent.
+
 ### Profile a specific chunk of code
 
 Pyinstrument also has a Python API. Just surround your code with Pyinstrument,
