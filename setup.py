@@ -29,7 +29,7 @@ setup(
             "pytest",
             "flaky",
             "trio",
-            "greenlet>=1.1.3",
+            "greenlet>=3.0.0a1",
             "pytest-asyncio==0.12.0",  # pinned to an older version due to an incompatibility with flaky
             "sphinx-autobuild==2021.3.14",
         ],
