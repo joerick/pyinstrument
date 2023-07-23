@@ -106,14 +106,14 @@ class TestCommandLine:
 
         process_pyi = subprocess.run(
             [*pyinstrument_invocation, "-m", "test_module", "arg1", "arg2"],
-            # stderr=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             check=True,
             cwd=tmp_path,
             text=True,
         )
         process_native = subprocess.run(
             [sys.executable, "-m", "test_module", "arg1", "arg2"],
-            # stderr=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             check=True,
             cwd=tmp_path,
             text=True,
@@ -121,6 +121,7 @@ class TestCommandLine:
 
         print("process_pyi.stderr", process_pyi.stderr)
         print("process_native.stderr", process_native.stderr)
+        assert process_native.stderr
         assert process_pyi.stderr == process_native.stderr
 
     def test_path_execution_details(self, pyinstrument_invocation, tmp_path: Path, monkeypatch):
