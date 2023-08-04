@@ -137,7 +137,7 @@ class PyinstrumentMagic(Magics):
         )
         as_text = _active_profiler.output_text(timeline=args.timeline)
         # repr_html may be a bit fragile, but it's been stable for a while
-        display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)
+        display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)  # type: ignore
 
         assert not _active_profiler.is_running
         _active_profiler = None

@@ -294,11 +294,11 @@ def main():
                 # when called with '-m', search the cwd for that module
                 sys.path[0] = os.path.abspath(".")
 
-            sys.argv[:] = [options.module_name] + options.module_args
+            argv = [options.module_name] + options.module_args
             code = "run_module(modname, run_name='__main__', alter_sys=True)"
             globs = {"run_module": runpy.run_module, "modname": options.module_name}
         else:
-            sys.argv[:] = args
+            argv = args
             if options.from_path:
                 progname = shutil.which(args[0])
                 if progname is None:
@@ -322,10 +322,14 @@ def main():
 
         profiler.start()
 
+        old_argv = sys.argv.copy()
         try:
+            sys.argv[:] = argv
             exec(code, globs, None)
         except (SystemExit, KeyboardInterrupt):
             pass
+        finally:
+            sys.argv[:] = old_argv
 
         session = profiler.stop()
 
