@@ -93,7 +93,6 @@ class HTMLRenderer(FrameRenderer):
     def default_processors(self) -> ProcessorList:
         return [
             processors.remove_importlib,
-            processors.remove_tracebackhide,
             processors.merge_consecutive_self_time,
             processors.aggregate_repeated_calls,
             processors.remove_unnecessary_self_time_nodes,

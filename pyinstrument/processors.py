@@ -128,6 +128,8 @@ def group_library_frames_processor(frame: Frame | None, options: ProcessorOption
             return False
         if should_hide:
             return True
+        if frame.has_tracebackhide:
+            return True
 
         return not frame.is_application_code
 

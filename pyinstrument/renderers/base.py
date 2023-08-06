@@ -93,7 +93,8 @@ class FrameRenderer(Renderer):
                 # processors.remove_first_pyinstrument_frames_processor,
                 #    (still hide the outer pyinstrument calling frames)
             ):
-                self.processors.remove(p)
+                if p in self.processors:
+                    self.processors.remove(p)
         if timeline:
             self.processors.remove(processors.aggregate_repeated_calls)
 
