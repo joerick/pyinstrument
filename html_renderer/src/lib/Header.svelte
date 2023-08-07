@@ -8,6 +8,11 @@
 
   const cpuTime = session.cpuTime?.toLocaleString(undefined, {maximumSignificantDigits: 3})
   const duration = session.duration.toLocaleString(undefined, {maximumSignificantDigits: 3})
+
+  let name = session.rootFrame?.function;
+  if (name == '<module>') {
+    name = session.program;
+  }
 </script>
 
 <div class="header">
@@ -34,6 +39,9 @@
         <div class="metric-value">{session.sampleCount}</div>
         <div class="metric-label">CPU time:</div>
         <div class="metric-value">{cpuTime} seconds</div>
+
+        <div class="metric-label">Program:</div>
+        <div class="metric-value">{name}</div>
       </div>
     </div>
   </div>
