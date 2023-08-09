@@ -7,9 +7,6 @@ from typing import Optional
 
 import greenlet
 import pytest
-import trio
-import trio._core._run
-import trio.lowlevel
 
 from pyinstrument import processors, stack_sampler
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER, Frame
@@ -61,6 +58,8 @@ async def test_sleep():
 
 
 def test_sleep_trio():
+    import trio
+
     async def run():
         profiler = Profiler()
         profiler.start()
@@ -102,6 +101,8 @@ def test_profiler_task_isolation(engine):
         if engine == "asyncio":
             await asyncio.sleep(async_time)
         else:
+            import trio
+
             await trio.sleep(async_time)
 
         time.sleep(sync_time / 2)
@@ -124,6 +125,7 @@ def test_profiler_task_isolation(engine):
 
             profiler_session = profile_task.result()
     elif engine == "trio":
+        import trio
 
         async def async_wait_and_capture(**kwargs):
             nonlocal profiler_session

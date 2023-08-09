@@ -3,7 +3,6 @@ import os
 import time
 from typing import Generator, Generic, Iterable, Iterator, NoReturn, Optional, TypeVar
 
-import trio
 from flaky import flaky
 
 from pyinstrument.frame import SYNTHETIC_LEAF_IDENTIFIERS, Frame
