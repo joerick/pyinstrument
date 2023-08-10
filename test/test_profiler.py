@@ -7,7 +7,6 @@ from test.fake_time_util import fake_time
 from typing import Generator, Optional
 
 import pytest
-import trio
 
 from pyinstrument import Profiler, renderers
 from pyinstrument.frame import Frame
