@@ -1,3 +1,4 @@
+import os
 import sys
 from test.util import calculate_frame_tree_times
 
@@ -19,6 +20,20 @@ ALL_PROCESSORS = [
 
 def self_time_frame(time):
     return Frame(SELF_TIME_FRAME_IDENTIFIER, time=time)
+
+
+def fixup_windows_paths(frame: Frame):
+    """
+    Deeply fixes windows paths within a frame tree. These tests are written with forward-slashes, but windows uses backslashes
+    """
+    identifier_parts = frame._identifier_parts
+    if len(identifier_parts) > 1:
+        identifier_parts[1] = os.path.normpath(identifier_parts[1])
+        frame._identifier_parts = identifier_parts
+        frame.identifier = "\x00".join(identifier_parts)
+
+    for child in frame.children:
+        fixup_windows_paths(child)
 
 
 def test_frame_passthrough_none():
@@ -296,7 +311,8 @@ def test_remove_unnecessary_self_time_nodes():
     assert strip_newlines_frame.time == 0.2
 
 
-def test_group_library_frames_processor():
+def test_group_library_frames_processor(monkeypatch):
+    monkeypatch.syspath_prepend("env/lib/python3.6")
     frame = Frame(
         identifier_or_frame_info="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
@@ -330,6 +346,10 @@ def test_group_library_frames_processor():
             ),
         ],
     )
+
+    if sys.platform.startswith("win"):
+        fixup_windows_paths(frame)
+
     calculate_frame_tree_times(frame)
     frame.self_check()
 
@@ -355,7 +375,4 @@ def test_group_library_frames_processor():
     assert group_root.children[0].children[0] in group.exit_frames
     assert group_root.children[0].children[0].children[0] not in group.frames
 
-    old_sys_path = sys.path[:]
-    sys.path.append("env/lib/python3.6")
     assert group.libraries == ["django"]
-    sys.path[:] = old_sys_path
