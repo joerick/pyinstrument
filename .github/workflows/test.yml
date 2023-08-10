@@ -43,8 +43,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest
-        pytest --only-ipython-magic
+        pytest && pytest --only-ipython-magic
 
   test-aarch64:
     name: "test (aarch64, ${{ matrix.pyver }})"
