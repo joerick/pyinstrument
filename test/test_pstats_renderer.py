@@ -93,7 +93,8 @@ def test_round_trip_encoding_of_binary_data(tmp_path: Path):
 
     data_blob_string = data_blob.decode(encoding="utf-8", errors="surrogateescape")
 
-    with open(file, mode="w", encoding="utf-8", errors="surrogateescape") as f:
+    # newline='' is required to prevent the default newline translation
+    with open(file, mode="w", encoding="utf-8", errors="surrogateescape", newline="") as f:
         f.write(data_blob_string)
 
     assert data_blob == data_blob_string.encode(encoding="utf-8", errors="surrogateescape")
