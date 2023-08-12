@@ -221,3 +221,27 @@ class TestCommandLine:
 
         assert function_name == "<module>"
         assert "busy_wait.py" in location
+
+    def test_binary_output(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        output_file = tmp_path / "output.pstats"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "--renderer=pstats",
+                f"--outfile={output_file}",
+                str(busy_wait_py),
+            ],
+            universal_newlines=True,
+        )
+
+        assert output_file.exists()
+
+        # check it can be loaded
+        import pstats
+
+        stats = pstats.Stats(str(output_file))
+        assert stats
