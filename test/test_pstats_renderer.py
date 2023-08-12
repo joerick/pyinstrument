@@ -46,9 +46,9 @@ def profiler_session():
 
 def test_pstats_renderer(profiler_session, tmp_path):
     fname = tmp_path / "test.pstats"
-    pstats = PstatsRenderer().render(profiler_session)
-    with open(fname, "w", encoding="utf-8", errors="surrogateescape") as fid:
-        fid.write(pstats)
+    pstats_data = PstatsRenderer().render(profiler_session)
+    with open(fname, "wb") as fid:
+        fid.write(pstats_data.encode(encoding="utf-8", errors="surrogateescape"))
     stats: Any = Stats(str(fname))
     # Sanity check
     assert stats.total_tt > 0

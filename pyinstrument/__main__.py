@@ -259,10 +259,18 @@ def main():
     if options.from_path and sys.platform == "win32":
         parser.error("--from-path is not supported on Windows")
 
+    renderer_class = get_renderer_class(options)
+
     # open the output file
 
     if options.outfile:
-        f = open(options.outfile, "w", encoding="utf-8", errors="surrogateescape")
+        f = open(
+            options.outfile,
+            "w",
+            encoding="utf-8",
+            errors="surrogateescape",
+            newline="" if renderer_class.output_is_binary else None,
+        )
         should_close_f_after_writing = True
     else:
         f = sys.stdout
@@ -271,7 +279,7 @@ def main():
     # create the renderer
 
     try:
-        renderer = create_renderer(options, output_file=f)
+        renderer = create_renderer(renderer_class, options, output_file=f)
     except OptionsParseError as e:
         parser.error(e.args[0])
         exit(1)
@@ -338,7 +346,7 @@ def main():
         if should_close_f_after_writing:
             f.close()
 
-    if options.renderer == "text":
+    if isinstance(renderer, renderers.ConsoleRenderer) and not options.outfile:
         _, report_identifier = save_report_to_temp_storage(session)
         print("To view this report with different options, run:")
         print("    pyinstrument --load-prev %s [options]" % report_identifier)
@@ -421,17 +429,9 @@ class OptionsParseError(Exception):
     pass
 
 
-def create_renderer(options: CommandLineOptions, output_file: TextIO) -> renderers.Renderer:
-    if options.output_html:
-        options.renderer = "html"
-
-    if options.renderer is None and options.outfile:
-        options.renderer = guess_renderer_from_outfile(options.outfile)
-
-    if options.renderer is None:
-        options.renderer = "text"
-
-    renderer_class = get_renderer_class(options.renderer)
+def create_renderer(
+    renderer_class: type[renderers.Renderer], options: CommandLineOptions, output_file: TextIO
+) -> renderers.Renderer:
     render_options = compute_render_options(
         options, renderer_class=renderer_class, output_file=output_file
     )
@@ -445,7 +445,18 @@ def create_renderer(options: CommandLineOptions, output_file: TextIO) -> rendere
         )
 
 
-def get_renderer_class(renderer: str) -> type[renderers.Renderer]:
+def get_renderer_class(options: CommandLineOptions) -> type[renderers.Renderer]:
+    renderer = options.renderer
+
+    if options.output_html:
+        renderer = "html"
+
+    if renderer is None and options.outfile:
+        renderer = guess_renderer_from_outfile(options.outfile)
+
+    if renderer is None:
+        renderer = "text"
+
     if renderer == "text":
         return renderers.ConsoleRenderer
     elif renderer == "html":
