@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 from pstats import Stats
 from test.fake_time_util import fake_time
 from typing import Any
@@ -89,12 +89,12 @@ def test_pstats_renderer(profiler_session, tmp_path):
 def test_round_trip_encoding_of_binary_data(tmp_path: Path):
     # as used by the pstats renderer
     data_blob = os.urandom(1024)
-    file = tmp_path / 'file.dat'
+    file = tmp_path / "file.dat"
 
-    data_blob_string = data_blob.decode(encoding='utf-8', errors="surrogateescape")
+    data_blob_string = data_blob.decode(encoding="utf-8", errors="surrogateescape")
 
-    with open(file, mode='w', encoding='utf-8', errors='surrogateescape') as f:
+    with open(file, mode="w", encoding="utf-8", errors="surrogateescape") as f:
         f.write(data_blob_string)
 
-    assert data_blob == data_blob_string.encode(encoding='utf-8', errors="surrogateescape")
+    assert data_blob == data_blob_string.encode(encoding="utf-8", errors="surrogateescape")
     assert data_blob == file.read_bytes()
