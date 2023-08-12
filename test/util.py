@@ -77,7 +77,7 @@ def busy_wait(duration):
 
 def main():
     print('sys.argv: ', sys.argv)
-    busy_wait(0.25)
+    busy_wait(0.1)
 
 
 if __name__ == '__main__':
