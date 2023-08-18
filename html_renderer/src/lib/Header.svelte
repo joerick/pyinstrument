@@ -46,7 +46,7 @@
 
 <div class="margins">
   <div class="row">
-    <div class="metric-label">Program:&nbsp;</div>
+    <div class="metric-label program-label">Program:&nbsp;</div>
     <div class="metric-value">{name}</div>
   </div>
 </div>
@@ -84,5 +84,9 @@
   .metric-value {
     color: #737779;
     margin-right: 0.5em;
+  }
+
+  .program-label {
+    text-transform: uppercase;
   }
 </style>
