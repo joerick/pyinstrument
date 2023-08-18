@@ -39,11 +39,15 @@
         <div class="metric-value">{session.sampleCount}</div>
         <div class="metric-label">CPU time:</div>
         <div class="metric-value">{cpuTime} seconds</div>
-
-        <div class="metric-label">Program:</div>
-        <div class="metric-value">{name}</div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="margins">
+  <div class="row">
+    <div class="metric-label">Program:&nbsp;</div>
+    <div class="metric-value">{name}</div>
   </div>
 </div>
 
