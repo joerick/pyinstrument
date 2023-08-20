@@ -8,11 +8,6 @@
 
   const cpuTime = session.cpuTime?.toLocaleString(undefined, {maximumSignificantDigits: 3})
   const duration = session.duration.toLocaleString(undefined, {maximumSignificantDigits: 3})
-
-  let name = session.rootFrame?.function;
-  if (name == '<module>') {
-    name = session.program;
-  }
 </script>
 
 <div class="header">
