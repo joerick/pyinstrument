@@ -39,6 +39,9 @@
   <Header session={session} />
   <div class="spacer" style="height: 20px;"></div>
   <div class="margins">
+
+  <div class="program"><span class="label">Program:&nbsp;</span>{name}</div>
+
     {#if session.rootFrame}
       <Frame frame={session.rootFrame} />
     {:else}
@@ -55,5 +58,15 @@
     font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  .program {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #B4B4B4;
+    .label {
+      color: #EAEAEA;
+      text-transform: uppercase;
+    }
   }
 </style>

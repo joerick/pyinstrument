@@ -44,13 +44,6 @@
   </div>
 </div>
 
-<div class="margins">
-  <div class="row">
-    <div class="metric-label program-label">Program:&nbsp;</div>
-    <div class="metric-value">{name}</div>
-  </div>
-</div>
-
 <style>
   .header {
     background: #292f32;
@@ -84,9 +77,5 @@
   .metric-value {
     color: #737779;
     margin-right: 0.5em;
-  }
-
-  .program-label {
-    text-transform: uppercase;
   }
 </style>
