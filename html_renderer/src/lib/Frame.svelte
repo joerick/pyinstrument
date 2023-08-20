@@ -111,8 +111,7 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="group-header"
          style:padding-left={`${indent*35}px`}
-         on:click|preventDefault|stopPropagation={headerClicked}
-         on:dblclick|preventDefault|stopPropagation>
+         on:click|preventDefault|stopPropagation={headerClicked}>
       <div class="group-header-button">
         <div class="group-triangle" class:rotate={isGroupVisible}>
           <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="#FFF" fill-rule="evenodd" fill-opacity=".582"/></svg>
