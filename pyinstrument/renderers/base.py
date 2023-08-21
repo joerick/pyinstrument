@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any, List
 
 from pyinstrument import processors
@@ -93,9 +94,13 @@ class FrameRenderer(Renderer):
                 # processors.remove_first_pyinstrument_frames_processor,
                 #    (still hide the outer pyinstrument calling frames)
             ):
-                self.processors.remove(p)
+                with contextlib.suppress(ValueError):
+                    # don't care if the processor isn't in the list
+                    self.processors.remove(p)
+
         if timeline:
-            self.processors.remove(processors.aggregate_repeated_calls)
+            with contextlib.suppress(ValueError):
+                self.processors.remove(processors.aggregate_repeated_calls)
 
     def default_processors(self) -> ProcessorList:
         """

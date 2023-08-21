@@ -2,11 +2,13 @@ import asyncio
 import contextlib
 import functools
 import random
+from typing import TYPE_CHECKING
 from unittest import mock
 
-from trio.testing import MockClock
-
 from pyinstrument import stack_sampler
+
+if TYPE_CHECKING:
+    from trio.testing import MockClock
 
 
 class FakeClock:
@@ -71,7 +73,7 @@ def fake_time_asyncio(loop=None):
 
 
 class FakeClockTrio:
-    def __init__(self, clock: MockClock) -> None:
+    def __init__(self, clock: "MockClock") -> None:
         self.trio_clock = clock
 
     def get_time(self):
@@ -83,6 +85,8 @@ class FakeClockTrio:
 
 @contextlib.contextmanager
 def fake_time_trio():
+    from trio.testing import MockClock
+
     trio_clock = MockClock(autojump_threshold=0)
     fake_clock = FakeClockTrio(trio_clock)
 

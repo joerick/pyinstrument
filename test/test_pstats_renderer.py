@@ -1,4 +1,6 @@
+import os
 import time
+from pathlib import Path
 from pstats import Stats
 from test.fake_time_util import fake_time
 from typing import Any
@@ -44,9 +46,9 @@ def profiler_session():
 
 def test_pstats_renderer(profiler_session, tmp_path):
     fname = tmp_path / "test.pstats"
-    pstats = PstatsRenderer().render(profiler_session)
-    with open(fname, "w", encoding="utf-8", errors="surrogateescape") as fid:
-        fid.write(pstats)
+    pstats_data = PstatsRenderer().render(profiler_session)
+    with open(fname, "wb") as fid:
+        fid.write(pstats_data.encode(encoding="utf-8", errors="surrogateescape"))
     stats: Any = Stats(str(fname))
     # Sanity check
     assert stats.total_tt > 0
@@ -82,3 +84,18 @@ def test_pstats_renderer(profiler_session, tmp_path):
     e_val = stats.stats[e_key]
     e_cumtime = e_val[3]
     assert e_cumtime == pytest.approx(2)
+
+
+def test_round_trip_encoding_of_binary_data(tmp_path: Path):
+    # as used by the pstats renderer
+    data_blob = os.urandom(1024)
+    file = tmp_path / "file.dat"
+
+    data_blob_string = data_blob.decode(encoding="utf-8", errors="surrogateescape")
+
+    # newline='' is required to prevent the default newline translation
+    with open(file, mode="w", encoding="utf-8", errors="surrogateescape", newline="") as f:
+        f.write(data_blob_string)
+
+    assert data_blob == data_blob_string.encode(encoding="utf-8", errors="surrogateescape")
+    assert data_blob == file.read_bytes()
