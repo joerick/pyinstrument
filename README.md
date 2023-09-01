@@ -54,6 +54,14 @@ Known issues
 Changelog
 ---------
 
+### v4.5.2
+
+_1 Sep 2023_
+
+-   Show the program name in the header of the HTML output (#260)
+-   Improve program name capture through resilience to other programs modifying sys.argv (#258)
+-   Add support for Python 3.12 (#246)
+
 ### v4.5.1
 
 _22 July 2023_
