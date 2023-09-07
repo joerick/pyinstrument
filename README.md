@@ -54,6 +54,12 @@ Known issues
 Changelog
 ---------
 
+### v4.5.3
+
+_7 Sep 2023_
+
+-   Fix a problem in the packaging process that prevented upload to PyPI
+
 ### v4.5.2
 
 _1 Sep 2023_
