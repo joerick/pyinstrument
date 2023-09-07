@@ -64,8 +64,12 @@ graph_data = (
     # ('pyinstrument timeline', min(pyinstrument_timeline_timings)),
 )
 
-from ascii_graph import Pyasciigraph
-
-graph = Pyasciigraph(float_format="{0:.3f}")
-for line in graph.graph("Profiler overhead", graph_data):
-    print(line)
+GRAPH_WIDTH = 60
+print("Profiler overhead")
+print("–" * (GRAPH_WIDTH + 17))
+max_time = max([t[1] for t in graph_data])
+for name, time in graph_data:
+    chars = int((time / max_time) * GRAPH_WIDTH)
+    spaces = GRAPH_WIDTH - chars
+    print(f'{name:15}  {"█" * chars}{" " * spaces}  {time:.3f}s')
+print()

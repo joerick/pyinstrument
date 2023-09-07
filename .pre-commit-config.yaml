@@ -40,7 +40,6 @@ repos:
       - flaky
       - numpy
       - nox
-      - ascii_graph
       - requests
       - greenlet
       - types-click

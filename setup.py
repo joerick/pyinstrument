@@ -47,7 +47,6 @@ setup(
         "examples": [
             "numpy",
             "django",
-            "ascii_graph @ https://github.com/nyurik/py-ascii-graph/archive/refs/heads/fix-python310.zip",
         ],
         "types": [
             "typing_extensions",
