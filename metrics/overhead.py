@@ -51,8 +51,7 @@ profiler.stop()
 # pyinstrument_timeline_timings = test_func()
 # profiler.stop()
 
-with open("out.html", "w") as f:
-    f.write(profiler.output_html())
+profiler.write_html("out.html")
 
 print(profiler.output_text(unicode=True, color=True))
 

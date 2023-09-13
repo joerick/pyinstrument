@@ -21,5 +21,4 @@ p.stop()
 
 print(p.output_text())
 
-with open("overflow_out.html", "w") as f:
-    f.write(p.output_html())
+p.write_html("overflow_out.html")
