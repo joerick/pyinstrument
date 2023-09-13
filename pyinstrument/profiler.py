@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import inspect
 import os
-from pathlib import Path
 import sys
 import time
 import types
+from pathlib import Path
 from time import process_time
 from typing import IO, Any
 
@@ -308,7 +308,7 @@ class Profiler:
 
     def write_html(self, path: str | os.PathLike[str], timeline: bool = False):
         """
-        Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
+        Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
         """
         file = Path(path)
         file.write_text(self.output(renderer=renderers.HTMLRenderer(timeline=timeline)))
