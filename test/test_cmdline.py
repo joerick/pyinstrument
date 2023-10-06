@@ -2,13 +2,12 @@ import os
 import re
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
 
 from .util import BUSY_WAIT_SCRIPT
-
-# this script just does a busywait for 0.25 seconds.
 
 EXECUTION_DETAILS_SCRIPT = f"""
 #!{sys.executable}
@@ -77,6 +76,32 @@ class TestCommandLine:
         subprocess.check_call(
             [*pyinstrument_invocation, "--from-path", "--", "pyi_test_program"],
         )
+
+    def test_program_passed_as_string(self, pyinstrument_invocation, tmp_path: Path):
+        # check the program actually runs
+        output = subprocess.check_output(
+            [
+                *pyinstrument_invocation,
+                "-c",
+                textwrap.dedent(
+                    f"""
+                    from pathlib import Path
+                    output_file = Path("{tmp_path}/output.txt")
+                    output_file.write_text("Hello World")
+                    print("Finished.")
+                    """
+                ),
+            ],
+        )
+
+        assert "Finished." in str(output)
+        assert (tmp_path / "output.txt").read_text() == "Hello World"
+
+        # check the output
+        output = subprocess.check_output([*pyinstrument_invocation, "-c", BUSY_WAIT_SCRIPT])
+
+        assert "busy_wait" in str(output)
+        assert "do_nothing" in str(output)
 
     def test_script_execution_details(self, pyinstrument_invocation, tmp_path: Path):
         program_path = tmp_path / "program.py"
@@ -155,6 +180,27 @@ class TestCommandLine:
 
         print("process_pyi.stderr", process_pyi.stderr)
         print("process_native.stderr", process_native.stderr)
+        assert process_pyi.stderr == process_native.stderr
+
+    def test_program_passed_as_string_execution_details(
+        self, pyinstrument_invocation, tmp_path: Path
+    ):
+        process_pyi = subprocess.run(
+            [*pyinstrument_invocation, "-c", EXECUTION_DETAILS_SCRIPT],
+            stderr=subprocess.PIPE,
+            check=True,
+            text=True,
+        )
+        process_native = subprocess.run(
+            [sys.executable, "-c", EXECUTION_DETAILS_SCRIPT],
+            stderr=subprocess.PIPE,
+            check=True,
+            text=True,
+        )
+
+        print("process_pyi.stderr", process_pyi.stderr)
+        print("process_native.stderr", process_native.stderr)
+        assert process_native.stderr
         assert process_pyi.stderr == process_native.stderr
 
     def test_session_save_and_load(self, pyinstrument_invocation, tmp_path: Path):
