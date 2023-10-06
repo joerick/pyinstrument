@@ -79,23 +79,26 @@ class TestCommandLine:
 
     def test_program_passed_as_string(self, pyinstrument_invocation, tmp_path: Path):
         # check the program actually runs
+        output_file = tmp_path / "output.txt"
         output = subprocess.check_output(
             [
                 *pyinstrument_invocation,
                 "-c",
                 textwrap.dedent(
                     f"""
+                    import sys
                     from pathlib import Path
-                    output_file = Path("{tmp_path}/output.txt")
+                    output_file = Path(sys.argv[1])
                     output_file.write_text("Hello World")
                     print("Finished.")
                     """
                 ),
+                str(output_file),
             ],
         )
 
         assert "Finished." in str(output)
-        assert (tmp_path / "output.txt").read_text() == "Hello World"
+        assert output_file.read_text() == "Hello World"
 
         # check the output
         output = subprocess.check_output([*pyinstrument_invocation, "-c", BUSY_WAIT_SCRIPT])
