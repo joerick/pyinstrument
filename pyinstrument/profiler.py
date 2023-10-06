@@ -311,7 +311,10 @@ class Profiler:
         Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
         """
         file = Path(path)
-        file.write_text(self.output(renderer=renderers.HTMLRenderer(timeline=timeline)))
+        file.write_text(
+            self.output(renderer=renderers.HTMLRenderer(timeline=timeline)),
+            encoding="utf-8",
+        )
 
     def open_in_browser(self, timeline: bool = False):
         """
