@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import inspect
+import os
 import sys
 import time
 import types
+from pathlib import Path
 from time import process_time
 from typing import IO, Any
 
@@ -303,6 +305,16 @@ class Profiler:
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
         return self.output(renderer=renderers.HTMLRenderer(timeline=timeline))
+
+    def write_html(self, path: str | os.PathLike[str], timeline: bool = False):
+        """
+        Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
+        """
+        file = Path(path)
+        file.write_text(
+            self.output(renderer=renderers.HTMLRenderer(timeline=timeline)),
+            encoding="utf-8",
+        )
 
     def open_in_browser(self, timeline: bool = False):
         """
