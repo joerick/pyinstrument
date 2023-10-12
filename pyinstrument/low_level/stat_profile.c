@@ -65,8 +65,13 @@ floatclock(void)
 {
     struct timeval t;
     gettimeofday(&t, (struct timezone *)NULL);
-
     return (double)t.tv_sec + t.tv_usec*0.000001;
+
+    // struct timespec t;
+    // clock_gettime(CLOCK_MONOTONIC_RAW_APPROX, &t);
+    // return (double)t.tv_sec + t.tv_nsec*0.000000001;
+
+    // return 1.0;
 }
 
 #endif  /* MS_WINDOWS */
@@ -671,14 +676,15 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
 static PyObject *
 setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"target", "interval", "context_var", "timer_func", NULL};
+    static char *kwlist[] = {"target", "interval", "context_var", "timer_type", "timer_func", NULL};
     ProfilerState *pState = NULL;
     double interval = 0.0;
     PyObject *target = NULL;
     PyObject *context_var = NULL;
+    PyObject *timer_type = NULL;
     PyObject *timer_func = NULL;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!O", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_func))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!zO", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_type, &timer_func))
         return NULL;
 
     if (target == Py_None) {
