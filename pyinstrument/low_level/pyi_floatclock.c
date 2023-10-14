@@ -32,7 +32,9 @@ double pyi_floatclock(double imprecision_tolerance)
 
 #else  /* !MS_WINDOWS */
 
-#include <sys/time.h>
+#include <sys/time.h> // clock_gettime
+#include <time.h> // gettimeofday
+
 #include <unistd.h>
 #include <float.h>
 
