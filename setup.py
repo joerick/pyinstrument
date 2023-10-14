@@ -13,7 +13,11 @@ setup(
     ext_modules=[
         Extension(
             "pyinstrument.low_level.stat_profile",
-            sources=["pyinstrument/low_level/stat_profile.c"],
+            sources=[
+                "pyinstrument/low_level/stat_profile.c",
+                "pyinstrument/low_level/pyi_floatclock.c",
+                "pyinstrument/low_level/pyi_timing_thread.c",
+            ],
         )
     ],
     description="Call stack profiler for Python. Shows you why your code is slow!",

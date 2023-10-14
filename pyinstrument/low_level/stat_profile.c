@@ -2,6 +2,9 @@
 #include <structmember.h>
 #include <frameobject.h>
 
+#include "pyi_floatclock.h"
+#include "pyi_timing_thread.h"
+
 ////////////////////////////
 // Version/Platform shims //
 ////////////////////////////
@@ -23,58 +26,6 @@ _PyFrame_GetBack(PyFrameObject *frame) {
 }
 #define PyFrame_GETBACK(f) _PyFrame_GetBack(f)
 #endif
-
-/*
-These timer functions are mostly stolen from timemodule.c
-*/
-
-#if defined(MS_WINDOWS) && !defined(__BORLANDC__)
-#include <windows.h>
-
-/* use QueryPerformanceCounter on Windows */
-
-static double
-floatclock(void)
-{
-    static LARGE_INTEGER ctrStart;
-    static double divisor = 0.0;
-    LARGE_INTEGER now;
-    double diff;
-
-    if (divisor == 0.0) {
-        LARGE_INTEGER freq;
-        QueryPerformanceCounter(&ctrStart);
-        if (!QueryPerformanceFrequency(&freq) || freq.QuadPart == 0) {
-            /* Unlikely to happen - this works on all intel
-               machines at least!  Revert to clock() */
-            return ((double)clock()) / CLOCKS_PER_SEC;
-        }
-        divisor = (double)freq.QuadPart;
-    }
-    QueryPerformanceCounter(&now);
-    diff = (double)(now.QuadPart - ctrStart.QuadPart);
-    return diff / divisor;
-}
-
-#else  /* !MS_WINDOWS */
-
-#include <sys/time.h>
-
-static double
-floatclock(void)
-{
-    struct timeval t;
-    gettimeofday(&t, (struct timezone *)NULL);
-    return (double)t.tv_sec + t.tv_usec*0.000001;
-
-    // struct timespec t;
-    // clock_gettime(CLOCK_MONOTONIC_RAW_APPROX, &t);
-    // return (double)t.tv_sec + t.tv_nsec*0.000000001;
-
-    // return 1.0;
-}
-
-#endif  /* MS_WINDOWS */
 
 ///////////////////
 // ProfilerState //
@@ -147,7 +98,7 @@ static double ProfilerState_GetTime(ProfilerState *self) {
         return resultDouble;
     } else {
         // otherwise as normal, call the C timer function.
-        return floatclock();
+        return pyi_floatclock(self->interval);
     }
 }
 
