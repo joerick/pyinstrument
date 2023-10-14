@@ -103,7 +103,13 @@ class StackSampler:
         self.current_sampling_interval = interval
         if self.last_profile_time == 0.0:
             self.last_profile_time = self._timer()
-        setstatprofile(self._sample, interval, active_profiler_context_var, self.timer_func)
+        setstatprofile(
+            target=self._sample,
+            interval=interval,
+            context_var=active_profiler_context_var,
+            timer_type="timer_func" if self.timer_func else "walltime",
+            timer_func=self.timer_func,
+        )
 
     def _stop_sampling(self):
         setstatprofile(None)
