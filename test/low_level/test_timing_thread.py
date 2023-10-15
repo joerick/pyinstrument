@@ -1,23 +1,25 @@
 import ctypes
 import time
 
-import pyinstrument.low_level.stat_profile
+import pyinstrument.low_level.stat_profile as native_module
+
+lib = ctypes.CDLL(native_module.__file__)
 
 from ..util import busy_wait
 
-pyi_timing_thread_subscribe = ctypes.pythonapi.pyi_timing_thread_subscribe
+pyi_timing_thread_subscribe = lib.pyi_timing_thread_subscribe
 pyi_timing_thread_subscribe.argtypes = [ctypes.c_double]
 pyi_timing_thread_subscribe.restype = ctypes.c_int
 
-pyi_timing_thread_get_time = ctypes.pythonapi.pyi_timing_thread_get_time
+pyi_timing_thread_get_time = lib.pyi_timing_thread_get_time
 pyi_timing_thread_get_time.argtypes = []
 pyi_timing_thread_get_time.restype = ctypes.c_double
 
-pyi_timing_thread_get_interval = ctypes.pythonapi.pyi_timing_thread_get_interval
+pyi_timing_thread_get_interval = lib.pyi_timing_thread_get_interval
 pyi_timing_thread_get_interval.argtypes = []
 pyi_timing_thread_get_interval.restype = ctypes.c_double
 
-pyi_timing_thread_unsubscribe = ctypes.pythonapi.pyi_timing_thread_unsubscribe
+pyi_timing_thread_unsubscribe = lib.pyi_timing_thread_unsubscribe
 pyi_timing_thread_unsubscribe.argtypes = [ctypes.c_int]
 pyi_timing_thread_unsubscribe.restype = ctypes.c_int
 

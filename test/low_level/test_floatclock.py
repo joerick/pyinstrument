@@ -3,10 +3,11 @@ import time
 
 import pytest
 
-# import the C extension to load the function into ctypes.pythonapi
-import pyinstrument.low_level.stat_profile
+import pyinstrument.low_level.stat_profile as native_module
 
-pyi_floatclock = ctypes.pythonapi.pyi_floatclock
+lib = ctypes.CDLL(native_module.__file__)
+
+pyi_floatclock = lib.pyi_floatclock
 pyi_floatclock.argtypes = [ctypes.c_double]
 pyi_floatclock.restype = ctypes.c_double
 
