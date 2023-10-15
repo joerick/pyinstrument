@@ -1,3 +1,6 @@
+#include "pyi_floatclock.h"
+
+#include <Python.h>
 
 /*
 These timer functions are mostly stolen from timemodule.c
