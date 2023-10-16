@@ -37,46 +37,56 @@ def test():
 
     # subscribe
     subscription_id = pyi_timing_thread_subscribe(0.001)
-    assert subscription_id >= 0
+    try:
+        assert subscription_id >= 0
 
-    assert pyi_timing_thread_get_interval() == 0.001
+        assert pyi_timing_thread_get_interval() == 0.001
 
-    # check it's updating
-    busy_wait(0.01)
-    time_a = pyi_timing_thread_get_time()
-    assert time_a > time_before
-    busy_wait(0.01)
-    time_b = pyi_timing_thread_get_time()
-    assert time_b > time_a
+        # check it's updating
+        busy_wait(0.01)
+        time_a = pyi_timing_thread_get_time()
+        assert time_a > time_before
+        busy_wait(0.01)
+        time_b = pyi_timing_thread_get_time()
+        assert time_b > time_a
 
-    # unsubscribe
-    assert pyi_timing_thread_unsubscribe(subscription_id) == 0
+        # unsubscribe
+        assert pyi_timing_thread_unsubscribe(subscription_id) == 0
 
-    assert pyi_timing_thread_get_interval() == -1
+        assert pyi_timing_thread_get_interval() == -1
 
-    # check it's stopped updating
-    time.sleep(0.01)
-    time_c = pyi_timing_thread_get_time()
-    time.sleep(0.01)
-    time_d = pyi_timing_thread_get_time()
-    assert time_c == time_d
+        # check it's stopped updating
+        time.sleep(0.01)
+        time_c = pyi_timing_thread_get_time()
+        time.sleep(0.01)
+        time_d = pyi_timing_thread_get_time()
+        assert time_c == time_d
+    finally:
+        # ensure the subscriber is removed even if the test fails
+        pyi_timing_thread_unsubscribe(subscription_id)
 
 
 def test_max_subscribers():
     subscription_ids = []
 
-    for i in range(1000):
-        subscription_id = pyi_timing_thread_subscribe(0.001)
-        assert subscription_id >= 0
-        subscription_ids.append(subscription_id)
+    try:
+        for i in range(1000):
+            subscription_id = pyi_timing_thread_subscribe(0.001)
+            assert subscription_id >= 0
+            subscription_ids.append(subscription_id)
 
-    # the next one should fail
-    assert pyi_timing_thread_subscribe(0.001) == PYI_TIMING_THREAD_TOO_MANY_SUBSCRIBERS
+        # the next one should fail
+        assert pyi_timing_thread_subscribe(0.001) == PYI_TIMING_THREAD_TOO_MANY_SUBSCRIBERS
 
-    # unsubscribe them in FIFO order
-    for subscription_id in subscription_ids:
-        assert pyi_timing_thread_get_interval() == 0.001
-        assert pyi_timing_thread_unsubscribe(subscription_id) == 0
+        # unsubscribe them in FIFO order
+        for subscription_id in subscription_ids:
+            assert pyi_timing_thread_get_interval() == 0.001
+            assert pyi_timing_thread_unsubscribe(subscription_id) == 0
 
-    # check there are no subscribers left
-    assert pyi_timing_thread_get_interval() == -1
+        # check there are no subscribers left
+        assert pyi_timing_thread_get_interval() == -1
+    finally:
+        # ensure all subscription ids are removed even if the test fails
+        while subscription_ids:
+            subscription_id = subscription_ids.pop()
+            pyi_timing_thread_unsubscribe(subscription_id)
