@@ -4,7 +4,7 @@ import urllib.parse
 from ast import parse
 
 from IPython import get_ipython  # type: ignore
-from IPython.core.magic import Magics, line_cell_magic, magics_class
+from IPython.core.magic import Magics, line_cell_magic, magics_class, no_var_expand
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import IFrame, display
 
@@ -71,6 +71,7 @@ class PyinstrumentMagic(Magics):
         nargs="*",
         help="When used as a line magic, the code to profile",
     )
+    @no_var_expand
     @line_cell_magic
     def pyinstrument(self, line, cell=None):
         """
