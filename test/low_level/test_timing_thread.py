@@ -1,11 +1,12 @@
 import ctypes
+import sys
 import time
 
 import pyinstrument.low_level.stat_profile as native_module
 
-lib = ctypes.CDLL(native_module.__file__)
-
 from ..util import busy_wait
+
+lib = ctypes.CDLL(native_module.__file__)
 
 pyi_timing_thread_subscribe = lib.pyi_timing_thread_subscribe
 pyi_timing_thread_subscribe.argtypes = [ctypes.c_double]
@@ -26,13 +27,25 @@ pyi_timing_thread_unsubscribe.restype = ctypes.c_int
 PYI_TIMING_THREAD_UNKNOWN_ERROR = -1
 PYI_TIMING_THREAD_TOO_MANY_SUBSCRIBERS = -2
 
+# on windows, the thread scheduling 'quanta', the time that a thread can run
+# before potentially being pre-empted, is 20-30ms. This means that the
+# worst-case, we have to wait 30ms before the timing thread gets a chance to
+# run. This isn't really a huge problem in practice, because thread-based
+# timing isn't much use on windows, since the synchronous timing functions are
+# so fast.
+
+if sys.platform == "win32":
+    WAIT_TIME = 0.03
+else:
+    WAIT_TIME = 0.015
+
 
 def test():
     # check the thread isn't running to begin with
     assert pyi_timing_thread_get_interval() == -1
 
     time_before = pyi_timing_thread_get_time()
-    time.sleep(0.01)
+    time.sleep(WAIT_TIME)
     assert pyi_timing_thread_get_time() == time_before
 
     # subscribe
@@ -43,10 +56,10 @@ def test():
         assert pyi_timing_thread_get_interval() == 0.001
 
         # check it's updating
-        busy_wait(0.01)
+        busy_wait(WAIT_TIME)
         time_a = pyi_timing_thread_get_time()
         assert time_a > time_before
-        busy_wait(0.01)
+        busy_wait(WAIT_TIME)
         time_b = pyi_timing_thread_get_time()
         assert time_b > time_a
 
@@ -56,9 +69,9 @@ def test():
         assert pyi_timing_thread_get_interval() == -1
 
         # check it's stopped updating
-        time.sleep(0.01)
+        time.sleep(WAIT_TIME)
         time_c = pyi_timing_thread_get_time()
-        time.sleep(0.01)
+        time.sleep(WAIT_TIME)
         time_d = pyi_timing_thread_get_time()
         assert time_c == time_d
     finally:
