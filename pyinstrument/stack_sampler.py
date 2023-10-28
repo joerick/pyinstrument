@@ -25,9 +25,11 @@ class StackSamplerSubscriber:
         desired_interval: float,
         bound_to_async_context: bool,
         async_state: AsyncState | None,
+        use_timing_thread: bool | None = None,
     ) -> None:
         self.target = target
         self.desired_interval = desired_interval
+        self.use_timing_thread = use_timing_thread
         self.bound_to_async_context = bound_to_async_context
         self.async_state = async_state
 
@@ -54,7 +56,9 @@ class StackSampler:
     def subscribe(
         self,
         target: StackSamplerSubscriberTarget,
+        *,
         desired_interval: float,
+        use_timing_thread: bool | None = None,
         use_async_context: bool,
     ):
         if use_async_context:
@@ -68,6 +72,7 @@ class StackSampler:
             StackSamplerSubscriber(
                 target=target,
                 desired_interval=desired_interval,
+                use_timing_thread=use_timing_thread,
                 bound_to_async_context=use_async_context,
                 async_state=AsyncState("in_context") if use_async_context else None,
             )
@@ -95,19 +100,41 @@ class StackSampler:
             return
 
         min_subscribers_interval = min(s.desired_interval for s in self.subscribers)
+        timing_thread_preferences = set(
+            s.use_timing_thread for s in self.subscribers if s.use_timing_thread is not None
+        )
+        if len(timing_thread_preferences) > 1:
+            raise ValueError(
+                f"Profiler requested different timing thread preferences from a profiler that is already running."
+            )
+
+        use_timing_thread = next(iter(timing_thread_preferences), False)
 
         if self.current_sampling_interval != min_subscribers_interval:
-            self._start_sampling(interval=min_subscribers_interval)
+            self._start_sampling(
+                interval=min_subscribers_interval, use_timing_thread=use_timing_thread
+            )
 
-    def _start_sampling(self, interval: float):
+    def _start_sampling(self, interval: float, use_timing_thread: bool):
+        if use_timing_thread and self.timer_func is not None:
+            raise ValueError(
+                f"Profiler requested to use the timing thread but this stack sampler is already using a custom timer function."
+            )
+        timer_type = (
+            "timer_func"
+            if self.timer_func
+            else ("walltime_thread" if use_timing_thread else "walltime")
+        )
+
         self.current_sampling_interval = interval
         if self.last_profile_time == 0.0:
             self.last_profile_time = self._timer()
+
         setstatprofile(
             target=self._sample,
             interval=interval,
             context_var=active_profiler_context_var,
-            timer_type="timer_func" if self.timer_func else "walltime",
+            timer_type=timer_type,
             timer_func=self.timer_func,
         )
 

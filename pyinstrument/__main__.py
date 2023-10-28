@@ -227,6 +227,16 @@ def main():
         ),
         default=0.001,
     )
+    parser.add_option(
+        "",
+        "--use-timing-thread",
+        dest="use_timing_thread",
+        action="store_true",
+        help=(
+            "Use a separate thread to time the interval between stack samples. "
+            "This can reduce the overhead of sampling on some systems."
+        ),
+    )
 
     # parse the options
 
@@ -326,7 +336,11 @@ def main():
         # because it will always be capturing the whole program, we never want
         # any execution to be <out-of-context>, and it avoids duplicate
         # profiler errors.
-        profiler = Profiler(interval=options.interval, async_mode="disabled")
+        profiler = Profiler(
+            interval=options.interval,
+            async_mode="disabled",
+            use_timing_thread=options.use_timing_thread,
+        )
 
         profiler.start()
 
@@ -571,6 +585,7 @@ class CommandLineOptions:
     renderer: str | None
     timeline: bool
     interval: float
+    use_timing_thread: bool | None
 
 
 if __name__ == "__main__":

@@ -44,18 +44,28 @@ class Profiler:
     _active_session: ActiveProfilerSession | None
     _interval: float
     _async_mode: AsyncMode
+    use_timing_thread: bool | None
 
-    def __init__(self, interval: float = 0.001, async_mode: AsyncMode = "enabled"):
+    def __init__(
+        self,
+        interval: float = 0.001,
+        async_mode: AsyncMode = "enabled",
+        use_timing_thread: bool | None = None,
+    ):
         """
         Note the profiling will not start until :func:`start` is called.
 
         :param interval: See :attr:`interval`.
         :param async_mode: See :attr:`async_mode`.
+        :param use_timing_thread: If True, the profiler will use a separate
+            thread to keep track of time. This is useful if you're on a system
+            where getting the time has significant overhead.
         """
         self._interval = interval
         self._last_session = None
         self._active_session = None
         self._async_mode = async_mode
+        self.use_timing_thread = use_timing_thread
 
     @property
     def interval(self) -> float:
@@ -127,7 +137,10 @@ class Profiler:
 
             use_async_context = self.async_mode != "disabled"
             get_stack_sampler().subscribe(
-                self._sampler_saw_call_stack, self.interval, use_async_context
+                self._sampler_saw_call_stack,
+                desired_interval=self.interval,
+                use_async_context=use_async_context,
+                use_timing_thread=self.use_timing_thread,
             )
         except:
             self._active_session = None

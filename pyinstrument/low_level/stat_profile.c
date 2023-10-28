@@ -40,6 +40,7 @@ typedef struct profiler_state {
     PyObject *last_context_var_value;
     PyObject *await_stack_list;
     PyObject *timer_func;
+    int timer_thread_subscription_id;
 } ProfilerState;
 
 static void ProfilerState_SetTarget(ProfilerState *self, PyObject *target) {
@@ -96,8 +97,11 @@ static double ProfilerState_GetTime(ProfilerState *self) {
 
         Py_DECREF(result);
         return resultDouble;
+    } else if (self->timer_thread_subscription_id >= 0) {
+        // when a self->timer_thread_subscription_id is set, use the timing thread.
+        return pyi_timing_thread_get_time();
     } else {
-        // otherwise as normal, call the C timer function.
+        // otherwise as normal, call the synchronous C timer function.
         return pyi_floatclock(self->interval);
     }
 }
@@ -108,6 +112,9 @@ static void ProfilerState_Dealloc(ProfilerState *self) {
     Py_XDECREF(self->last_context_var_value);
     Py_XDECREF(self->await_stack_list);
     Py_XDECREF(self->timer_func);
+    if (self->timer_thread_subscription_id >= 0) {
+        pyi_timing_thread_unsubscribe(self->timer_thread_subscription_id);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -162,6 +169,7 @@ static ProfilerState *ProfilerState_New(void) {
     op->last_context_var_value = NULL;
     op->await_stack_list = PyList_New(0);
     op->timer_func = NULL;
+    op->timer_thread_subscription_id = -1;
     return op;
 }
 
@@ -175,6 +183,14 @@ static PyObject *SELF_STRING = NULL;
 static PyObject *CLS_STRING = NULL;
 static PyObject *TRACEBACKHIDE_STRING = NULL;
 
+static PyObject *WALLTIME_STRING = NULL;
+static PyObject *WALLTIME_THREAD_STRING = NULL;
+static PyObject *TIMER_FUNC_STRING = NULL;
+
+#define TIMER_TYPE_WALLTIME 0
+#define TIMER_TYPE_WALLTIME_THREAD 1
+#define TIMER_TYPE_TIMER_FUNC 2
+
 #define WHAT_CALL 0
 #define WHAT_EXCEPTION 1
 #define WHAT_LINE 2
@@ -185,7 +201,7 @@ static PyObject *TRACEBACKHIDE_STRING = NULL;
 #define WHAT_CONTEXT_CHANGED 7
 
 static int
-trace_init(void)
+stat_profile_init(void)
 {
     static char *whatnames[8] = {"call", "exception", "line", "return",
                                  "c_call", "c_exception", "c_return",
@@ -209,6 +225,15 @@ trace_init(void)
 
     TRACEBACKHIDE_STRING = PyUnicode_InternFromString("__tracebackhide__");
     if (TRACEBACKHIDE_STRING == NULL) return -1;
+
+    WALLTIME_STRING = PyUnicode_InternFromString("walltime");
+    if (WALLTIME_STRING == NULL) return -1;
+
+    WALLTIME_THREAD_STRING = PyUnicode_InternFromString("walltime_thread");
+    if (WALLTIME_THREAD_STRING == NULL) return -1;
+
+    TIMER_FUNC_STRING = PyUnicode_InternFromString("timer_func");
+    if (TIMER_FUNC_STRING == NULL) return -1;
 
     return 0;
 }
@@ -508,6 +533,29 @@ _get_frame_info(PyFrameObject *frame) {
     return result;
 }
 
+static int
+_parse_timer_type(PyObject *timer_type, int defaultValue) {
+    if (timer_type == NULL || timer_type == Py_None) {
+        return defaultValue;
+    }
+
+    if (!PyUnicode_Check(timer_type)) {
+        PyErr_SetString(PyExc_TypeError, "timer_type must be a string");
+        return -1;
+    }
+
+    if (PyUnicode_Compare(timer_type, WALLTIME_STRING) == 0) {
+        return TIMER_TYPE_WALLTIME;
+    } else if (PyUnicode_Compare(timer_type, WALLTIME_THREAD_STRING) == 0) {
+        return TIMER_TYPE_WALLTIME_THREAD;
+    } else if (PyUnicode_Compare(timer_type, TIMER_FUNC_STRING) == 0) {
+        return TIMER_TYPE_TIMER_FUNC;
+    } else {
+        PyErr_SetString(PyExc_TypeError, "timer_type must be 'walltime', 'walltime_thread', or 'timer_func'");
+        return -1;
+    }
+}
+
 //////////////////////
 // Public functions //
 //////////////////////
@@ -635,7 +683,7 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
     PyObject *timer_type = NULL;
     PyObject *timer_func = NULL;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!zO", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_type, &timer_func))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!UO", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_type, &timer_func))
         return NULL;
 
     if (target == Py_None) {
@@ -654,13 +702,34 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
         // default interval is 1 ms
         pState->interval = (interval > 0) ? interval : 0.001;
 
+        int timer_type_int = _parse_timer_type(timer_type, TIMER_TYPE_WALLTIME);
+        if (timer_type_int == -1) {
+            return NULL;
+        }
+
         if (timer_func == Py_None) {
             timer_func = NULL;
+        }
+
+        if (timer_type_int == TIMER_TYPE_TIMER_FUNC && timer_func == NULL) {
+            PyErr_SetString(PyExc_TypeError, "timer_func must be set if timer_type is 'timer_func'");
+            return NULL;
+        }
+
+        if (timer_func && timer_type_int != TIMER_TYPE_TIMER_FUNC) {
+            PyErr_SetString(PyExc_TypeError, "timer_type must be 'timer_func' if timer_func is set");
+            return NULL;
         }
 
         if (timer_func) {
             Py_INCREF(timer_func);
             pState->timer_func = timer_func;
+        } else if (timer_type_int == TIMER_TYPE_WALLTIME_THREAD) {
+            pState->timer_thread_subscription_id = pyi_timing_thread_subscribe(pState->interval);
+            if (pState->timer_thread_subscription_id < 0) {
+                PyErr_Format(PyExc_RuntimeError, "failed to subscribe to timing thread: error %d", pState->timer_thread_subscription_id);
+                return NULL;
+            }
         }
 
         // initialise the last invocation to avoid immediate callback
@@ -730,7 +799,7 @@ PyMODINIT_FUNC PyInit_stat_profile(void)
         module_methods
     };
 
-    if (trace_init() == -1)
+    if (stat_profile_init() == -1)
         return NULL;
 
     return PyModule_Create(&moduledef);

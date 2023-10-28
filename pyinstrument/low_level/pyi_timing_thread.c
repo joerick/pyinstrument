@@ -6,7 +6,7 @@
 
 #include "pyi_floatclock.h"
 
-static double current_time = 0.0;
+static volatile double current_time = 0.0;
 
 static PyThread_type_lock subscriber_lock = NULL;
 static PyThread_type_lock update_lock = NULL;
@@ -69,6 +69,9 @@ int pyi_timing_thread_subscribe(double desiredInterval) {
         thread_should_exit = 0;
         PyThread_start_new_thread(timing_thread, NULL);
         thread_alive = 1;
+
+        // initialise the current_time in case it's read immediately
+        current_time = pyi_floatclock(0.0);
     }
 
     int new_id = 0;
