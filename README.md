@@ -54,15 +54,22 @@ Known issues
 Changelog
 ---------
 
+### v4.6.0
+
+_12 October 2023_
+
+-   Adds a feature `-c`, which allows profiling code directly from the command line, like `python -c`. (#271)
+-   Adds a convenience method [`Profiler.write_html`](https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.write_html), for writing HTML output to a file directly. (#266)
+
 ### v4.5.3
 
-_7 Sep 2023_
+_7 September 2023_
 
 -   Fix a problem in the packaging process that prevented upload to PyPI
 
 ### v4.5.2
 
-_1 Sep 2023_
+_1 September 2023_
 
 -   Show the program name in the header of the HTML output (#260)
 -   Improve program name capture through resilience to other programs modifying sys.argv (#258)

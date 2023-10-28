@@ -34,13 +34,25 @@ def main():
     parser = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
-    def dash_m_callback(option: str, opt: str, value: str, parser: optparse.OptionParser):
-        parser.values.module_name = value  # type: ignore
+    def store_and_consume_remaining(
+        option: optparse.Option, opt: str, value: str, parser: optparse.OptionParser
+    ):
+        """
+        A callback for optparse that stores the value and consumes all
+        remaining arguments, storing them in the same variable as a tuple.
+        """
 
-        # everything after the -m argument should be passed to that module
-        parser.values.module_args = parser.rargs + parser.largs  # type: ignore
-        parser.rargs[:] = []  # type: ignore
-        parser.largs[:] = []  # type: ignore
+        # assert a few things we know to be true about the parser
+        assert option.dest
+        assert parser.rargs is not None
+        assert parser.largs is not None
+
+        # everything after this argument should be consumed
+        remaining_arguments = parser.rargs + parser.largs
+        parser.rargs[:] = []
+        parser.largs[:] = []
+
+        setattr(parser.values, option.dest, ValueWithRemainingArgs(value, remaining_arguments))
 
     parser.add_option(
         "--load",
@@ -62,11 +74,20 @@ def main():
     parser.add_option(
         "-m",
         "",
-        dest="module_name",
+        dest="module",
         action="callback",
-        callback=dash_m_callback,
-        type="str",
+        callback=store_and_consume_remaining,
+        type="string",
         help="run library module as a script, like 'python -m module'",
+    )
+    parser.add_option(
+        "-c",
+        "",
+        dest="program",
+        action="callback",
+        callback=store_and_consume_remaining,
+        type="string",
+        help="program passed in as string, like 'python -c \"...\"'",
     )
     parser.add_option(
         "",
@@ -254,7 +275,8 @@ def main():
     session_options_used = [
         options.load is not None,
         options.load_prev is not None,
-        options.module_name is not None,
+        options.module is not None,
+        options.program is not None,
         len(args) > 0,
     ]
     if session_options_used.count(True) == 0:
@@ -263,7 +285,7 @@ def main():
     if session_options_used.count(True) > 1:
         parser.error("You can only specify one of --load, --load-prev, -m, or script arguments")
 
-    if options.module_name is not None and options.from_path:
+    if options.module is not None and options.from_path:
         parser.error("The options -m and --from-path are mutually exclusive.")
 
     if options.from_path and sys.platform == "win32":
@@ -307,14 +329,21 @@ def main():
     elif options.load:
         session = Session.load(options.load)
     else:
-        if options.module_name is not None:
+        # we are running some code
+        if options.module is not None:
             if not (sys.path[0] and os.path.samefile(sys.path[0], ".")):
                 # when called with '-m', search the cwd for that module
                 sys.path[0] = os.path.abspath(".")
 
-            argv = [options.module_name] + options.module_args
+            argv = [options.module.value] + options.module.remaining_args
             code = "run_module(modname, run_name='__main__', alter_sys=True)"
-            globs = {"run_module": runpy.run_module, "modname": options.module_name}
+            globs = {"run_module": runpy.run_module, "modname": options.module.value}
+        elif options.program is not None:
+            argv = ["-c", *options.program.remaining_args]
+            code = options.program.value
+            globs = {"__name__": "__main__"}
+            # set the first path entry to '' to match behaviour of python -c
+            sys.path[0] = ""
         else:
             argv = args
             if options.from_path:
@@ -332,6 +361,8 @@ def main():
             code = "run_path(progname, run_name='__main__')"
             globs = {"run_path": runpy.run_path, "progname": progname}
 
+        old_argv = sys.argv.copy()
+
         # there is no point using async mode for command line invocation,
         # because it will always be capturing the whole program, we never want
         # any execution to be <out-of-context>, and it avoids duplicate
@@ -344,7 +375,6 @@ def main():
 
         profiler.start()
 
-        old_argv = sys.argv.copy()
         try:
             sys.argv[:] = argv
             exec(code, globs, None)
@@ -566,8 +596,8 @@ class CommandLineOptions:
     A type that codifies the `options` variable.
     """
 
-    module_name: str | None
-    module_args: list[str]
+    module: ValueWithRemainingArgs | None
+    program: ValueWithRemainingArgs | None
     load: str | None
     load_prev: str | None
     from_path: str | None
@@ -586,6 +616,12 @@ class CommandLineOptions:
     timeline: bool
     interval: float
     use_timing_thread: bool | None
+
+
+class ValueWithRemainingArgs:
+    def __init__(self, value: str, remaining_args: list[str]):
+        self.value = value
+        self.remaining_args = remaining_args
 
 
 if __name__ == "__main__":

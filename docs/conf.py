@@ -22,7 +22,7 @@ copyright = "2021, Joe Rickerby"
 author = "Joe Rickerby"
 
 # The full version, including alpha/beta/rc tags
-release = "4.5.3"
+release = "4.6.0"
 
 
 # -- General configuration ---------------------------------------------------

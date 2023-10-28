@@ -294,8 +294,7 @@ def auto_profile(request):
     profiler.stop()
     PROFILE_ROOT.mkdir(exist_ok=True)
     results_file = PROFILE_ROOT / f"{request.node.name}.html"
-    with open(results_file, "w", encoding="utf-8") as f_html:
-        f_html.write(profiler.output_html())
+    profiler.write_html(results_file)
 ```
 
 This will generate a HTML file for each test node in your test suite inside
