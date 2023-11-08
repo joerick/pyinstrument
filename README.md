@@ -54,6 +54,12 @@ Known issues
 Changelog
 ---------
 
+### v4.6.1
+
+_8 November 2023_
+
+-   Fixes a bug with unwanted variable expansion in the IPython magics `%pyinstrument` (#278)
+
 ### v4.6.0
 
 _12 October 2023_
