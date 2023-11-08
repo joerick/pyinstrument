@@ -68,6 +68,15 @@ def test_magic_empty_line(ip):
     ip.run_line_magic("pyinstrument", line="")
 
 
+@pytest.mark.ipythonmagic
+def test_magic_no_variable_expansion(ip, capsys):
+    ip.run_line_magic("pyinstrument", line="print(\"hello {len('world')}\")")
+
+    captured = capsys.readouterr()
+    assert "hello {len('world')}" in captured.out
+    assert "hello 5" not in captured.out
+
+
 # Utils #
 
 
