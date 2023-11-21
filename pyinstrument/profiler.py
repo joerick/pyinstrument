@@ -300,19 +300,19 @@ class Profiler:
             )
         )
 
-    def output_html(self, timeline: bool = False) -> str:
+    def output_html(self, timeline: bool = False, show_all: bool = False) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
-        return self.output(renderer=renderers.HTMLRenderer(timeline=timeline))
+        return self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all))
 
-    def write_html(self, path: str | os.PathLike[str], timeline: bool = False):
+    def write_html(self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False):
         """
         Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
         """
         file = Path(path)
         file.write_text(
-            self.output(renderer=renderers.HTMLRenderer(timeline=timeline)),
+            self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all)),
             encoding="utf-8",
         )
 
