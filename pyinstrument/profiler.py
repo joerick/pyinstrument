@@ -306,7 +306,9 @@ class Profiler:
         """
         return self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all))
 
-    def write_html(self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False):
+    def write_html(
+        self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False
+    ):
         """
         Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
         """
