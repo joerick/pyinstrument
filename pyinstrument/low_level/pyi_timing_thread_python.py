@@ -73,7 +73,7 @@ def pyi_timing_thread_unsubscribe(id: int):
                 thread_alive = False
             return 0
         else:
-            return "PYI_TIMING_THREAD_NOT_SUBSCRIBED"
+            raise Exception("PYI_TIMING_THREAD_NOT_SUBSCRIBED")
 
 
 def pyi_timing_thread_get_time() -> float:
