@@ -1,10 +1,11 @@
 import ctypes
+import os
 import sys
 import time
 
 import pyinstrument.low_level.stat_profile as native_module
 
-from ..util import busy_wait
+from ..util import busy_wait, flaky_in_ci
 
 lib = ctypes.CDLL(native_module.__file__)
 
@@ -27,19 +28,23 @@ pyi_timing_thread_unsubscribe.restype = ctypes.c_int
 PYI_TIMING_THREAD_UNKNOWN_ERROR = -1
 PYI_TIMING_THREAD_TOO_MANY_SUBSCRIBERS = -2
 
-# on windows, the thread scheduling 'quanta', the time that a thread can run
-# before potentially being pre-empted, is 20-30ms. This means that the
-# worst-case, we have to wait 30ms before the timing thread gets a chance to
-# run. This isn't really a huge problem in practice, because thread-based
-# timing isn't much use on windows, since the synchronous timing functions are
-# so fast.
 
 if sys.platform == "win32":
+    # on windows, the thread scheduling 'quanta', the time that a thread can run
+    # before potentially being pre-empted, is 20-30ms. This means that the
+    # worst-case, we have to wait 30ms before the timing thread gets a chance to
+    # run. This isn't really a huge problem in practice, because thread-based
+    # timing isn't much use on windows, since the synchronous timing functions are
+    # so fast.
     WAIT_TIME = 0.03
+elif os.environ.get("QEMU_EMULATED"):
+    # the scheduler seems slower under emulation
+    WAIT_TIME = 0.1
 else:
     WAIT_TIME = 0.015
 
 
+@flaky_in_ci
 def test():
     # check the thread isn't running to begin with
     assert pyi_timing_thread_get_interval() == -1
