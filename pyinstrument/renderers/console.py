@@ -134,8 +134,9 @@ class ConsoleRenderer(FrameRenderer):
     def render_frame_flat(self, frame: Frame) -> str:
         def walk(frame: Frame):
             frame_id_to_time[frame.identifier] = (
-                frame_id_to_time.get(frame.identifier, 0) 
-                + frame.total_self_time if self.flat_time == "self" else frame.time
+                frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
+                if self.flat_time == "self"
+                else frame.time
             )
 
             frame_id_to_frame[frame.identifier] = frame
