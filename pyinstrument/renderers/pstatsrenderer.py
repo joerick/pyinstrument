@@ -71,7 +71,7 @@ class PstatsRenderer(FrameRenderer):
         stats[key] = (call_time, number_calls, total_time, cumulative_time, callers)
 
         for child in frame.children:
-            if not frame.is_synthetic:
+            if not child.is_synthetic:
                 self.render_frame(child, stats)
 
     def render(self, session: Session):
