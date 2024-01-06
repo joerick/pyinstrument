@@ -2,7 +2,7 @@ import os
 import time
 from pathlib import Path
 from pstats import Stats
-from test.fake_time_util import fake_time
+from test.fake_time_util import FakeClock, fake_time
 from typing import Any
 
 import pytest
@@ -99,3 +99,32 @@ def test_round_trip_encoding_of_binary_data(tmp_path: Path):
 
     assert data_blob == data_blob_string.encode(encoding="utf-8", errors="surrogateescape")
     assert data_blob == file.read_bytes()
+
+
+def sleep_and_busy_wait(clock: FakeClock):
+    time.sleep(1.0)
+    # this looks like a busy wait to the profiler
+    clock.time += 1.0
+
+
+def test_sum_of_tottime(tmp_path):
+    # Check that the sum of the tottime of all the functions is equal to the
+    # total time of the profile
+
+    with fake_time() as clock:
+        profiler = Profiler()
+        profiler.start()
+
+        sleep_and_busy_wait(clock)
+
+        profiler.stop()
+        profiler_session = profiler.last_session
+
+    assert profiler_session
+
+    pstats_data = PstatsRenderer().render(profiler_session)
+    fname = tmp_path / "test.pstats"
+    with open(fname, "wb") as fid:
+        fid.write(pstats_data.encode(encoding="utf-8", errors="surrogateescape"))
+    stats: Any = Stats(str(fname))
+    assert stats.total_tt == pytest.approx(2)
