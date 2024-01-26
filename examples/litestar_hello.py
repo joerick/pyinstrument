@@ -13,20 +13,20 @@ class ProfilingMiddleware(MiddlewareProtocol):
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         profiler = Profiler(interval=0.001, async_mode="enabled")
-
         profiler.start()
+        profile_html: str | None = None
 
         async def send_wrapper(message: Message) -> None:
-            if message["type"] == "http.response.body":
-                message["body"] = profiler.output_html().encode()
-
-            elif message["type"] == "http.response.start":
+            if message["type"] == "http.response.start":
                 profiler.stop()
+                nonlocal profile_html
+                profile_html = profiler.output_html()
                 message["headers"] = [
                     (b"content-type", b"text/html; charset=utf-8"),
-                    (b"content-length", str(len(profiler.output_html())).encode()),
+                    (b"content-length", str(len(profile_html)).encode()),
                 ]
-
+            elif message["type"] == "http.response.body":
+                message["body"] = profile_html.encode()
             await send(message)
 
         await self.app(scope, receive, send_wrapper)
