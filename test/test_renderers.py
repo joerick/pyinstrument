@@ -85,3 +85,9 @@ def test_show_all_doesnt_crash(
 ):
     renderer = frame_renderer_class(show_all=True)
     renderer.render(profiler_session)
+
+
+@pytest.mark.parametrize("flat_time", ["self", "total"])
+def test_console_renderer_flat_doesnt_crash(profiler_session, flat_time):
+    renderer = renderers.ConsoleRenderer(flat=True, flat_time=flat_time)
+    renderer.render(profiler_session)
