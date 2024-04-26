@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from collections import deque
 from typing import Any
 
@@ -28,6 +30,7 @@ class Session:
         start_call_stack: list[str],
         program: str,
         cpu_time: float,
+        sys_path: list[str],
     ):
         """Session()
 
@@ -42,6 +45,8 @@ class Session:
         self.start_call_stack = start_call_stack
         self.program = program
         self.cpu_time = cpu_time
+        self.sys_path = sys_path
+        self._short_file_path_cache = {}
 
     @staticmethod
     def load(filename: PathOrStr) -> Session:
@@ -63,16 +68,21 @@ class Session:
         with open(filename, "w") as f:
             json.dump(self.to_json(), f)
 
-    def to_json(self):
-        return {
-            "frame_records": self.frame_records,
+    def to_json(self, include_frame_records: bool = True):
+        result: dict[str, Any] = {
             "start_time": self.start_time,
             "duration": self.duration,
             "sample_count": self.sample_count,
             "start_call_stack": self.start_call_stack,
             "program": self.program,
             "cpu_time": self.cpu_time,
+            "sys_path": self.sys_path,
         }
+
+        if include_frame_records:
+            result["frame_records"] = self.frame_records
+
+        return result
 
     @staticmethod
     def from_json(json_dict: dict[str, Any]):
@@ -84,6 +94,7 @@ class Session:
             start_call_stack=json_dict["start_call_stack"],
             program=json_dict["program"],
             cpu_time=json_dict["cpu_time"] or 0,
+            sys_path=json_dict.get("sys_path", sys.path),
         )
 
     @staticmethod
@@ -109,6 +120,9 @@ class Session:
             start_call_stack=session1.start_call_stack,
             program=session1.program,
             cpu_time=session1.cpu_time + session2.cpu_time,
+            sys_path=(
+                session1.sys_path + [p for p in session2.sys_path if p not in session1.sys_path]
+            ),
         )
 
     def root_frame(self, trim_stem: bool = True) -> Frame | None:
@@ -119,7 +133,7 @@ class Session:
 
         :rtype: A :class:`Frame` object, or None if the session is empty.
         """
-        root_frame = build_frame_tree(self.frame_records)
+        root_frame = build_frame_tree(self.frame_records, context=self)
 
         if root_frame is None:
             return None
@@ -148,3 +162,35 @@ class Session:
 
         frame.remove_from_parent()
         return frame
+
+    _short_file_path_cache: dict[str, str]
+
+    def shorten_path(self, path: str) -> str:
+        """
+        Shorten a path to a more readable form, relative to sys_path. Used by
+        Frame.short_file_path.
+        """
+        if path in self._short_file_path_cache:
+            return self._short_file_path_cache[path]
+
+        result = path
+        # if os.sep doesn't appear, probably not a file path at all, more
+        # likely <built-in> or similar
+        if len(path.split(os.sep)) > 1:
+            for sys_path_entry in self.sys_path:
+                # On Windows, if path and sys_path_entry are on
+                # different drives, relpath will result in exception,
+                # because it cannot compute a relpath in this case.
+                # The root cause is that on Windows, there is no root
+                # dir like '/' on Linux.
+                try:
+                    candidate = os.path.relpath(path, sys_path_entry)
+                except ValueError:
+                    continue
+
+                if not result or (len(candidate.split(os.sep)) < len(result.split(os.sep))):
+                    result = candidate
+
+        self._short_file_path_cache[path] = result
+
+        return result

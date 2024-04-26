@@ -1,10 +1,10 @@
 <script lang="ts">
   import Header from './lib/Header.svelte'
-  import Frame from './lib/Frame.svelte'
   import type Session from "./lib/model/Session";
   export let session: Session
   import faviconImage from './assets/favicon.png'
   import { onDestroy, onMount } from 'svelte';
+  import TreeView from './lib/TreeView.svelte';
 
   // add favicon
   const favicon = document.createElement('link')
@@ -42,12 +42,12 @@
 
   <div class="program"><span class="label">Program:&nbsp;</span>{name}</div>
 
-    {#if session.rootFrame}
-      <Frame frame={session.rootFrame} />
-    {:else}
+    {#if !session.rootFrame}
       <div class="error">
         No samples recorded.
       </div>
+    {:else}
+      <TreeView session={session} />
     {/if}
   </div>
 </div>

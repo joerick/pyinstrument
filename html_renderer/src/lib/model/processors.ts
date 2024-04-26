@@ -1,0 +1,239 @@
+import type Frame from "./Frame";
+import { SELF_TIME_FRAME_IDENTIFIER } from "./Frame";
+import FrameGroup from "./FrameGroup";
+import { combineFrames, deleteFrameFromTree } from './frameOps'
+
+export type ProcessorOptions = Record<string, any>
+export type ProcessorFunction = (frame: Frame | null, options: ProcessorOptions) => Frame | null
+
+/**
+ * Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
+ */
+export function remove_importlib(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null
+    }
+
+    for (const child of frame.children) {
+        remove_importlib(child, options)
+
+        if (child.filePath && child.filePath.includes("<frozen importlib._bootstrap")) {
+            deleteFrameFromTree(child, { replaceWith: "children" })
+        }
+    }
+
+    return frame
+}
+
+/**
+ * Removes frames that have set a local `__tracebackhide__` (e.g.
+ * `__tracebackhide__ = True`), to hide them from the output.
+ */
+export function remove_tracebackhide(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null
+    }
+
+    for (const child of frame.children) {
+        remove_tracebackhide(child, options)
+
+        if (child.hasTracebackhide) {
+            deleteFrameFromTree(child, { replaceWith: "children" })
+        }
+    }
+
+    return frame
+}
+
+/**
+ * Converts a timeline into a time-aggregate summary.
+ *
+ * Adds together calls along the same call stack, so that repeated calls
+ * appear as the same frame. Removes time-linearity - frames are sorted
+ * according to total time spent.
+ *
+ * Useful for outputs that display a summary of execution (e.g., text and HTML
+ * outputs).
+ */
+export function aggregate_repeated_calls(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    const childrenByIdentifier: Record<string, Frame> = {};
+
+    for (const child of frame.children.slice()) {
+        if (childrenByIdentifier[child.identifier]) {
+            const aggregateFrame = childrenByIdentifier[child.identifier];
+            combineFrames(child, aggregateFrame);
+        } else {
+            childrenByIdentifier[child.identifier] = child;
+        }
+    }
+
+    frame.children.forEach(child => aggregate_repeated_calls(child, options));
+    frame._children.sort((a, b) => b.time - a.time);
+
+    return frame;
+}
+
+/**
+ * Groups frames that should be hidden into FrameGroup objects,
+ * according to `hide_regex` and `show_regex` in the options dictionary.
+ */
+export function group_library_frames_processor(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    const hideRegex = options.hideRegex;
+    const showRegex = options.showRegex;
+
+    function shouldHide(frame: Frame): boolean {
+        const filePath = frame.filePath || "";
+        const show = showRegex && new RegExp(showRegex).test(filePath);
+        const hide = hideRegex && new RegExp(hideRegex).test(filePath);
+
+        if (show) {
+            return false;
+        }
+        if (hide) {
+            return true;
+        }
+        return !frame.isApplicationCode
+    }
+
+    function addFramesToGroup(frame: Frame, group: FrameGroup): void {
+        group.addFrame(frame);
+        frame.children.forEach(child => {
+            if (shouldHide(child)) {
+                addFramesToGroup(child, group);
+            }
+        });
+    }
+
+    frame.children.forEach(child => {
+        if (!child.group && shouldHide(child) && child.children.some(shouldHide)) {
+            const group = new FrameGroup(child);
+            addFramesToGroup(child, group);
+        }
+
+        group_library_frames_processor(child, options);
+    });
+
+    return frame;
+}
+
+/**
+ * Combines consecutive 'self time' frames.
+ */
+export function merge_consecutive_self_time(frame: Frame | null, options: ProcessorOptions, recursive: boolean = true): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    let previousSelfTimeFrame: Frame | null = null;
+
+    for (const child of frame.children) {
+        if (child.identifier === SELF_TIME_FRAME_IDENTIFIER) {
+            if (previousSelfTimeFrame) {
+                previousSelfTimeFrame.time += child.time;
+                child.removeFromParent();
+            } else {
+                previousSelfTimeFrame = child;
+            }
+        } else {
+            previousSelfTimeFrame = null;
+        }
+    }
+
+    if (recursive) {
+        frame.children.forEach(child => merge_consecutive_self_time(child, options, true));
+    }
+
+    return frame;
+}
+
+/**
+ * Removes unnecessary self-time nodes.
+ */
+export function remove_unnecessary_self_time_nodes(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    if (frame.children.length === 1 && frame.children[0].identifier === SELF_TIME_FRAME_IDENTIFIER) {
+        deleteFrameFromTree(frame.children[0], { replaceWith: "nothing" });
+    }
+
+    frame.children.forEach(child => remove_unnecessary_self_time_nodes(child, options));
+
+    return frame;
+}
+
+/**
+ * Removes nodes that represent less than a certain percentage of the output.
+ */
+export function remove_irrelevant_nodes(frame: Frame | null, options: ProcessorOptions, totalTime: number | null = null): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    if (totalTime === null) {
+        totalTime = frame.time;
+        if (totalTime <= 0) {
+            totalTime = 1e-44;  // Prevent divide by zero
+        }
+    }
+
+    const filterThreshold = options.filterThreshold || 0.01;
+
+    for (const child of frame.children.slice()) {
+        const proportionOfTotal = child.time / totalTime;
+        if (proportionOfTotal < filterThreshold) {
+            deleteFrameFromTree(child, { replaceWith: "nothing" });
+        }
+    }
+
+    frame.children.forEach(child => remove_irrelevant_nodes(child, options, totalTime));
+
+    return frame;
+}
+
+/**
+ * Removes the initial frames specific to the command line use of pyinstrument.
+ */
+export function remove_first_pyinstrument_frames_processor(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    const isInitialPyinstrumentFrame = (f: Frame) =>
+        f.filePath?.includes("pyinstrument/__main__.py") && f.children.length > 0;
+
+    const isExecFrame = (f: Frame) =>
+        f.proportionOfParent > 0.8 && f.filePath?.includes("<string>") && f.children.length > 0;
+
+    const isRunpyFrame = (f: Frame) =>
+        f.proportionOfParent > 0.8 && (new RegExp(".*runpy.py").test(f.filePath ?? '') || f.filePath?.includes("<frozen runpy>")) && f.children.length > 0;
+
+    let result = frame;
+
+    if (!isInitialPyinstrumentFrame(result)) return frame;
+
+    result = result.children[0];
+
+    if (!isExecFrame(result)) return frame;
+
+    result = result.children[0];
+
+    if (!isRunpyFrame(result)) return frame;
+
+    while (isRunpyFrame(result)) {
+        result = result.children[0];
+    }
+
+    result.removeFromParent();
+
+    return result;
+}

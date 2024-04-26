@@ -2,6 +2,7 @@
   import { timeFormat, visibleGroups } from './appState';
   import type Frame from './model/Frame'
   export let frame: Frame
+  export let rootFrame: Frame
   export let indent: number = 0
 
   let childrenVisible = true
@@ -10,7 +11,7 @@
   $: {
     if (!frame.group) {
       isVisible = true
-    } else if ($visibleGroups[frame.groupId ?? '']) {
+    } else if ($visibleGroups[frame.group.id ?? '']) {
       isVisible = true
     } else if (frame.group?.rootFrame === frame) {
       isVisible = true
@@ -21,14 +22,17 @@
     }
   }
 
+  const frameProportionOfTotal = frame.time / rootFrame.time
+
   let name: string
+
   if (frame.className) {
     name = `${frame.className}.${frame.function}`
   } else {
     name = frame.function
   }
 
-  const codePosition = `${frame.filePathShort}:${frame.lineNo.toString().padEnd(4, ' ')}`
+  const codePosition = `${frame.filePathShort}:${frame.lineNo?.toString().padEnd(4, ' ')}`
 
   let formattedTime: string
   $: if ($timeFormat === "absolute") {
@@ -37,7 +41,7 @@
       maximumFractionDigits: 3,
     });
   } else if ($timeFormat === 'proportion') {
-    formattedTime = `${(frame.proportionOfTotal * 100).toLocaleString(undefined, {
+    formattedTime = `${(frameProportionOfTotal * 100).toLocaleString(undefined, {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     })}%`;
@@ -57,11 +61,11 @@
 
   let timeColor: string
 
-  if (frame.proportionOfTotal > 0.6) {
+  if (frameProportionOfTotal > 0.6) {
     timeColor = '#FF4159'
-  } else if (frame.proportionOfTotal > 0.3) {
+  } else if (frameProportionOfTotal > 0.3) {
     timeColor = '#F5A623'
-  } else if (frame.proportionOfTotal > 0.2) {
+  } else if (frameProportionOfTotal > 0.2) {
     timeColor = '#D8CB2A'
   } else {
     timeColor = '#7ED321'
@@ -71,12 +75,12 @@
     childrenVisible = !childrenVisible
   }
 
-  $: isGroupVisible = $visibleGroups[frame.groupId ?? ''] === true
+  $: isGroupVisible = $visibleGroups[frame.group?.id ?? ''] === true
 
   function headerClicked() {
     visibleGroups.update(groups => ({
       ...groups,
-      [frame.groupId ?? '']: !isGroupVisible
+      [frame.group?.id ?? '']: !isGroupVisible
     }))
   }
 
@@ -96,11 +100,10 @@
       </div>
       <div class="time"
            style:color="{timeColor}"
-           style:font-weight="{frame.proportionOfTotal < 0.2 ? 500 : 600}">
+           style:font-weight="{frameProportionOfTotal < 0.2 ? 500 : 600}">
         {formattedTime}
       </div>
       <div class="name">{name}</div>
-      <div class="spacer" style="flex: 1"></div>
       <div class="code-position">
         {codePosition}
       </div>
@@ -123,8 +126,9 @@
   {/if}
 
   {#if childrenVisible}
-    {#each frame.children as child (child.identifier)}
+    {#each frame.children as child}
       <svelte:self frame="{child}"
+                   rootFrame="{rootFrame}"
                    indent="{indent + (isVisible ? 1 : 0)}" />
     {/each}
   {/if}
@@ -180,6 +184,7 @@
 
 .frame-description {
   display: flex;
+  white-space: nowrap;
 }
 .frame-description:hover::before {
   position: absolute;
@@ -216,7 +221,7 @@
 .code-position {
   color: rgba(255, 255, 255, 0.5);
   text-align: right;
-  margin-left: 1em;
+  margin-left: 2em;
 }
 
 :global {
@@ -228,6 +233,7 @@
     background-color: white;
     position: absolute;
     opacity: 0.08;
+    pointer-events: none;
   }
   .frame-description:hover ~ .visual-guide {
     opacity: 0.4;

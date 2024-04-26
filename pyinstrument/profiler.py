@@ -162,6 +162,7 @@ class Profiler:
             program=" ".join(sys.argv),
             start_call_stack=self._active_session.start_call_stack,
             cpu_time=cpu_time,
+            sys_path=sys.path,
         )
         self._active_session = None
 
