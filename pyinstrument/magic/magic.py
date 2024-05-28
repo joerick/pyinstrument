@@ -2,14 +2,15 @@ import asyncio
 import threading
 import urllib.parse
 from ast import parse
+from textwrap import dedent
 
+import IPython
 from IPython import get_ipython  # type: ignore
 from IPython.core.magic import Magics, line_cell_magic, magics_class, no_var_expand
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import IFrame, display
 
 from .. import Profiler
-from ._utils import PrePostAstTransformer
 
 _active_profiler = None
 
@@ -34,12 +35,31 @@ def _get_active_profiler():
 class PyinstrumentMagic(Magics):
     def __init__(self, shell):
         super().__init__(shell)
-        # This will leak _get_active_profiler into the users space until we can magle it
-        self.pre = parse(
-            "\nfrom pyinstrument.magic.magic import _get_active_profiler; _get_active_profiler().start()\n"
-        )
-        self.post = parse("\n_get_active_profiler().stop()")
-        self._transformer = PrePostAstTransformer(self.pre, self.post)
+        if IPython.version_info < (8, 15):
+            from ._utils import PrePostAstTransformer
+
+            # This will leak _get_active_profiler into the users space until we can magle it
+            pre = parse(
+                "\nfrom pyinstrument.magic.magic import _get_active_profiler; _get_active_profiler().start()\n"
+            )
+            post = parse("\n_get_active_profiler().stop()")
+            self._transformer = PrePostAstTransformer(pre, post)
+        else:
+            from IPython.core.magics.ast_mod import ReplaceCodeTransformer
+
+            self._transformer = ReplaceCodeTransformer.from_string(
+                dedent(
+                    """
+            from pyinstrument.magic.magic import _get_active_profiler as ___get_prof
+            ___get_prof().start()
+            try:
+                __code__
+            finally:
+                ___get_prof().stop()
+            __ret__
+            """
+                )
+            )
 
     @magic_arguments()
     @argument(
@@ -109,6 +129,9 @@ class PyinstrumentMagic(Magics):
             cell_result = ip.run_cell(code)
         else:
             cell_result = self.run_cell_async(ip, code)
+        mangled_keys = [k for k in ip.user_ns.keys() if "-" in k]
+        for k in mangled_keys:
+            del ip.user_ns[k]
         ip.ast_transformers.remove(self._transformer)
 
         if (
