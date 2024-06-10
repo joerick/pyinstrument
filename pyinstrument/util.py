@@ -5,7 +5,10 @@ import sys
 import warnings
 from typing import IO, Any, AnyStr, Callable
 
-from pyinstrument.vendor.decorator import decorator
+try:
+    from pyinstrument.vendor.decorator import decorator
+except ImportError:
+    from decorator import decorator
 
 
 def object_with_import_path(import_path: str) -> Any:
