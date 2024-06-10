@@ -14,7 +14,6 @@ EXECUTION_DETAILS_SCRIPT = f"""
 import sys, os
 print('__name__', __name__, file=sys.stderr)
 print('sys.argv', sys.argv, file=sys.stderr)
-print('sys.path', sys.path, file=sys.stderr)
 print('sys.executable', os.path.realpath(sys.executable), file=sys.stderr)
 print('os.getcwd()', os.getcwd(), file=sys.stderr)
 """.strip()
