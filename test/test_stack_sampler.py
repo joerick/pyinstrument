@@ -97,8 +97,12 @@ def test_multiple_contexts():
 
     assert sys.getprofile() is None
     assert len(sampler.subscribers) == 0
-    context_1.run(sampler.subscribe, counter_1.sample, 0.001, True)
-    context_2.run(sampler.subscribe, counter_2.sample, 0.001, True)
+    context_1.run(
+        sampler.subscribe, target=counter_1.sample, desired_interval=0.001, use_async_context=True
+    )
+    context_2.run(
+        sampler.subscribe, target=counter_2.sample, desired_interval=0.001, use_async_context=True
+    )
 
     assert sys.getprofile() is not None
     assert len(sampler.subscribers) == 2
