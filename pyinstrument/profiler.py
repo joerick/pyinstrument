@@ -258,6 +258,7 @@ class Profiler:
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        **kwargs: Any,
     ):
         """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
 
@@ -280,6 +281,7 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                **kwargs,
             ),
             file=file,
         )
@@ -290,13 +292,14 @@ class Profiler:
         color: bool = False,
         show_all: bool = False,
         timeline: bool = False,
+        **kwargs: Any,
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
-                unicode=unicode, color=color, show_all=show_all, timeline=timeline
+                unicode=unicode, color=color, show_all=show_all, timeline=timeline, **kwargs,
             )
         )
 
