@@ -127,6 +127,11 @@ class Session:
         if trim_stem:
             root_frame = self._trim_stem(root_frame)
 
+        group_library_frames_processor(
+            root_frame,
+            {"hide_regex": ".+((IPython)|(ipykernel.zmqshell)|(pyinstrument.magic.magic))"},
+        )
+
         return root_frame
 
     def _trim_stem(self, frame: Frame):

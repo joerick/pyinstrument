@@ -105,4 +105,5 @@ class HTMLRenderer(FrameRenderer):
             processors.remove_irrelevant_nodes,
             processors.remove_first_pyinstrument_frames_processor,
             processors.group_library_frames_processor,
+            processors.group_ipython_frames_processor,
         ]
