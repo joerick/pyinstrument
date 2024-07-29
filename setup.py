@@ -31,7 +31,7 @@ setup(
             "trio",
             "greenlet>=3.0.0a1",
             "pytest-asyncio==0.12.0",  # pinned to an older version due to an incompatibility with flaky
-            "sphinx-autobuild==2021.3.14",
+            "sphinx-autobuild==2024.4.16",
             "ipython",
         ],
         "bin": [
@@ -39,9 +39,9 @@ setup(
             "nox",
         ],
         "docs": [
-            "sphinx==4.2.0",
-            "myst-parser==0.15.1",
-            "furo==2021.6.18b36",
+            "sphinx==7.4.7",
+            "myst-parser==3.0.1",
+            "furo==2024.7.18",
             "sphinxcontrib-programoutput==0.17",
         ],
         "examples": [
