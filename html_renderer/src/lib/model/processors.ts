@@ -6,6 +6,34 @@ import { combineFrames, deleteFrameFromTree } from './frameOps'
 export type ProcessorOptions = Record<string, any>
 export type ProcessorFunction = (frame: Frame | null, options: ProcessorOptions) => Frame | null
 
+export interface Processor {
+    name: string
+    description: string
+    function: ProcessorFunction
+    optionsSpec: {
+        key: string,
+        name: string,
+        value: {
+            type: 'string',
+            default: string
+        } | {
+            type: 'number',
+            default: number
+            min?: number
+            max?: number
+            sliderMin?: number
+            sliderMax?: number
+            sliderLogarithmic?: boolean
+        } | {
+            type: 'boolean',
+            default: boolean
+        }
+    }[],
+    category: 'normal' | 'advanced'
+}
+
+export const allProcessors: Processor[] = []
+
 /**
  * Removes ``<frozen importlib._bootstrap`` frames that clutter the output.
  */
@@ -24,6 +52,13 @@ export function remove_importlib(frame: Frame | null, options: ProcessorOptions)
 
     return frame
 }
+allProcessors.push({
+    name: "remove_importlib",
+    description: "Removes <frozen importlib._bootstrap frames that clutter the output.",
+    function: remove_importlib,
+    optionsSpec: [],
+    category: 'normal',
+})
 
 /**
  * Removes frames that have set a local `__tracebackhide__` (e.g.
@@ -44,6 +79,13 @@ export function remove_tracebackhide(frame: Frame | null, options: ProcessorOpti
 
     return frame
 }
+allProcessors.push({
+    name: "remove_tracebackhide",
+    description: "Removes frames that have set a local __tracebackhide__ (e.g. __tracebackhide__ = True), to hide them from the output.",
+    function: remove_tracebackhide,
+    optionsSpec: [],
+    category: 'advanced',
+})
 
 /**
  * Converts a timeline into a time-aggregate summary.
@@ -76,6 +118,13 @@ export function aggregate_repeated_calls(frame: Frame | null, options: Processor
 
     return frame;
 }
+allProcessors.push({
+    name: "aggregate_repeated_calls",
+    description: "Converts a timeline into a time-aggregate summary. Adds together calls along the same call stack, so that repeated calls appear as the same frame. Removes time-linearity - frames are sorted according to total time spent.",
+    function: aggregate_repeated_calls,
+    optionsSpec: [],
+    category: 'normal',
+})
 
 /**
  * Groups frames that should be hidden into FrameGroup objects,
@@ -123,6 +172,30 @@ export function group_library_frames_processor(frame: Frame | null, options: Pro
 
     return frame;
 }
+allProcessors.push({
+    name: "Group library frames",
+    description: "Groups frames that should be hidden.",
+    function: group_library_frames_processor,
+    optionsSpec: [
+        {
+            key: "hideRegex",
+            name: "Hide regex",
+            value: {
+                type: "string",
+                default: ""
+            }
+        },
+        {
+            key: "showRegex",
+            name: "Show regex",
+            value: {
+                type: "string",
+                default: ""
+            }
+        }
+    ],
+    category: 'normal',
+})
 
 /**
  * Combines consecutive 'self time' frames.
@@ -153,6 +226,13 @@ export function merge_consecutive_self_time(frame: Frame | null, options: Proces
 
     return frame;
 }
+allProcessors.push({
+    name: "Merge consecutive self time",
+    description: "Combines consecutive 'self time' frames.",
+    function: merge_consecutive_self_time,
+    optionsSpec: [],
+    category: 'advanced',
+})
 
 /**
  * Removes unnecessary self-time nodes.
@@ -170,6 +250,13 @@ export function remove_unnecessary_self_time_nodes(frame: Frame | null, options:
 
     return frame;
 }
+allProcessors.push({
+    name: "Remove unnecessary self time nodes",
+    description: "Removes unnecessary self-time nodes.",
+    function: remove_unnecessary_self_time_nodes,
+    optionsSpec: [],
+    category: 'advanced',
+})
 
 /**
  * Removes nodes that represent less than a certain percentage of the output.
@@ -199,6 +286,26 @@ export function remove_irrelevant_nodes(frame: Frame | null, options: ProcessorO
 
     return frame;
 }
+allProcessors.push({
+    name: "Remove irrelevant nodes",
+    description: "Removes nodes that represent less than a certain percentage of the output.",
+    function: remove_irrelevant_nodes,
+    optionsSpec: [
+        {
+            key: "filterThreshold",
+            name: "Filter threshold",
+            value: {
+                type: "number",
+                default: 0.01,
+                min: 0,
+                max: 1,
+                sliderMin: 0.0001,
+                sliderMax: 1
+            }
+        }
+    ],
+    category: 'normal',
+})
 
 /**
  * Removes the initial frames specific to the command line use of pyinstrument.
@@ -237,3 +344,10 @@ export function remove_first_pyinstrument_frames_processor(frame: Frame | null, 
 
     return result;
 }
+allProcessors.push({
+    name: "Remove first pyinstrument frames",
+    description: "Removes the initial frames specific to the command line use of pyinstrument.",
+    function: remove_first_pyinstrument_frames_processor,
+    optionsSpec: [],
+    category: 'advanced',
+})

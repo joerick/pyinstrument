@@ -23,6 +23,7 @@ from pyinstrument.util import (
 from pyinstrument.vendor import appdirs, keypath
 
 # pyright: strict
+# pyright: reportUnknownMemberType=false
 
 
 def main():

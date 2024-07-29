@@ -26,7 +26,7 @@
 
   let name: string
 
-  if (frame.className) {
+  $: if (frame.className) {
     name = `${frame.className}.${frame.function}`
   } else {
     name = frame.function
