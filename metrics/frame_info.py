@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import inspect
 from timeit import Timer
+from types import FrameType
+from typing import Final
 
 from pyinstrument.low_level.stat_profile import get_frame_info
 
-frame = inspect.currentframe()
+frame: Final[FrameType | None] = inspect.currentframe()
 assert frame
 
 

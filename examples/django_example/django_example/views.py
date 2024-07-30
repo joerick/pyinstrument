@@ -10,4 +10,4 @@ def hello_world(request):
         y *= x
     time.sleep(0.1)
 
-    return HttpResponse("Hello, world!")
+    return HttpResponse("Hello, world!")  # type: ignore
