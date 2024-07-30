@@ -30,6 +30,7 @@ These timer functions are mostly stolen from timemodule.c
 
 #if defined(MS_WINDOWS) && !defined(__BORLANDC__)
 #include <windows.h>
+#include <time.h> // for clock()
 
 /* use QueryPerformanceCounter on Windows */
 
