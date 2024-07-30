@@ -77,7 +77,7 @@ class PstatsRenderer(FrameRenderer):
     def render(self, session: Session):
         frame = self.preprocess(session.root_frame())
 
-        stats = {}
+        stats: StatsDict = {}
         self.render_frame(frame, stats)
 
         # marshal.dumps returns bytes, so we need to decode it to a string

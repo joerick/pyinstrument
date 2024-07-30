@@ -31,7 +31,7 @@ def main():
         v=pyinstrument.__version__,
         pyv=sys.version_info,
     )
-    parser = optparse.OptionParser(usage=usage, version=version_string)
+    parser: Any = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
     def store_and_consume_remaining(
