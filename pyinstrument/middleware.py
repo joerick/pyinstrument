@@ -92,11 +92,11 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
 
             if getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET:
                 if isinstance(renderer, HTMLRenderer):
-                    return HttpResponse(output)
+                    return HttpResponse(output)  # type: ignore
                 else:
                     renderer = HTMLRenderer()
                     output = renderer.render(profile_session)
-                    return HttpResponse(output)
+                    return HttpResponse(output)  # type: ignore
             else:
                 return response
         else:

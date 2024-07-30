@@ -6,6 +6,7 @@ import time
 from timeit import Timer
 
 import django.conf
+import django.template.loader
 
 import pyinstrument
 
