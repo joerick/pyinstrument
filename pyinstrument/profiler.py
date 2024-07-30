@@ -271,8 +271,9 @@ class Profiler:
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        flat: bool = False,
     ):
-        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, flat=False)
 
         Print the captured profile to the console.
 
@@ -281,6 +282,7 @@ class Profiler:
         :param color: Override ANSI color support detection.
         :param show_all: Sets the ``show_all`` parameter on the renderer.
         :param timeline: Sets the ``timeline`` parameter on the renderer.
+        :param flat: Sets the ``flat`` parameter on the renderer.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)
@@ -293,6 +295,7 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                flat=flat,
             ),
             file=file,
         )
@@ -303,29 +306,32 @@ class Profiler:
         color: bool = False,
         show_all: bool = False,
         timeline: bool = False,
+        flat: bool = False,
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
-                unicode=unicode, color=color, show_all=show_all, timeline=timeline
+                unicode=unicode, color=color, show_all=show_all, timeline=timeline, flat=flat
             )
         )
 
-    def output_html(self, timeline: bool = False) -> str:
+    def output_html(self, timeline: bool = False, show_all: bool = False) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
-        return self.output(renderer=renderers.HTMLRenderer(timeline=timeline))
+        return self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all))
 
-    def write_html(self, path: str | os.PathLike[str], timeline: bool = False):
+    def write_html(
+        self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False
+    ):
         """
         Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
         """
         file = Path(path)
         file.write_text(
-            self.output(renderer=renderers.HTMLRenderer(timeline=timeline)),
+            self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all)),
             encoding="utf-8",
         )
 

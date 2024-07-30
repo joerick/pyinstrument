@@ -8,7 +8,7 @@ line-length = 100
 [tool.pyright]
 include = ["pyinstrument", "test"]
 ignore = ["pyinstrument/vendor"]
-pythonVersion = "3.7"
+pythonVersion = "3.8"
 
 [tool.isort]
 profile = "black"

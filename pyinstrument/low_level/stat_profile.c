@@ -314,19 +314,19 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 
     PyObject *locals = PyFrame_GetLocals(frame);
 
-    if (!PyDict_Check(locals)) {
+    if (!PyMapping_Check(locals)) {
         Py_DECREF(locals);
         return NULL;
     }
 
     if (has_self) {
-        PyObject *self = PyDict_GetItem(locals, SELF_STRING);
+        PyObject *self = PyObject_GetItem(locals, SELF_STRING);
         if (self) {
             result = _PyType_Name(self->ob_type);
         }
     }
     else if (has_cls) {
-        PyObject *cls = PyDict_GetItem(locals, CLS_STRING);
+        PyObject *cls = PyObject_GetItem(locals, CLS_STRING);
         if (cls) {
             if (PyType_Check(cls)) {
                 PyTypeObject *type = (PyTypeObject *)cls;

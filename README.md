@@ -27,7 +27,7 @@ Installation
 
     pip install pyinstrument
 
-Pyinstrument supports Python 3.7+.
+Pyinstrument supports Python 3.8+.
 
 <!-- MARK installation end -->
 
@@ -53,6 +53,19 @@ Known issues
 
 Changelog
 ---------
+
+### v4.6.2
+
+_26 January 2024_
+
+-   Fixes a bug with the pstats renderer, where additional frames could be seen in the output. (#287)
+-   Adds `show_all` option to [Profiler.output_html](https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.output_html)
+
+### v4.6.1
+
+_8 November 2023_
+
+-   Fixes a bug with unwanted variable expansion in the IPython magics `%pyinstrument` (#278)
 
 ### v4.6.0
 
