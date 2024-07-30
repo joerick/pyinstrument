@@ -35,7 +35,7 @@ def _get_active_profiler():
 class PyinstrumentMagic(Magics):
     def __init__(self, shell):
         super().__init__(shell)
-        if IPython.version_info < (8, 15):
+        if IPython.version_info < (8, 15):  # type: ignore
             from ._utils import PrePostAstTransformer
 
             # This will leak _get_active_profiler into the users space until we can magle it
@@ -45,7 +45,7 @@ class PyinstrumentMagic(Magics):
             post = parse("\n_get_active_profiler().stop()")
             self._transformer = PrePostAstTransformer(pre, post)
         else:
-            from IPython.core.magics.ast_mod import ReplaceCodeTransformer
+            from IPython.core.magics.ast_mod import ReplaceCodeTransformer  # type: ignore
 
             self._transformer = ReplaceCodeTransformer.from_string(
                 dedent(
