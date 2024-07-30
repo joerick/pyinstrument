@@ -29,9 +29,9 @@ setup(
             "pytest",
             "flaky",
             "trio",
-            "greenlet>=3.0.0a1",
+            "greenlet>=3.0.0a1 ; python_version < '3.13'",
+            "greenlet @ https://github.com/vstinner/greenlet/archive/refs/heads/py313.zip ; python_version >= '3.13'",
             "pytest-asyncio==0.12.0",  # pinned to an older version due to an incompatibility with flaky
-            "sphinx-autobuild==2024.4.16",
             "ipython",
         ],
         "bin": [
@@ -43,6 +43,7 @@ setup(
             "myst-parser==3.0.1",
             "furo==2024.7.18",
             "sphinxcontrib-programoutput==0.17",
+            "sphinx-autobuild==2024.4.16",
         ],
         "examples": [
             "numpy",
