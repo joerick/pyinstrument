@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from asyncio import sleep
 
 from litestar import Litestar, get
 from litestar.middleware import MiddlewareProtocol
-from litestar.types import ASGIApp, Scope, Receive, Send, Message
+from litestar.types import ASGIApp, Message, Receive, Scope, Send
+
 from pyinstrument import Profiler
 
 
@@ -26,6 +29,7 @@ class ProfilingMiddleware(MiddlewareProtocol):
                     (b"content-length", str(len(profile_html)).encode()),
                 ]
             elif message["type"] == "http.response.body":
+                assert profile_html is not None
                 message["body"] = profile_html.encode()
             await send(message)
 

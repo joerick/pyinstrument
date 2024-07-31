@@ -49,6 +49,7 @@ setup(
         "examples": [
             "numpy",
             "django",
+            "litestar",
         ],
         "types": [
             "typing_extensions",

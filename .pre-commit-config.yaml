@@ -45,6 +45,7 @@ repos:
         -   types-click
         -   types-requests
         -   falcon
+        -   litestar
 
 
 -   repo: local
