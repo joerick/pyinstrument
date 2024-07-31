@@ -31,7 +31,7 @@ def main():
         v=pyinstrument.__version__,
         pyv=sys.version_info,
     )
-    parser = optparse.OptionParser(usage=usage, version=version_string)
+    parser: Any = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
     def store_and_consume_remaining(
@@ -298,6 +298,8 @@ def main():
         f = sys.stdout
         should_close_f_after_writing = False
 
+    inner_exception = None
+
     # create the renderer
 
     try:
@@ -363,8 +365,8 @@ def main():
         try:
             sys.argv[:] = argv
             exec(code, globs, None)
-        except (SystemExit, KeyboardInterrupt):
-            pass
+        except (SystemExit, KeyboardInterrupt) as e:
+            inner_exception = e
         finally:
             sys.argv[:] = old_argv
 
@@ -384,6 +386,11 @@ def main():
         print("To view this report with different options, run:")
         print("    pyinstrument --load-prev %s [options]" % report_identifier)
         print("")
+
+    if inner_exception:
+        # If the script raised an exception, re-raise it now to resume
+        # the normal Python exception handling (printing the traceback, etc.)
+        raise inner_exception
 
 
 def compute_render_options(
