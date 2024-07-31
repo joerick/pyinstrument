@@ -87,11 +87,9 @@ double pyi_floatclock(PYIFloatClockType timer)
     int res;
     if (timer == PYI_FLOATCLOCK_MONOTONIC_COARSE) {
 # ifdef CLOCK_MONOTONIC_COARSE
-        if (imprecision_tolerance >= pyi_monotonic_coarse_resolution()) {
-            struct timespec t;
-            res = clock_gettime(CLOCK_MONOTONIC_COARSE, &t);
-            if (res == 0) return t.tv_sec + t.tv_nsec * SEC_PER_NSEC;
-        }
+        struct timespec t;
+        res = clock_gettime(CLOCK_MONOTONIC_COARSE, &t);
+        if (res == 0) return t.tv_sec + t.tv_nsec * SEC_PER_NSEC;
 # else
         warn_once("CLOCK_MONOTONIC_COARSE not available on this system.");
     }
