@@ -20,6 +20,11 @@ The windows implementations mostly stolen from timemodule.c
 #include <windows.h>
 #include <time.h> // for clock()
 
+double pyi_monotonic_coarse_resolution(void)
+{
+    return DBL_MAX;
+}
+
 /* use QueryPerformanceCounter on Windows */
 
 double pyi_floatclock(PYIFloatClockType timer)
