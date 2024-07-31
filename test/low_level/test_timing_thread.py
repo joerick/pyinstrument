@@ -39,7 +39,7 @@ if sys.platform == "win32":
     WAIT_TIME = 0.03
 elif os.environ.get("QEMU_EMULATED"):
     # the scheduler seems slower under emulation
-    WAIT_TIME = 0.1
+    WAIT_TIME = 0.2
 else:
     WAIT_TIME = 0.015
 
