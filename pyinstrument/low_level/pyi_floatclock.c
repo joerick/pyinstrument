@@ -58,7 +58,7 @@ double pyi_floatclock(PYIFloatClockType timer)
 static double SEC_PER_NSEC = 1e-9;
 static double SEC_PER_USEC = 1e-6;
 
-double pyi_monotonic_coarse_resolution()
+double pyi_monotonic_coarse_resolution(void)
 {
 #ifdef CLOCK_MONOTONIC_COARSE
     static double resolution = -1;

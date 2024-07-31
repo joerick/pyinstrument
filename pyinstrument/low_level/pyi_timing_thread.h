@@ -2,6 +2,7 @@
 #define PYI_TIMINGTHREAD_H
 
 #include <Python.h>
+#include "shared.h"
 
 /**
  * Adds a subscription to the timing thread, requesting that it updates the
@@ -9,23 +10,23 @@
  * unsubscribe later, or a negative value indicating error.
  */
 
-PyAPI_FUNC(int) pyi_timing_thread_subscribe(double desired_interval);
+Py_EXPORTED_SYMBOL int pyi_timing_thread_subscribe(double desired_interval);
 
 /**
  * Returns the current time, as updated by the timing thread.
  */
-PyAPI_FUNC(double) pyi_timing_thread_get_time(void);
+Py_EXPORTED_SYMBOL double pyi_timing_thread_get_time(void);
 
 /**
  * Returns the current interval, or -1 if the thread is not running.
  */
-PyAPI_FUNC(double) pyi_timing_thread_get_interval(void);
+Py_EXPORTED_SYMBOL double pyi_timing_thread_get_interval(void);
 
 /**
  * Unsubscribes from the timing thread. Returns 0 on success, or a negative
  * value indicating error.
  */
-PyAPI_FUNC(int) pyi_timing_thread_unsubscribe(int id);
+Py_EXPORTED_SYMBOL int pyi_timing_thread_unsubscribe(int id);
 
 #define PYI_TIMING_THREAD_UNKNOWN_ERROR -1
 #define PYI_TIMING_THREAD_TOO_MANY_SUBSCRIBERS -2
