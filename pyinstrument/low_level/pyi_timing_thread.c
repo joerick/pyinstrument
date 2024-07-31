@@ -50,7 +50,7 @@ static void timing_thread(void* args) {
             // the wakeup, so let's release it again.
             PyThread_release_lock(update_lock);
         }
-        current_time = pyi_floatclock(0.0);
+        current_time = pyi_floatclock(PYI_FLOATCLOCK_DEFAULT);
     }
 }
 
@@ -71,7 +71,7 @@ int pyi_timing_thread_subscribe(double desiredInterval) {
         thread_alive = 1;
 
         // initialise the current_time in case it's read immediately
-        current_time = pyi_floatclock(0.0);
+        current_time = pyi_floatclock(PYI_FLOATCLOCK_DEFAULT);
     }
 
     int new_id = 0;

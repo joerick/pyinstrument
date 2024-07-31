@@ -2,8 +2,18 @@
 
 #include <Python.h>
 
+
+#define warn_once(msg) \
+    do { \
+        static int warned = 0; \
+        if (!warned) { \
+            fprintf(stderr, "pyinstrument: %s\n", msg); \
+            warned = 1; \
+        } \
+    } while (0)
+
 /*
-These timer functions are mostly stolen from timemodule.c
+The windows implementations mostly stolen from timemodule.c
 */
 
 #if defined(MS_WINDOWS) && !defined(__BORLANDC__)
@@ -12,8 +22,11 @@ These timer functions are mostly stolen from timemodule.c
 
 /* use QueryPerformanceCounter on Windows */
 
-double pyi_floatclock(double imprecision_tolerance)
+double pyi_floatclock(PYIFloatClockType timer)
 {
+    if (timer == PYI_FLOATCLOCK_MONOTONIC_COARSE) {
+        warn_once("CLOCK_MONOTONIC_COARSE not available on this system.");
+    }
     static LARGE_INTEGER ctrStart;
     static double divisor = 0.0;
     LARGE_INTEGER now;
@@ -45,11 +58,11 @@ double pyi_floatclock(double imprecision_tolerance)
 static double SEC_PER_NSEC = 1e-9;
 static double SEC_PER_USEC = 1e-6;
 
-#ifdef CLOCK_MONOTONIC_COARSE
-static inline double monotonic_coarse_resolution()
+double pyi_monotonic_coarse_resolution()
 {
-    static double resolution = DBL_MAX;
-    if (resolution == DBL_MAX) {
+#ifdef CLOCK_MONOTONIC_COARSE
+    static double resolution = -1;
+    if (resolution == -1) {
         struct timespec res;
         int success = clock_getres(CLOCK_MONOTONIC_COARSE, &res);
         if (success == 0) {
@@ -57,24 +70,30 @@ static inline double monotonic_coarse_resolution()
         } else {
             // clock_getres failed, so let's set the resolution to something
             // so this timer is never used.
-            resolution = DBL_MAX*0.99;
+            resolution = DBL_MAX;
         }
     }
     return resolution;
-}
+#else
+    return DBL_MAX;
 #endif
+}
 
-double pyi_floatclock(double imprecision_tolerance)
+double pyi_floatclock(PYIFloatClockType timer)
 {
     // gets the current time in seconds, as quickly as possible.
 #ifdef _POSIX_TIMERS
     struct timespec t;
     int res;
+    if (timer == PYI_FLOATCLOCK_MONOTONIC_COARSE) {
 # ifdef CLOCK_MONOTONIC_COARSE
-    if (imprecision_tolerance >= monotonic_coarse_resolution()) {
-        struct timespec t;
-        res = clock_gettime(CLOCK_MONOTONIC_COARSE, &t);
-        if (res == 0) return t.tv_sec + t.tv_nsec * SEC_PER_NSEC;
+        if (imprecision_tolerance >= pyi_monotonic_coarse_resolution()) {
+            struct timespec t;
+            res = clock_gettime(CLOCK_MONOTONIC_COARSE, &t);
+            if (res == 0) return t.tv_sec + t.tv_nsec * SEC_PER_NSEC;
+        }
+# else
+        warn_once("CLOCK_MONOTONIC_COARSE not available on this system.");
     }
 # endif
 # ifdef CLOCK_MONOTONIC

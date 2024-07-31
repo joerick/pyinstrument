@@ -4,6 +4,7 @@
 
 #include "pyi_floatclock.h"
 #include "pyi_timing_thread.h"
+#include <float.h>
 
 ////////////////////////////
 // Version/Platform shims //
@@ -41,6 +42,7 @@ typedef struct profiler_state {
     PyObject *await_stack_list;
     PyObject *timer_func;
     int timer_thread_subscription_id;
+    PYIFloatClockType floatclock_type;
 } ProfilerState;
 
 static void ProfilerState_SetTarget(ProfilerState *self, PyObject *target) {
@@ -170,6 +172,7 @@ static ProfilerState *ProfilerState_New(void) {
     op->await_stack_list = PyList_New(0);
     op->timer_func = NULL;
     op->timer_thread_subscription_id = -1;
+    op->floatclock_type = PYI_FLOATCLOCK_DEFAULT;
     return op;
 }
 
@@ -183,13 +186,10 @@ static PyObject *SELF_STRING = NULL;
 static PyObject *CLS_STRING = NULL;
 static PyObject *TRACEBACKHIDE_STRING = NULL;
 
-static PyObject *WALLTIME_STRING = NULL;
-static PyObject *WALLTIME_THREAD_STRING = NULL;
-static PyObject *TIMER_FUNC_STRING = NULL;
-
 #define TIMER_TYPE_WALLTIME 0
 #define TIMER_TYPE_WALLTIME_THREAD 1
 #define TIMER_TYPE_TIMER_FUNC 2
+#define TIMER_TYPE_WALLTIME_COARSE 3
 
 #define WHAT_CALL 0
 #define WHAT_EXCEPTION 1
@@ -225,15 +225,6 @@ stat_profile_init(void)
 
     TRACEBACKHIDE_STRING = PyUnicode_InternFromString("__tracebackhide__");
     if (TRACEBACKHIDE_STRING == NULL) return -1;
-
-    WALLTIME_STRING = PyUnicode_InternFromString("walltime");
-    if (WALLTIME_STRING == NULL) return -1;
-
-    WALLTIME_THREAD_STRING = PyUnicode_InternFromString("walltime_thread");
-    if (WALLTIME_THREAD_STRING == NULL) return -1;
-
-    TIMER_FUNC_STRING = PyUnicode_InternFromString("timer_func");
-    if (TIMER_FUNC_STRING == NULL) return -1;
 
     return 0;
 }
@@ -544,14 +535,16 @@ _parse_timer_type(PyObject *timer_type, int defaultValue) {
         return -1;
     }
 
-    if (PyUnicode_Compare(timer_type, WALLTIME_STRING) == 0) {
+    if (PyUnicode_CompareWithASCIIString(timer_type, "walltime") == 0) {
         return TIMER_TYPE_WALLTIME;
-    } else if (PyUnicode_Compare(timer_type, WALLTIME_THREAD_STRING) == 0) {
+    } else if (PyUnicode_CompareWithASCIIString(timer_type, "walltime_thread") == 0) {
         return TIMER_TYPE_WALLTIME_THREAD;
-    } else if (PyUnicode_Compare(timer_type, TIMER_FUNC_STRING) == 0) {
+    } else if (PyUnicode_CompareWithASCIIString(timer_type, "timer_func") == 0) {
         return TIMER_TYPE_TIMER_FUNC;
+    } else if (PyUnicode_CompareWithASCIIString(timer_type, "walltime_coarse") == 0) {
+        return TIMER_TYPE_WALLTIME_COARSE;
     } else {
-        PyErr_SetString(PyExc_TypeError, "timer_type must be 'walltime', 'walltime_thread', or 'timer_func'");
+        PyErr_SetString(PyExc_TypeError, "timer_type must be 'walltime', 'walltime_thread', 'walltime_coarse', or 'timer_func'");
         return -1;
     }
 }
@@ -730,6 +723,10 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
                 PyErr_Format(PyExc_RuntimeError, "failed to subscribe to timing thread: error %d", pState->timer_thread_subscription_id);
                 return NULL;
             }
+        } else if (timer_type_int == TIMER_TYPE_WALLTIME_COARSE) {
+            pState->floatclock_type = PYI_FLOATCLOCK_MONOTONIC_COARSE;
+        } else {
+            pState->floatclock_type = PYI_FLOATCLOCK_DEFAULT;
         }
 
         // initialise the last invocation to avoid immediate callback
@@ -772,6 +769,54 @@ get_frame_info(PyObject *m, PyObject *const *args, Py_ssize_t nargs)
     return _get_frame_info(frame);
 }
 
+static inline double
+measure_timing_overhead_for_timer(PYIFloatClockType timer) {
+    int n = 1000;
+    int num_iterations = 0;
+    pyi_floatclock(timer); // warmup
+    double start = pyi_floatclock(timer);
+    double end = start;
+    double duration = 0;
+    for (int i = 0; i < n; i++) {
+        end = pyi_floatclock(timer);
+        duration = end - start;
+        num_iterations += 1;
+        if (duration > 0.0001) {
+            // dont run this for more than 100us
+            break;
+        }
+    }
+    return duration / num_iterations;
+}
+
+static PyObject *
+measure_timing_overhead(PyObject *m, PyObject * Py_UNUSED(args))
+{
+    double monotonic_coarse_resolution = pyi_monotonic_coarse_resolution();
+    int is_course_timer_available = monotonic_coarse_resolution != DBL_MAX;
+
+    PyObject *result = PyDict_New();
+    PyObject *value = PyFloat_FromDouble(measure_timing_overhead_for_timer(PYI_FLOATCLOCK_DEFAULT));
+    PyDict_SetItemString(result, "walltime", value);
+    Py_DECREF(value);
+    if (is_course_timer_available) {
+        value = PyFloat_FromDouble(measure_timing_overhead_for_timer(PYI_FLOATCLOCK_MONOTONIC_COARSE));
+        PyDict_SetItemString(result, "walltime_coarse", value);
+        Py_DECREF(value);
+    }
+
+    return result;
+}
+
+static PyObject *
+walltime_coarse_resolution(PyObject *m, PyObject * Py_UNUSED(args))
+{
+    double resolution = pyi_monotonic_coarse_resolution();
+    if (resolution == DBL_MAX) {
+        Py_RETURN_NONE;
+    }
+    return PyFloat_FromDouble(resolution);
+}
 
 ///////////////////////////
 // Module initialization //
@@ -784,6 +829,10 @@ static PyMethodDef module_methods[] = {
      "<interval> seconds with the current stack."},
     {"get_frame_info", (PyCFunction)get_frame_info, METH_FASTCALL,
      "Returns the frame identifier string for the given Frame object."},
+    {"measure_timing_overhead", (PyCFunction)measure_timing_overhead, METH_NOARGS,
+     "Returns a dict showing how much overhead the timing options have."},
+    {"walltime_coarse_resolution", (PyCFunction)walltime_coarse_resolution, METH_NOARGS,
+     "Returns the resolution of the monotonic coarse clock. Returns None if the clock is not available."},
     {NULL}  /* Sentinel */
 };
 

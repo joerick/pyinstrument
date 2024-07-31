@@ -1,6 +1,8 @@
 import codecs
 import importlib
+import math
 import os
+import re
 import sys
 import warnings
 from typing import IO, Any, AnyStr, Callable
@@ -77,3 +79,32 @@ def file_supports_unicode(file_obj: IO[AnyStr]) -> bool:
 
 def file_is_a_tty(file_obj: IO[AnyStr]) -> bool:
     return hasattr(file_obj, "isatty") and file_obj.isatty()
+
+
+def unwrap(string: str) -> str:
+    string = string.replace("\n", " ")
+    string = re.sub(r"\s+", " ", string)
+    return string.strip()
+
+
+def format_float_with_sig_figs(value: float, sig_figs: int = 3, trim_zeroes=False) -> str:
+    """
+    Format a float to a string with a specific number of significant figures.
+    Doesn't use scientific notation.
+    """
+    if value == 0:
+        return "0"
+
+    precision = math.ceil(-math.log10(abs(value))) + sig_figs - 1
+    if precision < 0:
+        precision = 0
+    result = "{:.{precision}f}".format(value, precision=precision)
+
+    if trim_zeroes and "." in result:
+        result = result.rstrip("0").rstrip(".")
+
+    return result
+
+
+def strtobool(val: str) -> bool:
+    return val.lower() in {"y", "yes", "t", "true", "on", "1"}

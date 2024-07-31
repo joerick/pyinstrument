@@ -1,13 +1,23 @@
 from __future__ import annotations
 
+import os
+import sys
+import textwrap
 import threading
 import timeit
 import types
 from contextvars import ContextVar
 from typing import Any, Callable, List, NamedTuple, Optional
 
-from pyinstrument.low_level.stat_profile import get_frame_info, setstatprofile
+from pyinstrument.low_level.stat_profile import (
+    get_frame_info,
+    measure_timing_overhead,
+    setstatprofile,
+    walltime_coarse_resolution,
+)
+from pyinstrument.low_level.types import TimerType
 from pyinstrument.typing import LiteralStr
+from pyinstrument.util import format_float_with_sig_figs, strtobool, unwrap
 
 # pyright: strict
 
@@ -15,6 +25,8 @@ from pyinstrument.typing import LiteralStr
 thread_locals = threading.local()
 
 StackSamplerSubscriberTarget = Callable[[List[str], float, Optional["AsyncState"]], None]
+
+IGNORE_OVERHEAD_WARNING = strtobool(os.environ.get("PYINSTRUMENT_IGNORE_OVERHEAD_WARNING", "0"))
 
 
 class StackSamplerSubscriber:
@@ -46,12 +58,14 @@ class StackSampler:
     current_sampling_interval: float | None
     last_profile_time: float
     timer_func: Callable[[], float] | None
+    has_warned_about_timing_overhead: bool
 
     def __init__(self) -> None:
         self.subscribers = []
         self.current_sampling_interval = None
         self.last_profile_time = 0.0
         self.timer_func = None
+        self.has_warned_about_timing_overhead = False
 
     def subscribe(
         self,
@@ -120,11 +134,21 @@ class StackSampler:
             raise ValueError(
                 f"Profiler requested to use the timing thread but this stack sampler is already using a custom timer function."
             )
-        timer_type = (
-            "timer_func"
-            if self.timer_func
-            else ("walltime_thread" if use_timing_thread else "walltime")
-        )
+
+        timer_type: TimerType
+
+        if self.timer_func:
+            timer_type = "timer_func"
+        elif use_timing_thread:
+            timer_type = "walltime_thread"
+        else:
+            coarse_resolution = walltime_coarse_resolution()
+            if coarse_resolution is not None and coarse_resolution <= interval:
+                timer_type = "walltime_coarse"
+            else:
+                timer_type = "walltime"
+
+        self._check_timing_overhead(interval=interval, timer_type=timer_type)
 
         self.current_sampling_interval = interval
         if self.last_profile_time == 0.0:
@@ -179,6 +203,68 @@ class StackSampler:
             return self.timer_func()
         else:
             return timeit.default_timer()
+
+    def _check_timing_overhead(self, interval: float, timer_type: TimerType):
+        if self.has_warned_about_timing_overhead:
+            return
+        if IGNORE_OVERHEAD_WARNING:
+            return
+
+        overheads = timing_overhead()
+        overhead = overheads.get(timer_type)
+        if overhead is None:
+            return
+
+        if timer_type == "walltime":
+            if overhead > 200e-9:
+                self.has_warned_about_timing_overhead = True
+                message_parts: list[str] = []
+                message_parts.append(
+                    f"""
+                    pyinstrument: the timer on your system has an overhead of
+                    {overhead * 1e9:.0f} nanoseconds, which is considered
+                    high. You might experience longer runtimes than usual, and
+                    programs with lots of pure-python code might be distorted.
+                    """
+                )
+
+                message_parts.append(
+                    f"""
+                    You might want to try the timing thread option, which can
+                    be enabled using --use-timing-thread at the command line,
+                    or by setting the use_timing_thread parameter in the
+                    Profiler constructor.
+                    """
+                )
+
+                if "walltime_coarse" in overheads and overheads["walltime_coarse"] < 200e-9:
+                    coarse_resolution = walltime_coarse_resolution()
+                    assert coarse_resolution is not None
+                    message_parts.append(
+                        f"""
+                        Your system does offer a 'coarse' timer, with a lower
+                        overhead ({overheads["walltime_coarse"] * 1e9:.2g}
+                        nanoseconds). You can enable it by setting
+                        pyinstrument's interval to a value higher than
+                        {format_float_with_sig_figs(coarse_resolution,
+                        trim_zeroes=True)} seconds. If you're happy with the
+                        lower precision, this is the best option.
+                        """
+                    )
+
+                message_parts.append(
+                    f"""
+                    If you want to suppress this warning, you can set the
+                    environment variable PYINSTRUMENT_IGNORE_OVERHEAD_WARNING
+                    to '1'.
+                    """
+                )
+
+                message = "\n\n".join(
+                    textwrap.fill(unwrap(part), width=80) for part in message_parts
+                )
+
+                print(message, file=sys.stderr)
 
     class SubscriberNotFound(Exception):
         pass
@@ -242,3 +328,13 @@ class AsyncState(NamedTuple):
     """
 
     info: Any = None
+
+
+_timing_overhead: dict[TimerType, float] | None = None
+
+
+def timing_overhead() -> dict[TimerType, float]:
+    global _timing_overhead
+    if _timing_overhead is None:
+        _timing_overhead = measure_timing_overhead()
+    return _timing_overhead
