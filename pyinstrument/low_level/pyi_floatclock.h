@@ -2,7 +2,7 @@
 #define PYI_FLOATCLOCK_H
 
 #include <Python.h>
-#include "shared.h"
+#include "pyi_shared.h"
 
 typedef enum {
     PYI_FLOATCLOCK_DEFAULT = 0,

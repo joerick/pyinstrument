@@ -1,16 +1,9 @@
 #include "pyi_floatclock.h"
 
 #include <Python.h>
+#include <time.h> // gettimeofday, clock()
+#include <float.h> // DBL_MAX
 
-
-#define warn_once(msg) \
-    do { \
-        static int warned = 0; \
-        if (!warned) { \
-            fprintf(stderr, "pyinstrument: %s\n", msg); \
-            warned = 1; \
-        } \
-    } while (0)
 
 /*
 The windows implementations mostly stolen from timemodule.c
@@ -18,7 +11,6 @@ The windows implementations mostly stolen from timemodule.c
 
 #if defined(MS_WINDOWS) && !defined(__BORLANDC__)
 #include <windows.h>
-#include <time.h> // for clock()
 
 double pyi_monotonic_coarse_resolution(void)
 {
@@ -54,11 +46,8 @@ double pyi_floatclock(PYIFloatClockType timer)
 
 #else  /* !MS_WINDOWS */
 
-#include <sys/time.h> // clock_gettime
-#include <time.h> // gettimeofday
-
 #include <unistd.h>
-#include <float.h>
+#include <sys/time.h> // clock_gettime
 
 static double SEC_PER_NSEC = 1e-9;
 static double SEC_PER_USEC = 1e-6;

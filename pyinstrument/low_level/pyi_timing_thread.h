@@ -2,7 +2,7 @@
 #define PYI_TIMINGTHREAD_H
 
 #include <Python.h>
-#include "shared.h"
+#include "pyi_shared.h"
 
 /**
  * Adds a subscription to the timing thread, requesting that it updates the

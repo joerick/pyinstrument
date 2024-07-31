@@ -1,4 +1,8 @@
+#ifndef PYI_SHARED_H
+#define PYI_SHARED_H
+
 #include <Python.h>
+#include <stdio.h>
 
 #ifndef __has_attribute
 #  define __has_attribute(x) 0  // Compatibility with non-clang compilers.
@@ -15,3 +19,14 @@
 #    define Py_EXPORTED_SYMBOL
 #  endif
 #endif
+
+#define warn_once(msg) \
+    do { \
+        static int warned = 0; \
+        if (!warned) { \
+            fprintf(stderr, "pyinstrument: %s\n", msg); \
+            warned = 1; \
+        } \
+    } while (0)
+
+#endif /* PYI_SHARED_H */
