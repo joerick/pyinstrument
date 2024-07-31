@@ -266,7 +266,7 @@ printing the HTML result from pyinstrument.
 
 Minimal application setup allowing request profiling.
 
-Middleware ovverides the response to return profiling report as HTML document.
+The middleware overrides the response to return a profiling report in HTML format.
 
 ```python
 from asyncio import sleep
@@ -315,8 +315,7 @@ app = Litestar(
 )
 ```
 
-To invoke, make any request to your application and it launch a new window
-printing the HTML result from pyinstrument.
+To invoke, make any request to your application and it will return the HTML result from pyinstrument instead of your application's response.
 
 
 ### Profile Pytest tests
