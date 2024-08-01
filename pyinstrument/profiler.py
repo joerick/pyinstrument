@@ -11,6 +11,7 @@ from typing import IO, Any
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
+from pyinstrument.renderers.console import FlatTimeMode
 from pyinstrument.session import Session
 from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
 from pyinstrument.typing import LiteralStr
@@ -258,6 +259,8 @@ class Profiler:
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        flat: bool = False,
+        flat_time: FlatTimeMode = "self",
     ):
         """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
 
@@ -268,6 +271,8 @@ class Profiler:
         :param color: Override ANSI color support detection.
         :param show_all: Sets the ``show_all`` parameter on the renderer.
         :param timeline: Sets the ``timeline`` parameter on the renderer.
+        :param flat: Display a flat profile instead of a call graph.
+        :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)
@@ -280,6 +285,8 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                flat=flat,
+                flat_time=flat_time,
             ),
             file=file,
         )
@@ -290,13 +297,20 @@ class Profiler:
         color: bool = False,
         show_all: bool = False,
         timeline: bool = False,
+        flat: bool = False,
+        flat_time: FlatTimeMode = "self",
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
-                unicode=unicode, color=color, show_all=show_all, timeline=timeline
+                unicode=unicode,
+                color=color,
+                show_all=show_all,
+                timeline=timeline,
+                flat=flat,
+                flat_time=flat_time,
             )
         )
 

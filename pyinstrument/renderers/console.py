@@ -13,6 +13,8 @@ from pyinstrument.util import truncate
 
 # pyright: strict
 
+FlatTimeMode = LiteralStr["self", "total"]
+
 
 class ConsoleRenderer(FrameRenderer):
     """
@@ -26,7 +28,7 @@ class ConsoleRenderer(FrameRenderer):
         color: bool = False,
         flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
-        flat_time: LiteralStr["self", "total"] = "self",
+        flat_time: FlatTimeMode = "self",
         **kwargs: Any,
     ) -> None:
         """
