@@ -93,7 +93,7 @@ class ConsoleRenderer(FrameRenderer):
         lines[2] += f" CPU time: {session.cpu_time:.3f}"
 
         lines.append("")
-        lines.append("Program: %s" % session.program)
+        lines.append(session.target_description)
         lines.append("")
         lines.append("")
 

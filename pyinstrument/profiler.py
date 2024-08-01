@@ -28,11 +28,13 @@ class ActiveProfilerSession:
         start_time: float,
         start_process_time: float,
         start_call_stack: list[str],
+        target_description: str,
     ) -> None:
         self.start_time = start_time
         self.start_process_time = start_process_time
         self.start_call_stack = start_call_stack
         self.frame_records = []
+        self.target_description = target_description
 
 
 AsyncMode = LiteralStr["enabled", "disabled", "strict"]
@@ -111,7 +113,9 @@ class Profiler:
         """
         return self._last_session
 
-    def start(self, caller_frame: types.FrameType | None = None):
+    def start(
+        self, caller_frame: types.FrameType | None = None, target_description: str | None = None
+    ):
         """
         Instructs the profiler to start - to begin observing the program's execution and recording
         frames.
@@ -131,11 +135,20 @@ class Profiler:
         if caller_frame is None:
             caller_frame = inspect.currentframe().f_back  # type: ignore
 
+        if target_description is None:
+            if caller_frame is None:
+                target_description = "Profile at unknown location"
+            else:
+                target_description = "Profile at {}:{}".format(
+                    caller_frame.f_code.co_filename, caller_frame.f_lineno
+                )
+
         try:
             self._active_session = ActiveProfilerSession(
                 start_time=time.time(),
                 start_process_time=process_time(),
                 start_call_stack=build_call_stack(caller_frame, "initial", None),
+                target_description=target_description,
             )
 
             use_async_context = self.async_mode != "disabled"
@@ -168,16 +181,18 @@ class Profiler:
 
         cpu_time = process_time() - self._active_session.start_process_time
 
+        active_session = self._active_session
+        self._active_session = None
+
         session = Session(
-            frame_records=self._active_session.frame_records,
-            start_time=self._active_session.start_time,
-            duration=time.time() - self._active_session.start_time,
-            sample_count=len(self._active_session.frame_records),
-            program=" ".join(sys.argv),
-            start_call_stack=self._active_session.start_call_stack,
+            frame_records=active_session.frame_records,
+            start_time=active_session.start_time,
+            duration=time.time() - active_session.start_time,
+            sample_count=len(active_session.frame_records),
+            target_description=active_session.target_description,
+            start_call_stack=active_session.start_call_stack,
             cpu_time=cpu_time,
         )
-        self._active_session = None
 
         if self.last_session is not None:
             # include the previous session's data too

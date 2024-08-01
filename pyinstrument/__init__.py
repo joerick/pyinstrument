@@ -1,8 +1,9 @@
 import warnings
 
+from pyinstrument.context_manager import profile
 from pyinstrument.profiler import Profiler
 
-__all__ = ["__version__", "Profiler", "load_ipython_extension"]
+__all__ = ["__version__", "Profiler", "load_ipython_extension", "profile"]
 __version__ = "4.6.2"
 
 # enable deprecation warnings
