@@ -11,6 +11,7 @@ from typing import IO, Any
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
+from pyinstrument.renderers.console import FlatTimeMode
 from pyinstrument.session import Session
 from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
 from pyinstrument.typing import LiteralStr
@@ -259,6 +260,7 @@ class Profiler:
         show_all: bool = False,
         timeline: bool = False,
         flat: bool = False,
+        flat_time: FlatTimeMode = "self",
     ):
         """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, flat=False)
 
@@ -270,6 +272,7 @@ class Profiler:
         :param show_all: Sets the ``show_all`` parameter on the renderer.
         :param timeline: Sets the ``timeline`` parameter on the renderer.
         :param flat: Sets the ``flat`` parameter on the renderer.
+        :param flat_time: Sets the ``flat_time`` parameter on the renderer.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)
@@ -283,6 +286,7 @@ class Profiler:
                 show_all=show_all,
                 timeline=timeline,
                 flat=flat,
+                flat_time=flat_time,
             ),
             file=file,
         )
@@ -294,13 +298,19 @@ class Profiler:
         show_all: bool = False,
         timeline: bool = False,
         flat: bool = False,
+        flat_time: FlatTimeMode = "self",
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
-                unicode=unicode, color=color, show_all=show_all, timeline=timeline, flat=flat
+                unicode=unicode,
+                color=color,
+                show_all=show_all,
+                timeline=timeline,
+                flat=flat,
+                flat_time=flat_time,
             )
         )
 

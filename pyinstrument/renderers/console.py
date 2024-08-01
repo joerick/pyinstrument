@@ -13,6 +13,8 @@ from pyinstrument.util import truncate
 
 # pyright: strict
 
+FlatTimeMode = LiteralStr["self", "total"]
+
 
 class ConsoleRenderer(FrameRenderer):
     """
@@ -26,6 +28,7 @@ class ConsoleRenderer(FrameRenderer):
         color: bool = False,
         flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
+        flat_time: FlatTimeMode = "self",
         **kwargs: Any,
     ) -> None:
         """
@@ -33,6 +36,7 @@ class ConsoleRenderer(FrameRenderer):
         :param color: Enable color support, using ANSI color sequences.
         :param flat: Display a flat profile instead of a call graph.
         :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
+        :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
         """
         super().__init__(**kwargs)
 
@@ -40,6 +44,7 @@ class ConsoleRenderer(FrameRenderer):
         self.color = color
         self.flat = flat
         self.time = time
+        self.flat_time = flat_time
 
         if self.flat and self.timeline:
             raise Renderer.MisconfigurationError("Cannot use timeline and flat options together.")
@@ -132,6 +137,8 @@ class ConsoleRenderer(FrameRenderer):
         def walk(frame: Frame):
             frame_id_to_time[frame.identifier] = (
                 frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
+                if self.flat_time == "self"
+                else frame.time
             )
 
             frame_id_to_frame[frame.identifier] = frame
