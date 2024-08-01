@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import re
 import time
 from typing import Any, Dict, List, Tuple
 
 import pyinstrument
 from pyinstrument import processors
-from pyinstrument.frame import Frame
+from pyinstrument.frame import Frame, FrameGroup
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
 from pyinstrument.typing import LiteralStr
@@ -98,12 +99,39 @@ class ConsoleRenderer(FrameRenderer):
 
         return "\n".join(lines)
 
-    def render_frame(self, frame: Frame, indent: str = "", child_indent: str = "") -> str:
-        if not frame.group or (
+    def should_render_frame(self, frame: Frame) -> bool:
+        if not frame.group:
+            return True
+        # Only render the root frame, or frames that are significant
+        if (
             frame.group.root == frame
             or frame.total_self_time > 0.2 * self.root_frame.time
             or frame in frame.group.exit_frames
         ):
+            return True
+        return False
+
+    def group_description(self, group: FrameGroup) -> str:
+        hidden_frames = [f for f in group.frames if not self.should_render_frame(f)]
+        libraries = self.libraries_for_frames(hidden_frames)
+        return "[{count} frames hidden]  {c.faint}{libraries}{c.end}\n".format(
+            count=len(hidden_frames),
+            libraries=truncate(", ".join(libraries), 40),
+            c=self.colors,
+        )
+
+    def libraries_for_frames(self, frames: list[Frame]) -> list[str]:
+        libraries: list[str] = []
+        for frame in frames:
+            if frame.file_path_short:
+                library = re.split(r"[\\/\.]", frame.file_path_short, maxsplit=1)[0]
+
+                if library and library not in libraries:
+                    libraries.append(library)
+        return libraries
+
+    def render_frame(self, frame: Frame, indent: str = "", child_indent: str = "") -> str:
+        if self.should_render_frame(frame):
             result = f"{indent}{self.frame_description(frame)}\n"
 
             if self.unicode:
@@ -112,12 +140,7 @@ class ConsoleRenderer(FrameRenderer):
                 indents = {"├": "|- ", "│": "|  ", "└": "`- ", " ": "   "}
 
             if frame.group and frame.group.root == frame:
-                result += "{indent}[{count} frames hidden]  {c.faint}{libraries}{c.end}\n".format(
-                    indent=child_indent + "   ",
-                    count=len(frame.group.frames),
-                    libraries=truncate(", ".join(frame.group.libraries), 40),
-                    c=self.colors,
-                )
+                result += f"{child_indent}   {self.group_description(frame.group)}"
                 for key in indents:
                     indents[key] = "      "
         else:
@@ -125,10 +148,15 @@ class ConsoleRenderer(FrameRenderer):
             indents = {"├": "", "│": "", "└": "", " ": ""}
 
         if frame.children:
-            last_child = frame.children[-1]
+            children_to_be_rendered_indices = [
+                i for i, f in enumerate(frame.children) if self.should_render_frame(f)
+            ]
+            last_rendered_child_index = (
+                children_to_be_rendered_indices[-1] if children_to_be_rendered_indices else -1
+            )
 
-            for child in frame.children:
-                if child is not last_child:
+            for i, child in enumerate(frame.children):
+                if i < last_rendered_child_index:
                     c_indent = child_indent + indents["├"]
                     cc_indent = child_indent + indents["│"]
                 else:

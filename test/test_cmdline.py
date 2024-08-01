@@ -106,6 +106,8 @@ class TestCommandLine:
         # check the output
         output = subprocess.check_output([*pyinstrument_invocation, "-c", BUSY_WAIT_SCRIPT])
 
+        print(output.decode("utf-8"))
+
         assert "busy_wait" in str(output)
         assert "do_nothing" in str(output)
 

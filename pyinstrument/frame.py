@@ -199,6 +199,15 @@ class Frame:
             if file_path.startswith("<ipython-input-"):
                 # lines typed at a console or in a notebook are app code
                 return True
+            elif file_path == "<string>" or file_path == "<stdin>":
+                # eval/exec is app code if started by a parent frame that is
+                # app code
+                if self.parent:
+                    return self.parent.is_application_code
+                else:
+                    # if this is the root frame, it must have been started
+                    # with -c, so it's app code
+                    return True
             else:
                 # otherwise, this is probably some library-internal code gen
                 return False
