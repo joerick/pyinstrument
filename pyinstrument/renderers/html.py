@@ -22,8 +22,13 @@ class HTMLRenderer(FrameRenderer):
 
     output_file_extension = "html"
 
-    def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        show_all: bool = False,
+        timeline: bool = False,
+        processor_options: dict[str, Any] | None = None,
+    ):
+        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
 
     def render(self, session: Session):
         resources_dir = Path(__file__).parent / "html_resources"

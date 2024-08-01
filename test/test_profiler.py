@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import inspect
 import json
 import time
 from functools import partial
@@ -355,3 +356,38 @@ def test_state_management():
     profiler.reset()
     assert profiler.is_running == False
     assert profiler.last_session is None
+
+
+@pytest.mark.parametrize(
+    "profiler_method_name,renderer_class",
+    [
+        ("print", renderers.ConsoleRenderer),
+        ("output_text", renderers.ConsoleRenderer),
+        ("output_html", renderers.HTMLRenderer),
+    ],
+)
+def test_profiler_convenience_methods_have_all_options_available(
+    profiler_method_name, renderer_class
+):
+    method = getattr(Profiler, profiler_method_name)
+
+    method_signature = inspect.signature(method)
+    renderer_signature = inspect.signature(renderer_class)
+
+    for name, parameter in renderer_signature.parameters.items():
+        if name == "self":
+            continue
+        assert (
+            name in method_signature.parameters
+        ), f"Parameter {name} is missing from Profiler.{profiler_method_name}. {parameter}"
+        method_parameter = method_signature.parameters[name]
+
+        if profiler_method_name == "print" and name in {"color", "unicode"}:
+            # print has a mechanism of autodetecting these
+            continue
+        assert (
+            method_parameter.default == parameter.default
+        ), f"Parameter {name} has a different default value in Profiler.{profiler_method_name}. {parameter}"
+        assert (
+            method_parameter.annotation == parameter.annotation
+        ), f"Parameter {name} has a different annotation in Profiler.{profiler_method_name}. {parameter}"

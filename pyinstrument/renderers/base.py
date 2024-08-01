@@ -70,7 +70,7 @@ class FrameRenderer(Renderer):
         processor_options: dict[str, Any] | None = None,
     ):
         """
-        :param show_all: Don't hide library frames - show everything that pyinstrument captures.
+        :param show_all: Don't hide or filter frames - show everything that pyinstrument captures.
         :param timeline: Instead of aggregating time, leave the samples in chronological order.
         :param processor_options: A dictionary of processor options.
         """

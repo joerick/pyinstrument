@@ -272,21 +272,18 @@ class Profiler:
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat: bool = False,
         flat_time: FlatTimeMode = "self",
-        **kwargs: Any,
+        processor_options: dict[str, Any] | None = None,
     ):
-        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, flat=False)
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, time='seconds', flat=False, flat_time='self', processor_options=None)
 
-        Print the captured profile to the console.
+        Print the captured profile to the console, as rendered by :class:`renderers.ConsoleRenderer`
 
         :param file: the IO stream to write to. Could be a file descriptor or sys.stdout, sys.stderr. Defaults to sys.stdout.
-        :param unicode: Override unicode support detection.
-        :param color: Override ANSI color support detection.
-        :param show_all: Sets the ``show_all`` parameter on the renderer.
-        :param timeline: Sets the ``timeline`` parameter on the renderer.
-        :param flat: Sets the ``flat`` parameter on the renderer.
-        :param flat_time: Sets the ``flat_time`` parameter on the renderer.
+
+        See :class:`renderers.ConsoleRenderer` for the other parameters.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)
@@ -299,9 +296,10 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                time=time,
                 flat=flat,
                 flat_time=flat_time,
-                **kwargs,
+                processor_options=processor_options,
             ),
             file=file,
         )
@@ -312,12 +310,15 @@ class Profiler:
         color: bool = False,
         show_all: bool = False,
         timeline: bool = False,
+        time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat: bool = False,
         flat_time: FlatTimeMode = "self",
-        **kwargs: Any,
+        processor_options: dict[str, Any] | None = None,
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
+
+        See :class:`renderers.ConsoleRenderer` for parameter description.
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
@@ -325,17 +326,27 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                time=time,
                 flat=flat,
                 flat_time=flat_time,
-                **kwargs,
+                processor_options=processor_options,
             )
         )
 
-    def output_html(self, timeline: bool = False, show_all: bool = False) -> str:
+    def output_html(
+        self,
+        timeline: bool = False,
+        show_all: bool = False,
+        processor_options: dict[str, Any] | None = None,
+    ) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
-        return self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all))
+        return self.output(
+            renderer=renderers.HTMLRenderer(
+                timeline=timeline, show_all=show_all, processor_options=processor_options
+            )
+        )
 
     def write_html(
         self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False

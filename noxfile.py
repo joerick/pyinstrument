@@ -12,3 +12,17 @@ def test(session):
     session.install("-e", ".[test]", "setuptools")
     session.run("python", "setup.py", "build_ext", "--inplace")
     session.run("pytest")
+
+
+@nox.session()
+def docs(session):
+    session.env["UV_PRERELEASE"] = "allow"
+    session.install("-e", ".[docs]")
+    session.run("make", "-C", "docs", "html")
+
+
+@nox.session()
+def livedocs(session):
+    session.env["UV_PRERELEASE"] = "allow"
+    session.install("-e", ".[docs]")
+    session.run("make", "-C", "docs", "livehtml")
