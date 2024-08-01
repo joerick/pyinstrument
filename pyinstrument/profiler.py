@@ -11,6 +11,7 @@ from typing import IO, Any
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
+from pyinstrument.renderers.console import FlatTimeMode
 from pyinstrument.session import Session
 from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
 from pyinstrument.typing import LiteralStr
@@ -46,18 +47,28 @@ class Profiler:
     _active_session: ActiveProfilerSession | None
     _interval: float
     _async_mode: AsyncMode
+    use_timing_thread: bool | None
 
-    def __init__(self, interval: float = 0.001, async_mode: AsyncMode = "enabled"):
+    def __init__(
+        self,
+        interval: float = 0.001,
+        async_mode: AsyncMode = "enabled",
+        use_timing_thread: bool | None = None,
+    ):
         """
         Note the profiling will not start until :func:`start` is called.
 
         :param interval: See :attr:`interval`.
         :param async_mode: See :attr:`async_mode`.
+        :param use_timing_thread: If True, the profiler will use a separate
+            thread to keep track of time. This is useful if you're on a system
+            where getting the time has significant overhead.
         """
         self._interval = interval
         self._last_session = None
         self._active_session = None
         self._async_mode = async_mode
+        self.use_timing_thread = use_timing_thread
 
     @property
     def interval(self) -> float:
@@ -129,7 +140,10 @@ class Profiler:
 
             use_async_context = self.async_mode != "disabled"
             get_stack_sampler().subscribe(
-                self._sampler_saw_call_stack, self.interval, use_async_context
+                self._sampler_saw_call_stack,
+                desired_interval=self.interval,
+                use_async_context=use_async_context,
+                use_timing_thread=self.use_timing_thread,
             )
         except:
             self._active_session = None
@@ -258,9 +272,11 @@ class Profiler:
         color: bool | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        flat: bool = False,
+        flat_time: FlatTimeMode = "self",
         **kwargs: Any,
     ):
-        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, flat=False)
 
         Print the captured profile to the console.
 
@@ -269,6 +285,8 @@ class Profiler:
         :param color: Override ANSI color support detection.
         :param show_all: Sets the ``show_all`` parameter on the renderer.
         :param timeline: Sets the ``timeline`` parameter on the renderer.
+        :param flat: Sets the ``flat`` parameter on the renderer.
+        :param flat_time: Sets the ``flat_time`` parameter on the renderer.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)
@@ -281,6 +299,8 @@ class Profiler:
                 color=color,
                 show_all=show_all,
                 timeline=timeline,
+                flat=flat,
+                flat_time=flat_time,
                 **kwargs,
             ),
             file=file,
@@ -292,6 +312,8 @@ class Profiler:
         color: bool = False,
         show_all: bool = False,
         timeline: bool = False,
+        flat: bool = False,
+        flat_time: FlatTimeMode = "self",
         **kwargs: Any,
     ) -> str:
         """
@@ -299,7 +321,13 @@ class Profiler:
         """
         return self.output(
             renderer=renderers.ConsoleRenderer(
-                unicode=unicode, color=color, show_all=show_all, timeline=timeline, **kwargs,
+                unicode=unicode,
+                color=color,
+                show_all=show_all,
+                timeline=timeline,
+                flat=flat,
+                flat_time=flat_time,
+                **kwargs,
             )
         )
 

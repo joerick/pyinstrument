@@ -31,7 +31,7 @@ def main():
         v=pyinstrument.__version__,
         pyv=sys.version_info,
     )
-    parser = optparse.OptionParser(usage=usage, version=version_string)
+    parser: Any = optparse.OptionParser(usage=usage, version=version_string)
     parser.allow_interspersed_args = False
 
     def store_and_consume_remaining(
@@ -248,6 +248,16 @@ def main():
         ),
         default=0.001,
     )
+    parser.add_option(
+        "",
+        "--use-timing-thread",
+        dest="use_timing_thread",
+        action="store_true",
+        help=(
+            "Use a separate thread to time the interval between stack samples. "
+            "This can reduce the overhead of sampling on some systems."
+        ),
+    )
 
     # parse the options
 
@@ -297,6 +307,8 @@ def main():
     else:
         f = sys.stdout
         should_close_f_after_writing = False
+
+    inner_exception = None
 
     # create the renderer
 
@@ -357,14 +369,19 @@ def main():
         # because it will always be capturing the whole program, we never want
         # any execution to be <out-of-context>, and it avoids duplicate
         # profiler errors.
-        profiler = Profiler(interval=options.interval, async_mode="disabled")
+        profiler = Profiler(
+            interval=options.interval,
+            async_mode="disabled",
+            use_timing_thread=options.use_timing_thread,
+        )
+
         profiler.start()
 
         try:
             sys.argv[:] = argv
             exec(code, globs, None)
-        except (SystemExit, KeyboardInterrupt):
-            pass
+        except (SystemExit, KeyboardInterrupt) as e:
+            inner_exception = e
         finally:
             sys.argv[:] = old_argv
 
@@ -384,6 +401,11 @@ def main():
         print("To view this report with different options, run:")
         print("    pyinstrument --load-prev %s [options]" % report_identifier)
         print("")
+
+    if inner_exception:
+        # If the script raised an exception, re-raise it now to resume
+        # the normal Python exception handling (printing the traceback, etc.)
+        raise inner_exception
 
 
 def compute_render_options(
@@ -600,6 +622,7 @@ class CommandLineOptions:
     renderer: str | None
     timeline: bool
     interval: float
+    use_timing_thread: bool | None
 
 
 class ValueWithRemainingArgs:

@@ -27,7 +27,7 @@ Installation
 
     pip install pyinstrument
 
-Pyinstrument supports Python 3.7+.
+Pyinstrument supports Python 3.8+.
 
 <!-- MARK installation end -->
 

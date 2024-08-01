@@ -8,6 +8,7 @@ Perhaps one day we could add some functionality to pyinstrument_cext to keep
 a parallel stack containing both C and Python frames. But for now, this is
 fine.
 """
+
 import sys
 import time
 
