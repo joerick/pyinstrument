@@ -14,7 +14,6 @@ EXECUTION_DETAILS_SCRIPT = f"""
 import sys, os
 print('__name__', __name__, file=sys.stderr)
 print('sys.argv', sys.argv, file=sys.stderr)
-print('sys.path', sys.path, file=sys.stderr)
 print('sys.executable', os.path.realpath(sys.executable), file=sys.stderr)
 print('os.getcwd()', os.getcwd(), file=sys.stderr)
 """.strip()
@@ -60,7 +59,7 @@ class TestCommandLine:
 
     def test_running_yourself_as_module(self, pyinstrument_invocation):
         subprocess.check_call(
-            [*pyinstrument_invocation, "-m", "pyinstrument"],
+            [*pyinstrument_invocation, "-m", "pyinstrument", "--help"],
         )
 
     def test_path(self, pyinstrument_invocation, tmp_path: Path, monkeypatch):
@@ -295,3 +294,16 @@ class TestCommandLine:
 
         stats = pstats.Stats(str(output_file))
         assert stats
+
+    def test_program_exit_code(self, pyinstrument_invocation, tmp_path: Path):
+        exit_1_py = tmp_path / "exit_1.py"
+        exit_1_py.write_text("""import sys; sys.exit(1)""")
+
+        retcode = subprocess.call(
+            [
+                *pyinstrument_invocation,
+                str(exit_1_py),
+            ],
+        )
+
+        assert retcode == 1

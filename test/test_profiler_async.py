@@ -144,10 +144,10 @@ def test_profiler_task_isolation(engine):
                 )
                 nursery.start_soon(
                     partial(async_wait, sync_time=0.1, async_time=0.3, engine="trio")
-                )
+                )  # pyright: ignore
                 nursery.start_soon(
                     partial(async_wait, sync_time=0.1, async_time=0.3, engine="trio")
-                )
+                )  # pyright: ignore
 
         with fake_time_trio() as fake_clock:
             trio.run(multi_task, clock=fake_clock.trio_clock)

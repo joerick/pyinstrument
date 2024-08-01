@@ -262,7 +262,7 @@ class Profiler:
         flat: bool = False,
         flat_time: FlatTimeMode = "self",
     ):
-        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False)
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, flat=False)
 
         Print the captured profile to the console.
 
@@ -271,8 +271,8 @@ class Profiler:
         :param color: Override ANSI color support detection.
         :param show_all: Sets the ``show_all`` parameter on the renderer.
         :param timeline: Sets the ``timeline`` parameter on the renderer.
-        :param flat: Display a flat profile instead of a call graph.
-        :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
+        :param flat: Sets the ``flat`` parameter on the renderer.
+        :param flat_time: Sets the ``flat_time`` parameter on the renderer.
         """
         if unicode is None:
             unicode = file_supports_unicode(file)

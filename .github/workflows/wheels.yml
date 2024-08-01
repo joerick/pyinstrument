@@ -41,7 +41,7 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.16.2
+        uses: joerick/cibuildwheel@v2.19
         env:
           CIBW_SKIP: pp*
           CIBW_ARCHS: ${{matrix.archs}}
@@ -77,14 +77,17 @@ jobs:
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pyinstrument
+    permissions:
+      id-token: write
+      attestations: write
+
     steps:
       - uses: actions/download-artifact@v2
         with:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          # To test: repository_url: https://test.pypi.org/legacy/
+      - uses: pypa/gh-action-pypi-publish@release/v1
