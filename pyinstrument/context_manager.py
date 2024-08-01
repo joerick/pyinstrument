@@ -91,6 +91,7 @@ class ProfileContext:
             renderer = ConsoleRenderer(
                 color=file_supports_color(f),
                 unicode=file_supports_unicode(f),
+                short_mode=True,
             )
 
         f.write(renderer.render(session))

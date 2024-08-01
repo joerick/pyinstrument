@@ -1,6 +1,7 @@
 import os
 import pprint
 import sys
+import time
 
 pprint.pprint(sys.path)
 import pyinstrument
@@ -33,7 +34,7 @@ def main():
 class A:
     @pyinstrument.profile()
     def foo(self):
-        print("foo")
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":

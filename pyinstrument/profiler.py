@@ -290,9 +290,10 @@ class Profiler:
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat: bool = False,
         flat_time: FlatTimeMode = "self",
+        short_mode: bool = False,
         processor_options: dict[str, Any] | None = None,
     ):
-        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, time='seconds', flat=False, flat_time='self', processor_options=None)
+        """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, time='seconds', flat=False, flat_time='self', short_mode=False, processor_options=None)
 
         Print the captured profile to the console, as rendered by :class:`renderers.ConsoleRenderer`
 
@@ -314,6 +315,7 @@ class Profiler:
                 time=time,
                 flat=flat,
                 flat_time=flat_time,
+                short_mode=short_mode,
                 processor_options=processor_options,
             ),
             file=file,
@@ -328,6 +330,7 @@ class Profiler:
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat: bool = False,
         flat_time: FlatTimeMode = "self",
+        short_mode: bool = False,
         processor_options: dict[str, Any] | None = None,
     ) -> str:
         """
@@ -344,6 +347,7 @@ class Profiler:
                 time=time,
                 flat=flat,
                 flat_time=flat_time,
+                short_mode=short_mode,
                 processor_options=processor_options,
             )
         )

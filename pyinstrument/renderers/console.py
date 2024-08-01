@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import textwrap
 import time
 from typing import Any, Dict, List, Tuple
 
@@ -33,6 +34,7 @@ class ConsoleRenderer(FrameRenderer):
         flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat_time: FlatTimeMode = "self",
+        short_mode: bool = False,
     ) -> None:
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
@@ -40,6 +42,7 @@ class ConsoleRenderer(FrameRenderer):
         :param flat: Display a flat profile instead of a call graph.
         :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
         :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
+        :param short_mode: Display a short version of the output.
         :param show_all: See :class:`FrameRenderer`.
         :param timeline: See :class:`FrameRenderer`.
         :param processor_options: See :class:`FrameRenderer`.
@@ -51,6 +54,7 @@ class ConsoleRenderer(FrameRenderer):
         self.flat = flat
         self.time = time
         self.flat_time = flat_time
+        self.short_mode = short_mode
 
         if self.flat and self.timeline:
             raise Renderer.MisconfigurationError("Cannot use timeline and flat options together.")
@@ -61,23 +65,37 @@ class ConsoleRenderer(FrameRenderer):
         result = self.render_preamble(session)
 
         frame = self.preprocess(session.root_frame())
+        indent = ".  " if self.short_mode else ""
 
         if frame is None:
-            result += "No samples were recorded.\n\n"
-            return result
-
-        self.root_frame = frame
-
-        if self.flat:
-            result += self.render_frame_flat(self.root_frame)
+            result += f"{indent}No samples were recorded.\n"
         else:
-            result += self.render_frame(self.root_frame)
-        result += "\n"
+            self.root_frame = frame
+
+            if self.flat:
+                result += self.render_frame_flat(self.root_frame, indent=indent)
+            else:
+                result += self.render_frame(self.root_frame, indent=indent, child_indent=indent)
+
+        result += f"{indent}\n"
+
+        if self.short_mode:
+            result += "." * 53 + "\n\n"
 
         return result
 
     # pylint: disable=W1401
     def render_preamble(self, session: Session) -> str:
+        if self.short_mode:
+            return textwrap.dedent(
+                f"""
+                    pyinstrument ........................................
+                    .
+                    .  {session.target_description}
+                    .
+                """
+            )
+
         lines = [
             r"",
             r"  _     ._   __/__   _ _  _  _ _/_  ",
@@ -166,7 +184,7 @@ class ConsoleRenderer(FrameRenderer):
 
         return result
 
-    def render_frame_flat(self, frame: Frame) -> str:
+    def render_frame_flat(self, frame: Frame, indent: str) -> str:
         def walk(frame: Frame):
             frame_id_to_time[frame.identifier] = (
                 frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
