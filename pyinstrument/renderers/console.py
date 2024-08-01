@@ -24,12 +24,14 @@ class ConsoleRenderer(FrameRenderer):
 
     def __init__(
         self,
+        show_all: bool = False,
+        timeline: bool = False,
+        processor_options: dict[str, Any] | None = None,
         unicode: bool = False,
         color: bool = False,
         flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat_time: FlatTimeMode = "self",
-        **kwargs: Any,
     ) -> None:
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
@@ -37,8 +39,11 @@ class ConsoleRenderer(FrameRenderer):
         :param flat: Display a flat profile instead of a call graph.
         :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
         :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
+        :param show_all: See :class:`FrameRenderer`.
+        :param timeline: See :class:`FrameRenderer`.
+        :param processor_options: See :class:`FrameRenderer`.
         """
-        super().__init__(**kwargs)
+        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
 
         self.unicode = unicode
         self.color = color
