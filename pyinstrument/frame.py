@@ -344,7 +344,6 @@ class Frame:
 
 
 class FrameGroup:
-    _libraries: list[str] | None
     _frames: list[Frame]
     _exit_frames: list[Frame] | None
 
@@ -353,24 +352,8 @@ class FrameGroup:
         self.id = str(uuid.uuid4())
         self._frames = []
         self._exit_frames = None
-        self._libraries = None
 
         self.add_frame(root)
-
-    @property
-    def libraries(self) -> list[str]:
-        if self._libraries is None:
-            libraries: list[str] = []
-
-            for frame in self.frames:
-                if frame.file_path_short:
-                    library = frame.file_path_short.split(os.sep)[0]
-                    library, _ = os.path.splitext(library)
-                    if library and library not in libraries:
-                        libraries.append(library)
-            self._libraries = libraries
-
-        return self._libraries
 
     @property
     def frames(self) -> Sequence[Frame]:
