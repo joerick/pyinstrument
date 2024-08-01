@@ -104,7 +104,7 @@ static double ProfilerState_GetTime(ProfilerState *self) {
         return pyi_timing_thread_get_time();
     } else {
         // otherwise as normal, call the synchronous C timer function.
-        return pyi_floatclock(self->interval);
+        return pyi_floatclock(self->floatclock_type);
     }
 }
 
