@@ -70,8 +70,27 @@ spent.
 
 ## Profile a specific chunk of code
 
-Pyinstrument also has a Python API. Just surround your code with Pyinstrument,
-like this:
+Pyinstrument also has a Python API. You can use a with-block, like this:
+
+```python
+import pyinstrument
+
+with pyinstrument.profile():
+    # code you want to profile
+```
+
+Or you can decorate a function/method, like this:
+
+```python
+import pyinstrument
+
+@pyinstrument.profile()
+def my_function():
+    # code you want to profile
+
+```
+
+There's also a lower-level API called Profiler, that's more flexible:
 
 ```python
 from pyinstrument import Profiler
@@ -82,7 +101,6 @@ profiler.start()
 # code you want to profile
 
 profiler.stop()
-
 profiler.print()
 ```
 
@@ -91,6 +109,8 @@ If you get "No samples were recorded." because your code executed in under
 value smaller than the default 0.001 (1 millisecond) like this:
 
 ```python
+pyinstrument.profile(interval=0.0001)
+# or,
 profiler = Profiler(interval=0.0001)
 ...
 ```
@@ -104,6 +124,7 @@ save this HTML for later, use
 {meth}`profiler.output_html() <pyinstrument.Profiler.output_html>`.
 
 ## Profile code in Jupyter/IPython
+
 Via [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html),
 you can profile a line or a cell in IPython or Jupyter.
 
