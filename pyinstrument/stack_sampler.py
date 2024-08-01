@@ -216,7 +216,7 @@ class StackSampler:
             return
 
         if timer_type == "walltime":
-            if overhead > 200e-9:
+            if overhead > 300e-9:
                 self.has_warned_about_timing_overhead = True
                 message_parts: list[str] = []
                 message_parts.append(
@@ -237,7 +237,7 @@ class StackSampler:
                     """
                 )
 
-                if "walltime_coarse" in overheads and overheads["walltime_coarse"] < 200e-9:
+                if "walltime_coarse" in overheads and overheads["walltime_coarse"] < 300e-9:
                     coarse_resolution = walltime_coarse_resolution()
                     assert coarse_resolution is not None
                     message_parts.append(
