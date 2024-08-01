@@ -73,11 +73,11 @@
   $: collapsed = $collapsedFrames[frame.uuid] === true
 
   function setCollapsed(frame: Frame, value: boolean, recursive: boolean = true) {
-    collapsedFrames.update((collapsedFrames: {[id: string]: boolean}) => ({
+    collapsedFrames.update(collapsedFrames => ({
       ...collapsedFrames,
       [frame.uuid]: value
     }))
-    collapsedFrames[frame.uuid] = value
+
     if (recursive) {
       for (const child of frame.children) {
         setCollapsed(child, value, true)
@@ -89,7 +89,7 @@
   }
 
   function setGroupVisible(groupId: string, value: boolean) {
-    visibleGroups.update((groups: {[id: string]: boolean}) => ({
+    visibleGroups.update(groups => ({
       ...groups,
       [groupId]: value
     }))
@@ -143,11 +143,13 @@
     </div>
   {/if}
 
-  {#if !collapsed}
-    {#each frame.children as child (child.identifier)}
-      <svelte:self frame="{child}"
-                   indent="{indent + (isVisible ? 1 : 0)}" />
-    {/each}
+  {#if !collapsed && frame.children.length > 0}
+    <div class="children">
+      {#each frame.children as child (child.identifier)}
+        <svelte:self frame="{child}"
+                     indent="{indent + (isVisible ? 1 : 0)}" />
+      {/each}
+    </div>
   {/if}
 
   <div class="visual-guide"
@@ -240,21 +242,20 @@
   margin-left: 1em;
 }
 
-:global {
-  .visual-guide {
-    top: 21px;
-    bottom: 0;
-    left: 0;
-    width: 2px;
-    background-color: white;
-    position: absolute;
-    opacity: 0.08;
-  }
-  .frame-description:hover ~ .visual-guide {
-    opacity: 0.4;
-  }
-  .frame-description:hover ~ .children .visual-guide {
-    opacity: 0.1;
-  }
+.visual-guide {
+  top: 21px;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background-color: white;
+  position: absolute;
+  opacity: 0.08;
+  pointer-events: none;
+}
+:global(.frame-description:hover) ~ .visual-guide {
+  opacity: 0.4;
+}
+:global(.frame-description:hover) ~ .children :global(.visual-guide) {
+  opacity: 0.1;
 }
 </style>
