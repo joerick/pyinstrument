@@ -2,6 +2,7 @@ import Group from './Group';
 import type {FrameData} from '../dataTypes';
 
 export default class Frame {
+  uuid: string
   function: string;
   filePath: string;
   filePathShort: string;
@@ -19,6 +20,7 @@ export default class Frame {
   group: Group | null;
 
   constructor(jsonObject: FrameData, parent: Frame|null = null, context: FrameContext = {groups:{}}) {
+    this.uuid = crypto.randomUUID()
     this.parent = parent
     this.function = jsonObject.function;
     this.filePath = jsonObject.file_path;

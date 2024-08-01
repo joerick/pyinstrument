@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { timeFormat, visibleGroups } from './appState';
+  import { timeFormat, visibleGroups, collapsedFrames } from './appState';
   import type Frame from './model/Frame'
   export let frame: Frame
   export let indent: number = 0
-
-  let childrenVisible = true
 
   let isVisible: boolean
   $: {
@@ -67,30 +65,53 @@
     timeColor = '#7ED321'
   }
 
-  function descriptionClicked() {
-    childrenVisible = !childrenVisible
+  function descriptionClicked(event: MouseEvent) {
+    setCollapsed(frame, !collapsed, event.altKey)
   }
 
   $: isGroupVisible = $visibleGroups[frame.groupId ?? ''] === true
+  $: collapsed = $collapsedFrames[frame.uuid] === true
 
-  function headerClicked() {
-    visibleGroups.update(groups => ({
+  function setCollapsed(frame: Frame, value: boolean, recursive: boolean = true) {
+    collapsedFrames.update((collapsedFrames: {[id: string]: boolean}) => ({
+      ...collapsedFrames,
+      [frame.uuid]: value
+    }))
+    collapsedFrames[frame.uuid] = value
+    if (recursive) {
+      for (const child of frame.children) {
+        setCollapsed(child, value, true)
+        if (frame.group && frame.group.rootFrame == frame) {
+          setGroupVisible(frame.group.id, !value)
+        }
+      }
+    }
+  }
+
+  function setGroupVisible(groupId: string, value: boolean) {
+    visibleGroups.update((groups: {[id: string]: boolean}) => ({
       ...groups,
-      [frame.groupId ?? '']: !isGroupVisible
+      [groupId]: value
     }))
   }
 
+  function headerClicked() {
+    if (!frame.groupId) {
+      return
+    }
+    setGroupVisible(frame.groupId, !isGroupVisible)
+  }
 </script>
 <div class="frame">
   {#if isVisible}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="frame-description"
          class:application-code={frame.isApplicationCode}
-         class:children-visible={childrenVisible}
+         class:children-visible={!collapsed}
          style:padding-left={`${indent*35}px`}
          on:click|preventDefault|stopPropagation="{descriptionClicked}">
       <div class="frame-triangle"
-           class:rotate="{childrenVisible}"
+           class:rotate="{!collapsed}"
            style:visibility="{frame.children.length > 0 ? 'visible' : 'hidden'}">
         <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="{timeColor}" fill-rule="evenodd" fill-opacity=".582"/></svg>
       </div>
@@ -107,7 +128,7 @@
     </div>
   {/if}
 
-  {#if frame.group && frame.group.rootFrame == frame && childrenVisible}
+  {#if frame.group && frame.group.rootFrame == frame && !collapsed}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="group-header"
          style:padding-left={`${indent*35}px`}
@@ -122,7 +143,7 @@
     </div>
   {/if}
 
-  {#if childrenVisible}
+  {#if !collapsed}
     {#each frame.children as child (child.identifier)}
       <svelte:self frame="{child}"
                    indent="{indent + (isVisible ? 1 : 0)}" />
