@@ -375,7 +375,7 @@ def main():
             use_timing_thread=options.use_timing_thread,
         )
 
-        profiler.start()
+        profiler.start(target_description=f'Program: {" ".join(argv)}')
 
         try:
             sys.argv[:] = argv

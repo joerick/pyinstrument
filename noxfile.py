@@ -26,3 +26,10 @@ def livedocs(session):
     session.env["UV_PRERELEASE"] = "allow"
     session.install("-e", ".[docs]")
     session.run("make", "-C", "docs", "livehtml")
+
+
+@nox.session(python=False)
+def htmldev(session):
+    with session.chdir("html_renderer"):
+        session.run("npm", "install")
+        session.run("npm", "run", "dev")

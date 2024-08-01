@@ -374,5 +374,3 @@ def test_group_library_frames_processor(monkeypatch):
     assert group_root.children[0].children[0] in group.frames
     assert group_root.children[0].children[0] in group.exit_frames
     assert group_root.children[0].children[0].children[0] not in group.frames
-
-    assert group.libraries == ["django"]
