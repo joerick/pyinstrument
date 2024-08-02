@@ -54,6 +54,12 @@ Known issues
 Changelog
 ---------
 
+### v4.7.1
+
+_2 August 2024_
+
+-   Fix issue with PyPI upload
+
 ### v4.7.0
 
 _1 August 2024_
