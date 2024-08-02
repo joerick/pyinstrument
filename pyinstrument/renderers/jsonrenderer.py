@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import typing
 from typing import Any, Callable
 
 from pyinstrument import processors
@@ -13,7 +14,7 @@ from pyinstrument.session import Session
 
 # note: this file is called jsonrenderer to avoid hiding built-in module 'json'.
 
-encode_str: Callable[[str], str] = json.encoder.encode_basestring  # type: ignore
+encode_str = typing.cast(Callable[[str], str], json.encoder.encode_basestring)  # type: ignore
 
 
 def encode_bool(a_bool: bool):

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store'
-import type Group from './model/Group'
+import type FrameGroup from './model/FrameGroup'
 
 export const visibleGroups = writable<{[id: string]: boolean}>({})
 export const collapsedFrames = writable<{[id: string]: boolean}>({})

@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 import codecs
+import json
 import tempfile
 import urllib.parse
 import webbrowser
 from pathlib import Path
 from typing import Any
 
-from pyinstrument import processors
-from pyinstrument.renderers.base import FrameRenderer, ProcessorList
-from pyinstrument.renderers.jsonrenderer import JSONRenderer
+from pyinstrument.renderers.base import Renderer
 from pyinstrument.session import Session
 
 # pyright: strict
 
 
-class HTMLRenderer(FrameRenderer):
+class HTMLRenderer(Renderer):
     """
     Renders a rich, interactive web page, as a string of HTML.
     """
@@ -28,7 +27,12 @@ class HTMLRenderer(FrameRenderer):
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
     ):
-        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
+        super().__init__()
+        self.initial_options = {
+            "show_all": show_all,
+            "timeline": timeline,
+            "processor_options": processor_options or {},
+        }
 
     def render(self, session: Session):
         resources_dir = Path(__file__).parent / "html_resources"
@@ -59,7 +63,8 @@ class HTMLRenderer(FrameRenderer):
 
                 <script>
                     const sessionData = {session_json};
-                    pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData);
+                    const initialOptions = {json.dumps(self.initial_options)};
+                    pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData, initialOptions);
                 </script>
             </body>
             </html>
@@ -90,19 +95,8 @@ class HTMLRenderer(FrameRenderer):
         return output_filename
 
     def render_json(self, session: Session):
-        json_renderer = JSONRenderer()
-        json_renderer.processors = self.processors
-        json_renderer.processor_options = self.processor_options
-        return json_renderer.render(session)
-
-    def default_processors(self) -> ProcessorList:
-        return [
-            processors.remove_importlib,
-            processors.remove_tracebackhide,
-            processors.merge_consecutive_self_time,
-            processors.aggregate_repeated_calls,
-            processors.remove_unnecessary_self_time_nodes,
-            processors.remove_irrelevant_nodes,
-            processors.remove_first_pyinstrument_frames_processor,
-            processors.group_library_frames_processor,
-        ]
+        session_json = session.to_json(include_frame_records=False)
+        session_json_str = json.dumps(session_json)
+        root_frame = session.root_frame()
+        frame_tree_json_str = root_frame.to_json_str() if root_frame else "null"
+        return '{"session": %s, "frame_tree": %s}' % (session_json_str, frame_tree_json_str)

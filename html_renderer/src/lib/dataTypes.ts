@@ -1,21 +1,19 @@
 export interface SessionData {
-    start_time: number;
-    duration: number;
-    sample_count: number;
-    program: string;
-    cpu_time: number | null;
-    root_frame: FrameData | null;
+    session: {
+        start_time: number;
+        duration: number;
+        sample_count: number;
+        start_call_stack: string[],
+        program: string;
+        cpu_time: number;
+        sys_path: string;
+    };
+    frame_tree: FrameData;
 }
 
 export interface FrameData {
-    function: string;
-    file_path: string;
-    file_path_short: string;
-    line_no: number;
+    identifier: string;
     time: number;
-    await_time: number;
-    is_application_code: boolean;
+    attributes: {[name: string]: number};
     children: FrameData[];
-    group_id?: string;
-    class_name?: string;
 }

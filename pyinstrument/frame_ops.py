@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from typing import List, Sequence, Tuple
 
-from pyinstrument.frame import DUMMY_ROOT_FRAME_IDENTIFIER, SELF_TIME_FRAME_IDENTIFIER, Frame
+from pyinstrument.frame import (
+    DUMMY_ROOT_FRAME_IDENTIFIER,
+    SELF_TIME_FRAME_IDENTIFIER,
+    Frame,
+    FrameContext,
+)
 from pyinstrument.frame_info import frame_info_get_identifier
 from pyinstrument.typing import LiteralStr, assert_never
 
@@ -16,11 +21,13 @@ class IdentifierDoesntMatchException(ValueError):
     pass
 
 
-def build_frame_tree(frame_records: Sequence[FrameRecordType]) -> Frame | None:
+def build_frame_tree(
+    frame_records: Sequence[FrameRecordType], context: FrameContext
+) -> Frame | None:
     if len(frame_records) == 0:
         return None
 
-    root_frame = Frame(identifier_or_frame_info=DUMMY_ROOT_FRAME_IDENTIFIER)
+    root_frame = Frame(identifier_or_frame_info=DUMMY_ROOT_FRAME_IDENTIFIER, root_context=context)
 
     # put the root frame at the bottom of the stack
     frame_stack: list[Frame] = [root_frame]

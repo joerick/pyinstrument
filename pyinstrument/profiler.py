@@ -192,6 +192,7 @@ class Profiler:
             target_description=active_session.target_description,
             start_call_stack=active_session.start_call_stack,
             cpu_time=cpu_time,
+            sys_path=sys.path,
         )
 
         if self.last_session is not None:
