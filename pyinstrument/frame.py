@@ -45,8 +45,7 @@ SYNTHETIC_LEAF_IDENTIFIERS = frozenset(
 
 
 class FrameContext(typing.Protocol):
-    def shorten_path(self, path: str) -> str:
-        ...
+    def shorten_path(self, path: str) -> str: ...
 
 
 class Frame:
@@ -195,6 +194,15 @@ class Frame:
             if file_path.startswith("<ipython-input-"):
                 # lines typed at a console or in a notebook are app code
                 return True
+            elif file_path == "<string>" or file_path == "<stdin>":
+                # eval/exec is app code if started by a parent frame that is
+                # app code
+                if self.parent:
+                    return self.parent.is_application_code
+                else:
+                    # if this is the root frame, it must have been started
+                    # with -c, so it's app code
+                    return True
             else:
                 # otherwise, this is probably some library-internal code gen
                 return False
@@ -349,7 +357,6 @@ class Frame:
 
 
 class FrameGroup:
-    _libraries: list[str] | None
     _frames: list[Frame]
     _exit_frames: list[Frame] | None
 
@@ -358,25 +365,8 @@ class FrameGroup:
         self.id = str(uuid.uuid4())
         self._frames = []
         self._exit_frames = None
-        self._libraries = None
 
         self.add_frame(root)
-
-    @property
-    def libraries(self) -> list[str]:
-        if self._libraries is None:
-            libraries: list[str] = []
-
-            for frame in self.frames:
-                file_path_short = frame.file_path_short
-                if file_path_short:
-                    library = file_path_short.split(os.sep)[0]
-                    library, _ = os.path.splitext(library)
-                    if library and library not in libraries:
-                        libraries.append(library)
-            self._libraries = libraries
-
-        return self._libraries
 
     @property
     def frames(self) -> Sequence[Frame]:

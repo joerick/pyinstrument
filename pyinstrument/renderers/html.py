@@ -21,8 +21,18 @@ class HTMLRenderer(Renderer):
 
     output_file_extension = "html"
 
-    def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        show_all: bool = False,
+        timeline: bool = False,
+        processor_options: dict[str, Any] | None = None,
+    ):
+        super().__init__()
+        self.initial_options = {
+            "show_all": show_all,
+            "timeline": timeline,
+            "processor_options": processor_options or {},
+        }
 
     def render(self, session: Session):
         resources_dir = Path(__file__).parent / "html_resources"
@@ -53,7 +63,8 @@ class HTMLRenderer(Renderer):
 
                 <script>
                     const sessionData = {session_json};
-                    pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData);
+                    const initialOptions = {json.dumps(self.initial_options)};
+                    pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData, initialOptions);
                 </script>
             </body>
             </html>

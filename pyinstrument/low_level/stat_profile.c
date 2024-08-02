@@ -2,6 +2,10 @@
 #include <structmember.h>
 #include <frameobject.h>
 
+#include "pyi_floatclock.h"
+#include "pyi_timing_thread.h"
+#include <float.h>
+
 ////////////////////////////
 // Version/Platform shims //
 ////////////////////////////
@@ -24,53 +28,6 @@ _PyFrame_GetBack(PyFrameObject *frame) {
 #define PyFrame_GETBACK(f) _PyFrame_GetBack(f)
 #endif
 
-/*
-These timer functions are mostly stolen from timemodule.c
-*/
-
-#if defined(MS_WINDOWS) && !defined(__BORLANDC__)
-#include <windows.h>
-
-/* use QueryPerformanceCounter on Windows */
-
-static double
-floatclock(void)
-{
-    static LARGE_INTEGER ctrStart;
-    static double divisor = 0.0;
-    LARGE_INTEGER now;
-    double diff;
-
-    if (divisor == 0.0) {
-        LARGE_INTEGER freq;
-        QueryPerformanceCounter(&ctrStart);
-        if (!QueryPerformanceFrequency(&freq) || freq.QuadPart == 0) {
-            /* Unlikely to happen - this works on all intel
-               machines at least!  Revert to clock() */
-            return ((double)clock()) / CLOCKS_PER_SEC;
-        }
-        divisor = (double)freq.QuadPart;
-    }
-    QueryPerformanceCounter(&now);
-    diff = (double)(now.QuadPart - ctrStart.QuadPart);
-    return diff / divisor;
-}
-
-#else  /* !MS_WINDOWS */
-
-#include <sys/time.h>
-
-static double
-floatclock(void)
-{
-    struct timeval t;
-    gettimeofday(&t, (struct timezone *)NULL);
-
-    return (double)t.tv_sec + t.tv_usec*0.000001;
-}
-
-#endif  /* MS_WINDOWS */
-
 ///////////////////
 // ProfilerState //
 ///////////////////
@@ -84,6 +41,8 @@ typedef struct profiler_state {
     PyObject *last_context_var_value;
     PyObject *await_stack_list;
     PyObject *timer_func;
+    int timer_thread_subscription_id;
+    PYIFloatClockType floatclock_type;
 } ProfilerState;
 
 static void ProfilerState_SetTarget(ProfilerState *self, PyObject *target) {
@@ -140,9 +99,12 @@ static double ProfilerState_GetTime(ProfilerState *self) {
 
         Py_DECREF(result);
         return resultDouble;
+    } else if (self->timer_thread_subscription_id >= 0) {
+        // when a self->timer_thread_subscription_id is set, use the timing thread.
+        return pyi_timing_thread_get_time();
     } else {
-        // otherwise as normal, call the C timer function.
-        return floatclock();
+        // otherwise as normal, call the synchronous C timer function.
+        return pyi_floatclock(self->floatclock_type);
     }
 }
 
@@ -152,6 +114,9 @@ static void ProfilerState_Dealloc(ProfilerState *self) {
     Py_XDECREF(self->last_context_var_value);
     Py_XDECREF(self->await_stack_list);
     Py_XDECREF(self->timer_func);
+    if (self->timer_thread_subscription_id >= 0) {
+        pyi_timing_thread_unsubscribe(self->timer_thread_subscription_id);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -206,6 +171,8 @@ static ProfilerState *ProfilerState_New(void) {
     op->last_context_var_value = NULL;
     op->await_stack_list = PyList_New(0);
     op->timer_func = NULL;
+    op->timer_thread_subscription_id = -1;
+    op->floatclock_type = PYI_FLOATCLOCK_DEFAULT;
     return op;
 }
 
@@ -219,6 +186,11 @@ static PyObject *SELF_STRING = NULL;
 static PyObject *CLS_STRING = NULL;
 static PyObject *TRACEBACKHIDE_STRING = NULL;
 
+#define TIMER_TYPE_WALLTIME 0
+#define TIMER_TYPE_WALLTIME_THREAD 1
+#define TIMER_TYPE_TIMER_FUNC 2
+#define TIMER_TYPE_WALLTIME_COARSE 3
+
 #define WHAT_CALL 0
 #define WHAT_EXCEPTION 1
 #define WHAT_LINE 2
@@ -229,7 +201,7 @@ static PyObject *TRACEBACKHIDE_STRING = NULL;
 #define WHAT_CONTEXT_CHANGED 7
 
 static int
-trace_init(void)
+stat_profile_init(void)
 {
     static char *whatnames[8] = {"call", "exception", "line", "return",
                                  "c_call", "c_exception", "c_return",
@@ -333,19 +305,19 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
 
     PyObject *locals = PyFrame_GetLocals(frame);
 
-    if (!PyDict_Check(locals)) {
+    if (!PyMapping_Check(locals)) {
         Py_DECREF(locals);
         return NULL;
     }
 
     if (has_self) {
-        PyObject *self = PyDict_GetItem(locals, SELF_STRING);
+        PyObject *self = PyObject_GetItem(locals, SELF_STRING);
         if (self) {
             result = _PyType_Name(self->ob_type);
         }
     }
     else if (has_cls) {
-        PyObject *cls = PyDict_GetItem(locals, CLS_STRING);
+        PyObject *cls = PyObject_GetItem(locals, CLS_STRING);
         if (cls) {
             if (PyType_Check(cls)) {
                 PyTypeObject *type = (PyTypeObject *)cls;
@@ -552,6 +524,31 @@ _get_frame_info(PyFrameObject *frame) {
     return result;
 }
 
+static int
+_parse_timer_type(PyObject *timer_type, int defaultValue) {
+    if (timer_type == NULL || timer_type == Py_None) {
+        return defaultValue;
+    }
+
+    if (!PyUnicode_Check(timer_type)) {
+        PyErr_SetString(PyExc_TypeError, "timer_type must be a string");
+        return -1;
+    }
+
+    if (PyUnicode_CompareWithASCIIString(timer_type, "walltime") == 0) {
+        return TIMER_TYPE_WALLTIME;
+    } else if (PyUnicode_CompareWithASCIIString(timer_type, "walltime_thread") == 0) {
+        return TIMER_TYPE_WALLTIME_THREAD;
+    } else if (PyUnicode_CompareWithASCIIString(timer_type, "timer_func") == 0) {
+        return TIMER_TYPE_TIMER_FUNC;
+    } else if (PyUnicode_CompareWithASCIIString(timer_type, "walltime_coarse") == 0) {
+        return TIMER_TYPE_WALLTIME_COARSE;
+    } else {
+        PyErr_SetString(PyExc_TypeError, "timer_type must be 'walltime', 'walltime_thread', 'walltime_coarse', or 'timer_func'");
+        return -1;
+    }
+}
+
 //////////////////////
 // Public functions //
 //////////////////////
@@ -671,14 +668,15 @@ profile(PyObject *op, PyFrameObject *frame, int what, PyObject *arg)
 static PyObject *
 setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"target", "interval", "context_var", "timer_func", NULL};
+    static char *kwlist[] = {"target", "interval", "context_var", "timer_type", "timer_func", NULL};
     ProfilerState *pState = NULL;
     double interval = 0.0;
     PyObject *target = NULL;
     PyObject *context_var = NULL;
+    PyObject *timer_type = NULL;
     PyObject *timer_func = NULL;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!O", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_func))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|dO!UO", kwlist, &target, &interval, &PyContextVar_Type, &context_var, &timer_type, &timer_func))
         return NULL;
 
     if (target == Py_None) {
@@ -697,13 +695,38 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
         // default interval is 1 ms
         pState->interval = (interval > 0) ? interval : 0.001;
 
+        int timer_type_int = _parse_timer_type(timer_type, TIMER_TYPE_WALLTIME);
+        if (timer_type_int == -1) {
+            return NULL;
+        }
+
         if (timer_func == Py_None) {
             timer_func = NULL;
+        }
+
+        if (timer_type_int == TIMER_TYPE_TIMER_FUNC && timer_func == NULL) {
+            PyErr_SetString(PyExc_TypeError, "timer_func must be set if timer_type is 'timer_func'");
+            return NULL;
+        }
+
+        if (timer_func && timer_type_int != TIMER_TYPE_TIMER_FUNC) {
+            PyErr_SetString(PyExc_TypeError, "timer_type must be 'timer_func' if timer_func is set");
+            return NULL;
         }
 
         if (timer_func) {
             Py_INCREF(timer_func);
             pState->timer_func = timer_func;
+        } else if (timer_type_int == TIMER_TYPE_WALLTIME_THREAD) {
+            pState->timer_thread_subscription_id = pyi_timing_thread_subscribe(pState->interval);
+            if (pState->timer_thread_subscription_id < 0) {
+                PyErr_Format(PyExc_RuntimeError, "failed to subscribe to timing thread: error %d", pState->timer_thread_subscription_id);
+                return NULL;
+            }
+        } else if (timer_type_int == TIMER_TYPE_WALLTIME_COARSE) {
+            pState->floatclock_type = PYI_FLOATCLOCK_MONOTONIC_COARSE;
+        } else {
+            pState->floatclock_type = PYI_FLOATCLOCK_DEFAULT;
         }
 
         // initialise the last invocation to avoid immediate callback
@@ -746,6 +769,54 @@ get_frame_info(PyObject *m, PyObject *const *args, Py_ssize_t nargs)
     return _get_frame_info(frame);
 }
 
+static inline double
+measure_timing_overhead_for_timer(PYIFloatClockType timer) {
+    int n = 1000;
+    int num_iterations = 0;
+    pyi_floatclock(timer); // warmup
+    double start = pyi_floatclock(timer);
+    double end = start;
+    double duration = 0;
+    for (int i = 0; i < n; i++) {
+        end = pyi_floatclock(timer);
+        duration = end - start;
+        num_iterations += 1;
+        if (duration > 0.0001) {
+            // dont run this for more than 100us
+            break;
+        }
+    }
+    return duration / num_iterations;
+}
+
+static PyObject *
+measure_timing_overhead(PyObject *m, PyObject * Py_UNUSED(args))
+{
+    double monotonic_coarse_resolution = pyi_monotonic_coarse_resolution();
+    int is_course_timer_available = monotonic_coarse_resolution != DBL_MAX;
+
+    PyObject *result = PyDict_New();
+    PyObject *value = PyFloat_FromDouble(measure_timing_overhead_for_timer(PYI_FLOATCLOCK_DEFAULT));
+    PyDict_SetItemString(result, "walltime", value);
+    Py_DECREF(value);
+    if (is_course_timer_available) {
+        value = PyFloat_FromDouble(measure_timing_overhead_for_timer(PYI_FLOATCLOCK_MONOTONIC_COARSE));
+        PyDict_SetItemString(result, "walltime_coarse", value);
+        Py_DECREF(value);
+    }
+
+    return result;
+}
+
+static PyObject *
+walltime_coarse_resolution(PyObject *m, PyObject * Py_UNUSED(args))
+{
+    double resolution = pyi_monotonic_coarse_resolution();
+    if (resolution == DBL_MAX) {
+        Py_RETURN_NONE;
+    }
+    return PyFloat_FromDouble(resolution);
+}
 
 ///////////////////////////
 // Module initialization //
@@ -758,6 +829,10 @@ static PyMethodDef module_methods[] = {
      "<interval> seconds with the current stack."},
     {"get_frame_info", (PyCFunction)get_frame_info, METH_FASTCALL,
      "Returns the frame identifier string for the given Frame object."},
+    {"measure_timing_overhead", (PyCFunction)measure_timing_overhead, METH_NOARGS,
+     "Returns a dict showing how much overhead the timing options have."},
+    {"walltime_coarse_resolution", (PyCFunction)walltime_coarse_resolution, METH_NOARGS,
+     "Returns the resolution of the monotonic coarse clock. Returns None if the clock is not available."},
     {NULL}  /* Sentinel */
 };
 
@@ -773,7 +848,7 @@ PyMODINIT_FUNC PyInit_stat_profile(void)
         module_methods
     };
 
-    if (trace_init() == -1)
+    if (stat_profile_init() == -1)
         return NULL;
 
     return PyModule_Create(&moduledef);

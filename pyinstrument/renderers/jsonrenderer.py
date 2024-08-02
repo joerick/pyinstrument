@@ -69,7 +69,7 @@ class JSONRenderer(FrameRenderer):
         property_decls.append('"start_time": %f' % session.start_time)
         property_decls.append('"duration": %f' % session.duration)
         property_decls.append('"sample_count": %d' % session.sample_count)
-        property_decls.append('"program": %s' % encode_str(session.program))
+        property_decls.append('"target_description": %s' % encode_str(session.target_description))
         property_decls.append('"cpu_time": %f' % session.cpu_time)
         property_decls.append('"root_frame": %s' % self.render_frame(frame))
 

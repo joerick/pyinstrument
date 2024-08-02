@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
     LiteralStr = typing_extensions.Literal
     assert_never = typing_extensions.assert_never
+    Unpack = typing_extensions.Unpack
 else:
     # a type, that when subscripted, returns `str`.
     class _LiteralStr:
@@ -17,7 +18,9 @@ else:
     def assert_never(value: Any):
         raise ValueError(value)
 
+    Unpack = Any
+
 
 PathOrStr = Union[str, "os.PathLike[str]"]
 
-__all__ = ["PathOrStr", "LiteralStr", "assert_never"]
+__all__ = ["PathOrStr", "LiteralStr", "assert_never", "Unpack"]

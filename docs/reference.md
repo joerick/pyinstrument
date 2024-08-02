@@ -17,6 +17,49 @@ print a profile report to the console.
 The Python API is also available, for calling pyinstrument directly from
 Python and writing integrations with with other tools.
 
+### The `profile` function
+
+For example:
+
+```python
+with pyinstrument.profile():
+    time.sleep(1)
+```
+
+This will print something like:
+
+```
+pyinstrument ........................................
+.
+.  Block at testfile.py:2
+.
+.  1.000 <module>  testfile.py:1
+.  └─ 1.000 sleep  <built-in>
+.
+.....................................................
+```
+
+You can also use it as a function/method decorator, like this:
+
+```python
+@pyinstrument.profile()
+def my_function():
+    time.sleep(1)
+```
+
+```{eval-rst}
+.. function:: pyinstrument.profile(*, interval=0.001, async_mode="disabled", \
+                                 use_timing_thread=None, renderer=None, \
+                                 target_description=None)
+
+    Creates a context-manager or function decorator object, which profiles the given code and prints the output to stdout.
+
+    The *interval*, *async_mode* and *use_timing_thread* parameters are passed through to the underlying :class:`pyinstrument.Profiler` object.
+
+    You can pass a renderer to customise the output. By default, it uses a :class:`ConsoleRenderer <pyinstrument.renderers.ConsoleRenderer>` with `short_mode` set.
+
+```
+
 ### The Profiler object
 
 ```{eval-rst}

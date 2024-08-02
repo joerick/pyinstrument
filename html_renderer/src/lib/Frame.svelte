@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { timeFormat, visibleGroups } from './appState';
+  import { timeFormat, visibleGroups, collapsedFrames } from './appState';
   import type Frame from './model/Frame'
   export let frame: Frame
   export let rootFrame: Frame
   export let indent: number = 0
-
-  let childrenVisible = true
 
   let isVisible: boolean
   $: {
@@ -71,30 +69,53 @@
     timeColor = '#7ED321'
   }
 
-  function descriptionClicked() {
-    childrenVisible = !childrenVisible
+  function descriptionClicked(event: MouseEvent) {
+    setCollapsed(frame, !collapsed, event.altKey)
   }
 
   $: isGroupVisible = $visibleGroups[frame.group?.id ?? ''] === true
+  $: collapsed = $collapsedFrames[frame.uuid] === true
 
-  function headerClicked() {
+  function setCollapsed(frame: Frame, value: boolean, recursive: boolean = true) {
+    collapsedFrames.update(collapsedFrames => ({
+      ...collapsedFrames,
+      [frame.uuid]: value
+    }))
+
+    if (recursive) {
+      for (const child of frame.children) {
+        setCollapsed(child, value, true)
+        if (frame.group && frame.group.rootFrame == frame) {
+          setGroupVisible(frame.group.id, !value)
+        }
+      }
+    }
+  }
+
+  function setGroupVisible(groupId: string, value: boolean) {
     visibleGroups.update(groups => ({
       ...groups,
-      [frame.group?.id ?? '']: !isGroupVisible
+      [groupId]: value
     }))
   }
 
+  function headerClicked() {
+    if (!frame.group) {
+      return
+    }
+    setGroupVisible(frame.group.id, !isGroupVisible)
+  }
 </script>
 <div class="frame">
   {#if isVisible}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="frame-description"
          class:application-code={frame.isApplicationCode}
-         class:children-visible={childrenVisible}
+         class:children-visible={!collapsed}
          style:padding-left={`${indent*35}px`}
          on:click|preventDefault|stopPropagation="{descriptionClicked}">
       <div class="frame-triangle"
-           class:rotate="{childrenVisible}"
+           class:rotate="{!collapsed}"
            style:visibility="{frame.children.length > 0 ? 'visible' : 'hidden'}">
         <svg width="6" height="10"><path d="M.937-.016L5.793 4.84.937 9.696z" fill="{timeColor}" fill-rule="evenodd" fill-opacity=".582"/></svg>
       </div>
@@ -110,7 +131,7 @@
     </div>
   {/if}
 
-  {#if frame.group && frame.group.rootFrame == frame && childrenVisible}
+  {#if frame.group && frame.group.rootFrame == frame && !collapsed}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="group-header"
          style:padding-left={`${indent*35}px`}
@@ -125,12 +146,14 @@
     </div>
   {/if}
 
-  {#if childrenVisible}
-    {#each frame.children as child}
-      <svelte:self frame="{child}"
-                   rootFrame="{rootFrame}"
-                   indent="{indent + (isVisible ? 1 : 0)}" />
-    {/each}
+  {#if !collapsed && frame.children.length > 0}
+    <div class="children">
+      {#each frame.children as child (child.identifier)}
+        <svelte:self frame="{child}"
+                     rootFrame="{rootFrame}"
+                     indent="{indent + (isVisible ? 1 : 0)}" />
+      {/each}
+    </div>
   {/if}
 
   <div class="visual-guide"
@@ -224,22 +247,20 @@
   margin-left: 2em;
 }
 
-:global {
-  .visual-guide {
-    top: 21px;
-    bottom: 0;
-    left: 0;
-    width: 2px;
-    background-color: white;
-    position: absolute;
-    opacity: 0.08;
-    pointer-events: none;
-  }
-  .frame-description:hover ~ .visual-guide {
-    opacity: 0.4;
-  }
-  .frame-description:hover ~ .children .visual-guide {
-    opacity: 0.1;
-  }
+.visual-guide {
+  top: 21px;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background-color: white;
+  position: absolute;
+  opacity: 0.08;
+  pointer-events: none;
+}
+:global(.frame-description:hover) ~ .visual-guide {
+  opacity: 0.4;
+}
+:global(.frame-description:hover) ~ .children :global(.visual-guide) {
+  opacity: 0.1;
 }
 </style>

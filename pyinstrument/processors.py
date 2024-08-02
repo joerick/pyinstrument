@@ -281,9 +281,6 @@ def remove_first_pyinstrument_frames_processor(
 
     result = result.children[0]
 
-    if not is_runpy_frame(result):
-        return frame
-
     # at this point we know we've matched the first few frames of a command
     # line invocation. We'll trim some runpy frames and return.
 

@@ -36,6 +36,7 @@ const ATTRIBUTE_MARKER_TRACEBACKHIDE = "h"
 
 
 export default class Frame {
+    uuid: string = crypto.randomUUID()
     identifier: string
     _identifierParts: string[]
     time: number = 0

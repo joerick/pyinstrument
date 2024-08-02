@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+import re
+import textwrap
 import time
 from typing import Any, Dict, List, Tuple
 
 import pyinstrument
 from pyinstrument import processors
-from pyinstrument.frame import Frame
+from pyinstrument.frame import Frame, FrameGroup
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import truncate
 
 # pyright: strict
+
+FlatTimeMode = LiteralStr["self", "total"]
 
 
 class ConsoleRenderer(FrameRenderer):
@@ -22,24 +26,35 @@ class ConsoleRenderer(FrameRenderer):
 
     def __init__(
         self,
+        show_all: bool = False,
+        timeline: bool = False,
+        processor_options: dict[str, Any] | None = None,
         unicode: bool = False,
         color: bool = False,
         flat: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
-        **kwargs: Any,
+        flat_time: FlatTimeMode = "self",
+        short_mode: bool = False,
     ) -> None:
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
         :param flat: Display a flat profile instead of a call graph.
         :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
+        :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
+        :param short_mode: Display a short version of the output.
+        :param show_all: See :class:`FrameRenderer`.
+        :param timeline: See :class:`FrameRenderer`.
+        :param processor_options: See :class:`FrameRenderer`.
         """
-        super().__init__(**kwargs)
+        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
 
         self.unicode = unicode
         self.color = color
         self.flat = flat
         self.time = time
+        self.flat_time = flat_time
+        self.short_mode = short_mode
 
         if self.flat and self.timeline:
             raise Renderer.MisconfigurationError("Cannot use timeline and flat options together.")
@@ -50,23 +65,37 @@ class ConsoleRenderer(FrameRenderer):
         result = self.render_preamble(session)
 
         frame = self.preprocess(session.root_frame())
+        indent = ".  " if self.short_mode else ""
 
         if frame is None:
-            result += "No samples were recorded.\n\n"
-            return result
-
-        self.root_frame = frame
-
-        if self.flat:
-            result += self.render_frame_flat(self.root_frame)
+            result += f"{indent}No samples were recorded.\n"
         else:
-            result += self.render_frame(self.root_frame)
-        result += "\n"
+            self.root_frame = frame
+
+            if self.flat:
+                result += self.render_frame_flat(self.root_frame, indent=indent)
+            else:
+                result += self.render_frame(self.root_frame, indent=indent, child_indent=indent)
+
+        result += f"{indent}\n"
+
+        if self.short_mode:
+            result += "." * 53 + "\n\n"
 
         return result
 
     # pylint: disable=W1401
     def render_preamble(self, session: Session) -> str:
+        if self.short_mode:
+            return textwrap.dedent(
+                f"""
+                    pyinstrument ........................................
+                    .
+                    .  {session.target_description}
+                    .
+                """
+            )
+
         lines = [
             r"",
             r"  _     ._   __/__   _ _  _  _ _/_  ",
@@ -82,18 +111,45 @@ class ConsoleRenderer(FrameRenderer):
         lines[2] += f" CPU time: {session.cpu_time:.3f}"
 
         lines.append("")
-        lines.append("Program: %s" % session.program)
+        lines.append(session.target_description)
         lines.append("")
         lines.append("")
 
         return "\n".join(lines)
 
-    def render_frame(self, frame: Frame, indent: str = "", child_indent: str = "") -> str:
-        if not frame.group or (
+    def should_render_frame(self, frame: Frame) -> bool:
+        if not frame.group:
+            return True
+        # Only render the root frame, or frames that are significant
+        if (
             frame.group.root == frame
             or frame.total_self_time > 0.2 * self.root_frame.time
             or frame in frame.group.exit_frames
         ):
+            return True
+        return False
+
+    def group_description(self, group: FrameGroup) -> str:
+        hidden_frames = [f for f in group.frames if not self.should_render_frame(f)]
+        libraries = self.libraries_for_frames(hidden_frames)
+        return "[{count} frames hidden]  {c.faint}{libraries}{c.end}\n".format(
+            count=len(hidden_frames),
+            libraries=truncate(", ".join(libraries), 40),
+            c=self.colors,
+        )
+
+    def libraries_for_frames(self, frames: list[Frame]) -> list[str]:
+        libraries: list[str] = []
+        for frame in frames:
+            if frame.file_path_short:
+                library = re.split(r"[\\/\.]", frame.file_path_short, maxsplit=1)[0]
+
+                if library and library not in libraries:
+                    libraries.append(library)
+        return libraries
+
+    def render_frame(self, frame: Frame, indent: str = "", child_indent: str = "") -> str:
+        if self.should_render_frame(frame):
             result = f"{indent}{self.frame_description(frame)}\n"
 
             if self.unicode:
@@ -102,12 +158,7 @@ class ConsoleRenderer(FrameRenderer):
                 indents = {"├": "|- ", "│": "|  ", "└": "`- ", " ": "   "}
 
             if frame.group and frame.group.root == frame:
-                result += "{indent}[{count} frames hidden]  {c.faint}{libraries}{c.end}\n".format(
-                    indent=child_indent + "   ",
-                    count=len(frame.group.frames),
-                    libraries=truncate(", ".join(frame.group.libraries), 40),
-                    c=self.colors,
-                )
+                result += f"{child_indent}   {self.group_description(frame.group)}"
                 for key in indents:
                     indents[key] = "      "
         else:
@@ -115,10 +166,15 @@ class ConsoleRenderer(FrameRenderer):
             indents = {"├": "", "│": "", "└": "", " ": ""}
 
         if frame.children:
-            last_child = frame.children[-1]
+            children_to_be_rendered_indices = [
+                i for i, f in enumerate(frame.children) if self.should_render_frame(f)
+            ]
+            last_rendered_child_index = (
+                children_to_be_rendered_indices[-1] if children_to_be_rendered_indices else -1
+            )
 
-            for child in frame.children:
-                if child is not last_child:
+            for i, child in enumerate(frame.children):
+                if i < last_rendered_child_index:
                     c_indent = child_indent + indents["├"]
                     cc_indent = child_indent + indents["│"]
                 else:
@@ -128,10 +184,12 @@ class ConsoleRenderer(FrameRenderer):
 
         return result
 
-    def render_frame_flat(self, frame: Frame) -> str:
+    def render_frame_flat(self, frame: Frame, indent: str) -> str:
         def walk(frame: Frame):
             frame_id_to_time[frame.identifier] = (
                 frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
+                if self.flat_time == "self"
+                else frame.time
             )
 
             frame_id_to_frame[frame.identifier] = frame

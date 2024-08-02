@@ -8,7 +8,7 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         # Checkout pull request HEAD commit instead of merge commit
         ref: ${{ github.event.pull_request.head.sha }}
@@ -26,14 +26,14 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12-dev"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13-dev"]
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -50,7 +50,7 @@ jobs:
     name: "test (aarch64, ${{ matrix.pyver }})"
     strategy:
       matrix:
-        pyver: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
+        pyver: [cp312-cp312]
       fail-fast: false
     runs-on: ubuntu-latest
     env:
@@ -58,13 +58,15 @@ jobs:
       img: quay.io/pypa/manylinux2014_aarch64
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Set up QEMU
       id: qemu
       uses: docker/setup-qemu-action@v3
     - name: Install dependencies and test
       run: |
             docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            -e QEMU_EMULATED=1 \
+            -e CI=1 \
             ${{ env.img }} \
             bash -exc '${{ env.py }} -m venv .env && \
             source .env/bin/activate && \

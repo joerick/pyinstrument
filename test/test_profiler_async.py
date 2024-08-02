@@ -5,7 +5,6 @@ from functools import partial
 from test.fake_time_util import fake_time, fake_time_asyncio, fake_time_trio
 from typing import Optional
 
-import greenlet
 import pytest
 
 from pyinstrument import processors, stack_sampler
@@ -170,7 +169,15 @@ def test_profiler_task_isolation(engine):
     assert sum(f.time for f in await_frames) == pytest.approx(0.5, rel=0.1)
 
 
+PYTHON_IS_PRERELEASE = sys.version_info.releaselevel != "final"
+
+
+@pytest.mark.skipif(
+    PYTHON_IS_PRERELEASE, reason="greenlet is often slow to gain support for new interpreters"
+)
 def test_greenlet():
+    import greenlet
+
     profiler = Profiler()
 
     with fake_time():
@@ -197,7 +204,12 @@ def test_greenlet():
     assert sleep_frames[1].time == pytest.approx(0.1, rel=0.1)
 
 
+@pytest.mark.skipif(
+    PYTHON_IS_PRERELEASE, reason="greenlet is often slow to gain support for new interpreters"
+)
 def test_strict_with_greenlet():
+    import greenlet
+
     profiler = Profiler(async_mode="strict")
 
     with fake_time():

@@ -24,7 +24,7 @@ def test_increment(setstatprofile):
 
     counter = CallCounter()
 
-    setstatprofile(counter, timer_func=fake_time)
+    setstatprofile(counter, timer_func=fake_time, timer_type="timer_func")
 
     for _ in range(100):
         fake_sleep(1.0)

@@ -9,7 +9,7 @@ pyinstrument
 
 <!-- MARK intro start -->
 
-[![Screenshot](docs/img/screenshot.jpg)](https://raw.githubusercontent.com/joerick/pyinstrument/main/docs/img/screenshot.jpg)
+[![Screenshot](https://github.com/joerick/pyinstrument/raw/main/docs/img/screenshot.jpg)](https://github.com/joerick/pyinstrument/raw/main/docs/img/screenshot.jpg)
 
 Pyinstrument is a Python profiler. A profiler is a tool to help you optimize
 your code - make it faster. To get the biggest speed increase you should
@@ -27,7 +27,7 @@ Installation
 
     pip install pyinstrument
 
-Pyinstrument supports Python 3.7+.
+Pyinstrument supports Python 3.8+.
 
 <!-- MARK installation end -->
 
@@ -53,6 +53,23 @@ Known issues
 
 Changelog
 ---------
+
+### v4.7.1
+
+_2 August 2024_
+
+-   Fix issue with PyPI upload
+
+### v4.7.0
+
+_1 August 2024_
+
+-   Adds a new, convenient API for [profiling chunks of Python code](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-specific-chunk-of-code)! You can now profile simply using a `with` block, or a function/method decorator. This will profile the code and print a short readout into the terminal. (#327)
+-   Adds new, lower overhead timing options. Pyinstrument calls timers on every Python function call, which is fine on systems with fast timing available, but it adds significant overhead on systems that require a syscall for each, such as some Docker environments. Pyinstrument will now detect slow timers present a warning with two choices. You can enable a 'timing thread', which offloads the timing workload from the profiled thread, or, if you're happy with lower resolution, you can opt to use a 'coarse' timer, which is provided on some Linux systems. (#273)
+-   Alt-click rows in the HTML output to collapse/expand the whole tree (#325)
+-   Adds a `flat` argument to the console output, to present a flat list of functions (#294)
+-   Adds a Litestar example config and docs (#284)
+-   Preliminary Python 3.13 support (#322)
 
 ### v4.6.2
 

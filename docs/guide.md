@@ -1,7 +1,7 @@
 User guide
-----------
+==========
 
-### Installation
+## Installation
 
 ```{include} ../README.md
 ---
@@ -12,7 +12,7 @@ end-before: '<!-- MARK installation end -->'
 ---
 ```
 
-### Profile a Python script
+## Profile a Python script
 
 Call Pyinstrument directly from the command line. Instead of writing
 `python script.py`, type `pyinstrument script.py`. Your script will run as
@@ -58,7 +58,7 @@ Here are the options you can use:
 **Protip:** `-r html` will give you a interactive profile report as HTML - you
 can really explore this way!
 
-### Profile a Python CLI command
+## Profile a Python CLI command
 
 For profiling an installed Python script via the
 ["console_script" entry point](https://packaging.python.org/en/latest/specifications/entry-points/#use-for-scripts),
@@ -68,10 +68,29 @@ Your script will run as normal, and at the end (or when you press `^C`),
 Pyinstrument will output a colored summary showing where most of the time was
 spent.
 
-### Profile a specific chunk of code
+## Profile a specific chunk of code
 
-Pyinstrument also has a Python API. Just surround your code with Pyinstrument,
-like this:
+Pyinstrument also has a Python API. You can use a with-block, like this:
+
+```python
+import pyinstrument
+
+with pyinstrument.profile():
+    # code you want to profile
+```
+
+Or you can decorate a function/method, like this:
+
+```python
+import pyinstrument
+
+@pyinstrument.profile()
+def my_function():
+    # code you want to profile
+
+```
+
+There's also a lower-level API called Profiler, that's more flexible:
 
 ```python
 from pyinstrument import Profiler
@@ -82,7 +101,6 @@ profiler.start()
 # code you want to profile
 
 profiler.stop()
-
 profiler.print()
 ```
 
@@ -91,6 +109,8 @@ If you get "No samples were recorded." because your code executed in under
 value smaller than the default 0.001 (1 millisecond) like this:
 
 ```python
+pyinstrument.profile(interval=0.0001)
+# or,
 profiler = Profiler(interval=0.0001)
 ...
 ```
@@ -103,7 +123,8 @@ that smaller intervals could affect the performance overhead of profiling.
 save this HTML for later, use
 {meth}`profiler.output_html() <pyinstrument.Profiler.output_html>`.
 
-### Profile code in Jupyter/IPython
+## Profile code in Jupyter/IPython
+
 Via [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html),
 you can profile a line or a cell in IPython or Jupyter.
 
@@ -132,7 +153,7 @@ a()
 
 To customize options, see `%%pyinstrument??`.
 
-### Profile a web request in Django
+## Profile a web request in Django
 
 To profile Django web requests, add
 `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE` in your
@@ -166,7 +187,7 @@ Default value is `pyinstrument.renderers.HTMLRenderer`. The supported renderers 
 `pyinstrument.renderers.JSONRenderer`, `pyinstrument.renderers.HTMLRenderer`,
 `pyinstrument.renderers.SpeedscopeRenderer`.
 
-### Profile a web request in Flask
+## Profile a web request in Flask
 
 A simple setup to profile a Flask application is the following:
 
@@ -194,7 +215,7 @@ This will check for the `?profile` query param on each request and if found,
 it starts profiling. After each request where the profiler was running it
 creates the html output and returns that instead of the actual response.
 
-### Profile a web request in FastAPI
+## Profile a web request in FastAPI
 
 To profile call stacks in FastAPI, you can write a middleware extension for
 pyinstrument.
@@ -227,7 +248,7 @@ if PROFILING:
 To invoke, make any request to your application with the GET parameter
 `profile=1` and it will print the HTML result from pyinstrument.
 
-### Profile a web request in Falcon
+## Profile a web request in Falcon
 
 For profile call stacks in Falcon, you can write a middleware extension using
 pyinstrument.
@@ -262,8 +283,67 @@ if PROFILING:
 To invoke, make any request to your application and it launch a new window
 printing the HTML result from pyinstrument.
 
+## Profile a web request in Litestar
 
-### Profile Pytest tests
+Minimal application setup allowing request profiling.
+
+The middleware overrides the response to return a profiling report in HTML format.
+
+```python
+from __future__ import annotations
+
+from asyncio import sleep
+
+from litestar import Litestar, get
+from litestar.middleware import MiddlewareProtocol
+from litestar.types import ASGIApp, Message, Receive, Scope, Send
+
+from pyinstrument import Profiler
+
+
+class ProfilingMiddleware(MiddlewareProtocol):
+    def __init__(self, app: ASGIApp) -> None:
+        super().__init__(app)  # type: ignore
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        profiler = Profiler(interval=0.001, async_mode="enabled")
+        profiler.start()
+        profile_html: str | None = None
+
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                profiler.stop()
+                nonlocal profile_html
+                profile_html = profiler.output_html()
+                message["headers"] = [
+                    (b"content-type", b"text/html; charset=utf-8"),
+                    (b"content-length", str(len(profile_html)).encode()),
+                ]
+            elif message["type"] == "http.response.body":
+                assert profile_html is not None
+                message["body"] = profile_html.encode()
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+@get("/")
+async def index() -> str:
+    await sleep(1)
+    return "Hello, world!"
+
+
+app = Litestar(
+    route_handlers=[index],
+    middleware=[ProfilingMiddleware],
+)
+```
+
+To invoke, make any request to your application and it will return the HTML result from pyinstrument instead of your application's response.
+
+
+## Profile Pytest tests
 
 Pyinstrument can be invoked via the command-line to run pytest, giving you a
 consolidated report for the test suite.
@@ -300,7 +380,7 @@ def auto_profile(request):
 This will generate a HTML file for each test node in your test suite inside
 the `.profiles` directory.
 
-### Profile something else?
+## Profile something else?
 
 I'd love to have more ways to profile using Pyinstrument - e.g. other web
 frameworks. PRs are encouraged!

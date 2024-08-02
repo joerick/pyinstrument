@@ -28,7 +28,7 @@ class Session:
         duration: float,
         sample_count: int,
         start_call_stack: list[str],
-        program: str,
+        target_description: str,
         cpu_time: float,
         sys_path: list[str],
     ):
@@ -43,7 +43,7 @@ class Session:
         self.duration = duration
         self.sample_count = sample_count
         self.start_call_stack = start_call_stack
-        self.program = program
+        self.target_description = target_description
         self.cpu_time = cpu_time
         self.sys_path = sys_path
         self._short_file_path_cache = {}
@@ -74,7 +74,7 @@ class Session:
             "duration": self.duration,
             "sample_count": self.sample_count,
             "start_call_stack": self.start_call_stack,
-            "program": self.program,
+            "target_description": self.target_description,
             "cpu_time": self.cpu_time,
             "sys_path": self.sys_path,
         }
@@ -92,7 +92,7 @@ class Session:
             duration=json_dict["duration"],
             sample_count=json_dict["sample_count"],
             start_call_stack=json_dict["start_call_stack"],
-            program=json_dict["program"],
+            target_description=json_dict["target_description"],
             cpu_time=json_dict["cpu_time"] or 0,
             sys_path=json_dict.get("sys_path", sys.path),
         )
@@ -118,7 +118,7 @@ class Session:
             duration=session1.duration + session2.duration,
             sample_count=session1.sample_count + session2.sample_count,
             start_call_stack=session1.start_call_stack,
-            program=session1.program,
+            target_description=session1.target_description,
             cpu_time=session1.cpu_time + session2.cpu_time,
             sys_path=(
                 session1.sys_path + [p for p in session2.sys_path if p not in session1.sys_path]

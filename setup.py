@@ -9,11 +9,15 @@ long_description = (PROJECT_ROOT / "README.md").read_text(encoding="utf8")
 setup(
     name="pyinstrument",
     packages=find_namespace_packages(include=["pyinstrument*"]),
-    version="4.6.2",
+    version="4.7.1",
     ext_modules=[
         Extension(
             "pyinstrument.low_level.stat_profile",
-            sources=["pyinstrument/low_level/stat_profile.c"],
+            sources=[
+                "pyinstrument/low_level/stat_profile.c",
+                "pyinstrument/low_level/pyi_floatclock.c",
+                "pyinstrument/low_level/pyi_timing_thread.c",
+            ],
         )
     ],
     description="Call stack profiler for Python. Shows you why your code is slow!",
@@ -29,9 +33,12 @@ setup(
             "pytest",
             "flaky",
             "trio",
-            "greenlet>=3.0.0a1",
-            "pytest-asyncio==0.12.0",  # pinned to an older version due to an incompatibility with flaky
-            "sphinx-autobuild==2021.3.14",
+            # cffi is a trio dep, pinned to a version that works with py3.13
+            "cffi >= v1.17.0rc1 ; python_version >= '3.13'",
+            # greenlet doesn't work on py3.13 yet, the test skips it because python is still prerelease
+            "greenlet>=3.0.0a1 ; python_version < '3.13'",
+            # pinned to an older version due to an incompatibility with flaky
+            "pytest-asyncio==0.23.8",
             "ipython",
         ],
         "bin": [
@@ -39,21 +46,23 @@ setup(
             "nox",
         ],
         "docs": [
-            "sphinx==4.2.0",
-            "myst-parser==0.15.1",
-            "furo==2021.6.18b36",
+            "sphinx==7.4.7",
+            "myst-parser==3.0.1",
+            "furo==2024.7.18",
             "sphinxcontrib-programoutput==0.17",
+            "sphinx-autobuild==2024.4.16",
         ],
         "examples": [
             "numpy",
             "django",
+            "litestar",
         ],
         "types": [
             "typing_extensions",
         ],
     },
     include_package_data=True,
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     entry_points={"console_scripts": ["pyinstrument = pyinstrument.__main__:main"]},
     zip_safe=False,
     classifiers=[

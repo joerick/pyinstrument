@@ -27,6 +27,7 @@ build
 *.code-workspace
 .history
 .vscode
+.idea
 
 # docs
 docs/_build
