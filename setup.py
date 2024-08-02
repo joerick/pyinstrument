@@ -33,10 +33,12 @@ setup(
             "pytest",
             "flaky",
             "trio",
-            "cffi >= v1.17.0rc1 ; python_version >= '3.13'",  # trio dep, pinned to a version that works with py3.13
+            # cffi is a trio dep, pinned to a version that works with py3.13
+            "cffi >= v1.17.0rc1 ; python_version >= '3.13'",
+            # greenlet doesn't work on py3.13 yet, the test skips it because python is still prerelease
             "greenlet>=3.0.0a1 ; python_version < '3.13'",
-            "greenlet @ https://github.com/vstinner/greenlet/archive/refs/heads/py313.zip ; python_version >= '3.13'",
-            "pytest-asyncio==0.12.0",  # pinned to an older version due to an incompatibility with flaky
+            # pinned to an older version due to an incompatibility with flaky
+            "pytest-asyncio==0.23.8",
             "ipython",
         ],
         "bin": [
