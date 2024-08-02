@@ -21,15 +21,52 @@ def docs(session):
     session.run("make", "-C", "docs", "html")
 
 
-@nox.session()
+@nox.session(default=False)
 def livedocs(session):
     session.env["UV_PRERELEASE"] = "allow"
     session.install("-e", ".[docs]")
     session.run("make", "-C", "docs", "livehtml")
 
 
-@nox.session(python=False)
+@nox.session(default=False, python=False)
 def htmldev(session):
     with session.chdir("html_renderer"):
         session.run("npm", "install")
         session.run("npm", "run", "dev")
+
+
+@nox.session(default=False, python=False)
+def watchbuild(session):
+    # this doesn't use nox's environment isolation, because we want to build
+    # the python version of the activated venv
+    # we pass --force because the build_ext command doesn't rebuild if the
+    # headers change
+    session.run("python", "setup.py", "build_ext", "--inplace", "--force")
+    session.run(
+        "pipx",
+        "run",
+        "--spec",
+        "watchdog",
+        "watchmedo",
+        "shell-command",
+        "--patterns=*.h;*.c;setup.py;setup.cfg",
+        "--recursive",
+        "--command=python setup.py build_ext --inplace --force",
+        "pyinstrument",
+    )
+
+
+@nox.session(python=False, default=False)
+def watch(session):
+    session.run(
+        "npx",
+        "concurrently",
+        "--kill-others",
+        "--names",
+        "bext,html,docs",
+        "--prefix-colors",
+        "bgBlue,bgGreen,bgMagenta",
+        "nox -s watchbuild",
+        "nox -s htmldev",
+        "nox -s livedocs",
+    )
