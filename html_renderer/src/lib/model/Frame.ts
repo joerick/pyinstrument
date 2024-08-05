@@ -1,5 +1,6 @@
 import Group from './Group';
 import type {FrameData} from '../dataTypes';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class Frame {
   uuid: string
@@ -20,7 +21,7 @@ export default class Frame {
   group: Group | null;
 
   constructor(jsonObject: FrameData, parent: Frame|null = null, context: FrameContext = {groups:{}}) {
-    this.uuid = crypto.randomUUID()
+    this.uuid = uuidv4()
     this.parent = parent
     this.function = jsonObject.function;
     this.filePath = jsonObject.file_path;
