@@ -64,7 +64,7 @@ class ConsoleRenderer(FrameRenderer):
     def render(self, session: Session) -> str:
         result = self.render_preamble(session)
 
-        frame = self.preprocess(session.root_frame(trim_stem=not self.show_all))
+        frame = self.preprocess(session.root_frame(trim_stem=self.trim_stem))
         indent = ".  " if self.short_mode else ""
 
         if frame is None:

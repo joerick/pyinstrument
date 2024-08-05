@@ -160,6 +160,7 @@ class PyinstrumentMagic(Magics):
             timeline=args.timeline,
             processor_options={"strip_ipython_frame": not args.show_all},
             show_all=args.show_all,
+            trim_stem=not args.show_all,
         )
 
         as_iframe = IFrame(
@@ -172,6 +173,7 @@ class PyinstrumentMagic(Magics):
             timeline=args.timeline,
             processor_options={"strip_ipython_frame": not args.show_all},
             show_all=args.show_all,
+            trim_stem=not args.show_all,
         )
         # repr_html may be a bit fragile, but it's been stable for a while
         display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)  # type: ignore
