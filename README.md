@@ -54,6 +54,13 @@ Known issues
 Changelog
 ---------
 
+### v4.7.2
+
+_5 August 2024_
+
+-   Add CPython 3.13 wheels
+-   Fix a bug that caused the HTML output to fail to render in some browser contexts (#328)
+
 ### v4.7.1
 
 _2 August 2024_
