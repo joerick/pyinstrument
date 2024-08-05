@@ -320,20 +320,3 @@ def strip_ipython_frames_processor(frame: Frame | None, options: ProcessorOption
             break
 
     return frame
-
-
-def group_ipython_frames_processor(frame, options: ProcessorOptions) -> Frame | None:
-    """
-    In some case the IPython's magic show all the internal IPython frames, which makes
-    traces hard to read.
-
-    This will collapse most of IPython internal frames.
-    """
-    strip_ipython_frames = options.get("strip_ipython_frame", None)
-    if strip_ipython_frames:
-        return group_library_frames_processor(
-            frame,
-            {"hide_regex": ".+((IPython)|(ipykernel.zmqshell)|(pyinstrument.magic.magic))"},
-        )
-    else:
-        return frame
