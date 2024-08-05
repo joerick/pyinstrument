@@ -1,8 +1,9 @@
 <script lang="ts">
   import FrameView from './Frame.svelte'
-  import type Frame from './model/Frame';
-  import type Session from './model/Session';
-  import {aggregate_repeated_calls, group_library_frames_processor, merge_consecutive_self_time, remove_first_pyinstrument_frames_processor, remove_importlib, remove_irrelevant_nodes, remove_tracebackhide, remove_unnecessary_self_time_nodes, type ProcessorFunction, type ProcessorOptions, allProcessors, type Processor} from './model/processors'
+  import type Frame from '../lib/model/Frame';
+  import type Session from '../lib/model/Session';
+  import { applyProcessors } from '../lib/model/modelUtil';
+  import {aggregate_repeated_calls, group_library_frames_processor, merge_consecutive_self_time, remove_first_pyinstrument_frames_processor, remove_importlib, remove_irrelevant_nodes, remove_tracebackhide, remove_unnecessary_self_time_nodes, type ProcessorFunction, type ProcessorOptions, allProcessors, type Processor} from '../lib/model/processors'
   export let session: Session
 
   const defaultProcessorFunctions = [
@@ -28,17 +29,6 @@
   }
 
   $: activeProcessors = defaultProcessorFunctions.map(f => allProcessors.find(p => p.function == f)!).filter(p => enabledProcessors[p.name])
-
-  function applyProcessors(rootFrame: Frame, processors: Processor[], options: ProcessorOptions) {
-    let frame: Frame|null = rootFrame
-    for (const processor of processors) {
-      frame = processor.function(frame, options)
-      if (!frame) {
-        return null
-      }
-    }
-    return frame
-  }
 
   let rootFrame: Frame|null
   $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), activeProcessors, processorOptions)

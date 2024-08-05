@@ -60,11 +60,11 @@ export default class FrameGroup {
         const libraries: string[] = [];
 
         for (const frame of this.frames) {
-            const filePathShort = frame.filePathShort;
-            if (!filePathShort) {
-                continue;
+            const library = frame.library
+            if (!library) {
+                continue
             }
-            const library = /^[^\\/.]*/.exec(filePathShort)![0]
+
             if (!libraries.includes(library)) {
                 libraries.push(library);
             }

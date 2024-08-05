@@ -1,6 +1,6 @@
 <script lang="ts">
-  import {timeFormat} from './appState';
-  import type Session from "./model/Session";
+  import {timeFormat} from '../lib/appState';
+  import type Session from "../lib/model/Session";
 
   export let session: Session;
 

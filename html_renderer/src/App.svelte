@@ -1,10 +1,11 @@
 <script lang="ts">
-  import Header from './lib/Header.svelte'
+  import Header from './components/Header.svelte'
   import type Session from "./lib/model/Session";
   export let session: Session
   import faviconImage from './assets/favicon.png'
   import { onDestroy, onMount } from 'svelte';
-  import TreeView from './lib/TreeView.svelte';
+  import TreeView from './components/TreeView.svelte';
+  import Timeline from './components/Timeline.svelte';
 
   // add favicon
   const favicon = document.createElement('link')
@@ -48,6 +49,7 @@
       </div>
     {:else}
       <TreeView session={session} />
+      <Timeline session={session} />
     {/if}
   </div>
 </div>

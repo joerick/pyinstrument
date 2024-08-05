@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { timeFormat, visibleGroups, collapsedFrames } from './appState';
-  import type Frame from './model/Frame'
+  import { timeFormat, visibleGroups, collapsedFrames } from '../lib/appState';
+  import type Frame from '../lib/model/Frame'
   export let frame: Frame
   export let rootFrame: Frame
   export let indent: number = 0

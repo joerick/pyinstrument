@@ -193,7 +193,14 @@ export default class Frame {
 
     get className(): string {
         return this.getAttributeValue(ATTRIBUTE_MARKER_CLASS_NAME) ?? ""
+    }
 
+    get library(): string|null {
+        const filePathShort = this.filePathShort;
+        if (!filePathShort) {
+            return null;
+        }
+        return /^[^\\/.]*/.exec(filePathShort)![0]
     }
 }
 
