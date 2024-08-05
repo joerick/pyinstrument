@@ -27,8 +27,14 @@ class HTMLRenderer(FrameRenderer):
         show_all: bool = False,
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
+        trim_stem: bool = True,
     ):
-        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
+        super().__init__(
+            show_all=show_all,
+            timeline=timeline,
+            processor_options=processor_options,
+            trim_stem=trim_stem,
+        )
 
     def render(self, session: Session):
         resources_dir = Path(__file__).parent / "html_resources"
