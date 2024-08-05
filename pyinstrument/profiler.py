@@ -292,6 +292,7 @@ class Profiler:
         flat_time: FlatTimeMode = "self",
         short_mode: bool = False,
         processor_options: dict[str, Any] | None = None,
+        trim_stem: bool = True,
     ):
         """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, time='seconds', flat=False, flat_time='self', short_mode=False, processor_options=None)
 
@@ -317,6 +318,7 @@ class Profiler:
                 flat_time=flat_time,
                 short_mode=short_mode,
                 processor_options=processor_options,
+                trim_stem=trim_stem,
             ),
             file=file,
         )
