@@ -300,7 +300,12 @@ def group_ipython_frames_processor(frame, options: ProcessorOptions) -> Frame | 
 
     This will collapse most of IPython internal frames.
     """
-    return group_library_frames_processor(
-        frame,
-        {"hide_regex": ".+((IPython)|(ipykernel.zmqshell)|(pyinstrument.magic.magic))"},
-    )
+
+    strip_ipython_frames = options.get("strip_ipython_frame", None)
+    if strip_ipython_frames:
+        return group_library_frames_processor(
+            frame,
+            {"hide_regex": ".+((IPython)|(ipykernel.zmqshell)|(pyinstrument.magic.magic))"},
+        )
+    else:
+        return frame

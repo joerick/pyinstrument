@@ -151,7 +151,9 @@ class PyinstrumentMagic(Magics):
             )
             return
 
-        html = _active_profiler.output_html(timeline=args.timeline)
+        html = _active_profiler.output_html(
+            timeline=args.timeline, processor_options={"strip_ipython_frame": None}
+        )
 
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),
@@ -159,7 +161,9 @@ class PyinstrumentMagic(Magics):
             height=args.height,
             extras=['style="resize: vertical"'],
         )
-        as_text = _active_profiler.output_text(timeline=args.timeline)
+        as_text = _active_profiler.output_text(
+            timeline=args.timeline, processor_options={"strip_ipython_frame": None}
+        )
         # repr_html may be a bit fragile, but it's been stable for a while
         display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)  # type: ignore
 
