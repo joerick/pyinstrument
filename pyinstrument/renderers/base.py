@@ -61,6 +61,7 @@ class FrameRenderer(Renderer):
     """
 
     show_all: bool
+    trim_stem: bool
     timeline: bool
 
     def __init__(
@@ -68,11 +69,13 @@ class FrameRenderer(Renderer):
         show_all: bool = False,
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
+        trim_stem: bool = True,
     ):
         """
         :param show_all: Don't hide or filter frames - show everything that pyinstrument captures.
         :param timeline: Instead of aggregating time, leave the samples in chronological order.
         :param processor_options: A dictionary of processor options.
+        :param trim_stem: Don't trim the root of the profile tree.
         """
         # processors is defined on the base class to provide a common way for users to
         # add to and manipulate them before calling render()
@@ -81,6 +84,7 @@ class FrameRenderer(Renderer):
 
         self.show_all = show_all
         self.timeline = timeline
+        self.trim_stem = trim_stem
 
         if show_all:
             for p in (

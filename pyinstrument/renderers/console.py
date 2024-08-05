@@ -35,6 +35,7 @@ class ConsoleRenderer(FrameRenderer):
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat_time: FlatTimeMode = "self",
         short_mode: bool = False,
+        trim_stem: bool = True,
     ) -> None:
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
@@ -47,7 +48,12 @@ class ConsoleRenderer(FrameRenderer):
         :param timeline: See :class:`FrameRenderer`.
         :param processor_options: See :class:`FrameRenderer`.
         """
-        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
+        super().__init__(
+            show_all=show_all,
+            timeline=timeline,
+            processor_options=processor_options,
+            trim_stem=trim_stem,
+        )
 
         self.unicode = unicode
         self.color = color
@@ -64,7 +70,7 @@ class ConsoleRenderer(FrameRenderer):
     def render(self, session: Session) -> str:
         result = self.render_preamble(session)
 
-        frame = self.preprocess(session.root_frame())
+        frame = self.preprocess(session.root_frame(trim_stem=self.trim_stem))
         indent = ".  " if self.short_mode else ""
 
         if frame is None:
@@ -274,6 +280,7 @@ class ConsoleRenderer(FrameRenderer):
             processors.remove_irrelevant_nodes,
             processors.remove_first_pyinstrument_frames_processor,
             processors.group_library_frames_processor,
+            processors.strip_ipython_frames_processor,
         ]
 
     class colors_enabled:

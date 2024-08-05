@@ -292,6 +292,7 @@ class Profiler:
         flat_time: FlatTimeMode = "self",
         short_mode: bool = False,
         processor_options: dict[str, Any] | None = None,
+        trim_stem: bool = True,
     ):
         """print(file=sys.stdout, *, unicode=None, color=None, show_all=False, timeline=False, time='seconds', flat=False, flat_time='self', short_mode=False, processor_options=None)
 
@@ -317,6 +318,7 @@ class Profiler:
                 flat_time=flat_time,
                 short_mode=short_mode,
                 processor_options=processor_options,
+                trim_stem=trim_stem,
             ),
             file=file,
         )
@@ -332,6 +334,7 @@ class Profiler:
         flat_time: FlatTimeMode = "self",
         short_mode: bool = False,
         processor_options: dict[str, Any] | None = None,
+        trim_stem: bool = True,
     ) -> str:
         """
         Return the profile output as text, as rendered by :class:`ConsoleRenderer`
@@ -349,6 +352,7 @@ class Profiler:
                 flat_time=flat_time,
                 short_mode=short_mode,
                 processor_options=processor_options,
+                trim_stem=trim_stem,
             )
         )
 
@@ -357,13 +361,17 @@ class Profiler:
         timeline: bool = False,
         show_all: bool = False,
         processor_options: dict[str, Any] | None = None,
+        trim_stem: bool = True,
     ) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
         return self.output(
             renderer=renderers.HTMLRenderer(
-                timeline=timeline, show_all=show_all, processor_options=processor_options
+                timeline=timeline,
+                show_all=show_all,
+                processor_options=processor_options,
+                trim_stem=trim_stem,
             )
         )
 
