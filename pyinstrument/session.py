@@ -8,7 +8,6 @@ from pyinstrument.frame import Frame
 from pyinstrument.frame_info import frame_info_get_identifier
 from pyinstrument.frame_ops import FrameRecordType, build_frame_tree
 from pyinstrument.typing import PathOrStr
-from pyinstrument.processors import group_ipython_frames_processor
 
 # pyright: strict
 
@@ -127,11 +126,6 @@ class Session:
 
         if trim_stem:
             root_frame = self._trim_stem(root_frame)
-
-        group_ipython_frames_processor(
-            root_frame,
-            {"hide_regex": ".+((IPython)|(ipykernel.zmqshell)|(pyinstrument.magic.magic))"},
-        )
 
         return root_frame
 

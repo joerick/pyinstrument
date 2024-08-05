@@ -90,7 +90,7 @@ class HTMLRenderer(FrameRenderer):
         return output_filename
 
     def render_json(self, session: Session):
-        json_renderer = JSONRenderer()
+        json_renderer = JSONRenderer(show_all=self.show_all)
         json_renderer.processors = self.processors
         json_renderer.processor_options = self.processor_options
         return json_renderer.render(session)
@@ -105,5 +105,5 @@ class HTMLRenderer(FrameRenderer):
             processors.remove_irrelevant_nodes,
             processors.remove_first_pyinstrument_frames_processor,
             processors.group_library_frames_processor,
-            processors.group_ipython_frames_processor,
+            processors.strip_ipython_frames_processor,
         ]

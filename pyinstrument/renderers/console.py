@@ -64,7 +64,7 @@ class ConsoleRenderer(FrameRenderer):
     def render(self, session: Session) -> str:
         result = self.render_preamble(session)
 
-        frame = self.preprocess(session.root_frame())
+        frame = self.preprocess(session.root_frame(trim_stem=not self.show_all))
         indent = ".  " if self.short_mode else ""
 
         if frame is None:
@@ -274,7 +274,7 @@ class ConsoleRenderer(FrameRenderer):
             processors.remove_irrelevant_nodes,
             processors.remove_first_pyinstrument_frames_processor,
             processors.group_library_frames_processor,
-            processors.group_ipython_frames_processor,
+            processors.strip_ipython_frames_processor,
         ]
 
     class colors_enabled:

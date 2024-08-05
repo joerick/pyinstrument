@@ -69,6 +69,11 @@ class PyinstrumentMagic(Magics):
         help="The minimum time, in seconds, between each stack sample. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.interval",
     )
     @argument(
+        "--show-all",
+        action="store_true",
+        help="SHow all frames, including root frames with no time, and Internal IPython frames.",
+    )
+    @argument(
         "--async_mode",
         default="disabled",
         help="Configures how this Profiler tracks time in a program that uses async/await. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode",
@@ -152,7 +157,9 @@ class PyinstrumentMagic(Magics):
             return
 
         html = _active_profiler.output_html(
-            timeline=args.timeline, processor_options={"strip_ipython_frame": None}
+            timeline=args.timeline,
+            processor_options={"strip_ipython_frame": not args.show_all},
+            show_all=args.show_all,
         )
 
         as_iframe = IFrame(
@@ -162,7 +169,9 @@ class PyinstrumentMagic(Magics):
             extras=['style="resize: vertical"'],
         )
         as_text = _active_profiler.output_text(
-            timeline=args.timeline, processor_options={"strip_ipython_frame": None}
+            timeline=args.timeline,
+            processor_options={"strip_ipython_frame": not args.show_all},
+            show_all=args.show_all,
         )
         # repr_html may be a bit fragile, but it's been stable for a while
         display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)  # type: ignore
