@@ -3,7 +3,8 @@ import type FrameGroup from './FrameGroup';
 
 export interface FrameData {
     identifier: string,
-    time?: number
+    time?: number // duration in seconds
+    startTime?: number
     attributes?: {[name: string]: number},
     children?: readonly FrameData[],
 }
@@ -39,6 +40,7 @@ export default class Frame {
     uuid: string = crypto.randomUUID()
     identifier: string
     _identifierParts: string[]
+    startTime: number
     time: number = 0
     absorbedTime: number = 0
     group: FrameGroup|null = null
@@ -54,11 +56,20 @@ export default class Frame {
     ) {
         this.identifier = data.identifier
         this._identifierParts = this.identifier.split(IDENTIFIER_SEP)
+        this.startTime = data.startTime ?? 0
         this.time = data.time ?? 0
         this.attributes = data.attributes ?? {}
         this.context = context
 
-        const children = data.children?.map(f => new Frame(f, context));
+        let childStartTime = this.startTime
+        const children = data.children?.map(f => {
+            if (f.startTime === undefined) {
+                f = {...f, startTime: childStartTime}
+                childStartTime += f.time ?? 0
+            }
+            childStartTime = f.startTime! + (f.time ?? 0)
+            return new Frame(f, context)
+        });
         if (children) {
             this.addChildren(children)
         }
@@ -77,6 +88,9 @@ export default class Frame {
         frame.parent = this
         if (options.after) {
             const index = this._children.indexOf(options.after)
+            if (index == -1) {
+                throw new Error("After frame not found")
+            }
             this._children.splice(index+1, 0, frame)
         } else {
             this._children.push(frame)
@@ -84,6 +98,7 @@ export default class Frame {
     }
 
     addChildren(frames: readonly Frame[], options: {after?: Frame} = {}) {
+        frames = frames.slice()
         if (options.after) {
             const reversed = frames.slice()
             reversed.reverse()

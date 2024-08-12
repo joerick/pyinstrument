@@ -4,6 +4,7 @@
   import { applyProcessors } from "../lib/model/modelUtil";
   import { allProcessors, type Processor } from "../lib/model/processors";
   import * as processors from "../lib/model/processors";
+  import TimelineCanvasView from "./TimelineCanvasView";
 
   export let session: Session
 
@@ -29,40 +30,27 @@
   let rootFrame: Frame|null
   $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), activeProcessors, processorOptions)
 
-  interface DisplayFrame {
-    startTime: number
-    frame: Frame
-    depth: number
+  let rootElement: HTMLDivElement|null = null
+  let timelineCanvasView: TimelineCanvasView|null = null
+
+  $: if (rootElement) {
+    timelineCanvasView = new TimelineCanvasView(rootElement)
   }
-  const frames: DisplayFrame[] = []
-  function collectFrames(frame: Frame, startTime: number, depth: number) {
-    frames.push({frame, startTime, depth})
-    let childStartTime = startTime
-    for (const child of frame.children) {
-      if (child.identifier !== SELF_TIME_FRAME_IDENTIFIER) {
-        // we don't render self time frames
-        collectFrames(child, childStartTime, depth + 1)
-      }
-      childStartTime += child.time
-    }
-  }
-  $: if (rootFrame) {
-    collectFrames(rootFrame, 0, 0)
+
+  $: if (rootFrame && timelineCanvasView) {
+    timelineCanvasView.setRootFrame(rootFrame)
   }
 </script>
 
-<div class="timeline">
-  <div class="frames">
-    {#each frames as {frame, startTime, depth}}
-      <div class="frame"
-           style:top={`${depth*21}px`}
-           style:left={`${startTime*20000}px`}
-           style:width={`${frame.time*20000}px`}>{frame.function}</div>
-    {/each}
-  </div>
+<div class="timeline" bind:this={rootElement}>
+
 </div>
 
 <style lang="scss">
+  .timeline {
+    position: relative;
+    height: 800px;
+  }
   .frames {
     position: relative;
     height: 500px;

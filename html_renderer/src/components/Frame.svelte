@@ -148,7 +148,7 @@
 
   {#if !collapsed && frame.children.length > 0}
     <div class="children">
-      {#each frame.children as child (child.identifier)}
+      {#each frame.children as child (child.uuid)}
         <svelte:self frame="{child}"
                      rootFrame="{rootFrame}"
                      indent="{indent + (isVisible ? 1 : 0)}" />

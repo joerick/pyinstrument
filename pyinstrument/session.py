@@ -79,9 +79,6 @@ class Session:
             "sys_path": self.sys_path,
         }
 
-        if include_frame_records:
-            result["frame_records"] = self.frame_records
-
         return result
 
     @staticmethod

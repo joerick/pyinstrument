@@ -26,6 +26,7 @@ class HTMLRenderer(Renderer):
         show_all: bool = False,
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
+        _data_only: bool = False,  # only for testing purposes
     ):
         super().__init__()
         self.initial_options = {
@@ -33,8 +34,13 @@ class HTMLRenderer(Renderer):
             "timeline": timeline,
             "processor_options": processor_options or {},
         }
+        self._data_only = _data_only
 
     def render(self, session: Session):
+        session_json = self.render_json(session)
+        if self._data_only:
+            return session_json
+
         resources_dir = Path(__file__).parent / "html_resources"
 
         js_file = resources_dir / "app.js"
@@ -47,8 +53,6 @@ class HTMLRenderer(Renderer):
 
         js = js_file.read_text()
         css = css_file.read_text()
-
-        session_json = self.render_json(session)
 
         page = f"""<!DOCTYPE html>
             <html>

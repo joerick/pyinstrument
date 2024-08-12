@@ -13,7 +13,11 @@ export function deleteFrameFromTree(frame: Frame, options: {replaceWith: 'childr
         parent.addChildren(frame.children, {after: frame})
     } else if (replaceWith == 'self_time') {
         parent.addChild(
-            new Frame({identifier: SELF_TIME_FRAME_IDENTIFIER}, parent.context),
+            new Frame({
+                identifier: SELF_TIME_FRAME_IDENTIFIER,
+                time: frame.time,
+            }, parent.context),
+            {after: frame}
         )
     } else if (replaceWith == 'nothing') {
         parent.absorbedTime += frame.time
