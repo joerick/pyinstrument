@@ -291,32 +291,3 @@ def remove_first_pyinstrument_frames_processor(
     result.remove_from_parent()
 
     return result
-
-
-def strip_ipython_frames_processor(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
-    """
-    Remove internal IPython nodes.
-
-    """
-    if not options.get("strip_ipython_frames_processor", None):
-        return frame
-    if frame is None:
-        return None
-
-    for child in frame.children:
-        strip_ipython_frames_processor(child, options=options)
-    for match in (
-        "IPython/core/interactiveshell.py",
-        "IPython/terminal/interactiveshell.py",
-        "IPython/core/async_helpers.py",
-        "IPython/terminal/ipapp.py",
-        "traitlets/config/application.py",
-        "ipython/IPython/__init__.py",
-        "ipykernel/zmqshell",
-        "pyinstrument/magic/magic.py",
-    ):
-        if frame.file_path is not None and match in frame.file_path:
-            delete_frame_from_tree(frame, replace_with="children")
-            break
-
-    return frame
