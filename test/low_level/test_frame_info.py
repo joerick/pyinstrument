@@ -1,5 +1,7 @@
 import inspect
 
+import pytest
+
 from pyinstrument.low_level import stat_profile as stat_profile_c
 from pyinstrument.low_level import stat_profile_python
 
@@ -59,17 +61,19 @@ def test_frame_info_hide_false():
     assert stat_profile_c.get_frame_info(frame) == stat_profile_python.get_frame_info(frame)
 
 
-def test_frame_info_with_classes():
-    instance = AClass()
+instance = AClass()
 
-    test_functions = [
+
+@pytest.mark.parametrize(
+    "test_function",
+    [
         instance.get_frame_info_for_a_method,
         AClass.get_frame_info_for_a_class_method,
         instance.get_frame_info_with_cell_variable,
-    ]
+    ],
+)
+def test_frame_info_with_classes(test_function):
+    c_frame_info = test_function(stat_profile_c.get_frame_info)
+    py_frame_info = test_function(stat_profile_python.get_frame_info)
 
-    for test_function in test_functions:
-        c_frame_info = test_function(stat_profile_c.get_frame_info)
-        py_frame_info = test_function(stat_profile_python.get_frame_info)
-
-        assert c_frame_info == py_frame_info
+    assert c_frame_info == py_frame_info
