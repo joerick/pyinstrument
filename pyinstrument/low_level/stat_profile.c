@@ -310,19 +310,31 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         return NULL;
     }
 
-    if (has_self) {
+    // we still have to check the locals has the key, because it could have
+    // been "del'd"
+    if (has_self && PyMapping_HasKey(locals, SELF_STRING)) {
         PyObject *self = PyObject_GetItem(locals, SELF_STRING);
-        if (self) {
-            result = _PyType_Name(self->ob_type);
+
+        if (!self) {
+            PyErr_Clear();
+            Py_DECREF(locals);
+            return NULL;
         }
+
+        result = _PyType_Name(self->ob_type);
     }
-    else if (has_cls) {
+    else if (has_cls && PyMapping_HasKey(locals, CLS_STRING)) {
         PyObject *cls = PyObject_GetItem(locals, CLS_STRING);
-        if (cls) {
-            if (PyType_Check(cls)) {
-                PyTypeObject *type = (PyTypeObject *)cls;
-                result = _PyType_Name(type);
-            }
+
+        if (!cls) {
+            PyErr_Clear();
+            Py_DECREF(locals);
+            return NULL;
+        }
+
+        if (PyType_Check(cls)) {
+            PyTypeObject *type = (PyTypeObject *)cls;
+            result = _PyType_Name(type);
         }
     }
 
