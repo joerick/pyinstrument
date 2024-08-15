@@ -61,7 +61,6 @@ class FrameRenderer(Renderer):
     """
 
     show_all: bool
-    trim_stem: bool
     timeline: bool
 
     def __init__(
@@ -69,7 +68,6 @@ class FrameRenderer(Renderer):
         show_all: bool = False,
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
-        trim_stem: bool = True,
     ):
         """
         :param show_all: Don't hide or filter frames - show everything that pyinstrument captures.
@@ -84,7 +82,6 @@ class FrameRenderer(Renderer):
 
         self.show_all = show_all
         self.timeline = timeline
-        self.trim_stem = trim_stem
 
         if show_all:
             for p in (

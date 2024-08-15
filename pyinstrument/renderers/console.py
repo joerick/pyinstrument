@@ -24,6 +24,8 @@ class ConsoleRenderer(FrameRenderer):
     consoles.
     """
 
+    trim_stem: bool
+
     def __init__(
         self,
         show_all: bool = False,
@@ -47,14 +49,14 @@ class ConsoleRenderer(FrameRenderer):
         :param show_all: See :class:`FrameRenderer`.
         :param timeline: See :class:`FrameRenderer`.
         :param processor_options: See :class:`FrameRenderer`.
+        :param trim_stem: Don't trim the root of the profile tree.
         """
         super().__init__(
             show_all=show_all,
             timeline=timeline,
             processor_options=processor_options,
-            trim_stem=trim_stem,
         )
-
+        self.trim_stem = trim_stem
         self.unicode = unicode
         self.color = color
         self.flat = flat

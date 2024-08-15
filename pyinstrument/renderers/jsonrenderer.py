@@ -62,7 +62,7 @@ class JSONRenderer(FrameRenderer):
         return "{%s}" % ",".join(property_decls)
 
     def render(self, session: Session):
-        frame = self.preprocess(session.root_frame(trim_stem=self.trim_stem))
+        frame = self.preprocess(session.root_frame())
 
         property_decls: list[str] = []
         property_decls.append('"start_time": %f' % session.start_time)
