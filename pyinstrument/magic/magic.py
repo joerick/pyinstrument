@@ -22,6 +22,102 @@ _ASYNCIO_TEXT_WARNING = (
     _ASYNCIO_HTML_WARNING.replace("<pre>", "`").replace("</pre>", "`").replace("<br>", "\n")
 )
 
+from collections import namedtuple
+
+Option = namedtuple(
+    "Option", "short, long, dest, action, metavar, default, help, callback, type".split(", ")
+)
+
+
+class ParserRecorder:
+    _options: dict
+
+    def __init__(self, /):
+        self._options = {}
+
+    def arguments(self, skip=[]):
+        """
+        Apply the recorded arguments as options for this magic, except the one in `skip`.
+        """
+        acc = []
+        for key, opt in self._options.items():
+            print("key...", key)
+            if key in skip:
+                print(
+                    "skip",
+                )
+                continue
+            if opt.action == "callback":
+                continue
+
+            type_as_type = {"string": str}.get(opt.type, opt.type)
+            if opt.short:
+                assert len(opt.short) >= 2, opt.short
+                if opt.long:
+                    args = (opt.short, opt.long)
+                else:
+                    args = (opt.short,)
+            else:
+                assert len(opt.long) >= 2
+                args = (opt.long,)
+            kwargs = dict(
+                dest=opt.dest,
+                action=opt.action,
+                metavar=opt.metavar,
+                default=opt.default,
+                help=opt.help,
+                type=type_as_type,
+            )
+            if opt.action in ["store_true", "store_false"]:
+                assert kwargs["metavar"] is None
+                del kwargs["metavar"]
+                assert kwargs["type"] in (bool, None), kwargs
+                del kwargs["type"]
+            print("apply", kwargs)
+            acc.append(argument(*args, **kwargs))
+
+        def inner(f):
+            for dec in acc:
+                f = dec(f)
+            return f
+
+        return inner
+
+    def add_option(
+        self,
+        short,
+        long,
+        /,
+        action,
+        help,
+        dest=None,
+        metavar=None,
+        default=None,
+        callback=None,
+        type=None,
+    ):
+        key = long if long else short
+        assert key not in self._options
+        self._options[key] = Option(
+            short,
+            long,
+            dest=dest,
+            action=action,
+            default=default,
+            help=help,
+            metavar=metavar,
+            callback=callback,
+            type=type,
+        )
+
+
+from pyinstrument.__main__ import _define_options
+
+pr = ParserRecorder()
+_define_options(pr)
+# for opt, val in pr._options.items():
+# print(opt, "\n   ", val)
+
 
 def _get_active_profiler():
     """
@@ -62,28 +158,17 @@ class PyinstrumentMagic(Magics):
             )
 
     @magic_arguments()
-    @argument(
-        "--interval",
-        type=float,
-        default=0.001,
-        help="The minimum time, in seconds, between each stack sample. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.interval",
-    )
+    @pr.arguments()
     @argument(
         "--async_mode",
         default="disabled",
         help="Configures how this Profiler tracks time in a program that uses async/await. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode",
     )
     @argument(
-        "--height",
         "-h",
+        "--height",
         default=400,
         help="Output height",
-    )
-    @argument(
-        "--timeline",
-        type=bool,
-        default=False,
-        help="Show output timeline view",
     )
     @argument(
         "code",
@@ -123,7 +208,11 @@ class PyinstrumentMagic(Magics):
         if self._transformer in ip.ast_transformers:
             ip.ast_transformers.remove(self._transformer)
 
-        _active_profiler = Profiler(interval=args.interval, async_mode=args.async_mode)
+        _active_profiler = Profiler(
+            interval=args.interval,
+            async_mode=args.async_mode,
+            use_timing_thread=args.use_timing_thread,
+        )
         ip.ast_transformers.append(self._transformer)
         if args.async_mode == "disabled":
             cell_result = ip.run_cell(code)

@@ -24,58 +24,6 @@ from pyinstrument.vendor import appdirs, keypath
 
 # pyright: strict
 
-from collections import namedtuple
-
-Option = namedtuple(
-    "Option", "short, long, dest, action, metavar, default, help, callback, type".split(", ")
-)
-
-
-class ParserAdapter:
-    _options: list
-
-    def __init__(self, opt_parser, /):
-        self._opt_parser = opt_parser
-        self._options = []
-
-    def add_option(
-        self,
-        short,
-        long,
-        /,
-        action,
-        help,
-        dest=None,
-        metavar=None,
-        default=None,
-        callback=None,
-        type=None,
-    ):
-        self._options.append(
-            Option(
-                short,
-                long,
-                dest=dest,
-                action=action,
-                default=default,
-                help=help,
-                metavar=metavar,
-                callback=callback,
-                type=type,
-            )
-        )
-        return self._opt_parser.add_option(
-            short,
-            long,
-            dest=dest,
-            action=action,
-            default=default,
-            help=help,
-            metavar=metavar,
-            callback=callback,
-            type=type,
-        )
-
 
 def _define_options(parser: optparse.OptionParser) -> None:
     """
@@ -317,15 +265,12 @@ def main():
         v=pyinstrument.__version__,
         pyv=sys.version_info,
     )
-    _parser: Any = optparse.OptionParser(usage=usage, version=version_string)
-    _parser.allow_interspersed_args = False
+    parser: Any = optparse.OptionParser(usage=usage, version=version_string)
+    parser.allow_interspersed_args = False
 
-    parser = ParserAdapter(_parser)
 
     _define_options(parser)
     # parse the options
-
-    parser = _parser
 
     if not sys.argv[1:]:
         parser.print_help()
