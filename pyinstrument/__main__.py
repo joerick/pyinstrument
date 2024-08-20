@@ -25,15 +25,13 @@ from pyinstrument.vendor import appdirs, keypath
 # pyright: strict
 
 
-def main():
-    usage = "usage: pyinstrument [options] scriptfile [arg] ..."
-    version_string = "pyinstrument {v}, on Python {pyv[0]}.{pyv[1]}.{pyv[2]}".format(
-        v=pyinstrument.__version__,
-        pyv=sys.version_info,
-    )
-    parser: Any = optparse.OptionParser(usage=usage, version=version_string)
-    parser.allow_interspersed_args = False
+def _define_options(parser: optparse.OptionParser) -> None:
+    """
+    Utility function to define parser options.
 
+    The goal in the end is to reuse this with the IPython magic to avoid redefining all
+    options twice.
+    """
     def store_and_consume_remaining(
         option: optparse.Option, opt: str, value: str, parser: optparse.OptionParser
     ):
@@ -259,6 +257,17 @@ def main():
         ),
     )
 
+
+def main():
+    usage = "usage: pyinstrument [options] scriptfile [arg] ..."
+    version_string = "pyinstrument {v}, on Python {pyv[0]}.{pyv[1]}.{pyv[2]}".format(
+        v=pyinstrument.__version__,
+        pyv=sys.version_info,
+    )
+    parser: Any = optparse.OptionParser(usage=usage, version=version_string)
+    parser.allow_interspersed_args = False
+
+    _define_options(parser)
     # parse the options
 
     if not sys.argv[1:]:
