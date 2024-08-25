@@ -363,9 +363,7 @@ class Profiler:
         """
         return self.output(
             renderer=renderers.HTMLRenderer(
-                timeline=timeline,
-                show_all=show_all,
-                processor_options=processor_options,
+                timeline=timeline, show_all=show_all, processor_options=processor_options
             )
         )
 

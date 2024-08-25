@@ -47,11 +47,7 @@ class ConsoleRenderer(FrameRenderer):
         :param timeline: See :class:`FrameRenderer`.
         :param processor_options: See :class:`FrameRenderer`.
         """
-        super().__init__(
-            show_all=show_all,
-            timeline=timeline,
-            processor_options=processor_options,
-        )
+        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
         self.unicode = unicode
         self.color = color
         self.flat = flat

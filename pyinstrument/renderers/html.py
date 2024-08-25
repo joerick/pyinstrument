@@ -28,11 +28,7 @@ class HTMLRenderer(FrameRenderer):
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
     ):
-        super().__init__(
-            show_all=show_all,
-            timeline=timeline,
-            processor_options=processor_options,
-        )
+        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
 
     def render(self, session: Session):
         resources_dir = Path(__file__).parent / "html_resources"
@@ -94,7 +90,7 @@ class HTMLRenderer(FrameRenderer):
         return output_filename
 
     def render_json(self, session: Session):
-        json_renderer = JSONRenderer(show_all=self.show_all)
+        json_renderer = JSONRenderer()
         json_renderer.processors = self.processors
         json_renderer.processor_options = self.processor_options
         return json_renderer.render(session)
