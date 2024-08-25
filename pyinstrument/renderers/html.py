@@ -21,16 +21,13 @@ class HTMLRenderer(FrameRenderer):
     """
 
     output_file_extension = "html"
-    trim_stem: bool
 
     def __init__(
         self,
         show_all: bool = False,
         timeline: bool = False,
         processor_options: dict[str, Any] | None = None,
-        trim_stem: bool = True,
     ):
-        self.trim_stem = trim_stem
         super().__init__(
             show_all=show_all,
             timeline=timeline,

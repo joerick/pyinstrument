@@ -24,8 +24,6 @@ class ConsoleRenderer(FrameRenderer):
     consoles.
     """
 
-    trim_stem: bool
-
     def __init__(
         self,
         show_all: bool = False,
@@ -37,7 +35,6 @@ class ConsoleRenderer(FrameRenderer):
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat_time: FlatTimeMode = "self",
         short_mode: bool = False,
-        trim_stem: bool = True,
     ) -> None:
         """
         :param unicode: Use unicode, like box-drawing characters in the output.
@@ -49,14 +46,12 @@ class ConsoleRenderer(FrameRenderer):
         :param show_all: See :class:`FrameRenderer`.
         :param timeline: See :class:`FrameRenderer`.
         :param processor_options: See :class:`FrameRenderer`.
-        :param trim_stem: Don't trim the root of the profile tree.
         """
         super().__init__(
             show_all=show_all,
             timeline=timeline,
             processor_options=processor_options,
         )
-        self.trim_stem = trim_stem
         self.unicode = unicode
         self.color = color
         self.flat = flat
@@ -72,7 +67,7 @@ class ConsoleRenderer(FrameRenderer):
     def render(self, session: Session) -> str:
         result = self.render_preamble(session)
 
-        frame = self.preprocess(session.root_frame(trim_stem=self.trim_stem))
+        frame = self.preprocess(session.root_frame())
         indent = ".  " if self.short_mode else ""
 
         if frame is None:

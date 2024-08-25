@@ -164,7 +164,6 @@ class PyinstrumentMagic(Magics):
         html_renderer = renderers.HTMLRenderer(
             show_all=args.show_all,
             timeline=args.timeline,
-            trim_stem=not args.show_all,
         )
         html_renderer.processors.append(strip_ipython_frames_processor)
         html = _active_profiler.output(html_renderer)
@@ -178,7 +177,6 @@ class PyinstrumentMagic(Magics):
         text_renderer = renderers.ConsoleRenderer(
             timeline=args.timeline,
             show_all=args.show_all,
-            trim_stem=not args.show_all,
         )
         text_renderer.processors.append(strip_ipython_frames_processor)
 
