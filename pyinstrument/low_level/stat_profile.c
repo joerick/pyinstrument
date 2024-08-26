@@ -232,7 +232,9 @@ stat_profile_init(void)
 static PyObject *
 call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg)
 {
-    PyFrame_FastToLocals(frame);
+    // note: we no longer call PyFrame_FastToLocals and PyFrame_LocalsToFast
+    // here, as it's only needed for python-level modification of locals,
+    // which a profiler doesn't need to do.
 
 #if PY_VERSION_HEX >= 0x03090000
     // vectorcall implementation could be faster, is available in Python 3.9
@@ -242,10 +244,9 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
     PyObject *result = PyObject_CallFunctionObjArgs(pState->target, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg, NULL);
 #endif
 
-    PyFrame_LocalsToFast(frame, 1);
-
-    if (result == NULL)
+    if (result == NULL) {
         PyTraceBack_Here(frame);
+    }
 
     return result;
 }
