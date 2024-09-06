@@ -9,7 +9,7 @@ long_description = (PROJECT_ROOT / "README.md").read_text(encoding="utf8")
 setup(
     name="pyinstrument",
     packages=find_namespace_packages(include=["pyinstrument*"]),
-    version="4.7.2",
+    version="4.7.3",
     ext_modules=[
         Extension(
             "pyinstrument.low_level.stat_profile",
