@@ -4,7 +4,7 @@ export interface SessionData {
         duration: number;
         sample_count: number;
         start_call_stack: string[],
-        program: string;
+        target_description: string;
         cpu_time: number;
         sys_path: string;
     };

@@ -5,7 +5,7 @@ export default class Session {
     startTime: number;
     duration: number;
     sampleCount: number;
-    program: string;
+    target_description: string;
     cpuTime: number;
     rootFrame: Frame;
     sysPath: string;
@@ -14,7 +14,7 @@ export default class Session {
         this.startTime = data.session.start_time;
         this.duration = data.session.duration;
         this.sampleCount = data.session.sample_count;
-        this.program = data.session.program;
+        this.target_description = data.session.target_description;
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
         this.rootFrame = new Frame(data.frame_tree, this)

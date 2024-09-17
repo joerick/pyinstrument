@@ -28,9 +28,20 @@
 
   const rootFrame = session.rootFrame;
   const duration = rootFrame?.time.toLocaleString(undefined, {maximumSignificantDigits: 3});
-  let name = rootFrame?.function;
-  if (name == '<module>') {
-    name = session.program;
+  session.target_description = 'Block at /Users/joerick/Projects/pyinstrument/pyinstrument/console.py:80'
+  let name
+  // let name = rootFrame?.function;
+  // if (name == '<module>') {
+  //   name = session.target_description;
+  // }
+
+  let match
+  // grab just the last path component of the description as a short version
+  // for the page title
+  if (match = /[^\s/]+(:\d+)?$/.exec(session.target_description)) {
+    name = match[0]
+  } else {
+    name = session.target_description
   }
 
   document.title = `${duration}s - ${name} - pyinstrument`
@@ -40,8 +51,6 @@
   <Header session={session} />
   <div class="spacer" style="height: 20px;"></div>
   <div class="margins">
-
-  <div class="program"><span class="label">Program:&nbsp;</span>{name}</div>
 
     {#if !session.rootFrame}
       <div class="error">
