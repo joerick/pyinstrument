@@ -75,7 +75,8 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                 path = path.replace("?", "_qs_")
 
             if profile_dir:
-                filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}".format(
+                default_filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}"
+                filename = getattr(settings, "PYINSTRUMENT_FILENAME", default_filename).format(
                     total_time=profile_session.duration,
                     path=path,
                     timestamp=time.time(),
