@@ -1,8 +1,9 @@
 <script lang="ts">
-  import {timeFormat} from '../lib/appState';
   import type Session from "../lib/model/Session";
   import CogIcon from './CogIcon.svelte';
   import Logo from './Logo.svelte';
+  import {viewOptions} from '../lib/settings'
+  import ViewOptions from "./ViewOptions.svelte";
 
   export let session: Session;
 
@@ -22,51 +23,58 @@
       <div class="logo">
         <Logo />
       </div>
-      <div class="left">
+      <div class="layout">
         <div class="target-description">
           {session.target_description}
+        </div>
+        <div class="metrics">
+          <div class="metric date">
+            <span class="metric-label">Recorded:</span>
+            <span class="metric-value">{startTime}</span>
+          </div>
+          <br>
+          <div class="metric">
+            <span class="metric-label">Samples:</span>
+            <span class="metric-value">{session.sampleCount}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">CPU utilization:</span>
+            <span class="metric-value">{(cpuUtilisation * 100).toFixed(0)}%</span>
+          </div>
         </div>
         <div class="view-options">
           <div class="toggle">
             View:
             <label>
-              <input type="radio">
+              <input type="radio" bind:group={$viewOptions.viewMode} value="call-stack">
               Call stack
             </label>
             <label>
-              <input type="radio">
+              <input type="radio" bind:group={$viewOptions.viewMode} value="timeline">
               Timeline
             </label>
           </div>
           <div class="spacer" style="flex: 1"></div>
-          <button on:click|preventDefault|stopPropagation={viewOptionsButtonClicked}>
-            <CogIcon />
-            Options
-          </button>
-        </div>
-      </div>
-      <div class="metrics">
-        <div class="metric date">
-          <span class="metric-label">Recorded:</span>
-          <span class="metric-value">{startTime}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Samples:</span>
-          <span class="metric-value">{session.sampleCount}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">CPU utilization:</span>
-          <span class="metric-value">{(cpuUtilisation * 100).toFixed(0)}%</span>
+          <div class="button-container">
+            <button on:click|preventDefault|stopPropagation={viewOptionsButtonClicked}>
+              <CogIcon />
+              View options
+            </button>
+            {#if viewOptionsVisible}
+              <ViewOptions on:close={() => viewOptionsVisible = false}/>
+            {/if}
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .header {
     background: #292f32;
     font-size: 14px;
+    padding: 9px 0;
   }
   .row {
     display: flex;
@@ -74,27 +82,49 @@
     gap: 10px;
   }
   .logo {
-    position: relative;
-    left: -6px;
+    margin: 0 -6px;
+    margin-right: -3px;
   }
-  .left {
-    flex-grow: 1;
+  .layout {
+    flex: 1;
+    display: grid;
+    gap: 0 10px;
+    grid-template-columns: auto minmax(auto, max-content);
+  }
+  @media (max-width: 800px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
   }
   .target-description {
     font-weight: 600;
+    margin-bottom: 1px;
   }
   .view-options {
-    display: flex;;
+    display: flex;
+    // margin-top: 2px;
+    label {
+      margin: 0 5px;
+    }
   }
   .metrics {
-    display: grid;
-    grid-template-columns: auto auto;
-    grid-gap: 1px 10px;
+    grid-row: span 2;
+    /* grid-gap: 1px 10px; */
     text-align: right;
     align-items: end;
+    min-width: min-content;
   }
-  .metric.date {
-    grid-column: 1 / 3;
+  @media (max-width: 800px) {
+    .metrics {
+      text-align: left;
+      br {
+        display: none;
+      }
+    }
+  }
+  .metric {
+    display: inline-block;
+    white-space: nowrap;
   }
 
   .metric-label {
@@ -105,18 +135,31 @@
     color: rgba(255, 255, 255, 0.4);
   }
   input[type=radio] {
-    width: 10px;
-    height: 10px;
-    border: 1px solid currentColor;
-    background-color: transparent;
+    // width: 10px;
+    // height: 10px;
+    // border: 1px solid currentColor;
+    // background-color: transparent;
+    vertical-align: -8%;
+  }
+  .button-container {
+    // display: flex;
+    position: relative;
   }
   button {
-    background: #5C6063;
+    $bg: #5C6063;
+    background: $bg;
     border-radius: 6px;
     font: inherit;
     font-size: calc(12em/14);
     color: inherit;
     border: none;
+    cursor: pointer;
 
+    &:hover {
+      background: lighten($color: $bg, $amount: 3);
+    }
+    &:active {
+      background: darken($color: $bg, $amount: 3);
+    }
   }
 </style>

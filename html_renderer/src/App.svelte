@@ -13,6 +13,20 @@
   favicon.href = faviconImage
   document.head.appendChild(favicon)
 
+  // add webfont
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'style'
+  link.onload = () => {
+    // clever trick to make the css non-blocking, i don't want to wait on slow
+    // connections to see a local page.
+    // adapted from
+    // https://stackoverflow.com/a/60477207/382749
+    link.rel = 'stylesheet'
+  }
+  link.href = `https://fonts.googleapis.com/css?family=Source+Code+Pro:400,600|Source+Sans+Pro:400,600&display=swap`;
+  document.head.appendChild(link);
+
   // don't let the body scroll up due to lack of content (when a tree is closed)
   // prevents the frames from jumping around when they are collapsed
   function didScroll() {
@@ -66,18 +80,9 @@
 
 <style lang="scss">
   .app {
-    font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+    font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif;
+    font-size-adjust: 0.486;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  .program {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #B4B4B4;
-    .label {
-      color: #EAEAEA;
-      text-transform: uppercase;
-    }
   }
 </style>

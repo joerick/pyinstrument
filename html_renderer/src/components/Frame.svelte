@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { timeFormat, visibleGroups, collapsedFrames } from '../lib/appState';
+  import { visibleGroups, collapsedFrames } from '../lib/appState';
   import type Frame from '../lib/model/Frame'
+  import { viewOptionsCallStack } from '../lib/settings';
   export let frame: Frame
   export let rootFrame: Frame
   export let indent: number = 0
@@ -33,12 +34,12 @@
   const codePosition = `${frame.filePathShort}:${frame.lineNo?.toString().padEnd(4, ' ')}`
 
   let formattedTime: string
-  $: if ($timeFormat === "absolute") {
+  $: if ($viewOptionsCallStack.timeFormat === "absolute") {
     formattedTime = frame.time.toLocaleString(undefined, {
       minimumFractionDigits: 3,
       maximumFractionDigits: 3,
     });
-  } else if ($timeFormat === 'proportion') {
+  } else if ($viewOptionsCallStack.timeFormat === 'proportion') {
     formattedTime = `${(frameProportionOfTotal * 100).toLocaleString(undefined, {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
@@ -165,6 +166,7 @@
 <style lang="scss">
 .frame {
   font-family: 'Source Code Pro', 'Roboto Mono', Consolas, Monaco, monospace;
+  font-size-adjust: 0.486094;
   font-size: 15px;
   z-index: 0;
   position: relative;
