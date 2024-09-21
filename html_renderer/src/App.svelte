@@ -28,19 +28,6 @@
   link.href = `https://fonts.googleapis.com/css?family=Source+Code+Pro:400,600|Source+Sans+Pro:400,600&display=swap`;
   document.head.appendChild(link);
 
-  // don't let the body scroll up due to lack of content (when a tree is closed)
-  // prevents the frames from jumping around when they are collapsed
-  function didScroll() {
-    document.body.style.minHeight = `${window.scrollY + window.innerHeight}px`;
-  }
-  onMount(() => {
-    window.addEventListener('scroll', didScroll);
-    didScroll();
-  });
-  onDestroy(() => {
-    window.removeEventListener('scroll', didScroll);
-  });
-
   const rootFrame = session.rootFrame;
   const duration = rootFrame?.time.toLocaleString(undefined, {maximumSignificantDigits: 3});
   session.target_description = 'Block at /Users/joerick/Projects/pyinstrument/pyinstrument/console.py:80'
@@ -63,10 +50,13 @@
 </script>
 
 <div class="app">
-  <Header session={session} />
+  <div class="header">
+    <Header session={session} />
+  </div>
+  <div class="body">
     {#if !session.rootFrame}
-      <div class="spacer" style="height: 20px;"></div>
       <div class="margins">
+        <div class="spacer" style="height: 20px;"></div>
         <div class="error">
           No samples recorded.
         </div>
@@ -76,8 +66,11 @@
     {:else if $viewOptions.viewMode === 'timeline'}
       <TimelineView session={session} />
     {:else}
-      Unknown view mode: {$viewOptions.viewMode}
+      <div class="error">
+        Unknown view mode: {$viewOptions.viewMode}
+      </div>
     {/if}
+  </div>
 </div>
 
 
@@ -87,5 +80,14 @@
     font-size-adjust: 0.486;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .header {
+  }
+  .body {
+    flex: 1;
+    position: relative;
   }
 </style>

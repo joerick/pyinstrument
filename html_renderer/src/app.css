@@ -5,6 +5,10 @@ html, body {
     margin: 0;
 }
 
+#app {
+    min-height: 100%;
+}
+
 .margins {
     padding: 0 30px;
 }

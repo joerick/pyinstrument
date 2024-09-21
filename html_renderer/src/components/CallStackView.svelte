@@ -7,6 +7,7 @@
   export let session: Session
   import { viewOptionsCallStack } from '../lib/settings';
   import { derived } from 'svelte/store';
+  import { onMount } from 'svelte';
 
   const config = derived([viewOptionsCallStack], ([viewOptionsCallStack]) => {
     const processors = [
@@ -27,22 +28,56 @@
     return {processors, options}
   })
 
+  let element: HTMLElement|undefined
+  let scrollInnerElement: HTMLElement|undefined
+  // don't let the body scroll up due to lack of content (when a tree is closed)
+  // prevents the frames from jumping around when they are collapsed
+  onMount(() => {
+    const el = element
+    if (!el) { throw new Error('element not set'); }
+    let listener
+    el.addEventListener('scroll', listener = () => {
+      scrollInnerElement!.style.minHeight = `${el.scrollTop + el.clientHeight}px`;
+    });
+    listener();
+    return () => {
+      el.removeEventListener('scroll', listener);
+    }
+  });
+
   let rootFrame: Frame|null
   $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)
 </script>
 
-<div class="tree-view">
-  <div class="spacer" style="height: 20px;"></div>
-  <div class="margins">
-    {#if !rootFrame}
-      <div class="error">
-        All frames were filtered out.
-      </div>
-    {:else}
-      <FrameView frame={rootFrame} rootFrame={rootFrame} />
-    {/if}
+<div class="call-stack-view" bind:this={element}>
+  <div class="scroll-inner" bind:this={scrollInnerElement}>
+    <div class="margins">
+      {#if !rootFrame}
+        <div class="error">
+          All frames were filtered out.
+        </div>
+      {:else}
+        <FrameView frame={rootFrame} rootFrame={rootFrame} />
+      {/if}
+    </div>
   </div>
 </div>
 
 <style lang="scss">
+  .call-stack-view {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    &:focus {
+      outline: none;
+    }
+  }
+  .scroll-inner {
+    padding-top: 20px;
+    padding-bottom: 40px;
+    box-sizing: border-box;
+  }
 </style>
