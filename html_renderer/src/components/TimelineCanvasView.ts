@@ -8,6 +8,7 @@ const BACKGROUND_COLOR = '#212325'
 const FRAME_PITCH = 18
 const FRAME_HEIGHT = 17
 
+const X_MARGIN = 20
 
 const GRADIENT_STR = ['#47A298','#9FC175','#C1A731','#C07210','#B84210','#B53134','#9A3586','#4958B5','#3475BA','#318DBC','#47A298']
 const GRADIENT = GRADIENT_STR.map(parseColor)
@@ -35,6 +36,7 @@ export default class TimelineCanvasView extends CanvasView {
 
     setRootFrame(rootFrame: Frame) {
         this.frames = []
+        this._frameMaxT = undefined
         this._collectFrames(rootFrame, 0)
         this.fitContents()
         this.setNeedsRedraw()
@@ -50,12 +52,16 @@ export default class TimelineCanvasView extends CanvasView {
         }
     }
 
+    _frameMaxT: number|undefined
     get frameMaxT() {
-        return this.frames.reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0)
+        if (this._frameMaxT === undefined) {
+            this._frameMaxT = this.frames.reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0)
+        }
+        return this._frameMaxT
     }
 
     get minZoom() {
-        return this.width / this.frameMaxT
+        return (this.width - 2*X_MARGIN) / this.frameMaxT
     }
 
     fitContents() {
@@ -75,7 +81,7 @@ export default class TimelineCanvasView extends CanvasView {
         if (this.startT < 0) {
             this.startT = 0
         }
-        const maxStartT = this.frameMaxT - this.width / this.zoom
+        const maxStartT = this.frameMaxT - (this.width - 2*X_MARGIN) / this.zoom
         if (this.startT > maxStartT) {
             this.startT = maxStartT
         }
@@ -171,15 +177,20 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     xForT(t: number): number {
-        return (t - this.startT) * this.zoom
+        return (t - this.startT) * this.zoom + X_MARGIN
+    }
+
+    tForX(x: number): number {
+        return (x - X_MARGIN) / this.zoom + this.startT
     }
 
     onWheel(event: WheelEvent) {
         // pinch to zoom & cmd+wheel to zoom
         if (event.ctrlKey || event.metaKey) {
-            const mouseT = this.startT + event.offsetX / this.zoom
+            const mouseT = this.tForX(event.offsetX)
             this.zoom *= 1 - event.deltaY / 100
-            this.startT = mouseT - event.offsetX / this.zoom
+            // this.startT = mouseT - event.offsetX / this.zoom
+            this.startT = mouseT - (event.offsetX - X_MARGIN) / this.zoom
             this.clampViewport()
             this.setNeedsRedraw()
             event.preventDefault()
