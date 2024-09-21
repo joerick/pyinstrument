@@ -8,46 +8,24 @@
   import { viewOptionsCallStack } from '../lib/settings';
   import { derived } from 'svelte/store';
 
-  // const defaultProcessorFunctions = [
-  //   remove_importlib,
-  //   remove_tracebackhide,
-  //   merge_consecutive_self_time,
-  //   aggregate_repeated_calls,
-  //   remove_unnecessary_self_time_nodes,
-  //   remove_irrelevant_nodes,
-  //   remove_first_pyinstrument_frames_processor,
-  //   group_library_frames_processor,
-  // ] as ProcessorFunction[]
-
-  // let activeProcessors: Processor[]
-  // let enabledProcessors: {[name: string]: boolean} = {}
-
-  // let processorOptions: Record<string, any> = {}
-  // for (const processor of allProcessors) {
-  //   enabledProcessors[processor.name] = defaultProcessorFunctions.includes(processor.function)
-  //   for (const optionSpec of processor.optionsSpec) {
-  //     processorOptions[optionSpec.name] = optionSpec.value.default
-  //   }
-  // }
-
   const config = derived([viewOptionsCallStack], ([viewOptionsCallStack]) => {
     const processors = [
-      viewOptionsCallStack.hideImportlib ? remove_importlib : null,
-      viewOptionsCallStack.hideTracebackHide ? remove_tracebackhide : null,
+      viewOptionsCallStack.removeImportlib ? remove_importlib : null,
+      viewOptionsCallStack.removeTracebackHide ? remove_tracebackhide : null,
       merge_consecutive_self_time,
       aggregate_repeated_calls,
       remove_unnecessary_self_time_nodes,
-      viewOptionsCallStack.hideIrrelevant ? remove_irrelevant_nodes : null,
-      viewOptionsCallStack.hidePyinstrument ? remove_first_pyinstrument_frames_processor : null,
+      viewOptionsCallStack.removeIrrelevant ? remove_irrelevant_nodes : null,
+      viewOptionsCallStack.removePyinstrument ? remove_first_pyinstrument_frames_processor : null,
       viewOptionsCallStack.collapseMode !== 'disabled' ? group_library_frames_processor : null,
     ].filter(p => p !== null)
-    const options = {}
+    const options = {
+      filterThreshold: viewOptionsCallStack.removeIrrelevantThreshold,
+      hideRegex: viewOptionsCallStack.collapseMode == 'custom' ? viewOptionsCallStack.collapseCustomHide : undefined,
+      showRegex: viewOptionsCallStack.collapseMode == 'custom' ? viewOptionsCallStack.collapseCustomShow : undefined,
+    } as ProcessorOptions
     return {processors, options}
   })
-
-  // let config: {processors: ProcessorFunction[], options: ProcessorOptions}
-  // $: config = computeProcessorsAndOptions()
-  // $: activeProcessors = defaultProcessorFunctions.map(f => allProcessors.find(p => p.function == f)!).filter(p => enabledProcessors[p.name])
 
   let rootFrame: Frame|null
   $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)

@@ -3,7 +3,11 @@ import { SELF_TIME_FRAME_IDENTIFIER } from "./Frame";
 import FrameGroup from "./FrameGroup";
 import { combineFrames, deleteFrameFromTree } from './frameOps'
 
-export type ProcessorOptions = Record<string, any>
+export interface ProcessorOptions {
+    filterThreshold?: number // used by remove_irrelevant_nodes
+    hideRegex?: string // used by group_library_frames_processor
+    showRegex?: string // used by group_library_frames_processor
+}
 export type ProcessorFunction = (frame: Frame | null, options: ProcessorOptions) => Frame | null
 
 export interface Processor {
@@ -61,8 +65,8 @@ allProcessors.push({
 })
 
 /**
- * Removes frames that have set a local `__tracebackhide__` (e.g.
- * `__tracebackhide__ = True`), to hide them from the output.
+ * Removes frames that have set a local `__traceback_hide__` (e.g.
+ * `__traceback_hide__ = True`), to remove them from the output.
  */
 export function remove_tracebackhide(frame: Frame | null, options: ProcessorOptions): Frame | null {
     if (!frame) {
@@ -72,7 +76,7 @@ export function remove_tracebackhide(frame: Frame | null, options: ProcessorOpti
     for (const child of frame.children) {
         remove_tracebackhide(child, options)
 
-        if (child.hasTracebackhide) {
+        if (child.hasTracebackHide) {
             deleteFrameFromTree(child, { replaceWith: "children" })
         }
     }
@@ -81,7 +85,7 @@ export function remove_tracebackhide(frame: Frame | null, options: ProcessorOpti
 }
 allProcessors.push({
     name: "remove_tracebackhide",
-    description: "Removes frames that have set a local __tracebackhide__ (e.g. __tracebackhide__ = True), to hide them from the output.",
+    description: "Removes frames that have set a local __traceback_hide__ (e.g. __traceback_hide__ = True), to remove them from the output.",
     function: remove_tracebackhide,
     optionsSpec: [],
     category: 'advanced',
@@ -128,7 +132,7 @@ allProcessors.push({
 
 /**
  * Groups frames that should be hidden into FrameGroup objects,
- * according to `hide_regex` and `show_regex` in the options dictionary.
+ * according to `remove_regex` and `show_regex` in the options dictionary.
  */
 export function group_library_frames_processor(frame: Frame | null, options: ProcessorOptions): Frame | null {
     if (!frame) {
@@ -273,7 +277,7 @@ export function remove_irrelevant_nodes(frame: Frame | null, options: ProcessorO
         }
     }
 
-    const filterThreshold = options.filterThreshold || 0.01;
+    const filterThreshold = options.filterThreshold ?? 0.01;
 
     for (const child of frame.children.slice()) {
         const proportionOfTotal = child.time / totalTime;

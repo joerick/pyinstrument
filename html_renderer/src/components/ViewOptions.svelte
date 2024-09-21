@@ -9,10 +9,10 @@
   function clickOutside() {
     dispatch("close");
   }
-  let element: HTMLElement | undefined;
+  let boxElement: HTMLElement | undefined;
   onMount(() => {
-    if (!element) return;
-    return onClickOutside(element, clickOutside, {ignore: [".js-view-options-button"]});
+    if (!boxElement) return;
+    return onClickOutside(boxElement, clickOutside, {ignore: [".js-view-options-button"]});
   })
 
   let title = "View options";
@@ -24,7 +24,7 @@
 </script>
 
 <div class="view-options">
-  <div class="box" bind:this={element}>
+  <div class="box" bind:this={boxElement}>
     <div class="title">{title}</div>
     {#if $viewOptions.viewMode === "call-stack"}
       <ViewOptionsCallStack />

@@ -138,7 +138,7 @@ export default class Frame {
         return attributes[maxIdx].data
     }
 
-    get hasTracebackhide(): boolean {
+    get hasTracebackHide(): boolean {
         return this.getAttributeValue(ATTRIBUTE_MARKER_TRACEBACKHIDE) == '1'
     }
 

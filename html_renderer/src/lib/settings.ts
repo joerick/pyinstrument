@@ -4,11 +4,11 @@ export interface ViewOptionsCallStack {
     collapseMode: 'non-application'|'disabled'|'custom'
     collapseCustomHide: string
     collapseCustomShow: string
-    hideImportlib: boolean
-    hideTracebackHide: boolean
-    hidePyinstrument: boolean
-    hideIrrelevant: boolean
-    hideIrrelevantThreshold: number
+    removeImportlib: boolean
+    removeTracebackHide: boolean
+    removePyinstrument: boolean
+    removeIrrelevant: boolean
+    removeIrrelevantThreshold: number
     timeFormat: 'absolute'|'proportion'
 }
 
@@ -17,11 +17,11 @@ export function CallStackViewOptionsDefaults(): ViewOptionsCallStack {
         collapseMode: 'non-application',
         collapseCustomHide: '',
         collapseCustomShow: '',
-        hideImportlib: true,
-        hideTracebackHide: true,
-        hidePyinstrument: true,
-        hideIrrelevant: true,
-        hideIrrelevantThreshold: 0.001,
+        removeImportlib: true,
+        removeTracebackHide: true,
+        removePyinstrument: true,
+        removeIrrelevant: true,
+        removeIrrelevantThreshold: 0.001,
         timeFormat: 'absolute',
     }
 }
@@ -47,20 +47,20 @@ export const viewOptions = persisted(
 )
 
 export interface ViewOptionsTimeline {
-    hideImportlib: boolean,
-    hideTracebackHide: boolean,
-    hidePyinstrument: boolean,
-    hideIrrelevant: boolean,
-    hideIrrelevantThreshold: number,
+    removeImportlib: boolean,
+    removeTracebackHide: boolean,
+    removePyinstrument: boolean,
+    removeIrrelevant: boolean,
+    removeIrrelevantThreshold: number,
 }
 export const viewOptionsTimeline = persisted<ViewOptionsTimeline>(
     'pyinstrument:viewOptionsTimeline',
     {
-        hideImportlib: true,
-        hideTracebackHide: true,
-        hidePyinstrument: true,
-        hideIrrelevant: true,
-        hideIrrelevantThreshold: 0.0001,
+        removeImportlib: true,
+        removeTracebackHide: true,
+        removePyinstrument: true,
+        removeIrrelevant: true,
+        removeIrrelevantThreshold: 0.0001,
     },
     {syncTabs: true}
 )

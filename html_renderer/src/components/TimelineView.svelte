@@ -2,7 +2,6 @@
   import Frame, { SELF_TIME_FRAME_IDENTIFIER } from "../lib/model/Frame";
   import type Session from "../lib/model/Session";
   import { applyProcessors } from "../lib/model/modelUtil";
-  import { allProcessors, type Processor } from "../lib/model/processors";
   import * as processors from "../lib/model/processors";
   import TimelineCanvasView from "./TimelineCanvasView";
 
@@ -38,18 +37,5 @@
   .timeline {
     position: relative;
     height: 800px;
-  }
-  .frames {
-    position: relative;
-    height: 500px;
-  }
-  .frame {
-    position: absolute;
-    background-color: green;
-    border: 1px solid black;
-    padding: 0 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 </style>
