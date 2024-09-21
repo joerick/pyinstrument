@@ -29,15 +29,8 @@
         />
         <label for={cid + "collapseModeCustom"}>Custom</label>
         <div class="description">
-          Regex on the source file path
+          Regex on the source file path.
           <div class="mini-input-grid">
-            <label for="collapseCustomHide">Hide</label>
-            <input
-              id="collapseCustomHide"
-              type="text"
-              bind:value={$viewOptionsCallStack.collapseCustomHide}
-              placeholder=".*/lib/.*"
-            />
             <label for="collapseCustomShow">Show</label>
             <input
               id="collapseCustomShow"
@@ -45,7 +38,15 @@
               bind:value={$viewOptionsCallStack.collapseCustomShow}
               placeholder="myproject"
             />
+            <label for="collapseCustomHide">Hide</label>
+            <input
+              id="collapseCustomHide"
+              type="text"
+              bind:value={$viewOptionsCallStack.collapseCustomHide}
+              placeholder=".*/lib/.*"
+            />
           </div>
+          If neither match, non-application rule is used.
         </div>
       </div>
       <div class="option">
@@ -87,7 +88,12 @@
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 5px;
-    align-items: center;
+    align-items: baseline;
+    margin-top: 3px;
+    margin-bottom: 2px;
+    label {
+      font-weight: 600;
+    }
     input {
       font-family: 'Source Code Pro', 'Roboto Mono', Consolas, Monaco, monospace;
       font-size-adjust: 0.486094;

@@ -13,22 +13,10 @@
     processors.remove_tracebackhide,
     processors.remove_first_pyinstrument_frames_processor,
   ] as processors.ProcessorFunction[]
-
-  let activeProcessors: Processor[]
-  let enabledProcessors: {[name: string]: boolean} = {}
-
-  let processorOptions: Record<string, any> = {}
-  for (const processor of allProcessors) {
-    enabledProcessors[processor.name] = defaultProcessorFunctions.includes(processor.function)
-    for (const optionSpec of processor.optionsSpec) {
-      processorOptions[optionSpec.name] = optionSpec.value.default
-    }
-  }
-
-  $: activeProcessors = defaultProcessorFunctions.map(f => allProcessors.find(p => p.function == f)!).filter(p => enabledProcessors[p.name])
+  const processorOptions = {}
 
   let rootFrame: Frame|null
-  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), activeProcessors, processorOptions)
+  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), defaultProcessorFunctions, processorOptions)
 
   let rootElement: HTMLDivElement|null = null
   let timelineCanvasView: TimelineCanvasView|null = null

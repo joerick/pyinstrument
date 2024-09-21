@@ -4,8 +4,9 @@
   export let session: Session
   import faviconImage from './assets/favicon.png'
   import { onDestroy, onMount } from 'svelte';
-  import TreeView from './components/TreeView.svelte';
-  import Timeline from './components/Timeline.svelte';
+  import CallStackView from './components/CallStackView.svelte';
+  import TimelineView from './components/TimelineView.svelte';
+  import { viewOptions } from './lib/settings';
 
   // add favicon
   const favicon = document.createElement('link')
@@ -63,18 +64,20 @@
 
 <div class="app">
   <Header session={session} />
-  <div class="spacer" style="height: 20px;"></div>
-  <div class="margins">
-
     {#if !session.rootFrame}
-      <div class="error">
-        No samples recorded.
+      <div class="spacer" style="height: 20px;"></div>
+      <div class="margins">
+        <div class="error">
+          No samples recorded.
+        </div>
       </div>
+    {:else if $viewOptions.viewMode === 'call-stack'}
+      <CallStackView session={session} />
+    {:else if $viewOptions.viewMode === 'timeline'}
+      <TimelineView session={session} />
     {:else}
-      <TreeView session={session} />
-      <Timeline session={session} />
+      Unknown view mode: {$viewOptions.viewMode}
     {/if}
-  </div>
 </div>
 
 
