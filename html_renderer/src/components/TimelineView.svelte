@@ -1,21 +1,25 @@
 <script lang="ts">
+  import { derived } from "svelte/store";
   import Frame, { SELF_TIME_FRAME_IDENTIFIER } from "../lib/model/Frame";
   import type Session from "../lib/model/Session";
   import { applyProcessors } from "../lib/model/modelUtil";
-  import * as processors from "../lib/model/processors";
+  import { viewOptionsTimeline } from "../lib/settings";
   import TimelineCanvasView from "./TimelineCanvasView";
+  import { remove_first_pyinstrument_frames_processor, remove_importlib, remove_tracebackhide, type ProcessorOptions } from "../lib/model/processors";
 
   export let session: Session
-
-  const defaultProcessorFunctions = [
-    processors.remove_importlib,
-    processors.remove_tracebackhide,
-    processors.remove_first_pyinstrument_frames_processor,
-  ] as processors.ProcessorFunction[]
-  const processorOptions = {}
+  const config = derived([viewOptionsTimeline], ([viewOptionsTimeline]) => {
+      const processors = [
+        viewOptionsTimeline.removeImportlib ? remove_importlib : null,
+        viewOptionsTimeline.removeTracebackHide ? remove_tracebackhide : null,
+        viewOptionsTimeline.removePyinstrument ? remove_first_pyinstrument_frames_processor : null,
+      ].filter(p => p !== null)
+      const options = {} as ProcessorOptions
+      return {processors, options}
+    })
 
   let rootFrame: Frame|null
-  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), defaultProcessorFunctions, processorOptions)
+  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)
 
   let rootElement: HTMLDivElement|null = null
   let timelineCanvasView: TimelineCanvasView|null = null

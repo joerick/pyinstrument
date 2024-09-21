@@ -37,6 +37,7 @@ export default class TimelineCanvasView extends CanvasView {
         this.frames = []
         this._collectFrames(rootFrame, 0)
         this.fitContents()
+        this.setNeedsRedraw()
     }
 
     _collectFrames(frame: Frame, depth: number) {
