@@ -3,6 +3,7 @@
   import { viewOptions } from "../lib/settings";
   import ViewOptionsCallStack from "./ViewOptionsCallStack.svelte";
   import ViewOptionsTimeline from "./ViewOptionsTimeline.svelte";
+  import { onClickOutside } from "../lib/utils";
 
   const dispatch = createEventDispatcher();
   function clickOutside() {
@@ -10,36 +11,9 @@
   }
   let element: HTMLElement | undefined;
   onMount(() => {
-    if (!element) return
-    let clickListener;
-    let pointerDownListener;
-
-    let pointerId: number | undefined;
-    element.addEventListener(
-      "pointerdown",
-      (pointerDownListener = (e: PointerEvent) => {
-        pointerId = e.pointerId;
-      }),
-      { capture: true },
-    );
-    window.addEventListener(
-      "click",
-      (clickListener = (e: MouseEvent) => {
-        console.log(e)
-        if ('pointerId' in e && e.pointerId !== pointerId) {
-          // this click didn't start in the element
-          return;
-        }
-        if (!e.composedPath().includes(element!)) {
-          clickOutside();
-        }
-      }),
-      { capture: true },
-    );
-    return () => {
-      window.removeEventListener("click", clickListener);
-    };
-  });
+    if (!element) return;
+    return onClickOutside(element, clickOutside, {ignore: [".js-view-options-button"]});
+  })
 
   let title = "View options";
   $: if ($viewOptions.viewMode === "call-stack") {
@@ -50,7 +24,6 @@
 </script>
 
 <div class="view-options">
-  <!-- <div class="backdrop" on:click|capture|preventDefault={backdropClicked} role="presentation"></div> -->
   <div class="box" bind:this={element}>
     <div class="title">{title}</div>
     {#if $viewOptions.viewMode === "call-stack"}
@@ -66,14 +39,6 @@
     position: absolute;
     z-index: 1;
     right: 0;
-  }
-  .backdrop {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.1);
   }
   .box {
     width: 90vw;

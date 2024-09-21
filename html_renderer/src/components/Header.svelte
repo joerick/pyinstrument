@@ -56,7 +56,7 @@
           </div>
           <div class="spacer" style="flex: 1"></div>
           <div class="button-container">
-            <button on:click|preventDefault|stopPropagation={viewOptionsButtonClicked}>
+            <button on:click|preventDefault|stopPropagation={viewOptionsButtonClicked} class="js-view-options-button">
               <CogIcon />
               View options
             </button>

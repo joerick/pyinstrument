@@ -112,3 +112,86 @@ export function cyrb53(str: string, seed: number = 0) {
 export function hash(str: string) {
     return cyrb53(str, 21) / 2**53;
 }
+
+interface OnClickOutsideOptions {
+  ignore?: (HTMLElement | string)[];
+  capture?: boolean;
+}
+
+type OnClickOutsideHandler = (evt: MouseEvent) => void;
+
+/**
+ * Listen for clicks outside of an element.
+ *
+ * Translated from
+ * https://github.com/vueuse/vueuse/blob/798077d678a2a8cd50cc3c3b85a722befb6087d4/packages/core/onClickOutside/index.ts
+ * License: MIT
+ * https://github.com/vueuse/vueuse/blob/798077d678a2a8cd50cc3c3b85a722befb6087d4/LICENSE
+ *
+ * @param target - The target element to watch for outside clicks.
+ * @param handler - The function to call when a click outside the target is detected.
+ * @param options - Optional configurations.
+ * @returns A cleanup function that removes the event listeners.
+ */
+export function onClickOutside(
+  target: HTMLElement,
+  handler: OnClickOutsideHandler,
+  options: OnClickOutsideOptions = {}
+) {
+  const { ignore = [], capture = true } = options;
+  const windowObj = window;
+
+  if (!windowObj) return () => {};
+
+  let shouldListen = true;
+  let isProcessingClick = false;
+
+  const shouldIgnore = (event: MouseEvent) => {
+    return ignore.some((target) => {
+      if (typeof target === "string") {
+        return Array.from(document.querySelectorAll(target)).some(
+          (el) => el === event.target || event.composedPath().includes(el)
+        );
+      } else {
+        return target && (event.target === target || event.composedPath().includes(target));
+      }
+    });
+  };
+
+  const listener = (event: MouseEvent) => {
+    if (!target || target === event.target || event.composedPath().includes(target)) return;
+
+    if (event.detail === 0) shouldListen = !shouldIgnore(event);
+
+    if (!shouldListen) {
+      shouldListen = true;
+      return;
+    }
+
+    handler(event);
+  };
+
+  const clickListener = (event: MouseEvent) => {
+    if (!isProcessingClick) {
+      isProcessingClick = true;
+      setTimeout(() => {
+        isProcessingClick = false;
+      }, 0);
+      listener(event);
+    }
+  };
+
+  const pointerDownListener = (event: PointerEvent) => {
+    shouldListen = !shouldIgnore(event) && !!(target && !event.composedPath().includes(target));
+  };
+
+  windowObj.addEventListener("click", clickListener, { passive: true, capture });
+  windowObj.addEventListener("pointerdown", pointerDownListener, { passive: true });
+
+  const stop = () => {
+    windowObj.removeEventListener("click", clickListener, { capture });
+    windowObj.removeEventListener("pointerdown", pointerDownListener);
+  };
+
+  return stop;
+}
