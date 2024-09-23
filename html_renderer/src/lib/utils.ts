@@ -195,3 +195,14 @@ export function onClickOutside(
 
   return stop;
 }
+
+export function escapeForHtml(str: string) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
+export function htmlForStringWithWBRAtSlashes(str: string) {
+    let result = escapeForHtml(str);
+    return result.replace(/\//g, '/<wbr>');
+}

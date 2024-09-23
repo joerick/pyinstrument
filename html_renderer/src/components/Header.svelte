@@ -4,6 +4,7 @@
   import Logo from './Logo.svelte';
   import {viewOptions} from '../lib/settings'
   import ViewOptions from "./ViewOptions.svelte";
+  import { htmlForStringWithWBRAtSlashes } from "../lib/utils";
 
   export let session: Session;
 
@@ -25,7 +26,7 @@
       </div>
       <div class="layout">
         <div class="target-description">
-          {session.target_description}
+          {@html htmlForStringWithWBRAtSlashes(session.target_description)}
         </div>
         <div class="metrics">
           <div class="metric date">

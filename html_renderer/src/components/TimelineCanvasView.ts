@@ -175,9 +175,9 @@ export default class TimelineCanvasView extends CanvasView {
 
     drawAxis(ctx: CanvasRenderingContext2D, increment: number, alpha: number, dontSkip: boolean = false) {
         ctx.fillStyle = 'white'
-        const startT = Math.ceil(this.startT / increment) * increment
+        const startT = Math.floor(this.startT / increment) * increment
         const endT = this.startT + this.width / this.zoom
-        const decimals = Math.max(0, Math.ceil(-Math.log10(increment)))
+        const numDecimals = Math.max(0, Math.ceil(-Math.log10(increment)))
 
         for (let t = startT; t < endT; t += increment) {
             const x = this.xForT(t)
@@ -192,7 +192,7 @@ export default class TimelineCanvasView extends CanvasView {
             if (textAlpha > 0.01) {
                 ctx.globalAlpha = textAlpha
                 ctx.font = `13px "Source Sans Pro", sans-serif`
-                let text = t.toFixed(decimals)
+                let text = t.toFixed(numDecimals)
                 if (text == '0') {
                     text = '0s'
                 }

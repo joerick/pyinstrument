@@ -12,8 +12,8 @@
     <script type="module">
       import pyinstrumentHTMLRenderer from "/src/main.ts";
 
-      // fetch('/sample.json')
-      fetch('/sample-sympy.json')
+      fetch('/sample.json')
+      // fetch('/sample-sympy.json')
         .then(async response => JSON.parse(await response.text()))
         .then(data => {
             pyinstrumentHTMLRenderer.render(
