@@ -1,14 +1,16 @@
 import CanvasView from "../lib/CanvasView";
 import type Frame from "../lib/model/Frame";
 import { SELF_TIME_FRAME_IDENTIFIER } from "../lib/model/Frame";
-import { hash, parseColor, sampleGradient } from "../lib/utils";
+import { hash, map, parseColor, sampleGradient } from "../lib/utils";
 
 const BACKGROUND_COLOR = '#212325'
 
 const FRAME_PITCH = 18
 const FRAME_HEIGHT = 17
 
-const X_MARGIN = 20
+const X_MARGIN = 28
+const Y_MARGIN = 17
+const Y_FRAME_INSET = 29 // vertical space between y margin and first frame, where the axis markers are drawn
 
 const GRADIENT_STR = ['#47A298','#9FC175','#C1A731','#C07210','#B84210','#B53134','#9A3586','#4958B5','#3475BA','#318DBC','#47A298']
 const GRADIENT = GRADIENT_STR.map(parseColor)
@@ -18,8 +20,8 @@ export interface TimelineFrame {
     depth: number
 }
 export default class TimelineCanvasView extends CanvasView {
-    zoom: number = 1
-    startT: number = 0
+    zoom: number = 1 // pixels per second
+    startT: number = 0 // seconds
     frames: TimelineFrame[] = []
     isZoomedIn: boolean = false
 
@@ -64,6 +66,12 @@ export default class TimelineCanvasView extends CanvasView {
         return (this.width - 2*X_MARGIN) / this.frameMaxT
     }
 
+    get maxZoom() {
+        // 150 ns is the python function calling overhead.
+        // 150 ns per 10 pixels seems the smallest that makes sense to me
+        return 10 / 150e-9
+    }
+
     fitContents() {
         this.startT = 0
         this.zoom = this.minZoom
@@ -76,6 +84,10 @@ export default class TimelineCanvasView extends CanvasView {
             this.isZoomedIn = false
         } else {
             this.isZoomedIn = true
+        }
+
+        if (this.zoom > this.maxZoom) {
+            this.zoom = this.maxZoom
         }
 
         if (this.startT < 0) {
@@ -107,7 +119,7 @@ export default class TimelineCanvasView extends CanvasView {
         ctx.fillRect(0, 0, width, height)
 
         // draw scale
-        // TODO
+        this.drawAxes(ctx)
 
         // draw frames
         for (const frame of this.frames) {
@@ -118,12 +130,68 @@ export default class TimelineCanvasView extends CanvasView {
 
         // debug
         ctx.fillStyle = 'red'
-        ctx.fillText(`startT: ${this.startT}`, 10, 10)
-        ctx.fillText(`zoom: ${this.zoom}`, 10, 20)
+        ctx.font = `23px "Source Sans Pro", sans-serif`
+        // ctx.fillText(`startT: ${this.startT}`, 10, 10)
+        // ctx.fillText(`zoom: ${this.zoom}`, 10, 50)
+        // ctx.fillText(`width/zoom: ${this.width / this.zoom}`, 10, 50)
+    }
+
+    drawAxes(ctx: CanvasRenderingContext2D) {
+        const viewportDuration = this.width / this.zoom
+        if (viewportDuration == 0) {
+            // avoid log of 0
+            return
+        }
+        const axisScale = Math.log10(viewportDuration)
+        let highestAxis = Math.ceil(axisScale) + 2
+        if (highestAxis < 0) {
+            // ensures that we always draw whole number axes, stops numbers
+            // like '0' from changing precision to '0.0' as we zoom in
+            highestAxis = 0
+        }
+        const smallestAxis = Math.ceil(axisScale) - 3
+        const alphaForAxis = (a: number) => map(a, {from: [axisScale, axisScale-3], to: [0.71, 0]})
+        for (let a = smallestAxis; a < highestAxis; a++) {
+            let alpha = alphaForAxis(a)
+            alpha = Math.max(0, Math.min(1, alpha))
+            alpha = Math.pow(alpha, 2)
+            this.drawAxis(ctx, Math.pow(10, a), alpha)
+        }
+        // highest axis - set the flag to never skip as there are no higher increments
+        this.drawAxis(ctx, Math.pow(10, highestAxis), alphaForAxis(highestAxis), true)
+    }
+
+    drawAxis(ctx: CanvasRenderingContext2D, increment: number, alpha: number, dontSkip: boolean = false) {
+        ctx.fillStyle = 'white'
+        const startT = Math.ceil(this.startT / increment) * increment
+        const endT = this.startT + this.width / this.zoom
+        const decimals = Math.max(0, Math.ceil(-Math.log10(increment)))
+
+        for (let t = startT; t < endT; t += increment) {
+            const x = this.xForT(t)
+            const drawnByAHigherIncrement = Math.round(t / increment) % 10 === 0
+            if (drawnByAHigherIncrement && !dontSkip) {
+                continue
+            }
+            ctx.globalAlpha = alpha
+            ctx.fillRect(x, Y_MARGIN, 1, this.height - Y_MARGIN)
+
+            const textAlpha = map(alpha, {from: [0.12, 0.25], to: [0, 0.5], clamp: true})
+            if (textAlpha > 0.01) {
+                ctx.globalAlpha = textAlpha
+                ctx.font = `13px "Source Sans Pro", sans-serif`
+                let text = t.toFixed(decimals)
+                if (text == '0') {
+                    text = '0s'
+                }
+                ctx.fillText(text, x + 3, Y_MARGIN+10)
+            }
+            ctx.globalAlpha = 1
+        }
     }
 
     drawFrame(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame) {
-        const y = timelineFrame.depth * FRAME_PITCH
+        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET
         const h = FRAME_HEIGHT
         let x = this.xForT(timelineFrame.frame.startTime)
         const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
@@ -138,7 +206,7 @@ export default class TimelineCanvasView extends CanvasView {
             width = 1
         }
         if (width > 2) {
-            // add a little margin
+            // add a little gap between frames
             width -= 1
         }
 
@@ -171,6 +239,12 @@ export default class TimelineCanvasView extends CanvasView {
             if (x < 0) {
                 x = 0
             }
+            // the minimum width per character is 3.3px (that's an 'l')
+            // no point in drawing more characters than that, it'll be clipped
+            const maxChars = Math.floor(width / 3.3)
+            if (name.length > maxChars) {
+                name = name.substring(0, maxChars)
+            }
             ctx.fillText(name, x + 2, y + 13)
         }
         ctx.restore()
@@ -185,24 +259,22 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     onWheel(event: WheelEvent) {
-        // pinch to zoom & cmd+wheel to zoom
-        if (event.ctrlKey || event.metaKey) {
-            const mouseT = this.tForX(event.offsetX)
-            this.zoom *= 1 - event.deltaY / 100
-            // this.startT = mouseT - event.offsetX / this.zoom
-            this.startT = mouseT - (event.offsetX - X_MARGIN) / this.zoom
-            this.clampViewport()
-            this.setNeedsRedraw()
-            event.preventDefault()
-            return
-        }
+        const isPinchGestureOrCmdWheel = event.ctrlKey || event.metaKey
+
+        // zooming
+        const zoomSpeed = isPinchGestureOrCmdWheel ? 0.01 : 0.0023
+        const mouseT = this.tForX(event.offsetX)
+        this.zoom *= 1 - event.deltaY * zoomSpeed
+        this.clampViewport()
+        this.startT = mouseT - (event.offsetX - X_MARGIN) / this.zoom
+
         // scroll to pan
-        this.startT += event.deltaX / this.zoom
+        if (!isPinchGestureOrCmdWheel) {
+            this.startT += event.deltaX / this.zoom
+        }
         this.clampViewport()
         this.setNeedsRedraw()
         event.preventDefault()
-
-        // this.setNeedsRedraw()
     }
     mouseLocation: { x: number; y: number } | null = null
     onMouseMove(event: MouseEvent): void {
