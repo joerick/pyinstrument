@@ -18,6 +18,11 @@ const GRADIENT = GRADIENT_STR.map(parseColor)
 export interface TimelineFrame {
     frame: Frame
     depth: number
+    // also cache some computed properties that are used in rendering
+    isApplicationCode: boolean
+    library: string | null
+    className: string
+    filePathShort: string | null
 }
 export default class TimelineCanvasView extends CanvasView {
     zoom: number = 1 // pixels per second
@@ -45,7 +50,14 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     _collectFrames(frame: Frame, depth: number) {
-        this.frames.push({ frame, depth })
+        this.frames.push({
+            frame,
+            depth,
+            isApplicationCode: frame.isApplicationCode,
+            library: frame.library,
+            className: frame.className,
+            filePathShort: frame.filePathShort,
+        })
         for (const child of frame.children) {
             if (child.identifier !== SELF_TIME_FRAME_IDENTIFIER) {
                 // we don't render self time frames
@@ -205,13 +217,13 @@ export default class TimelineCanvasView extends CanvasView {
         if (width < 1) {
             width = 1
         }
-        if (width > 2) {
+        if (width > 1) {
             // add a little gap between frames
-            width -= 1
+            width -= map(width, {from: [1,3], to: [0, 1], clamp: true})
         }
 
         ctx.fillStyle = this.colorForFrame(timelineFrame)
-        ctx.globalAlpha = timelineFrame.frame.isApplicationCode ? 1 : 0.5
+        ctx.globalAlpha = timelineFrame.isApplicationCode ? 1 : 0.5
 
         if (width < 2) {
             // fast path
@@ -229,10 +241,10 @@ export default class TimelineCanvasView extends CanvasView {
             ctx.font = `13px "Source Sans Pro", sans-serif`
             ctx.fillStyle = 'white'
             let name: string
-            if (timelineFrame.frame.className) {
-                name = `${timelineFrame.frame.className}.${timelineFrame.frame.function}`
+            if (timelineFrame.className) {
+                name = `${timelineFrame.className}.${timelineFrame.frame.function}`
             } else if (timelineFrame.frame.function == '<module>'){
-                name = timelineFrame.frame.filePathShort ?? timelineFrame.frame.filePath ?? ''
+                name = timelineFrame.filePathShort ?? timelineFrame.frame.filePath ?? ''
             } else {
                 name = timelineFrame.frame.function
             }
@@ -265,6 +277,7 @@ export default class TimelineCanvasView extends CanvasView {
         const zoomSpeed = isPinchGestureOrCmdWheel ? 0.01 : 0.0023
         const mouseT = this.tForX(event.offsetX)
         this.zoom *= 1 - event.deltaY * zoomSpeed
+        // an extra clamp to clamp this.zoom before the startT is adjusted
         this.clampViewport()
         this.startT = mouseT - (event.offsetX - X_MARGIN) / this.zoom
 
@@ -319,17 +332,26 @@ export default class TimelineCanvasView extends CanvasView {
         return result
     }
 
-    colorForFrame(frame: TimelineFrame) {
+    libraryIndexForFrame(frame: TimelineFrame) {
         if (!this._libraryOrder) {
             this._assignLibraryOrder()
         }
 
-        let libraryIndex = this._libraryOrder?.indexOf(frame.frame.library || '') ?? 0
-        if (libraryIndex === -1) {
-            libraryIndex = 0
+        const library = frame.library || ''
+        let result = this._libraryOrder!.indexOf(library)
+
+        if (result === -1) {
+            // we haven't seen this one before, add it to the list to give it an index
+            result = this._libraryOrder!.length
+            this._libraryOrder!.push(library)
         }
+
+        return result
+    }
+
+    colorForFrame(frame: TimelineFrame) {
+        const libraryIndex = this.libraryIndexForFrame(frame)
         const color = this.colorForLibraryIndex(libraryIndex)
         return color
-        // return sampleGradient(GRADIENT, hash(frame.frame.library ?? ''))
     }
 }
