@@ -30,7 +30,6 @@
 
   const rootFrame = session.rootFrame;
   const duration = rootFrame?.time.toLocaleString(undefined, {maximumSignificantDigits: 3});
-  session.target_description = 'Block at /Users/joerick/Projects/pyinstrument/pyinstrument/console.py:80'
   let name
   // let name = rootFrame?.function;
   // if (name == '<module>') {

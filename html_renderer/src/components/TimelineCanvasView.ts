@@ -2,7 +2,7 @@ import CanvasView from "../lib/CanvasView";
 import type Frame from "../lib/model/Frame";
 import { SELF_TIME_FRAME_IDENTIFIER } from "../lib/model/Frame";
 import { hash, map, parseColor, sampleGradient } from "../lib/utils";
-import TimelineCanvasViewTooltip from "./TimelineCanvasViewTooltip.svelte";
+import TimelineCanvasViewTooltip, { estimateWidth, type TooltipFrameInfo } from "./TimelineCanvasViewTooltip.svelte";
 import type { ComponentProps } from 'svelte';
 
 const BACKGROUND_COLOR = '#212325'
@@ -163,7 +163,7 @@ export default class TimelineCanvasView extends CanvasView {
         // ctx.fillText(`width/zoom: ${this.width / this.zoom}`, 10, 50)
 
         const hoverFrame = this.hitTest(this.mouseLocation?.x ?? 0, this.mouseLocation?.y ?? 0)
-        this.updateTooltip(hoverFrame)
+        this.updateTooltip(ctx, hoverFrame)
     }
 
     drawAxes(ctx: CanvasRenderingContext2D) {
@@ -372,8 +372,9 @@ export default class TimelineCanvasView extends CanvasView {
         if (this._colors[libraryIndex] !== undefined) {
             return this._colors[libraryIndex]
         }
-        // assign colors using color gradient and library order,
-        // gradually bisecting a color wheel
+        // assign colors using color gradient and library order, gradually
+        // bisecting a color wheel - this gives the top libraries the most
+        // distinct colors
         const denominator = Math.pow(2,Math.ceil(Math.log2(libraryIndex+1)))
         const numerator = 2*libraryIndex - denominator + 1
         const gradientLocation = numerator/denominator
@@ -405,10 +406,10 @@ export default class TimelineCanvasView extends CanvasView {
         return color
     }
 
-    updateTooltip(timelineFrame: TimelineFrame | null) {
+    updateTooltip(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame | null) {
+        // update the content
         if (timelineFrame) {
-            type Props = ComponentProps<TimelineCanvasViewTooltip>
-            const props: Props = {
+            const frameInfo: TooltipFrameInfo = {
                 name: this.frameName(timelineFrame),
                 time: timelineFrame.frame.time,
                 selfTime: this.frameSelfTime(timelineFrame),
@@ -420,18 +421,37 @@ export default class TimelineCanvasView extends CanvasView {
             if (!this.tooltipComponent) {
                 this.tooltipComponent = new TimelineCanvasViewTooltip({
                     target: this.tooltipContainer,
-                    props,
+                    props: {f: frameInfo},
                 })
             } else {
-                this.tooltipComponent.$set(props)
+                this.tooltipComponent.$set({f: frameInfo})
+            }
+
+            // update the position
+            if (this.mouseLocation) {
+                const position = {x: this.mouseLocation.x + 12, y: this.mouseLocation.y + 12}
+
+                // rather than reading the width from the DOM, we estimate it
+                // using canvas APIs. this tends to result in faster and more
+                // predictable results. Also the DOM is very inefficient at
+                // getting the size of something - it often has to relayout
+                // the entire page.
+                const tooltipWidth = estimateWidth(ctx, frameInfo)
+                const maxX = this.width - 10 - tooltipWidth
+                if (position.x > maxX) {
+                    position.x = maxX
+                }
+
+                this.tooltipContainer.style.left = `${position.x}px`
+                this.tooltipContainer.style.top = `${position.y}px`
             }
         }
 
-        // if (!timelineFrame) {
-        //     if (this.tooltipComponent) {
-        //         this.tooltipComponent.$destroy()
-        //         this.tooltipComponent = null
-        //     }
-        // }
+        if (!timelineFrame) {
+            if (this.tooltipComponent) {
+                this.tooltipComponent.$destroy()
+                this.tooltipComponent = null
+            }
+        }
     }
 }

@@ -204,5 +204,5 @@ export function escapeForHtml(str: string) {
 
 export function htmlForStringWithWBRAtSlashes(str: string) {
     let result = escapeForHtml(str);
-    return result.replace(/\//g, '/<wbr>');
+    return result.replace(/(\/|\\)/g, s => `${s}<wbr>`);
 }
