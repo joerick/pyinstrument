@@ -48,7 +48,6 @@ class ConsoleRenderer(FrameRenderer):
         :param processor_options: See :class:`FrameRenderer`.
         """
         super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
-
         self.unicode = unicode
         self.color = color
         self.flat = flat
@@ -244,6 +243,8 @@ class ConsoleRenderer(FrameRenderer):
         return f"{value_str} {function_str}  {code_position_str}"
 
     def frame_proportion_of_total_time(self, time: float) -> float:
+        if self.root_frame.time == 0:
+            return 1
         return time / self.root_frame.time
 
     def _ansi_color_for_time(self, time: float) -> str:

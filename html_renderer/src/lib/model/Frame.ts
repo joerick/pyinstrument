@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import type FrameGroup from './FrameGroup';
 // import type { FrameData } from '../dataTypes';
 
@@ -35,9 +36,8 @@ const ATTRIBUTE_MARKER_CLASS_NAME = "c"
 const ATTRIBUTE_MARKER_LINE_NUMBER = "l"
 const ATTRIBUTE_MARKER_TRACEBACKHIDE = "h"
 
-
 export default class Frame {
-    uuid: string = crypto.randomUUID()
+    uuid: string = uuidv4()
     identifier: string
     _identifierParts: string[]
     startTime: number

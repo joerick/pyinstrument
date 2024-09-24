@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import threading
 import urllib.parse
@@ -10,7 +12,10 @@ from IPython.core.magic import Magics, line_cell_magic, magics_class, no_var_exp
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import IFrame, display
 
-from .. import Profiler
+from pyinstrument import Profiler, renderers
+from pyinstrument.frame import Frame
+from pyinstrument.frame_ops import delete_frame_from_tree
+from pyinstrument.processors import ProcessorOptions
 
 _active_profiler = None
 
@@ -67,6 +72,11 @@ class PyinstrumentMagic(Magics):
         type=float,
         default=0.001,
         help="The minimum time, in seconds, between each stack sample. See: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.interval",
+    )
+    @argument(
+        "--show-all",
+        action="store_true",
+        help="SHow all frames, including root frames with no time, and Internal IPython frames.",
     )
     @argument(
         "--async_mode",
@@ -151,15 +161,26 @@ class PyinstrumentMagic(Magics):
             )
             return
 
-        html = _active_profiler.output_html(timeline=args.timeline)
-
+        html_renderer = renderers.HTMLRenderer(
+            show_all=args.show_all,
+            timeline=args.timeline,
+        )
+        html_renderer.processors.append(strip_ipython_frames_processor)
+        html = _active_profiler.output(html_renderer)
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),
             width="100%",
             height=args.height,
             extras=['style="resize: vertical"'],
         )
-        as_text = _active_profiler.output_text(timeline=args.timeline)
+
+        text_renderer = renderers.ConsoleRenderer(
+            timeline=args.timeline,
+            show_all=args.show_all,
+        )
+        text_renderer.processors.append(strip_ipython_frames_processor)
+
+        as_text = _active_profiler.output(text_renderer)
         # repr_html may be a bit fragile, but it's been stable for a while
         display({"text/html": as_iframe._repr_html_(), "text/plain": as_text}, raw=True)  # type: ignore
 
@@ -184,3 +205,34 @@ class PyinstrumentMagic(Magics):
         finally:
             loop.call_soon_threadsafe(loop.stop)
             asyncio.set_event_loop(old_loop)
+
+
+IPYTHON_INTERNAL_FILES = (
+    "IPython/core/interactiveshell.py",
+    "IPython/terminal/interactiveshell.py",
+    "IPython/core/async_helpers.py",
+    "IPython/terminal/ipapp.py",
+    "traitlets/config/application.py",
+    "ipython/IPython/__init__.py",
+    "ipykernel/zmqshell",
+    "pyinstrument/magic/magic.py",
+)
+
+
+def strip_ipython_frames_processor(frame: Frame | None, options: ProcessorOptions) -> Frame | None:
+    """
+    A processor function that removes internal IPython nodes.
+    """
+    if frame is None:
+        return None
+
+    for child in frame.children:
+        strip_ipython_frames_processor(child, options=options)
+
+        if child.file_path is not None and any(
+            f in child.file_path for f in IPYTHON_INTERNAL_FILES
+        ):
+            delete_frame_from_tree(child, replace_with="children")
+            break
+
+    return frame

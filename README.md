@@ -54,6 +54,23 @@ Known issues
 Changelog
 ---------
 
+### v4.7.3
+
+_6 September 2024_
+
+-   Fix a bug introduced in 4.7.0 which would cause the profiler to crash when profiling code with unusual locals, notably some pytest extensions (#332)
+-   Fix a bug that causes pyinstrument to fail to import packages like `glom` on Python 3.12 or later, which mutate the locals() dict. (#336)
+-   Fix a bug that caused a `UnicodeDecodeError` on some platforms (#330)
+-   Fix a DivideByZero error that occurs in some situations
+-   The IPython integration takes greater step to ensure a clean profile output, by ensuring internal frames are trimmed before printing. (#321)
+
+### v4.7.2
+
+_5 August 2024_
+
+-   Add CPython 3.13 wheels
+-   Fix a bug that caused the HTML output to fail to render in some browser contexts (#328)
+
 ### v4.7.1
 
 _2 August 2024_

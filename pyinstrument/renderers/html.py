@@ -51,8 +51,8 @@ class HTMLRenderer(Renderer):
                 "Could not find app.js / app.css. Perhaps you need to run bin/build_js_bundle.py?"
             )
 
-        js = js_file.read_text()
-        css = css_file.read_text()
+        js = js_file.read_text(encoding="utf-8")
+        css = css_file.read_text(encoding="utf-8")
 
         page = f"""<!DOCTYPE html>
             <html>

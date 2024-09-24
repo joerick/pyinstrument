@@ -232,7 +232,9 @@ stat_profile_init(void)
 static PyObject *
 call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg)
 {
-    PyFrame_FastToLocals(frame);
+    // note: we no longer call PyFrame_FastToLocals and PyFrame_LocalsToFast
+    // here, as it's only needed for python-level modification of locals,
+    // which a profiler doesn't need to do.
 
 #if PY_VERSION_HEX >= 0x03090000
     // vectorcall implementation could be faster, is available in Python 3.9
@@ -242,10 +244,9 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
     PyObject *result = PyObject_CallFunctionObjArgs(pState->target, (PyObject *) frame, whatstrings[what], arg == NULL ? Py_None : arg, NULL);
 #endif
 
-    PyFrame_LocalsToFast(frame, 1);
-
-    if (result == NULL)
+    if (result == NULL) {
         PyTraceBack_Here(frame);
+    }
 
     return result;
 }
@@ -310,19 +311,31 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         return NULL;
     }
 
-    if (has_self) {
+    // we still have to check the locals has the key, because it could have
+    // been "del'd"
+    if (has_self && PyMapping_HasKey(locals, SELF_STRING)) {
         PyObject *self = PyObject_GetItem(locals, SELF_STRING);
-        if (self) {
-            result = _PyType_Name(self->ob_type);
+
+        if (!self) {
+            PyErr_Clear();
+            Py_DECREF(locals);
+            return NULL;
         }
+
+        result = _PyType_Name(self->ob_type);
     }
-    else if (has_cls) {
+    else if (has_cls && PyMapping_HasKey(locals, CLS_STRING)) {
         PyObject *cls = PyObject_GetItem(locals, CLS_STRING);
-        if (cls) {
-            if (PyType_Check(cls)) {
-                PyTypeObject *type = (PyTypeObject *)cls;
-                result = _PyType_Name(type);
-            }
+
+        if (!cls) {
+            PyErr_Clear();
+            Py_DECREF(locals);
+            return NULL;
+        }
+
+        if (PyType_Check(cls)) {
+            PyTypeObject *type = (PyTypeObject *)cls;
+            result = _PyType_Name(type);
         }
     }
 

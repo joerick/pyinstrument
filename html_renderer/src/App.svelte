@@ -10,7 +10,7 @@
 
   // add favicon
   const favicon = document.createElement('link')
-  favicon.rel = 'shortut icon'
+  favicon.rel = 'shortcut icon'
   favicon.href = faviconImage
   document.head.appendChild(favicon)
 
