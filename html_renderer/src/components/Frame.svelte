@@ -1,5 +1,6 @@
 <script lang="ts">
   import { visibleGroups, collapsedFrames } from '../lib/appState';
+  import { colorForFrameProportionOfTotal } from '../lib/color';
   import type Frame from '../lib/model/Frame'
   import { viewOptionsCallStack } from '../lib/settings';
   export let frame: Frame
@@ -59,16 +60,7 @@
   }
 
   let timeColor: string
-
-  if (frameProportionOfTotal > 0.6) {
-    timeColor = '#FF4159'
-  } else if (frameProportionOfTotal > 0.3) {
-    timeColor = '#F5A623'
-  } else if (frameProportionOfTotal > 0.2) {
-    timeColor = '#D8CB2A'
-  } else {
-    timeColor = '#7ED321'
-  }
+  timeColor = colorForFrameProportionOfTotal(frameProportionOfTotal)
 
   function descriptionClicked(event: MouseEvent) {
     setCollapsed(frame, !collapsed, event.altKey)

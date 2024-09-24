@@ -2,6 +2,8 @@ import CanvasView from "../lib/CanvasView";
 import type Frame from "../lib/model/Frame";
 import { SELF_TIME_FRAME_IDENTIFIER } from "../lib/model/Frame";
 import { hash, map, parseColor, sampleGradient } from "../lib/utils";
+import TimelineCanvasViewTooltip from "./TimelineCanvasViewTooltip.svelte";
+import type { ComponentProps } from 'svelte';
 
 const BACKGROUND_COLOR = '#212325'
 
@@ -30,17 +32,30 @@ export default class TimelineCanvasView extends CanvasView {
     frames: TimelineFrame[] = []
     isZoomedIn: boolean = false
 
+    tooltipContainer: HTMLElement
+    tooltipComponent: TimelineCanvasViewTooltip | null = null
+
     constructor(container: HTMLElement) {
         super(container)
 
         this.onWheel = this.onWheel.bind(this)
+        this.onMouseMove = this.onMouseMove.bind(this)
+        this.onMouseLeave = this.onMouseLeave.bind(this)
         this.canvas.addEventListener('wheel', this.onWheel)
+        this.canvas.addEventListener('mousemove', this.onMouseMove)
+        this.canvas.addEventListener('mouseleave', this.onMouseLeave)
+
+        this.tooltipContainer = document.createElement('div')
+        this.tooltipContainer.style.position = 'absolute'
+        this.tooltipContainer.style.pointerEvents = 'none'
+        this.container.appendChild(this.tooltipContainer)
     }
     destroy(): void {
         super.destroy()
         this.canvas.removeEventListener('wheel', this.onWheel)
     }
 
+    _rootFrame: Frame | null = null
     setRootFrame(rootFrame: Frame) {
         this.frames = []
         this._frameMaxT = undefined
@@ -146,6 +161,9 @@ export default class TimelineCanvasView extends CanvasView {
         // ctx.fillText(`startT: ${this.startT}`, 10, 10)
         // ctx.fillText(`zoom: ${this.zoom}`, 10, 50)
         // ctx.fillText(`width/zoom: ${this.width / this.zoom}`, 10, 50)
+
+        const hoverFrame = this.hitTest(this.mouseLocation?.x ?? 0, this.mouseLocation?.y ?? 0)
+        this.updateTooltip(hoverFrame)
     }
 
     drawAxes(ctx: CanvasRenderingContext2D) {
@@ -203,63 +221,62 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     drawFrame(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame) {
-        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET
-        const h = FRAME_HEIGHT
-        let x = this.xForT(timelineFrame.frame.startTime)
-        const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
-        let width = endX - x
-
+        const { x, y, w, h } = this.frameDims(timelineFrame)
+        const endX = x + w
         if (endX < 0 || x > this.width) {
             // offscreen
             return
         }
 
-        if (width < 1) {
-            width = 1
-        }
-        if (width > 1) {
-            // add a little gap between frames
-            width -= map(width, {from: [1,3], to: [0, 1], clamp: true})
-        }
-
         ctx.fillStyle = this.colorForFrame(timelineFrame)
         ctx.globalAlpha = timelineFrame.isApplicationCode ? 1 : 0.5
 
-        if (width < 2) {
+        if (w < 2) {
             // fast path
-            ctx.fillRect(x, y, width, h)
+            ctx.fillRect(x, y, w, h)
             return
         }
 
         ctx.save()
         ctx.beginPath()
-        ctx.rect(x, y, width, h)
+        ctx.rect(x, y, w, h)
         ctx.fill()
         ctx.clip()
 
-        if (width > 2) {
+        if (w > 2) {
             ctx.font = `13px "Source Sans Pro", sans-serif`
             ctx.fillStyle = 'white'
-            let name: string
-            if (timelineFrame.className) {
-                name = `${timelineFrame.className}.${timelineFrame.frame.function}`
-            } else if (timelineFrame.frame.function == '<module>'){
-                name = timelineFrame.filePathShort ?? timelineFrame.frame.filePath ?? ''
-            } else {
-                name = timelineFrame.frame.function
-            }
-            if (x < 0) {
-                x = 0
+            let name = this.frameName(timelineFrame)
+            let textX = x
+            if (textX < 0) {
+                textX = 0
             }
             // the minimum width per character is 3.3px (that's an 'l')
             // no point in drawing more characters than that, it'll be clipped
-            const maxChars = Math.floor(width / 3.3)
+            const maxChars = Math.floor(w / 3.3)
             if (name.length > maxChars) {
                 name = name.substring(0, maxChars)
             }
-            ctx.fillText(name, x + 2, y + 13)
+            ctx.fillText(name, textX + 2, y + 13)
         }
         ctx.restore()
+    }
+
+    frameDims(timelineFrame: TimelineFrame): { x: number; y: number; w: number; h: number } {
+        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET
+        const h = FRAME_HEIGHT
+        let x = this.xForT(timelineFrame.frame.startTime)
+        const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
+        let w = endX - x
+
+        if (w < 1) {
+            w = 1
+        }
+        if (w > 1) {
+            // add a little gap between frames
+            w -= map(w, {from: [1,3], to: [0, 1], clamp: true})
+        }
+        return { x, y, w, h }
     }
 
     xForT(t: number): number {
@@ -268,6 +285,39 @@ export default class TimelineCanvasView extends CanvasView {
 
     tForX(x: number): number {
         return (x - X_MARGIN) / this.zoom + this.startT
+    }
+
+    frameName(timelineFrame: TimelineFrame): string {
+        let name: string
+        if (timelineFrame.className) {
+            name = `${timelineFrame.className}.${timelineFrame.frame.function}`
+        } else if (timelineFrame.frame.function == '<module>'){
+            name = timelineFrame.filePathShort ?? timelineFrame.frame.filePath ?? ''
+        } else {
+            name = timelineFrame.frame.function
+        }
+        return name
+    }
+
+    frameSelfTime(timelineFrame: TimelineFrame): number {
+        let selfTime = timelineFrame.frame.time;
+        const renderedChildren = timelineFrame.frame.children.filter(child => !child.isSynthetic);
+
+        for (const child of renderedChildren) {
+            selfTime -= child.time;
+        }
+
+        return selfTime;
+    }
+
+    hitTest(x: number, y: number): TimelineFrame | null {
+        for (const frame of this.frames) {
+            const { x: frameX, y: frameY, w, h } = this.frameDims(frame)
+            if (x >= frameX && x <= frameX + w && y >= frameY && y <= frameY + h) {
+                return frame
+            }
+        }
+        return null
     }
 
     onWheel(event: WheelEvent) {
@@ -332,12 +382,12 @@ export default class TimelineCanvasView extends CanvasView {
         return result
     }
 
-    libraryIndexForFrame(frame: TimelineFrame) {
+    libraryIndexForFrame(timelineFrame: TimelineFrame) {
         if (!this._libraryOrder) {
             this._assignLibraryOrder()
         }
 
-        const library = frame.library || ''
+        const library = timelineFrame.library || ''
         let result = this._libraryOrder!.indexOf(library)
 
         if (result === -1) {
@@ -349,9 +399,39 @@ export default class TimelineCanvasView extends CanvasView {
         return result
     }
 
-    colorForFrame(frame: TimelineFrame) {
-        const libraryIndex = this.libraryIndexForFrame(frame)
+    colorForFrame(timelineFrame: TimelineFrame) {
+        const libraryIndex = this.libraryIndexForFrame(timelineFrame)
         const color = this.colorForLibraryIndex(libraryIndex)
         return color
+    }
+
+    updateTooltip(timelineFrame: TimelineFrame | null) {
+        if (timelineFrame) {
+            type Props = ComponentProps<TimelineCanvasViewTooltip>
+            const props: Props = {
+                name: this.frameName(timelineFrame),
+                time: timelineFrame.frame.time,
+                selfTime: this.frameSelfTime(timelineFrame),
+                totalTime: this._rootFrame?.time ?? 1e-12,
+                location: `${timelineFrame.filePathShort}:${timelineFrame.frame.lineNo}`,
+                locationColor: this.colorForFrame(timelineFrame),
+            }
+
+            if (!this.tooltipComponent) {
+                this.tooltipComponent = new TimelineCanvasViewTooltip({
+                    target: this.tooltipContainer,
+                    props,
+                })
+            } else {
+                this.tooltipComponent.$set(props)
+            }
+        }
+
+        // if (!timelineFrame) {
+        //     if (this.tooltipComponent) {
+        //         this.tooltipComponent.$destroy()
+        //         this.tooltipComponent = null
+        //     }
+        // }
     }
 }
