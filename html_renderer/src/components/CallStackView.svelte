@@ -51,15 +51,17 @@
 
 <div class="call-stack-view" bind:this={element}>
   <div class="scroll-inner" bind:this={scrollInnerElement}>
-    <div class="margins">
-      {#if !rootFrame}
+    {#if !rootFrame}
+      <div class="margins">
         <div class="error">
           All frames were filtered out.
         </div>
-      {:else}
+      </div>
+    {:else}
+      <div class="call-stack-margins">
         <FrameView frame={rootFrame} rootFrame={rootFrame} />
-      {/if}
-    </div>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -76,8 +78,14 @@
     }
   }
   .scroll-inner {
-    padding-top: 20px;
+    padding-top: 10px;
     padding-bottom: 40px;
     box-sizing: border-box;
+    width: auto;
+    min-width: max-content;
+  }
+  .call-stack-margins {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 </style>
