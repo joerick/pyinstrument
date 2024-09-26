@@ -39,9 +39,14 @@ class HTMLRenderer(Renderer):
                 DeprecationWarning,
                 stacklevel=3,
             )
+        # this is an undocumented option for use by the ipython magic, might
+        # be removed later
+        self.preprocessors: ProcessorList = []
 
     def render(self, session: Session):
-        session_json = JSONForHTMLRenderer().render(session)
+        json_renderer = JSONForHTMLRenderer()
+        json_renderer.processors = self.preprocessors
+        session_json = json_renderer.render(session)
 
         resources_dir = Path(__file__).parent / "html_resources"
 
@@ -117,5 +122,6 @@ class JSONForHTMLRenderer(FrameRenderer):
         session_json = session.to_json(include_frame_records=False)
         session_json_str = json.dumps(session_json)
         root_frame = session.root_frame()
+        root_frame = self.preprocess(root_frame)
         frame_tree_json_str = root_frame.to_json_str() if root_frame else "null"
         return '{"session": %s, "frame_tree": %s}' % (session_json_str, frame_tree_json_str)

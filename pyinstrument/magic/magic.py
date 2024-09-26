@@ -165,7 +165,7 @@ class PyinstrumentMagic(Magics):
             show_all=args.show_all,
             timeline=args.timeline,
         )
-        html_renderer.processors.append(strip_ipython_frames_processor)
+        html_renderer.preprocessors.append(strip_ipython_frames_processor)
         html = _active_profiler.output(html_renderer)
         as_iframe = IFrame(
             src="data:text/html, " + urllib.parse.quote(html),

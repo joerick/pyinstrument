@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 import time
 from typing import Generator, Generic, Iterable, Iterator, NoReturn, Optional, TypeVar
 
@@ -7,6 +8,7 @@ from flaky import flaky
 
 from pyinstrument.frame import SYNTHETIC_LEAF_IDENTIFIERS, Frame
 from pyinstrument.profiler import Profiler
+from pyinstrument.session import Session
 
 if "CI" in os.environ:
     # a decorator that allows some test flakiness in CI environments, presumably
@@ -83,3 +85,17 @@ def main():
 if __name__ == '__main__':
     main()
 """
+
+
+def dummy_session() -> Session:
+    return Session(
+        frame_records=[],
+        start_time=0,
+        duration=0,
+        sample_count=0,
+        start_call_stack=[],
+        target_description="dummy",
+        cpu_time=0,
+        sys_path=sys.path,
+        sys_prefixes=Session.current_sys_prefixes(),
+    )
