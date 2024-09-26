@@ -14,7 +14,7 @@ const X_MARGIN = 28
 const Y_MARGIN = 17
 const Y_FRAME_INSET = 29 // vertical space between y margin and first frame, where the axis markers are drawn
 
-const GRADIENT_STR = ['#47A298','#9FC175','#C1A731','#C07210','#B84210','#B53134','#9A3586','#4958B5','#3475BA','#318DBC','#47A298']
+const GRADIENT_STR = ['#47A298','#8AAE5D','#C1A731','#C07210','#B84210','#B53134','#9A3586','#4958B5','#3475BA','#318DBC','#47A298']
 const GRADIENT = GRADIENT_STR.map(parseColor)
 
 export interface TimelineFrame {
@@ -57,6 +57,7 @@ export default class TimelineCanvasView extends CanvasView {
 
     _rootFrame: Frame | null = null
     setRootFrame(rootFrame: Frame) {
+        this._rootFrame = rootFrame
         this.frames = []
         this._frameMaxT = undefined
         this._collectFrames(rootFrame, 0)
@@ -440,6 +441,12 @@ export default class TimelineCanvasView extends CanvasView {
                 const maxX = this.width - 10 - tooltipWidth
                 if (position.x > maxX) {
                     position.x = maxX
+                }
+                // note, this is a guess, but clipping off bottom will be rare, as will be wrapping tooltips
+                const tooltipHeight = 60
+                const maxY = this.height - 10 - tooltipHeight
+                if (position.y > maxY) {
+                    position.y = maxY
                 }
 
                 this.tooltipContainer.style.left = `${position.x}px`
