@@ -193,6 +193,7 @@ class Profiler:
             start_call_stack=active_session.start_call_stack,
             cpu_time=cpu_time,
             sys_path=sys.path,
+            sys_prefixes=Session.current_sys_prefixes(),
         )
 
         if self.last_session is not None:
@@ -355,18 +356,11 @@ class Profiler:
 
     def output_html(
         self,
-        timeline: bool = False,
-        show_all: bool = False,
-        processor_options: dict[str, Any] | None = None,
     ) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
-        return self.output(
-            renderer=renderers.HTMLRenderer(
-                timeline=timeline, show_all=show_all, processor_options=processor_options
-            )
-        )
+        return self.output(renderer=renderers.HTMLRenderer())
 
     def write_html(
         self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False

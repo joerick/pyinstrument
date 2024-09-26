@@ -27,7 +27,7 @@ def build_frame_tree(
     if len(frame_records) == 0:
         return None
 
-    root_frame = Frame(identifier_or_frame_info=DUMMY_ROOT_FRAME_IDENTIFIER, root_context=context)
+    root_frame = Frame(identifier_or_frame_info=DUMMY_ROOT_FRAME_IDENTIFIER, context=context)
 
     # put the root frame at the bottom of the stack
     frame_stack: list[Frame] = [root_frame]

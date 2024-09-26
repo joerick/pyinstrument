@@ -12,3 +12,9 @@ html, body {
 .margins {
     padding: 0 30px;
 }
+label {
+    user-select: none;
+    * {
+        user-select: initial;
+    }
+}

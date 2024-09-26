@@ -12,7 +12,9 @@
     <script type="module">
       import pyinstrumentHTMLRenderer from "/src/main.ts";
 
-      fetch('/sample.json')
+      // fetch('/sample.json')
+      // fetch('/busy_wait.json')
+      fetch('/sympy_perf.json')
       // fetch('/sample-edit-longpaths.json')
       // fetch('/sample-sympy.json')
         .then(async response => JSON.parse(await response.text()))

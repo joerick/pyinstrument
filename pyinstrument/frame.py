@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import typing
 import uuid
 from typing import Callable, Sequence
@@ -46,6 +45,8 @@ SYNTHETIC_LEAF_IDENTIFIERS = frozenset(
 
 class FrameContext(typing.Protocol):
     def shorten_path(self, path: str) -> str: ...
+    @property
+    def sys_prefixes(self) -> Sequence[str]: ...
 
 
 class Frame:
@@ -57,7 +58,7 @@ class Frame:
     group: FrameGroup | None
     time: float
 
-    # if this frame is a root frame, this is the session it belongs to
+    # the session this frame belongs to
     _context: FrameContext | None
 
     # tracks the time from frames that were deleted during processing
@@ -70,7 +71,7 @@ class Frame:
         identifier_or_frame_info: str = "",
         children: Sequence[Frame] | None = None,
         time: float = 0,
-        root_context: FrameContext | None = None,
+        context: FrameContext | None = None,
     ):
         identifier = frame_info_get_identifier(identifier_or_frame_info)
         self.identifier = identifier
@@ -78,7 +79,7 @@ class Frame:
         self.time = 0.0
         self.group = None
         self.absorbed_time = 0.0
-        self._context = root_context
+        self._context = context
 
         self._identifier_parts = identifier.split("\x00")
         self.attributes = {}
@@ -108,13 +109,17 @@ class Frame:
         if self.parent:
             self.parent._children.remove(self)
             self.parent = None
-        self._context = None
 
     @property
     def context(self):
         if not self._context:
             raise RuntimeError("Frame has no context")
         return self._context
+
+    def set_context(self, context: FrameContext | None):
+        self._context = context
+        for child in self._children:
+            child.set_context(context)
 
     @staticmethod
     def new_subclass_with_frame_info(frame_info: str) -> Frame:
@@ -182,13 +187,9 @@ class Frame:
         if not file_path:
             return False
 
-        if "/lib/" in file_path:
+        if any(file_path.startswith(p) for p in self.context.sys_prefixes):
+            # lives in python install dir or virtualenv
             return False
-
-        if os.sep != "/":
-            # windows uses back-slash too, so let's look for that too.
-            if (f"{os.sep}lib{os.sep}") in file_path:
-                return False
 
         if file_path.startswith("<"):
             if file_path.startswith("<ipython-input-"):
@@ -230,7 +231,7 @@ class Frame:
 
         frame.remove_from_parent()
         frame.parent = self
-        frame._context = self.context
+        frame.set_context(self._context)
         if after is None:
             self._children.append(frame)
         else:

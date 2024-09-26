@@ -31,6 +31,7 @@ class Session:
         target_description: str,
         cpu_time: float,
         sys_path: list[str],
+        sys_prefixes: list[str],
     ):
         """Session()
 
@@ -46,6 +47,7 @@ class Session:
         self.target_description = target_description
         self.cpu_time = cpu_time
         self.sys_path = sys_path
+        self.sys_prefixes = sys_prefixes
         self._short_file_path_cache = {}
 
     @staticmethod
@@ -77,7 +79,11 @@ class Session:
             "target_description": self.target_description,
             "cpu_time": self.cpu_time,
             "sys_path": self.sys_path,
+            "sys_prefixes": self.sys_prefixes,
         }
+
+        if include_frame_records:
+            result["frame_records"] = self.frame_records
 
         return result
 
@@ -92,6 +98,7 @@ class Session:
             target_description=json_dict["target_description"],
             cpu_time=json_dict["cpu_time"] or 0,
             sys_path=json_dict.get("sys_path", sys.path),
+            sys_prefixes=json_dict.get("sys_prefixes", Session.current_sys_prefixes()),
         )
 
     @staticmethod
@@ -120,7 +127,14 @@ class Session:
             sys_path=(
                 session1.sys_path + [p for p in session2.sys_path if p not in session1.sys_path]
             ),
+            sys_prefixes=list(set([*session1.sys_prefixes, *session2.sys_prefixes])),
         )
+
+    @staticmethod
+    def current_sys_prefixes() -> list[str]:
+        prefixes = [sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix]
+        # deduplicate
+        return list(set(prefixes))
 
     def root_frame(self, trim_stem: bool = True) -> Frame | None:
         """

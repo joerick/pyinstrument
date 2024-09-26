@@ -9,6 +9,7 @@ export default class Session {
     cpuTime: number;
     rootFrame: Frame;
     sysPath: string;
+    sysPrefixes: string[];
 
     constructor(data: SessionData) {
         this.startTime = data.session.start_time;
@@ -17,6 +18,7 @@ export default class Session {
         this.target_description = data.session.target_description;
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
+        this.sysPrefixes = data.session.sys_prefixes
         this.rootFrame = new Frame(data.frame_tree, this)
     }
 

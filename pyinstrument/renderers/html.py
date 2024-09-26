@@ -4,11 +4,11 @@ import codecs
 import json
 import tempfile
 import urllib.parse
+import warnings
 import webbrowser
 from pathlib import Path
-from typing import Any
 
-from pyinstrument.renderers.base import Renderer
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
 
 # pyright: strict
@@ -25,21 +25,23 @@ class HTMLRenderer(Renderer):
         self,
         show_all: bool = False,
         timeline: bool = False,
-        processor_options: dict[str, Any] | None = None,
-        _data_only: bool = False,  # only for testing purposes
     ):
         super().__init__()
-        self.initial_options = {
-            "show_all": show_all,
-            "timeline": timeline,
-            "processor_options": processor_options or {},
-        }
-        self._data_only = _data_only
+        if show_all:
+            warnings.warn(
+                f"the show_all option is deprecated on the HTML renderer, and has no effect. Use the view options in the webpage instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        if timeline:
+            warnings.warn(
+                f"timeline is deprecated on the HTML renderer, and has no effect. Use the timeline view in the webpage instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
 
     def render(self, session: Session):
-        session_json = self.render_json(session)
-        if self._data_only:
-            return session_json
+        session_json = JSONForHTMLRenderer().render(session)
 
         resources_dir = Path(__file__).parent / "html_resources"
 
@@ -67,8 +69,7 @@ class HTMLRenderer(Renderer):
 
                 <script>
                     const sessionData = {session_json};
-                    const initialOptions = {json.dumps(self.initial_options)};
-                    pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData, initialOptions);
+                    pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData);
                 </script>
             </body>
             </html>
@@ -98,7 +99,21 @@ class HTMLRenderer(Renderer):
         webbrowser.open(url)
         return output_filename
 
-    def render_json(self, session: Session):
+
+class JSONForHTMLRenderer(FrameRenderer):
+    """
+    The HTML takes a special form of JSON-encoded session, which includes
+    an unprocessed frame tree rather than a list of frame records. This
+    reduces the amount of parsing code that must be included in the
+    Typescript renderer.
+    """
+
+    output_file_extension = "json"
+
+    def default_processors(self) -> ProcessorList:
+        return []
+
+    def render(self, session: Session) -> str:
         session_json = session.to_json(include_frame_records=False)
         session_json_str = json.dumps(session_json)
         root_frame = session.root_frame()

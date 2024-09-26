@@ -7,6 +7,7 @@ export interface SessionData {
         target_description: string;
         cpu_time: number;
         sys_path: string;
+        sys_prefixes: string[];
     };
     frame_tree: FrameData;
 }

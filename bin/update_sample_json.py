@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-from pyinstrument.renderers.html import HTMLRenderer
+from pyinstrument.renderers.html import JSONForHTMLRenderer
 from pyinstrument.session import Session
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -18,8 +18,8 @@ def main():
     session = Session.load(args.SESSION_FILE)
 
     with open(OUTPUT_FILE, "w") as f:
-        renderer = HTMLRenderer()
-        f.write(renderer.render_json(session))
+        renderer = JSONForHTMLRenderer()
+        f.write(renderer.render(session))
 
     print(f"Sample JSON written to {OUTPUT_FILE}")
 

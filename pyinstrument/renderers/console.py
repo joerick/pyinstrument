@@ -238,7 +238,11 @@ class ConsoleRenderer(FrameRenderer):
         function_color = self._ansi_color_for_name(frame)
         function_str = f"{function_color}{function_name}{self.colors.end}"
 
-        code_position_str = f"{self.colors.faint}{frame.code_position_short}{self.colors.end}"
+        code_position_short = frame.code_position_short()
+        if code_position_short:
+            code_position_str = f"{self.colors.faint}{code_position_short}{self.colors.end}"
+        else:
+            code_position_str = ""
 
         return f"{value_str} {function_str}  {code_position_str}"
 

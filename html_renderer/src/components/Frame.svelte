@@ -233,6 +233,12 @@
         {codePosition}
       </div>
     </div>
+
+    <div
+      class="visual-guide"
+      style:left={`${indent * 35 + 21}px`}
+      style:backgroundColor={timeColor}
+    ></div>
   {/if}
 
   {#if frame.group && frame.group.rootFrame == frame && !collapsed}
@@ -272,12 +278,6 @@
       {/each}
     </div>
   {/if}
-
-  <div
-    class="visual-guide"
-    style:left={`${indent * 35 + 21}px`}
-    style:backgroundColor={timeColor}
-  ></div>
 </div>
 
 <style lang="scss">

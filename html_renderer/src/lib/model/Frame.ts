@@ -180,8 +180,9 @@ export default class Frame {
             return false;
         }
 
-        const libPaths = ["/lib/", "\\lib\\"];
-        if (libPaths.some(path => filePath.includes(path))) {
+        const prefixes = this.context.sysPrefixes
+        if (prefixes.some(path => filePath.startsWith(path))) {
+            // this code lives in the Python installation dir or a virtualenv
             return false;
         }
 
@@ -189,6 +190,15 @@ export default class Frame {
             if (filePath.startsWith("<ipython-input-")) {
                 // Lines typed at a console or in a notebook are considered application code
                 return true;
+            } else if (filePath == "<string>" || filePath == "<stdin>") {
+                // eval/exec is app code if started by a parent frame that is app code
+                if (this.parent) {
+                    return this.parent.isApplicationCode
+                } else {
+                    // if this is the root frame, it must have been started
+                    // with -c, so it's app code
+                    return true
+                }
             } else {
                 // Otherwise, this is likely some form of library-internal code generation
                 return false;
@@ -221,4 +231,5 @@ export default class Frame {
 
 interface FrameContext {
     shortenPath(path: string): string
+    sysPrefixes: string[]
 }
