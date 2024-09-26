@@ -206,3 +206,20 @@ export function htmlForStringWithWBRAtSlashes(str: string) {
     let result = escapeForHtml(str);
     return result.replace(/(\/|\\)/g, s => `${s}<wbr>`);
 }
+
+export function maxBy<T>(list: readonly T[], keyFunc: (a:T) => number): T|null {
+    if (list.length == 0) return null
+
+    let maxResult = list[0]
+    let maxResultScore = keyFunc(maxResult)
+
+    for (const el of list) {
+        const elScore = keyFunc(el)
+        if (elScore > maxResultScore) {
+            maxResult = el
+            maxResultScore = elScore
+        }
+    }
+
+    return maxResult
+}

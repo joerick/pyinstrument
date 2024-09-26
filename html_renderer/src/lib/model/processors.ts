@@ -1,3 +1,4 @@
+import { maxBy } from "../utils";
 import type Frame from "./Frame";
 import { SELF_TIME_FRAME_IDENTIFIER } from "./Frame";
 import FrameGroup from "./FrameGroup";
@@ -319,6 +320,8 @@ export function remove_first_pyinstrument_frames_processor(frame: Frame | null, 
         return null;
     }
 
+    const longestFrame = (frames: readonly Frame[]) => maxBy(frames, f => f.time)
+
     const isInitialPyinstrumentFrame = (f: Frame) =>
         f.filePath?.includes("pyinstrument/__main__.py") && f.children.length > 0;
 
@@ -332,16 +335,16 @@ export function remove_first_pyinstrument_frames_processor(frame: Frame | null, 
 
     if (!isInitialPyinstrumentFrame(result)) return frame;
 
-    result = result.children[0];
+    result = longestFrame(result.children)!
 
     if (!isExecFrame(result)) return frame;
 
-    result = result.children[0];
+    result = longestFrame(result.children)!
 
     if (!isRunpyFrame(result)) return frame;
 
     while (isRunpyFrame(result)) {
-        result = result.children[0];
+        result = longestFrame(result.children)!
     }
 
     result.removeFromParent();

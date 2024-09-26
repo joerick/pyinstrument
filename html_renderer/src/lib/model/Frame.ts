@@ -225,7 +225,8 @@ export default class Frame {
         if (!filePathShort) {
             return null;
         }
-        return /^[^\\/.]*/.exec(filePathShort)![0]
+        // return the first part of the path that isn't slashes or dots
+        return /^[\\/.]*([^\\/.]*)/.exec(filePathShort)![0] ?? ''
     }
 }
 

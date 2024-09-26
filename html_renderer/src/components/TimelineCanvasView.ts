@@ -14,7 +14,7 @@ const X_MARGIN = 28
 const Y_MARGIN = 17
 const Y_FRAME_INSET = 29 // vertical space between y margin and first frame, where the axis markers are drawn
 
-const GRADIENT_STR = ['#47A298','#8AAE5D','#C1A731','#C07210','#B84210','#B53134','#9A3586','#4958B5','#3475BA','#318DBC','#47A298']
+const GRADIENT_STR = ['#3475BA','#318DBC','#47A298','#8AAE5D','#C1A731','#C07210','#B84210','#B53134','#9A3586','#4958B5','#3475BA']
 const GRADIENT = GRADIENT_STR.map(parseColor)
 
 export interface TimelineFrame {
@@ -355,16 +355,16 @@ export default class TimelineCanvasView extends CanvasView {
     // libraries get colors further apart from each other
     _libraryOrder: string[] | null = null
     _assignLibraryOrder() {
-        const librariesOccurenceCounts: Record<string, number> = {}
+        const librariesTotalTime: Record<string, number> = {}
 
         for (const timelineFrame of this.frames) {
             const frame = timelineFrame.frame
             const library = frame.library ?? ''
-            librariesOccurenceCounts[library] = (librariesOccurenceCounts[library] || 0) + 1
+            librariesTotalTime[library] = (librariesTotalTime[library] || 0) + timelineFrame.frame.time
         }
 
-        const libraries = Object.keys(librariesOccurenceCounts)
-        libraries.sort((a, b) => librariesOccurenceCounts[b] - librariesOccurenceCounts[a])
+        const libraries = Object.keys(librariesTotalTime)
+        libraries.sort((a, b) => librariesTotalTime[b] - librariesTotalTime[a])
         this._libraryOrder = libraries
     }
 
