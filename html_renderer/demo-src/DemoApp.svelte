@@ -1,16 +1,12 @@
 <script lang="ts">
   import pyinstrumentHTMLRenderer from "../src/main";
 
-  const fileURLs = import.meta.glob("../demo-data/*.json", {
-    eager: true,
-    import: "default",
-    query: "?url",
-  }) as Record<string, string>;
+  const fileURLs = import.meta.glob("../demo-data/*.json", {import: "default"})
 
-  const files = Object.entries(fileURLs).map(([srcURL, realURL]) => {
+  const files = Object.entries(fileURLs).map(([srcURL, promiseFn]) => {
     const filename = srcURL.split("/").pop()!;
     const stem = filename.split(".").slice(0, -1).join(".");
-    return { name: stem, url: realURL };
+    return { name: stem, promiseFn };
   });
 
   let file = files[0];
@@ -22,8 +18,7 @@
     loading = true;
     error = null;
     data = null;
-    fetch(file.url)
-      .then((response) => response.json())
+    file.promiseFn()
       .then((json) => {
         data = json;
         error = null;
