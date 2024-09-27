@@ -9,11 +9,29 @@
   function clickOutside() {
     dispatch("close");
   }
+  let rootElement: HTMLElement | undefined;
   let boxElement: HTMLElement | undefined;
   onMount(() => {
     if (!boxElement) return;
     return onClickOutside(boxElement, clickOutside, {ignore: [".js-view-options-button"]});
   })
+  function ensureBoxIsOnScreen() {
+    // small screens might have the box off-screen
+    if (!rootElement || !boxElement) return;
+    const rootRect = rootElement.getBoundingClientRect();
+    const boxRect = boxElement.getBoundingClientRect();
+    const boxWidth = boxRect.width;
+    if (rootRect.right - boxWidth - 20 < 0) {
+      boxElement.style.right = `${rootRect.right - boxWidth - 20}px`;
+    } else {
+      boxElement.style.right = "0";
+    }
+  }
+  onMount(() => {
+    ensureBoxIsOnScreen();
+    window.addEventListener("resize", ensureBoxIsOnScreen);
+    return () => window.removeEventListener("resize", ensureBoxIsOnScreen);
+  });
 
   let title = "View options";
   $: if ($viewOptions.viewMode === "call-stack") {
@@ -23,7 +41,7 @@
   }
 </script>
 
-<div class="view-options">
+<div class="view-options" bind:this={rootElement}>
   <div class="box" bind:this={boxElement}>
     <div class="title">{title}</div>
     {#if $viewOptions.viewMode === "call-stack"}

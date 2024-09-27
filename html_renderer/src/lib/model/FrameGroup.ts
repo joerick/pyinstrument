@@ -1,3 +1,4 @@
+import { randomId } from '../utils';
 import type Frame from './Frame';
 
 export default class FrameGroup {
@@ -6,7 +7,7 @@ export default class FrameGroup {
     _frames: Frame[] = []
 
     constructor(rootFrame: Frame) {
-        this.id = crypto.randomUUID()
+        this.id = randomId()
         this.rootFrame = rootFrame;
     }
 

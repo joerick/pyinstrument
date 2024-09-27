@@ -1,6 +1,7 @@
 <script lang="ts">
   import { viewOptionsCallStack } from "../lib/settings";
-  const cid = Math.random().toString(36).substring(4);
+  import { randomId } from "../lib/utils";
+  const cid = randomId();
 
   function removeIrrelevantThresholdPercent() {
     const num = $viewOptionsCallStack.removeIrrelevantThreshold * 100

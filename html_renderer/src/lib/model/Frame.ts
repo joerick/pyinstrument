@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import type FrameGroup from './FrameGroup';
+import { randomId } from '../utils';
 // import type { FrameData } from '../dataTypes';
 
 export interface FrameData {
@@ -37,7 +37,7 @@ const ATTRIBUTE_MARKER_LINE_NUMBER = "l"
 const ATTRIBUTE_MARKER_TRACEBACKHIDE = "h"
 
 export default class Frame {
-    uuid: string = uuidv4()
+    uuid: string = randomId()
     identifier: string
     _identifierParts: string[]
     startTime: number
@@ -226,7 +226,7 @@ export default class Frame {
             return null;
         }
         // return the first part of the path that isn't slashes or dots
-        return /^[\\/.]*([^\\/.]*)/.exec(filePathShort)![0] ?? ''
+        return /^[\\/.]*[^\\/.]*/.exec(filePathShort)![0] ?? ''
     }
 }
 

@@ -223,3 +223,10 @@ export function maxBy<T>(list: readonly T[], keyFunc: (a:T) => number): T|null {
 
     return maxResult
 }
+
+/**
+ * Provides 56 bits of randomness as a neat 11-character string.
+ */
+export function randomId() {
+    return Math.random().toString(36).substring(2);
+}

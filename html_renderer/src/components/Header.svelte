@@ -103,9 +103,11 @@
   }
   .view-options {
     display: flex;
+    flex-wrap: wrap;
     // margin-top: 2px;
     label {
       margin: 0 5px;
+      white-space: nowrap;
     }
   }
   .metrics {
