@@ -4,28 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pyinstrument</title>
+    <title>Pyinstrument Demo</title>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-    <script type="module">
-      import pyinstrumentHTMLRenderer from "/src/main.ts";
-
-      // fetch('/sample.json')
-      // fetch('/busy_wait.json')
-      // fetch('/sympy_perf.json')
-      fetch('/context_api.json')
-      // fetch('/sample-edit-longpaths.json')
-      // fetch('/sample-sympy.json')
-        .then(async response => JSON.parse(await response.text()))
-        .then(data => {
-            pyinstrumentHTMLRenderer.render(
-                document.getElementById('app'),
-                data,
-            )
-        })
-        .catch(console.error);
-    </script>
+    <script type="module" src="demo-src/main.ts"></script>
   </body>
 </html>

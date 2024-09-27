@@ -67,6 +67,7 @@
 
 <style lang="scss">
   .call-stack-view {
+    background-color: #303538;
     position: absolute;
     top: 0;
     bottom: 0;
