@@ -29,6 +29,7 @@ export interface TimelineFrame {
 export default class TimelineCanvasView extends CanvasView {
     zoom: number = 1 // pixels per second
     startT: number = 0 // seconds
+    yOffset: number = 0 // pixels
     frames: TimelineFrame[] = []
     isZoomedIn: boolean = false
 
@@ -41,9 +42,12 @@ export default class TimelineCanvasView extends CanvasView {
         this.onWheel = this.onWheel.bind(this)
         this.onMouseMove = this.onMouseMove.bind(this)
         this.onMouseLeave = this.onMouseLeave.bind(this)
+        this.onMouseDown = this.onMouseDown.bind(this)
+        this.windowMouseUp = this.windowMouseUp.bind(this)
         this.canvas.addEventListener('wheel', this.onWheel)
         this.canvas.addEventListener('mousemove', this.onMouseMove)
         this.canvas.addEventListener('mouseleave', this.onMouseLeave)
+        this.canvas.addEventListener('mousedown', this.onMouseDown)
 
         this.tooltipContainer = document.createElement('div')
         this.tooltipContainer.style.position = 'absolute'
@@ -56,10 +60,12 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     _rootFrame: Frame | null = null
+    maxDepth = 0
     setRootFrame(rootFrame: Frame) {
         this._rootFrame = rootFrame
         this.frames = []
         this._frameMaxT = undefined
+        this.maxDepth = 0
         this._collectFrames(rootFrame, 0)
         this.fitContents()
         this.setNeedsRedraw()
@@ -74,6 +80,7 @@ export default class TimelineCanvasView extends CanvasView {
             className: frame.className,
             filePathShort: frame.filePathShort,
         })
+        this.maxDepth = Math.max(this.maxDepth, depth)
         for (const child of frame.children) {
             if (child.identifier !== SELF_TIME_FRAME_IDENTIFIER) {
                 // we don't render self time frames
@@ -88,6 +95,10 @@ export default class TimelineCanvasView extends CanvasView {
             this._frameMaxT = this.frames.reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0)
         }
         return this._frameMaxT
+    }
+
+    get maxYOffset() {
+        return Math.max(0, (this.maxDepth+1) * FRAME_PITCH + Y_MARGIN*2 + Y_FRAME_INSET - this.height)
     }
 
     get minZoom() {
@@ -125,6 +136,13 @@ export default class TimelineCanvasView extends CanvasView {
         if (this.startT > maxStartT) {
             this.startT = maxStartT
         }
+
+        if (this.yOffset < 0) {
+            this.yOffset = 0
+        }
+        if (this.yOffset > this.maxYOffset) {
+            this.yOffset = this.maxYOffset
+        }
     }
 
     lastDrawWidth: number = 0
@@ -156,6 +174,10 @@ export default class TimelineCanvasView extends CanvasView {
 
         ctx.globalAlpha = 1
 
+        const canDrag = this.maxYOffset > 0 || this.isZoomedIn
+        const mouseDown = !!this.mouseDownLocation
+        this.canvas.style.cursor = (mouseDown && canDrag) ? 'grabbing' : 'initial'
+
         // debug
         ctx.fillStyle = 'red'
         ctx.font = `23px "Source Sans Pro", sans-serif`
@@ -163,7 +185,10 @@ export default class TimelineCanvasView extends CanvasView {
         // ctx.fillText(`zoom: ${this.zoom}`, 10, 50)
         // ctx.fillText(`width/zoom: ${this.width / this.zoom}`, 10, 50)
 
-        const hoverFrame = this.hitTest(this.mouseLocation?.x ?? 0, this.mouseLocation?.y ?? 0)
+        let hoverFrame
+        if (!mouseDown) {
+            hoverFrame = this.hitTest(this.mouseLocation?.x ?? 0, this.mouseLocation?.y ?? 0)
+        }
         this.updateTooltip(ctx, hoverFrame)
     }
 
@@ -205,7 +230,8 @@ export default class TimelineCanvasView extends CanvasView {
                 continue
             }
             ctx.globalAlpha = alpha
-            ctx.fillRect(x, Y_MARGIN, 1, this.height - Y_MARGIN)
+            const y = Y_MARGIN - this.yOffset
+            ctx.fillRect(x, y, 1, this.height - y)
 
             const textAlpha = map(alpha, {from: [0.12, 0.25], to: [0, 0.5], clamp: true})
             if (textAlpha > 0.01) {
@@ -215,7 +241,13 @@ export default class TimelineCanvasView extends CanvasView {
                 if (text == '0') {
                     text = '0s'
                 }
-                ctx.fillText(text, x + 3, Y_MARGIN+10)
+                let topY = y + 10
+                ctx.fillText(text, x + 3, topY)
+                let bottomY = this.height + Y_MARGIN + 10 - this.yOffset
+                if (bottomY < this.height - 3) {
+                    bottomY = this.height - 3
+                }
+                ctx.fillText(text, x + 3, bottomY)
             }
             ctx.globalAlpha = 1
         }
@@ -264,7 +296,7 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     frameDims(timelineFrame: TimelineFrame): { x: number; y: number; w: number; h: number } {
-        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET
+        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET - this.yOffset
         const h = FRAME_HEIGHT
         let x = this.xForT(timelineFrame.frame.startTime)
         const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
@@ -341,13 +373,34 @@ export default class TimelineCanvasView extends CanvasView {
         event.preventDefault()
     }
     mouseLocation: { x: number; y: number } | null = null
+    mouseDownLocation: { x: number; y: number } | null = null
     onMouseMove(event: MouseEvent): void {
-        this.mouseLocation = { x: event.offsetX, y: event.offsetY }
+        const mouseLocation = { x: event.offsetX, y: event.offsetY }
+        const prevMouseLocation = this.mouseLocation
+        this.mouseLocation = mouseLocation
+        if (prevMouseLocation && this.mouseDownLocation) {
+            const dLocation = {x: mouseLocation.x - prevMouseLocation.x, y: mouseLocation.y - prevMouseLocation.y}
+            this.startT -= dLocation.x / this.zoom
+            this.yOffset -= dLocation.y
+            this.clampViewport()
+        }
         this.setNeedsRedraw()
     }
     onMouseLeave(event: MouseEvent): void {
-        // console.log('mouse leave', event)
         this.mouseLocation = null
+        this.setNeedsRedraw()
+    }
+    onMouseDown(event: MouseEvent): void {
+        if (!(event.button === 0 || event.button === 1)) {
+            return
+        }
+        this.mouseDownLocation = { x: event.offsetX, y: event.offsetY }
+        window.addEventListener('mouseup', this.windowMouseUp)
+        this.setNeedsRedraw()
+    }
+    windowMouseUp(event: MouseEvent): void {
+        window.removeEventListener('mouseup', this.windowMouseUp)
+        this.mouseDownLocation = null
         this.setNeedsRedraw()
     }
 

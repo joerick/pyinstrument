@@ -45,5 +45,6 @@
     left: 0;
     right: 0;
     overflow: hidden;
+    user-select: none;
   }
 </style>
