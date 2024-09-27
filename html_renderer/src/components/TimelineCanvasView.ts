@@ -44,10 +44,18 @@ export default class TimelineCanvasView extends CanvasView {
         this.onMouseLeave = this.onMouseLeave.bind(this)
         this.onMouseDown = this.onMouseDown.bind(this)
         this.windowMouseUp = this.windowMouseUp.bind(this)
+        this.onTouchstart = this.onTouchstart.bind(this)
+        this.onTouchmove = this.onTouchmove.bind(this)
+        this.onTouchend = this.onTouchend.bind(this)
+        this.onTouchcancel = this.onTouchend.bind(this)
         this.canvas.addEventListener('wheel', this.onWheel)
         this.canvas.addEventListener('mousemove', this.onMouseMove)
         this.canvas.addEventListener('mouseleave', this.onMouseLeave)
         this.canvas.addEventListener('mousedown', this.onMouseDown)
+        this.canvas.addEventListener('touchstart', this.onTouchstart)
+        this.canvas.addEventListener('touchmove', this.onTouchmove)
+        this.canvas.addEventListener('touchend', this.onTouchend)
+        this.canvas.addEventListener('touchcancel', this.onTouchcancel)
 
         this.tooltipContainer = document.createElement('div')
         this.tooltipContainer.style.position = 'absolute'
@@ -55,8 +63,16 @@ export default class TimelineCanvasView extends CanvasView {
         this.container.appendChild(this.tooltipContainer)
     }
     destroy(): void {
-        super.destroy()
         this.canvas.removeEventListener('wheel', this.onWheel)
+        this.canvas.removeEventListener('mousemove', this.onMouseMove)
+        this.canvas.removeEventListener('mouseleave', this.onMouseLeave)
+        this.canvas.removeEventListener('mousedown', this.onMouseDown)
+        this.canvas.removeEventListener('touchstart', this.onTouchstart)
+        this.canvas.removeEventListener('touchmove', this.onTouchmove)
+        this.canvas.removeEventListener('touchend', this.onTouchend)
+        this.canvas.removeEventListener('touchcancel', this.onTouchcancel)
+        this.tooltipContainer.remove()
+        super.destroy()
     }
 
     _rootFrame: Frame | null = null
@@ -89,61 +105,74 @@ export default class TimelineCanvasView extends CanvasView {
         }
     }
 
-    _frameMaxT: number|undefined
-    get frameMaxT() {
-        if (this._frameMaxT === undefined) {
-            this._frameMaxT = this.frames.reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0)
+    tooltipLocation: { x: number; y: number } | null = null
+
+    updateTooltip(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame | null) {
+        // update the content
+        if (timelineFrame) {
+            const frameInfo: TooltipFrameInfo = {
+                name: this.frameName(timelineFrame),
+                time: timelineFrame.frame.time,
+                selfTime: this.frameSelfTime(timelineFrame),
+                totalTime: this._rootFrame?.time ?? 1e-12,
+                location: `${timelineFrame.filePathShort}:${timelineFrame.frame.lineNo}`,
+                locationColor: this.colorForFrame(timelineFrame),
+            }
+
+            if (!this.tooltipComponent) {
+                this.tooltipComponent = new TimelineCanvasViewTooltip({
+                    target: this.tooltipContainer,
+                    props: {f: frameInfo},
+                })
+            } else {
+                this.tooltipComponent.$set({f: frameInfo})
+            }
+
+            // update the position
+            if (this.tooltipLocation) {
+                const position = {x: this.tooltipLocation.x + 12, y: this.tooltipLocation.y + 12}
+
+                // rather than reading the width from the DOM, we estimate it
+                // using canvas APIs. this tends to result in faster and more
+                // predictable results. Also the DOM is very inefficient at
+                // getting the size of something - it often has to relayout
+                // the entire page.
+                const tooltipWidth = estimateWidth(ctx, frameInfo)
+                const maxX = this.width - 10 - tooltipWidth
+                if (position.x > maxX) {
+                    position.x = maxX
+                }
+                // note, this is a guess, but clipping off bottom will be rare, as will be wrapping tooltips
+                const tooltipHeight = 60
+                const maxY = this.height - 10 - tooltipHeight
+                if (position.y > maxY) {
+                    position.y = maxY
+                }
+
+                this.tooltipContainer.style.left = `${position.x}px`
+                this.tooltipContainer.style.top = `${position.y}px`
+            }
         }
-        return this._frameMaxT
+
+        if (!timelineFrame) {
+            if (this.tooltipComponent) {
+                this.tooltipComponent.$destroy()
+                this.tooltipComponent = null
+            }
+        }
     }
 
-    get maxYOffset() {
-        return Math.max(0, (this.maxDepth+1) * FRAME_PITCH + Y_MARGIN*2 + Y_FRAME_INSET - this.height)
-    }
-
-    get minZoom() {
-        return (this.width - 2*X_MARGIN) / this.frameMaxT
-    }
-
-    get maxZoom() {
-        // 150 ns is the python function calling overhead.
-        // 150 ns per 10 pixels seems the smallest that makes sense to me
-        return 10 / 150e-9
-    }
-
-    fitContents() {
-        this.startT = 0
-        this.zoom = this.minZoom
-        this.isZoomedIn = false
-    }
-
-    clampViewport() {
-        if (this.zoom < this.minZoom) {
-            this.zoom = this.minZoom
-            this.isZoomedIn = false
-        } else {
-            this.isZoomedIn = true
-        }
-
-        if (this.zoom > this.maxZoom) {
-            this.zoom = this.maxZoom
-        }
-
-        if (this.startT < 0) {
-            this.startT = 0
-        }
-        const maxStartT = this.frameMaxT - (this.width - 2*X_MARGIN) / this.zoom
-        if (this.startT > maxStartT) {
-            this.startT = maxStartT
-        }
-
-        if (this.yOffset < 0) {
-            this.yOffset = 0
-        }
-        if (this.yOffset > this.maxYOffset) {
-            this.yOffset = this.maxYOffset
-        }
-    }
+    //   /$$$$$$$                                    /$$
+    //  | $$__  $$                                  |__/
+    //  | $$  \ $$  /$$$$$$   /$$$$$$  /$$  /$$  /$$ /$$ /$$$$$$$   /$$$$$$
+    //  | $$  | $$ /$$__  $$ |____  $$| $$ | $$ | $$| $$| $$__  $$ /$$__  $$
+    //  | $$  | $$| $$  \__/  /$$$$$$$| $$ | $$ | $$| $$| $$  \ $$| $$  \ $$
+    //  | $$  | $$| $$       /$$__  $$| $$ | $$ | $$| $$| $$  | $$| $$  | $$
+    //  | $$$$$$$/| $$      |  $$$$$$$|  $$$$$/$$$$/| $$| $$  | $$|  $$$$$$$
+    //  |_______/ |__/       \_______/ \_____/\___/ |__/|__/  |__/ \____  $$
+    //                                                             /$$  \ $$
+    //                                                            |  $$$$$$/
+    //                                                             \______/
 
     lastDrawWidth: number = 0
     lastDrawHeight: number = 0
@@ -185,15 +214,19 @@ export default class TimelineCanvasView extends CanvasView {
         // ctx.fillText(`zoom: ${this.zoom}`, 10, 50)
         // ctx.fillText(`width/zoom: ${this.width / this.zoom}`, 10, 50)
 
-        let hoverFrame
-        if (!mouseDown) {
-            hoverFrame = this.hitTest(this.mouseLocation?.x ?? 0, this.mouseLocation?.y ?? 0)
+        let hoverFrame: TimelineFrame | null = null
+        if (!mouseDown && this.tooltipLocation) {
+            hoverFrame = this.hitTest(this.tooltipLocation)
         }
         this.updateTooltip(ctx, hoverFrame)
     }
 
     drawAxes(ctx: CanvasRenderingContext2D) {
-        const viewportDuration = this.width / this.zoom
+        // const viewportDuration = this.width / this.zoom
+        // clamp the width here to min 800 px, so that we don't draw too many
+        // axes on small screens
+        const viewportDuration = Math.max(800, this.width) / this.zoom
+
         if (viewportDuration == 0) {
             // avoid log of 0
             return
@@ -206,7 +239,7 @@ export default class TimelineCanvasView extends CanvasView {
             highestAxis = 0
         }
         const smallestAxis = Math.ceil(axisScale) - 3
-        const alphaForAxis = (a: number) => map(a, {from: [axisScale, axisScale-3], to: [0.71, 0]})
+        const alphaForAxis = (a: number) => map(a, {from: [axisScale, axisScale-3], to: [0.71, 0], clamp: true})
         for (let a = smallestAxis; a < highestAxis; a++) {
             let alpha = alphaForAxis(a)
             alpha = Math.max(0, Math.min(1, alpha))
@@ -270,138 +303,35 @@ export default class TimelineCanvasView extends CanvasView {
             return
         }
 
+        let name = this.frameName(timelineFrame)
+
+        // the minimum width per character is 3.3px (that's an 'l')
+        // no point in drawing more characters than that, it'll be clipped
+        const maxChars = Math.floor(w / 3.3)
+        if (name.length > maxChars) {
+            name = name.substring(0, maxChars)
+        }
+        if (name.length == 0) {
+            // fast path
+            ctx.fillRect(x, y, w, h)
+            return
+        }
+
         ctx.save()
         ctx.beginPath()
         ctx.rect(x, y, w, h)
         ctx.fill()
         ctx.clip()
 
-        if (w > 2) {
-            ctx.font = `13px "Source Sans Pro", sans-serif`
-            ctx.fillStyle = 'white'
-            let name = this.frameName(timelineFrame)
-            let textX = x
-            if (textX < 0) {
-                textX = 0
-            }
-            // the minimum width per character is 3.3px (that's an 'l')
-            // no point in drawing more characters than that, it'll be clipped
-            const maxChars = Math.floor(w / 3.3)
-            if (name.length > maxChars) {
-                name = name.substring(0, maxChars)
-            }
-            ctx.fillText(name, textX + 2, y + 13)
+        ctx.font = `13px "Source Sans Pro", sans-serif`
+        ctx.fillStyle = 'white'
+        let textX = x
+        if (textX < 0) {
+            textX = 0
         }
+        ctx.fillText(name, textX + 2, y + 13)
+
         ctx.restore()
-    }
-
-    frameDims(timelineFrame: TimelineFrame): { x: number; y: number; w: number; h: number } {
-        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET - this.yOffset
-        const h = FRAME_HEIGHT
-        let x = this.xForT(timelineFrame.frame.startTime)
-        const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
-        let w = endX - x
-
-        if (w < 1) {
-            w = 1
-        }
-        if (w > 1) {
-            // add a little gap between frames
-            w -= map(w, {from: [1,3], to: [0, 1], clamp: true})
-        }
-        return { x, y, w, h }
-    }
-
-    xForT(t: number): number {
-        return (t - this.startT) * this.zoom + X_MARGIN
-    }
-
-    tForX(x: number): number {
-        return (x - X_MARGIN) / this.zoom + this.startT
-    }
-
-    frameName(timelineFrame: TimelineFrame): string {
-        let name: string
-        if (timelineFrame.className) {
-            name = `${timelineFrame.className}.${timelineFrame.frame.function}`
-        } else if (timelineFrame.frame.function == '<module>'){
-            name = timelineFrame.filePathShort ?? timelineFrame.frame.filePath ?? ''
-        } else {
-            name = timelineFrame.frame.function
-        }
-        return name
-    }
-
-    frameSelfTime(timelineFrame: TimelineFrame): number {
-        let selfTime = timelineFrame.frame.time;
-        const renderedChildren = timelineFrame.frame.children.filter(child => !child.isSynthetic);
-
-        for (const child of renderedChildren) {
-            selfTime -= child.time;
-        }
-
-        return selfTime;
-    }
-
-    hitTest(x: number, y: number): TimelineFrame | null {
-        for (const frame of this.frames) {
-            const { x: frameX, y: frameY, w, h } = this.frameDims(frame)
-            if (x >= frameX && x <= frameX + w && y >= frameY && y <= frameY + h) {
-                return frame
-            }
-        }
-        return null
-    }
-
-    onWheel(event: WheelEvent) {
-        const isPinchGestureOrCmdWheel = event.ctrlKey || event.metaKey
-
-        // zooming
-        const zoomSpeed = isPinchGestureOrCmdWheel ? 0.01 : 0.0023
-        const mouseT = this.tForX(event.offsetX)
-        this.zoom *= 1 - event.deltaY * zoomSpeed
-        // an extra clamp to clamp this.zoom before the startT is adjusted
-        this.clampViewport()
-        this.startT = mouseT - (event.offsetX - X_MARGIN) / this.zoom
-
-        // scroll to pan
-        if (!isPinchGestureOrCmdWheel) {
-            this.startT += event.deltaX / this.zoom
-        }
-        this.clampViewport()
-        this.setNeedsRedraw()
-        event.preventDefault()
-    }
-    mouseLocation: { x: number; y: number } | null = null
-    mouseDownLocation: { x: number; y: number } | null = null
-    onMouseMove(event: MouseEvent): void {
-        const mouseLocation = { x: event.offsetX, y: event.offsetY }
-        const prevMouseLocation = this.mouseLocation
-        this.mouseLocation = mouseLocation
-        if (prevMouseLocation && this.mouseDownLocation) {
-            const dLocation = {x: mouseLocation.x - prevMouseLocation.x, y: mouseLocation.y - prevMouseLocation.y}
-            this.startT -= dLocation.x / this.zoom
-            this.yOffset -= dLocation.y
-            this.clampViewport()
-        }
-        this.setNeedsRedraw()
-    }
-    onMouseLeave(event: MouseEvent): void {
-        this.mouseLocation = null
-        this.setNeedsRedraw()
-    }
-    onMouseDown(event: MouseEvent): void {
-        if (!(event.button === 0 || event.button === 1)) {
-            return
-        }
-        this.mouseDownLocation = { x: event.offsetX, y: event.offsetY }
-        window.addEventListener('mouseup', this.windowMouseUp)
-        this.setNeedsRedraw()
-    }
-    windowMouseUp(event: MouseEvent): void {
-        window.removeEventListener('mouseup', this.windowMouseUp)
-        this.mouseDownLocation = null
-        this.setNeedsRedraw()
     }
 
     // the library order controls which color is assigned. More common
@@ -460,58 +390,278 @@ export default class TimelineCanvasView extends CanvasView {
         return color
     }
 
-    updateTooltip(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame | null) {
-        // update the content
-        if (timelineFrame) {
-            const frameInfo: TooltipFrameInfo = {
-                name: this.frameName(timelineFrame),
-                time: timelineFrame.frame.time,
-                selfTime: this.frameSelfTime(timelineFrame),
-                totalTime: this._rootFrame?.time ?? 1e-12,
-                location: `${timelineFrame.filePathShort}:${timelineFrame.frame.lineNo}`,
-                locationColor: this.colorForFrame(timelineFrame),
-            }
+    //   /$$                                                 /$$
+    //  | $$                                                | $$
+    //  | $$        /$$$$$$  /$$   /$$  /$$$$$$  /$$   /$$ /$$$$$$
+    //  | $$       |____  $$| $$  | $$ /$$__  $$| $$  | $$|_  $$_/
+    //  | $$        /$$$$$$$| $$  | $$| $$  \ $$| $$  | $$  | $$
+    //  | $$       /$$__  $$| $$  | $$| $$  | $$| $$  | $$  | $$ /$$
+    //  | $$$$$$$$|  $$$$$$$|  $$$$$$$|  $$$$$$/|  $$$$$$/  |  $$$$/
+    //  |________/ \_______/ \____  $$ \______/  \______/    \___/
+    //                       /$$  | $$
+    //                      |  $$$$$$/
+    //                       \______/
 
-            if (!this.tooltipComponent) {
-                this.tooltipComponent = new TimelineCanvasViewTooltip({
-                    target: this.tooltipContainer,
-                    props: {f: frameInfo},
-                })
-            } else {
-                this.tooltipComponent.$set({f: frameInfo})
-            }
+    _frameMaxT: number|undefined
+    get frameMaxT() {
+        if (this._frameMaxT === undefined) {
+            this._frameMaxT = this.frames.reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0)
+        }
+        return this._frameMaxT
+    }
 
-            // update the position
-            if (this.mouseLocation) {
-                const position = {x: this.mouseLocation.x + 12, y: this.mouseLocation.y + 12}
+    get maxYOffset() {
+        return Math.max(0, (this.maxDepth+1) * FRAME_PITCH + Y_MARGIN*2 + Y_FRAME_INSET - this.height)
+    }
 
-                // rather than reading the width from the DOM, we estimate it
-                // using canvas APIs. this tends to result in faster and more
-                // predictable results. Also the DOM is very inefficient at
-                // getting the size of something - it often has to relayout
-                // the entire page.
-                const tooltipWidth = estimateWidth(ctx, frameInfo)
-                const maxX = this.width - 10 - tooltipWidth
-                if (position.x > maxX) {
-                    position.x = maxX
-                }
-                // note, this is a guess, but clipping off bottom will be rare, as will be wrapping tooltips
-                const tooltipHeight = 60
-                const maxY = this.height - 10 - tooltipHeight
-                if (position.y > maxY) {
-                    position.y = maxY
-                }
+    get minZoom() {
+        return (this.width - 2*X_MARGIN) / this.frameMaxT
+    }
 
-                this.tooltipContainer.style.left = `${position.x}px`
-                this.tooltipContainer.style.top = `${position.y}px`
-            }
+    get maxZoom() {
+        // 150 ns is the python function calling overhead.
+        // 150 ns per 10 pixels seems the smallest that makes sense to me
+        return 10 / 150e-9
+    }
+
+    fitContents() {
+        this.startT = 0
+        this.zoom = this.minZoom
+        this.isZoomedIn = false
+    }
+
+    clampViewport() {
+        if (this.zoom < this.minZoom) {
+            this.zoom = this.minZoom
+            this.isZoomedIn = false
+        } else {
+            this.isZoomedIn = true
         }
 
-        if (!timelineFrame) {
-            if (this.tooltipComponent) {
-                this.tooltipComponent.$destroy()
-                this.tooltipComponent = null
+        if (this.zoom > this.maxZoom) {
+            this.zoom = this.maxZoom
+        }
+
+        if (this.startT < 0) {
+            this.startT = 0
+        }
+        const maxStartT = this.frameMaxT - (this.width - 2*X_MARGIN) / this.zoom
+        if (this.startT > maxStartT) {
+            this.startT = maxStartT
+        }
+
+        if (this.yOffset < 0) {
+            this.yOffset = 0
+        }
+        if (this.yOffset > this.maxYOffset) {
+            this.yOffset = this.maxYOffset
+        }
+    }
+
+    frameDims(timelineFrame: TimelineFrame): { x: number; y: number; w: number; h: number } {
+        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET - this.yOffset
+        const h = FRAME_HEIGHT
+        let x = this.xForT(timelineFrame.frame.startTime)
+        const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
+        let w = endX - x
+
+        if (w < 1) {
+            w = 1
+        }
+        if (w > 1) {
+            // add a little gap between frames
+            w -= map(w, {from: [1,3], to: [0, 1], clamp: true})
+        }
+        return { x, y, w, h }
+    }
+
+    xForT(t: number): number {
+        return (t - this.startT) * this.zoom + X_MARGIN
+    }
+
+    tForX(x: number): number {
+        return (x - X_MARGIN) / this.zoom + this.startT
+    }
+
+    frameName(timelineFrame: TimelineFrame): string {
+        let name: string
+        if (timelineFrame.className) {
+            name = `${timelineFrame.className}.${timelineFrame.frame.function}`
+        } else if (timelineFrame.frame.function == '<module>'){
+            name = timelineFrame.filePathShort ?? timelineFrame.frame.filePath ?? ''
+        } else {
+            name = timelineFrame.frame.function
+        }
+        return name
+    }
+
+    frameSelfTime(timelineFrame: TimelineFrame): number {
+        let selfTime = timelineFrame.frame.time;
+        const renderedChildren = timelineFrame.frame.children.filter(child => !child.isSynthetic);
+
+        for (const child of renderedChildren) {
+            selfTime -= child.time;
+        }
+
+        return selfTime;
+    }
+
+    hitTest(loc: {x: number, y: number}): TimelineFrame | null {
+        for (const frame of this.frames) {
+            const { x: frameX, y: frameY, w, h } = this.frameDims(frame)
+            if (loc.x >= frameX && loc.x <= frameX + w && loc.y >= frameY && loc.y <= frameY + h) {
+                return frame
             }
         }
+        return null
+    }
+
+    //   /$$      /$$
+    //  | $$$    /$$$
+    //  | $$$$  /$$$$  /$$$$$$  /$$   /$$  /$$$$$$$  /$$$$$$
+    //  | $$ $$/$$ $$ /$$__  $$| $$  | $$ /$$_____/ /$$__  $$
+    //  | $$  $$$| $$| $$  \ $$| $$  | $$|  $$$$$$ | $$$$$$$$
+    //  | $$\  $ | $$| $$  | $$| $$  | $$ \____  $$| $$_____/
+    //  | $$ \/  | $$|  $$$$$$/|  $$$$$$/ /$$$$$$$/|  $$$$$$$
+    //  |__/     |__/ \______/  \______/ |_______/  \_______/
+    //
+    //
+    //
+    onWheel(event: WheelEvent) {
+        const isPinchGestureOrCmdWheel = event.ctrlKey || event.metaKey
+
+        // zooming
+        const zoomSpeed = isPinchGestureOrCmdWheel ? 0.01 : 0.0023
+        const mouseT = this.tForX(event.offsetX)
+        this.zoom *= 1 - event.deltaY * zoomSpeed
+        // an extra clamp to clamp this.zoom before the startT is adjusted
+        this.clampViewport()
+        this.startT = mouseT - (event.offsetX - X_MARGIN) / this.zoom
+
+        // scroll to pan
+        if (!isPinchGestureOrCmdWheel) {
+            this.startT += event.deltaX / this.zoom
+        }
+        this.clampViewport()
+        this.setNeedsRedraw()
+        event.preventDefault()
+    }
+    mouseLocation: { x: number; y: number } | null = null
+    mouseDownLocation: { x: number; y: number } | null = null
+    onMouseMove(event: MouseEvent): void {
+        const mouseLocation = { x: event.offsetX, y: event.offsetY }
+        const prevMouseLocation = this.mouseLocation
+        this.mouseLocation = mouseLocation
+        if (prevMouseLocation && this.mouseDownLocation) {
+            const dLocation = {x: mouseLocation.x - prevMouseLocation.x, y: mouseLocation.y - prevMouseLocation.y}
+            this.startT -= dLocation.x / this.zoom
+            this.yOffset -= dLocation.y
+            this.clampViewport()
+        }
+        this.tooltipLocation = mouseLocation
+        this.setNeedsRedraw()
+    }
+    onMouseLeave(event: MouseEvent): void {
+        this.mouseLocation = null
+        this.tooltipLocation = null
+        this.setNeedsRedraw()
+    }
+    onMouseDown(event: MouseEvent): void {
+        if (!(event.button === 0 || event.button === 1)) {
+            return
+        }
+        this.mouseDownLocation = { x: event.offsetX, y: event.offsetY }
+        window.addEventListener('mouseup', this.windowMouseUp)
+        this.setNeedsRedraw()
+    }
+    windowMouseUp(event: MouseEvent): void {
+        window.removeEventListener('mouseup', this.windowMouseUp)
+        this.mouseDownLocation = null
+        this.setNeedsRedraw()
+    }
+
+    //   /$$$$$$$$                               /$$
+    //  |__  $$__/                              | $$
+    //     | $$     /$$$$$$  /$$   /$$  /$$$$$$$| $$$$$$$
+    //     | $$    /$$__  $$| $$  | $$ /$$_____/| $$__  $$
+    //     | $$   | $$  \ $$| $$  | $$| $$      | $$  \ $$
+    //     | $$   | $$  | $$| $$  | $$| $$      | $$  | $$
+    //     | $$   |  $$$$$$/|  $$$$$$/|  $$$$$$$| $$  | $$
+    //     |__/    \______/  \______/  \_______/|__/  |__/
+
+    touches: { [key: number]: { x: number; y: number, downT: number, startDate: number, downX: number, downY: number } } = {}
+    onTouchstart(event: TouchEvent) {
+        event.preventDefault()
+        event.stopPropagation()
+
+        for (const touch of Array.from(event.changedTouches)) {
+            this.touches[touch.identifier] = {
+                x: touch.clientX,
+                y: touch.clientY,
+                downT: this.tForX(touch.clientX),
+                startDate: Date.now(),
+                downX: touch.clientX,
+                downY: touch.clientY,
+            }
+        }
+    }
+    onTouchmove(event: TouchEvent) {
+        event.preventDefault()
+        event.stopPropagation()
+
+        let yMotionSum = 0
+        for (const touch of Array.from(event.changedTouches)) {
+            const prevTouch = this.touches[touch.identifier]
+            if (!prevTouch) {
+                continue
+            }
+            yMotionSum += touch.clientY - prevTouch.y
+            this.touches[touch.identifier] = {
+                ...prevTouch,
+                x: touch.clientX,
+                y: touch.clientY
+            }
+        }
+        const yMotion = yMotionSum / Object.keys(this.touches).length
+        this.yOffset -= yMotion
+        this.adjustXAxisForTouches()
+        this.setNeedsRedraw()
+    }
+    onTouchend(event: TouchEvent) {
+        event.preventDefault()
+        event.stopPropagation()
+
+        for (const touch of Array.from(event.changedTouches)) {
+            delete this.touches[touch.identifier]
+        }
+        this.setNeedsRedraw()
+    }
+    onTouchcancel(event: TouchEvent) {
+        event.preventDefault()
+        event.stopPropagation()
+
+        for (const touch of Array.from(event.changedTouches)) {
+            delete this.touches[touch.identifier]
+        }
+        this.setNeedsRedraw()
+    }
+    adjustXAxisForTouches() {
+        const touchIds = Object.keys(this.touches).map(Number)
+        if (touchIds.length == 0) {
+            return
+        }
+        if (touchIds.length == 1) {
+            const touch = this.touches[touchIds[0]]
+            this.startT = touch.downT - (touch.x - X_MARGIN) / this.zoom
+        }
+        if (touchIds.length >= 2) {
+            const touch1 = this.touches[touchIds[0]]
+            const touch2 = this.touches[touchIds[1]]
+            const newZoom = (touch2.x - touch1.x) / (touch2.downT - touch1.downT)
+            const newStartT = touch1.downT - (touch1.x - X_MARGIN) / newZoom
+            this.startT = newStartT
+            this.zoom = newZoom
+        }
+        this.clampViewport()
     }
 }

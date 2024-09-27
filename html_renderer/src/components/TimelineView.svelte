@@ -6,6 +6,7 @@
   import { viewOptionsTimeline } from "../lib/settings";
   import TimelineCanvasView from "./TimelineCanvasView";
   import { remove_first_pyinstrument_frames_processor, remove_importlib, remove_tracebackhide, type ProcessorOptions } from "../lib/model/processors";
+  import { onDestroy } from "svelte";
 
   export let session: Session
   const config = derived([viewOptionsTimeline], ([viewOptionsTimeline]) => {
@@ -27,6 +28,9 @@
   $: if (rootElement) {
     timelineCanvasView = new TimelineCanvasView(rootElement)
   }
+  onDestroy(() => {
+    timelineCanvasView?.destroy()
+  })
 
   $: if (rootFrame && timelineCanvasView) {
     timelineCanvasView.setRootFrame(rootFrame)
