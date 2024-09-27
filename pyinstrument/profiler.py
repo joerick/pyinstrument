@@ -29,12 +29,14 @@ class ActiveProfilerSession:
         start_process_time: float,
         start_call_stack: list[str],
         target_description: str,
+        interval: float,
     ) -> None:
         self.start_time = start_time
         self.start_process_time = start_process_time
         self.start_call_stack = start_call_stack
         self.frame_records = []
         self.target_description = target_description
+        self.interval = interval
 
 
 AsyncMode = LiteralStr["enabled", "disabled", "strict"]
@@ -149,6 +151,7 @@ class Profiler:
                 start_process_time=process_time(),
                 start_call_stack=build_call_stack(caller_frame, "initial", None),
                 target_description=target_description,
+                interval=self.interval,
             )
 
             use_async_context = self.async_mode != "disabled"
@@ -188,6 +191,8 @@ class Profiler:
             frame_records=active_session.frame_records,
             start_time=active_session.start_time,
             duration=time.time() - active_session.start_time,
+            min_interval=active_session.interval,
+            max_interval=active_session.interval,
             sample_count=len(active_session.frame_records),
             target_description=active_session.target_description,
             start_call_stack=active_session.start_call_stack,

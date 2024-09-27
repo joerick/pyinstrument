@@ -4,6 +4,8 @@ import Frame from "./Frame";
 export default class Session {
     startTime: number;
     duration: number;
+    minInterval: number;
+    maxInterval: number;
     sampleCount: number;
     target_description: string;
     cpuTime: number;
@@ -14,6 +16,8 @@ export default class Session {
     constructor(data: SessionData) {
         this.startTime = data.session.start_time;
         this.duration = data.session.duration;
+        this.minInterval = data.session.min_interval;
+        this.maxInterval = data.session.max_interval;
         this.sampleCount = data.session.sample_count;
         this.target_description = data.session.target_description;
         this.cpuTime = data.session.cpu_time;

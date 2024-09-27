@@ -91,6 +91,8 @@ def dummy_session() -> Session:
     return Session(
         frame_records=[],
         start_time=0,
+        min_interval=0.1,
+        max_interval=0.1,
         duration=0,
         sample_count=0,
         start_call_stack=[],

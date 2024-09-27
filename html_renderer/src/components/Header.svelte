@@ -128,11 +128,12 @@
   .metric {
     display: inline-block;
     white-space: nowrap;
-    margin-left: 6px;
+    margin-left: 2px;
   }
   @media (max-width: 800px) {
     .metric {
       margin-left: 0;
+      margin-right: 2px;
     }
   }
 

@@ -26,6 +26,8 @@ class Session:
         frame_records: list[FrameRecordType],
         start_time: float,
         duration: float,
+        min_interval: float,
+        max_interval: float,
         sample_count: int,
         start_call_stack: list[str],
         target_description: str,
@@ -42,6 +44,8 @@ class Session:
         self.frame_records = frame_records
         self.start_time = start_time
         self.duration = duration
+        self.min_interval = min_interval
+        self.max_interval = max_interval
         self.sample_count = sample_count
         self.start_call_stack = start_call_stack
         self.target_description = target_description
@@ -74,6 +78,8 @@ class Session:
         result: dict[str, Any] = {
             "start_time": self.start_time,
             "duration": self.duration,
+            "min_interval": self.min_interval,
+            "max_interval": self.max_interval,
             "sample_count": self.sample_count,
             "start_call_stack": self.start_call_stack,
             "target_description": self.target_description,
@@ -92,6 +98,8 @@ class Session:
         return Session(
             frame_records=json_dict["frame_records"],
             start_time=json_dict["start_time"],
+            min_interval=json_dict.get("min_interval", 0.001),
+            max_interval=json_dict.get("max_interval", 0.001),
             duration=json_dict["duration"],
             sample_count=json_dict["sample_count"],
             start_call_stack=json_dict["start_call_stack"],
@@ -119,6 +127,8 @@ class Session:
         return Session(
             frame_records=session1.frame_records + session2.frame_records,
             start_time=session1.start_time,
+            min_interval=min(session1.min_interval, session2.min_interval),
+            max_interval=max(session1.max_interval, session2.max_interval),
             duration=session1.duration + session2.duration,
             sample_count=session1.sample_count + session2.sample_count,
             start_call_stack=session1.start_call_stack,

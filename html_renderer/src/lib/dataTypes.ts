@@ -2,6 +2,8 @@ export interface SessionData {
     session: {
         start_time: number;
         duration: number;
+        min_interval: number;
+        max_interval: number;
         sample_count: number;
         start_call_stack: string[],
         target_description: string;
