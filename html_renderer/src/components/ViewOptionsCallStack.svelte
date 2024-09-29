@@ -23,10 +23,9 @@
           bind:group={$viewOptionsCallStack.collapseMode}
           value="non-application"
         />
-        <label for={cid + "collapseModeAll"}>Non-application code</label>
+        <label for={cid + "collapseModeAll"}>Library code</label>
         <div class="description">
-          Application code is anything run from outside the Python home
-          directory.
+          Code run from the Python stdlib, a virtualenv, or a conda env will be collapsed.
         </div>
       </div>
       <div class="option">
@@ -63,7 +62,7 @@
               autocorrect="off"
             />
           </div>
-          If neither match, non-application rule is used.
+          If neither match, the library code rule is used.
         </div>
       </div>
       <div class="option">
