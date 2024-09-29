@@ -30,18 +30,47 @@
 
   let element: HTMLElement|undefined
   let scrollInnerElement: HTMLElement|undefined
-  // don't let the body scroll up due to lack of content (when a tree is closed)
-  // prevents the frames from jumping around when they are collapsed
+  let scrollSizeFixerElement: HTMLElement|undefined
+  // don't let the body scroll up due to lack of content (when a tree is
+  // closed)
+  //
+  // the scrollSizeFixerElement prevents the frames from jumping around
+  // when they are collapsed
   onMount(() => {
+    let scrollMaxY = 0
     const el = element
     if (!el) { throw new Error('element not set'); }
-    let listener
-    el.addEventListener('scroll', listener = () => {
-      scrollInnerElement!.style.minHeight = `${Math.floor(el.scrollTop + el.clientHeight)}px`;
+    if (!scrollInnerElement) { throw new Error('scrollInnerElement not set'); }
+    if (!scrollSizeFixerElement) { throw new Error('scrollSizeFixerElement not set'); }
+
+    const sizeObserver = new ResizeObserver(() => {
+      // when the size of the scrollInnerElement changes, we can increase the
+      // scrollMaxY, but not decrease it
+      const height = scrollInnerElement!.getBoundingClientRect().height;
+      if (height > scrollMaxY) {
+        scrollMaxY = height;
+        scrollSizeFixerElement!.style.top = `${scrollMaxY-1}px`;
+      }
     });
-    listener();
+    sizeObserver.observe(scrollInnerElement!);
+    let scrollListener
+    el.addEventListener('scroll', scrollListener = () => {
+      // when the user scrolls, we can decrease the scrollMaxY, but no smaller
+      // than the current height of the scrollInnerElement
+      let scrollBottom = el.scrollTop + el.clientHeight;
+      const height = scrollInnerElement!.getBoundingClientRect().height;
+      if (scrollBottom < height) {
+        scrollBottom = height;
+      }
+      if (scrollBottom < scrollMaxY) {
+        scrollMaxY = scrollBottom
+        scrollSizeFixerElement!.style.top = `${scrollMaxY-1}px`;
+      }
+    });
+    scrollListener();
     return () => {
-      el.removeEventListener('scroll', listener);
+      sizeObserver.disconnect();
+      el.removeEventListener('scroll', scrollListener);
     }
   });
 
@@ -63,6 +92,7 @@
       </div>
     {/if}
   </div>
+  <div class="scroll-size-fixer" bind:this={scrollSizeFixerElement}></div>
 </div>
 
 <style lang="scss">
@@ -88,5 +118,12 @@
   .call-stack-margins {
     padding-left: 18px;
     padding-right: 18px;
+  }
+  .scroll-size-fixer {
+    height: 1px;
+    width: 100px;
+    position: absolute;
+    left: 0;
+    // background-color: red;
   }
 </style>
