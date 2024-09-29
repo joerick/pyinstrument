@@ -142,9 +142,7 @@ class Session:
 
     @staticmethod
     def current_sys_prefixes() -> list[str]:
-        prefixes = [sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix]
-        # deduplicate
-        return list(set(prefixes))
+        return [sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix]
 
     def root_frame(self, trim_stem: bool = True) -> Frame | None:
         """
