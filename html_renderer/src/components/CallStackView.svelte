@@ -37,7 +37,7 @@
     if (!el) { throw new Error('element not set'); }
     let listener
     el.addEventListener('scroll', listener = () => {
-      scrollInnerElement!.style.minHeight = `${el.scrollTop + el.clientHeight}px`;
+      scrollInnerElement!.style.minHeight = `${Math.floor(el.scrollTop + el.clientHeight)}px`;
     });
     listener();
     return () => {
