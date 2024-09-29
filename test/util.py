@@ -2,10 +2,11 @@ import asyncio
 import os
 import sys
 import time
-from typing import Generator, Generic, Iterable, Iterator, NoReturn, Optional, TypeVar
+from typing import Callable, Generator, Generic, Iterable, Iterator, NoReturn, Optional, TypeVar
 
 from flaky import flaky
 
+from pyinstrument import stack_sampler
 from pyinstrument.frame import SYNTHETIC_LEAF_IDENTIFIERS, Frame
 from pyinstrument.profiler import Profiler
 from pyinstrument.session import Session
@@ -101,3 +102,21 @@ def dummy_session() -> Session:
         sys_path=sys.path,
         sys_prefixes=Session.current_sys_prefixes(),
     )
+
+
+def tidy_up_profiler_state_on_fail(func: Callable) -> Callable[[], None]:
+    """
+    Useful inside a test that's flaky in CI, where the check_sampler_state
+    fixture only gets to run at the end of all flaky attempts.
+    """
+    # consider adding to the flasky_in_ci decorator if it's useful elsewhere
+
+    def wrapped():
+        try:
+            func()
+        except BaseException:
+            sys.setprofile(None)
+            stack_sampler.thread_locals.__dict__.clear()
+            raise
+
+    return wrapped

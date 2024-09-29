@@ -6,7 +6,7 @@ import pytest
 
 from pyinstrument import stack_sampler
 
-from .util import do_nothing, flaky_in_ci
+from .util import do_nothing, flaky_in_ci, tidy_up_profiler_state_on_fail
 
 
 class SampleCounter:
@@ -24,6 +24,7 @@ def test_create():
 
 
 @flaky_in_ci
+@tidy_up_profiler_state_on_fail
 def test_get_samples():
     sampler = stack_sampler.get_stack_sampler()
     counter = SampleCounter()
@@ -47,6 +48,7 @@ def test_get_samples():
 
 
 @flaky_in_ci
+@tidy_up_profiler_state_on_fail
 def test_multiple_samplers():
     sampler = stack_sampler.get_stack_sampler()
     counter_1 = SampleCounter()
@@ -89,6 +91,7 @@ def test_multiple_samplers_async_error():
 
 
 @flaky_in_ci
+@tidy_up_profiler_state_on_fail
 def test_multiple_contexts():
     sampler = stack_sampler.get_stack_sampler()
 
