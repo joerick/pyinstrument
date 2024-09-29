@@ -43,12 +43,14 @@
 
 <div class="view-options" bind:this={rootElement}>
   <div class="box" bind:this={boxElement}>
-    <div class="title">{title}</div>
-    {#if $viewOptions.viewMode === "call-stack"}
-      <ViewOptionsCallStack />
-    {:else if $viewOptions.viewMode === "timeline"}
-      <ViewOptionsTimeline />
-    {/if}
+    <div class="title-row">{title}</div>
+    <div class="body">
+      {#if $viewOptions.viewMode === "call-stack"}
+        <ViewOptionsCallStack />
+      {:else if $viewOptions.viewMode === "timeline"}
+        <ViewOptionsTimeline />
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -61,6 +63,8 @@
   .box {
     width: 90vw;
     max-width: 282px;
+    height: max-content;
+    max-height: calc(100vh - 100px);
     position: absolute;
     right: 0;
     top: calc(100% + 4px);
@@ -69,11 +73,18 @@
     background: #2a2f32;
     box-shadow: 0px 2px 14px -5px rgba(0, 0, 0, 0.25);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
-  .title {
+  .title-row {
     padding: 5px 9px;
     font-size: 12px;
     font-weight: 600;
     background-color: #3c4144;
+  }
+  .body {
+    overflow-y: auto;
+    flex-basis: content;
+    flex-shrink: 1;
   }
 </style>
