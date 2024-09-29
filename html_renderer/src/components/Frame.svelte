@@ -237,7 +237,7 @@
     <div
       class="visual-guide"
       style:left={`${indent * 35 + 21}px`}
-      style:backgroundColor={timeColor}
+      style:background-color={timeColor}
     ></div>
   {/if}
 
@@ -284,7 +284,7 @@
   .frame {
     font-family: "Source Code Pro", "Roboto Mono", Consolas, Monaco, monospace;
     font-size-adjust: 0.486094;
-    font-size: 15px;
+    font-size: 14px;
     z-index: 0;
     position: relative;
     user-select: none;
@@ -382,6 +382,6 @@
     opacity: 0.4;
   }
   :global(.frame-description:hover) ~ .children :global(.visual-guide) {
-    opacity: 0.1;
+    opacity: 0.15;
   }
 </style>
