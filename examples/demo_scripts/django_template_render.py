@@ -21,7 +21,7 @@ def main():
         action="store",
         type="int",
         help="number of template render calls to make",
-        default=100,
+        default=200,
     )
     options, _ = parser.parse_args()
 
@@ -38,7 +38,11 @@ def main():
     )
     django.setup()
 
-    for _ in range(0, options.iterations):
+    render_templates(options.iterations)
+
+
+def render_templates(iterations: int):
+    for _ in range(0, iterations):
         django.template.loader.render_to_string("template.html")
 
 

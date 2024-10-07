@@ -1,6 +1,6 @@
 import os
 import sys
-from test.util import calculate_frame_tree_times
+from test.util import calculate_frame_tree_times, dummy_session
 
 from pytest import approx
 
@@ -20,20 +20,6 @@ ALL_PROCESSORS = [
 
 def self_time_frame(time):
     return Frame(SELF_TIME_FRAME_IDENTIFIER, time=time)
-
-
-def fixup_windows_paths(frame: Frame):
-    """
-    Deeply fixes windows paths within a frame tree. These tests are written with forward-slashes, but windows uses backslashes
-    """
-    identifier_parts = frame._identifier_parts
-    if len(identifier_parts) > 1:
-        identifier_parts[1] = os.path.normpath(identifier_parts[1])
-        frame._identifier_parts = identifier_parts
-        frame.identifier = "\x00".join(identifier_parts)
-
-    for child in frame.children:
-        fixup_windows_paths(child)
 
 
 def test_frame_passthrough_none():
@@ -312,7 +298,9 @@ def test_remove_unnecessary_self_time_nodes():
 
 
 def test_group_library_frames_processor(monkeypatch):
-    monkeypatch.syspath_prepend("env/lib/python3.6")
+    session = dummy_session()
+    session.sys_path = ["env/lib/python3.6"]
+    session.sys_prefixes = ["env"]
     frame = Frame(
         identifier_or_frame_info="<module>\x00cibuildwheel/__init__.py\x0012",
         children=[
@@ -345,10 +333,8 @@ def test_group_library_frames_processor(monkeypatch):
                 children=[self_time_frame(0.1)],
             ),
         ],
+        context=session,
     )
-
-    if sys.platform.startswith("win"):
-        fixup_windows_paths(frame)
 
     calculate_frame_tree_times(frame)
     frame.self_check()

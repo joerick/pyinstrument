@@ -377,6 +377,11 @@ def test_profiler_convenience_methods_have_all_options_available(
     for name, parameter in renderer_signature.parameters.items():
         if name == "self":
             continue
+
+        if profiler_method_name == "output_html" and name in {"timeline", "show_all"}:
+            # these options have been deprecated
+            continue
+
         assert (
             name in method_signature.parameters
         ), f"Parameter {name} is missing from Profiler.{profiler_method_name}. {parameter}"

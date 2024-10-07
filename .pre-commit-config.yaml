@@ -23,7 +23,7 @@ repos:
     rev: v2.3.0
     hooks:
     -   id: codespell
-        exclude: "\\.(json)$"
+        exclude: "\\.(json)$|docs/_static/preview"
         args:
         -   --ignore-words-list=vas
 

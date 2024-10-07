@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 import codecs
+import json
 import tempfile
 import urllib.parse
+import warnings
 import webbrowser
 from pathlib import Path
-from typing import Any
 
-from pyinstrument import processors
-from pyinstrument.renderers.base import FrameRenderer, ProcessorList
-from pyinstrument.renderers.jsonrenderer import JSONRenderer
+from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
 
 # pyright: strict
 
 
-class HTMLRenderer(FrameRenderer):
+class HTMLRenderer(Renderer):
     """
     Renders a rich, interactive web page, as a string of HTML.
     """
@@ -26,11 +25,29 @@ class HTMLRenderer(FrameRenderer):
         self,
         show_all: bool = False,
         timeline: bool = False,
-        processor_options: dict[str, Any] | None = None,
     ):
-        super().__init__(show_all=show_all, timeline=timeline, processor_options=processor_options)
+        super().__init__()
+        if show_all:
+            warnings.warn(
+                f"the show_all option is deprecated on the HTML renderer, and has no effect. Use the view options in the webpage instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        if timeline:
+            warnings.warn(
+                f"timeline is deprecated on the HTML renderer, and has no effect. Use the timeline view in the webpage instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        # this is an undocumented option for use by the ipython magic, might
+        # be removed later
+        self.preprocessors: ProcessorList = []
 
     def render(self, session: Session):
+        json_renderer = JSONForHTMLRenderer()
+        json_renderer.processors = self.preprocessors
+        session_json = json_renderer.render(session)
+
         resources_dir = Path(__file__).parent / "html_resources"
 
         js_file = resources_dir / "app.js"
@@ -43,8 +60,6 @@ class HTMLRenderer(FrameRenderer):
 
         js = js_file.read_text(encoding="utf-8")
         css = css_file.read_text(encoding="utf-8")
-
-        session_json = self.render_json(session)
 
         page = f"""<!DOCTYPE html>
             <html>
@@ -89,20 +104,24 @@ class HTMLRenderer(FrameRenderer):
         webbrowser.open(url)
         return output_filename
 
-    def render_json(self, session: Session):
-        json_renderer = JSONRenderer()
-        json_renderer.processors = self.processors
-        json_renderer.processor_options = self.processor_options
-        return json_renderer.render(session)
+
+class JSONForHTMLRenderer(FrameRenderer):
+    """
+    The HTML takes a special form of JSON-encoded session, which includes
+    an unprocessed frame tree rather than a list of frame records. This
+    reduces the amount of parsing code that must be included in the
+    Typescript renderer.
+    """
+
+    output_file_extension = "json"
 
     def default_processors(self) -> ProcessorList:
-        return [
-            processors.remove_importlib,
-            processors.remove_tracebackhide,
-            processors.merge_consecutive_self_time,
-            processors.aggregate_repeated_calls,
-            processors.remove_unnecessary_self_time_nodes,
-            processors.remove_irrelevant_nodes,
-            processors.remove_first_pyinstrument_frames_processor,
-            processors.group_library_frames_processor,
-        ]
+        return []
+
+    def render(self, session: Session) -> str:
+        session_json = session.to_json(include_frame_records=False)
+        session_json_str = json.dumps(session_json)
+        root_frame = session.root_frame()
+        root_frame = self.preprocess(root_frame)
+        frame_tree_json_str = root_frame.to_json_str() if root_frame else "null"
+        return '{"session": %s, "frame_tree": %s}' % (session_json_str, frame_tree_json_str)

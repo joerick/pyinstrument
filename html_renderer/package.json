@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.1",
@@ -19,9 +20,10 @@
     "svelte-preprocess": "^6.0.2",
     "tslib": "^2.6.3",
     "typescript": "^5.5.4",
-    "vite": "^5.3.5"
+    "vite": "^5.3.5",
+    "vitest": "^2.0.5"
   },
   "dependencies": {
-    "uuid": "^10.0.0"
+    "svelte-persisted-store": "^0.11.0"
   }
 }

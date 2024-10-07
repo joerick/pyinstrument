@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import html
 import threading
 import urllib.parse
 from ast import parse
@@ -40,12 +41,20 @@ def _get_active_profiler():
 class PyinstrumentMagic(Magics):
     def __init__(self, shell):
         super().__init__(shell)
+        self._transformer = None
+
+    def recreate_transformer(self, target_description: str):
         if IPython.version_info < (8, 15):  # type: ignore
             from ._utils import PrePostAstTransformer
 
             # This will leak _get_active_profiler into the users space until we can magle it
             pre = parse(
-                "\nfrom pyinstrument.magic.magic import _get_active_profiler; _get_active_profiler().start()\n"
+                dedent(
+                    f"""
+                    from pyinstrument.magic.magic import _get_active_profiler
+                    _get_active_profiler().start(target_description={target_description!r})
+                    """
+                )
             )
             post = parse("\n_get_active_profiler().stop()")
             self._transformer = PrePostAstTransformer(pre, post)
@@ -54,15 +63,15 @@ class PyinstrumentMagic(Magics):
 
             self._transformer = ReplaceCodeTransformer.from_string(
                 dedent(
+                    f"""
+                    from pyinstrument.magic.magic import _get_active_profiler as ___get_prof
+                    ___get_prof().start(target_description={target_description!r})
+                    try:
+                        __code__
+                    finally:
+                        ___get_prof().stop()
+                    __ret__
                     """
-            from pyinstrument.magic.magic import _get_active_profiler as ___get_prof
-            ___get_prof().start()
-            try:
-                __code__
-            finally:
-                ___get_prof().stop()
-            __ret__
-            """
                 )
             )
 
@@ -122,6 +131,10 @@ class PyinstrumentMagic(Magics):
         if not ip:
             raise RuntimeError("couldn't get ipython shell instance")
 
+        if cell:
+            target_description = f"Cell [{ip.execution_count}]"
+        else:
+            target_description = f"Line in cell [{ip.execution_count}]"
         code = cell or line
 
         if not code:
@@ -134,6 +147,7 @@ class PyinstrumentMagic(Magics):
             ip.ast_transformers.remove(self._transformer)
 
         _active_profiler = Profiler(interval=args.interval, async_mode=args.async_mode)
+        self.recreate_transformer(target_description=target_description)
         ip.ast_transformers.append(self._transformer)
         if args.async_mode == "disabled":
             cell_result = ip.run_cell(code)
@@ -165,13 +179,13 @@ class PyinstrumentMagic(Magics):
             show_all=args.show_all,
             timeline=args.timeline,
         )
-        html_renderer.processors.append(strip_ipython_frames_processor)
-        html = _active_profiler.output(html_renderer)
+        html_renderer.preprocessors.append(strip_ipython_frames_processor)
+        html_str = _active_profiler.output(html_renderer)
         as_iframe = IFrame(
-            src="data:text/html, " + urllib.parse.quote(html),
+            src="data:text/html, Loading…",
             width="100%",
             height=args.height,
-            extras=['style="resize: vertical"'],
+            extras=['style="resize: vertical"', f'srcdoc="{html.escape(html_str)}"'],
         )
 
         text_renderer = renderers.ConsoleRenderer(

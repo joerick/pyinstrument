@@ -17,6 +17,9 @@
     "isolatedModules": true,
     "moduleDetection": "force"
   },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "include": [
+    "src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte",
+    "demo-src/**/*.d.ts", "demo-src/**/*.ts", "demo-src/**/*.js", "demo-src/**/*.svelte"
+],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

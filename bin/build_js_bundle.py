@@ -10,6 +10,8 @@ HTML_RENDERER_DIR = "html_renderer"
 JS_BUNDLE = "pyinstrument/renderers/html_resources/app.js"
 CSS_BUNDLE = "pyinstrument/renderers/html_resources/app.css"
 
+DOCS_PREVIEW_DIR = "docs/_static/preview"
+
 if __name__ == "__main__":
     # chdir to root of repo
     os.chdir(os.path.dirname(__file__))
@@ -45,3 +47,7 @@ if __name__ == "__main__":
 
     shutil.copyfile(HTML_RENDERER_DIR + "/dist/pyinstrument-html.iife.js", JS_BUNDLE)
     shutil.copyfile(HTML_RENDERER_DIR + "/dist/style.css", CSS_BUNDLE)
+
+    subprocess.check_call("npm run build -- --mode preview", cwd=HTML_RENDERER_DIR, shell=True)
+    shutil.rmtree(DOCS_PREVIEW_DIR, ignore_errors=True)
+    shutil.copytree(HTML_RENDERER_DIR + "/dist", DOCS_PREVIEW_DIR)
