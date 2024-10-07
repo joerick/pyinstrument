@@ -117,16 +117,26 @@ class ConsoleRenderer(FrameRenderer):
         return "\n".join(lines)
 
     def should_render_frame(self, frame: Frame) -> bool:
-        if not frame.group:
-            return True
+        if frame.group and not self.should_ignore_group(frame.group):
+            return self.should_render_frame_in_group(frame)
+        return True
+
+    def should_render_frame_in_group(self, frame: Frame) -> bool:
         # Only render the root frame, or frames that are significant
-        if (
+        assert frame.group
+        return (
             frame.group.root == frame
             or frame.total_self_time > 0.2 * self.root_frame.time
             or frame in frame.group.exit_frames
-        ):
-            return True
-        return False
+        )
+
+    def should_ignore_group(self, group: FrameGroup) -> bool:
+        """
+        If a group is ignored, its frames are all printed - they're not hidden.
+        """
+        hidden_frames = [f for f in group.frames if not self.should_render_frame_in_group(f)]
+        # don't bother printing groups with one/zero hidden frames
+        return len(hidden_frames) < 2
 
     def group_description(self, group: FrameGroup) -> str:
         hidden_frames = [f for f in group.frames if not self.should_render_frame(f)]
@@ -156,7 +166,11 @@ class ConsoleRenderer(FrameRenderer):
             else:
                 indents = {"├": "|- ", "│": "|  ", "└": "`- ", " ": "   "}
 
-            if frame.group and frame.group.root == frame:
+            if (
+                frame.group
+                and frame.group.root == frame
+                and not self.should_ignore_group(frame.group)
+            ):
                 result += f"{child_indent}   {self.group_description(frame.group)}"
                 for key in indents:
                     indents[key] = "      "
