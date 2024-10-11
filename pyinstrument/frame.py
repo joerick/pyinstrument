@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import json
 import math
-import os
-import sys
+import typing
 import uuid
-from typing import Sequence
+from typing import Callable, Sequence
 
 from pyinstrument.frame_info import (
     ATTRIBUTE_MARKER_CLASS_NAME,
@@ -43,6 +43,12 @@ SYNTHETIC_LEAF_IDENTIFIERS = frozenset(
 )
 
 
+class FrameContext(typing.Protocol):
+    def shorten_path(self, path: str) -> str: ...
+    @property
+    def sys_prefixes(self) -> Sequence[str]: ...
+
+
 class Frame:
     """
     Object that represents a stack frame in the parsed tree
@@ -51,6 +57,9 @@ class Frame:
     parent: Frame | None
     group: FrameGroup | None
     time: float
+
+    # the session this frame belongs to
+    _context: FrameContext | None
 
     # tracks the time from frames that were deleted during processing
     absorbed_time: float
@@ -62,6 +71,7 @@ class Frame:
         identifier_or_frame_info: str = "",
         children: Sequence[Frame] | None = None,
         time: float = 0,
+        context: FrameContext | None = None,
     ):
         identifier = frame_info_get_identifier(identifier_or_frame_info)
         self.identifier = identifier
@@ -69,6 +79,7 @@ class Frame:
         self.time = 0.0
         self.group = None
         self.absorbed_time = 0.0
+        self._context = context
 
         self._identifier_parts = identifier.split("\x00")
         self.attributes = {}
@@ -98,6 +109,17 @@ class Frame:
         if self.parent:
             self.parent._children.remove(self)
             self.parent = None
+
+    @property
+    def context(self):
+        if not self._context:
+            raise RuntimeError("Frame has no context")
+        return self._context
+
+    def set_context(self, context: FrameContext | None):
+        self._context = context
+        for child in self._children:
+            child.set_context(context)
 
     @staticmethod
     def new_subclass_with_frame_info(frame_info: str) -> Frame:
@@ -150,32 +172,10 @@ class Frame:
         if self.is_synthetic and self.parent:
             return self.parent.file_path_short
 
-        if not hasattr(self, "_file_path_short"):
-            result = None
+        if not self.file_path:
+            return None
 
-            if self.file_path:
-                if len(self.file_path.split(os.sep)) == 1:
-                    # probably not a file path at all, more likely <built-in>
-                    # or similar
-                    result = self.file_path
-                else:
-                    for path in sys.path:
-                        # On Windows, if self.file_path and path are on
-                        # different drives, relpath will result in exception,
-                        # because it cannot compute a relpath in this case.
-                        # The root cause is that on Windows, there is no root
-                        # dir like '/' on Linux.
-                        try:
-                            candidate = os.path.relpath(self.file_path, path)
-                        except ValueError:
-                            continue
-
-                        if not result or (len(candidate.split(os.sep)) < len(result.split(os.sep))):
-                            result = candidate
-
-            self._file_path_short = result
-
-        return self._file_path_short
+        return self.context.shorten_path(self.file_path)
 
     @property
     def is_application_code(self) -> bool:
@@ -187,13 +187,9 @@ class Frame:
         if not file_path:
             return False
 
-        if "/lib/" in file_path:
+        if any(file_path.startswith(p) for p in self.context.sys_prefixes):
+            # lives in python install dir or virtualenv
             return False
-
-        if os.sep != "/":
-            # windows uses back-slash too, so let's look for that too.
-            if (f"{os.sep}lib{os.sep}") in file_path:
-                return False
 
         if file_path.startswith("<"):
             if file_path.startswith("<ipython-input-"):
@@ -214,11 +210,11 @@ class Frame:
 
         return True
 
-    @property
     def code_position_short(self) -> str | None:
-        if self.file_path_short and self.line_no:
-            return "%s:%i" % (self.file_path_short, self.line_no)
-        return self.file_path_short
+        file_path_short = self.file_path_short
+        if file_path_short and self.line_no:
+            return "%s:%i" % (file_path_short, self.line_no)
+        return file_path_short
 
     _children: list[Frame]
     attributes: dict[str, float]
@@ -235,6 +231,7 @@ class Frame:
 
         frame.remove_from_parent()
         frame.parent = self
+        frame.set_context(self._context)
         if after is None:
             self._children.append(frame)
         else:
@@ -341,6 +338,23 @@ class Frame:
             len(self.children),
             self.group,
         )
+
+    def to_json_str(self):
+        # method that converts this object into a JSON string. Uses an inline
+        # technique because the json module uses 2x stack frames, so we'd get
+        # a RecursionError on deep stacks.
+        encode_str = typing.cast(Callable[[str], str], json.encoder.encode_basestring)  # type: ignore
+
+        property_decls: list[str] = []
+        property_decls.append('"identifier": %s' % encode_str(self.identifier))
+        property_decls.append('"time": %f' % self.time)
+        property_decls.append('"attributes": %s' % json.dumps(self.attributes))
+        child_jsons: list[str] = []
+        for child in self.children:
+            child_jsons.append(child.to_json_str())
+        property_decls.append('"children": [%s]' % ",".join(child_jsons))
+
+        return "{%s}" % ",".join(property_decls)
 
 
 class FrameGroup:

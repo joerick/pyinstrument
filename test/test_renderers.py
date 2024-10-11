@@ -15,7 +15,6 @@ from .fake_time_util import fake_time
 
 frame_renderer_classes: list[type[renderers.FrameRenderer]] = [
     renderers.ConsoleRenderer,
-    renderers.HTMLRenderer,
     renderers.JSONRenderer,
     renderers.PstatsRenderer,
     renderers.SpeedscopeRenderer,

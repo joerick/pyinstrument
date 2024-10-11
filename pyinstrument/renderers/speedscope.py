@@ -236,7 +236,7 @@ class SpeedscopeRenderer(FrameRenderer):
             processors.remove_importlib,
             processors.remove_tracebackhide,
             processors.merge_consecutive_self_time,
-            processors.remove_unnecessary_self_time_nodes,
             processors.remove_irrelevant_nodes,
+            processors.remove_unnecessary_self_time_nodes,
             processors.remove_first_pyinstrument_frames_processor,
         ]

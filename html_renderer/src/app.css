@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro:400,600|Source+Sans+Pro:400,600');
-
 html, body {
     background-color: #303538;
     color: white;
@@ -9,4 +7,10 @@ html, body {
 
 .margins {
     padding: 0 30px;
+}
+label {
+    user-select: none;
+    * {
+        user-select: initial;
+    }
 }
