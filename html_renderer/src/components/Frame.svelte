@@ -77,7 +77,16 @@
     name = frame.function;
   }
 
-  const codePosition = `${frame.filePathShort}:${frame.lineNo?.toString().padEnd(4, " ")}`;
+  let codePosition: string
+  if (frame.isSynthetic) {
+    codePosition = "";
+  } else if (frame.filePathShort == null) {
+    codePosition = "";
+  } else if (frame.lineNo == null || frame.lineNo === 0) {
+    codePosition = frame.filePathShort;
+  } else {
+    codePosition = `${frame.filePathShort}:${frame.lineNo}`;
+  }
 
   let formattedTime: string;
   $: if ($viewOptionsCallStack.timeFormat === "absolute") {
@@ -224,7 +233,7 @@
       <div
         class="time"
         style:color={timeColor}
-        style:font-weight={frameProportionOfTotal < 0.2 ? 500 : 600}
+        style:font-weight={frameProportionOfTotal < 0.15 ? 500 : 600}
       >
         {formattedTime}
       </div>
@@ -262,7 +271,7 @@
             /></svg
           >
         </div>
-        {frame.group.frames.length} frames hidden ({groupLibrarySummary})
+        {frame.group.frames.length-1} frames hidden ({groupLibrarySummary})
       </div>
     </div>
   {/if}
