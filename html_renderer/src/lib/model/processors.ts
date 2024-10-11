@@ -351,6 +351,24 @@ export function remove_first_pyinstrument_frames_processor(frame: Frame | null, 
 
     return result;
 }
+
+export function remove_useless_groups_processor(frame: Frame | null, options: ProcessorOptions): Frame | null {
+    if (!frame) {
+        return null;
+    }
+
+    frame.children.forEach(child => remove_useless_groups_processor(child, options));
+
+    // a group with only two frames is meaningless, you still print the root
+    // frame, so you're just collapsing the single child frame with a group,
+    // which is better printed as just a single frame
+    if (frame.group && frame.group.frames.length < 3) {
+        frame.group.removeFrame(frame);
+    }
+
+    return frame;
+}
+
 allProcessors.push({
     name: "Remove first pyinstrument frames",
     description: "Removes the initial frames specific to the command line use of pyinstrument.",
