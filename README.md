@@ -54,6 +54,23 @@ Known issues
 Changelog
 ---------
 
+### v5.0.0
+
+_11 October 2024_
+
+Loads of improvements to the HTML renderer!
+
+-   Timeline mode - see and zoom into an interactive linear timeline!
+
+    ![timeline mode](docs/img/timeline.png)
+-   HTML mode now has interactive options, rather than needing to set the upfront.
+-   Streamlined the design of the HTML page header.
+-   HTML Call stack view supports arrow key navigation.
+-   The way ‘library’ code is detected has been changed. Previously, if the string ‘/lib/’ occurred in the file path, that was considered library code (and collapsed by default). Now, pyinstrument captures the paths of the Python install and any active virtualenv/conda env at profile time. Files that are stored there are considered library. That should give fewer false positives.
+-   Calls to profiler.start() can now pass a target_description parameter, which is displayed in the profile readout.
+
+Check my [blog post](https://joerick.me/posts/2024/10/3/pyinstrument-5/) for more info on the new features.
+
 ### v4.7.3
 
 _6 September 2024_

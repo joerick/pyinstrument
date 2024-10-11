@@ -4,7 +4,7 @@ from pyinstrument.context_manager import profile
 from pyinstrument.profiler import Profiler
 
 __all__ = ["__version__", "Profiler", "load_ipython_extension", "profile"]
-__version__ = "4.7.3"
+__version__ = "5.0.0"
 
 # enable deprecation warnings
 warnings.filterwarnings("once", ".*", DeprecationWarning, r"pyinstrument\..*")
