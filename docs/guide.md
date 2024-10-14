@@ -168,6 +168,9 @@ profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
 
+You can further customize the filename by adding `PYINSTRUMENT_FILENAME` to 
+`settings.py`, default values is `"{total_time:.3f}s {path} {timestamp:.0f}.{ext}"`.
+
 If you want to show the profiling page depending on the request you can define
 `PYINSTRUMENT_SHOW_CALLBACK` as dotted path to a function used for determining
 whether the page should show or not.
