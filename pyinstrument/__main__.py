@@ -409,9 +409,31 @@ def main():
         raise inner_exception
 
 
+class OptionsParseError(Exception):
+    pass
+
+
 def compute_render_options(
-    options: CommandLineOptions, renderer_class: type[renderers.Renderer], output_file: TextIO
+    options: CommandLineOptions,
+    renderer_class: type[renderers.Renderer],
+    unicode_support: bool,
+    color_support: bool,
 ) -> dict[str, Any]:
+    """
+    Given a list of `CommandLineOptions`, compute the
+    rendering options for the given renderer.
+
+    Raises an `OptionsParseError` if there is an error parsing the options.
+
+    unicode_support:
+        indicate whether the expected output supports unicode
+    color_support:
+        indicate whether the expected output supports color
+
+    Both of these will be used to determine the  default of outputting unicode
+    or color, but can be overridden with `options.color` and `option.unicode`.
+    """
+
     # parse show/hide options
     if options.hide_fnmatch is not None and options.hide_regex is not None:
         raise OptionsParseError("You can‘t specify both --hide and --hide-regex")
@@ -449,8 +471,8 @@ def compute_render_options(
     if issubclass(renderer_class, renderers.ConsoleRenderer):
         unicode_override = options.unicode is not None
         color_override = options.color is not None
-        unicode: Any = options.unicode if unicode_override else file_supports_unicode(output_file)
-        color: Any = options.color if color_override else file_supports_color(output_file)
+        unicode: Any = options.unicode if unicode_override else unicode_support
+        color: Any = options.color if color_override else color_support
 
         render_options.update({"unicode": unicode, "color": color})
 
@@ -481,15 +503,14 @@ def compute_render_options(
     return render_options
 
 
-class OptionsParseError(Exception):
-    pass
-
-
 def create_renderer(
     renderer_class: type[renderers.Renderer], options: CommandLineOptions, output_file: TextIO
 ) -> renderers.Renderer:
     render_options = compute_render_options(
-        options, renderer_class=renderer_class, output_file=output_file
+        options,
+        renderer_class=renderer_class,
+        unicode_support=file_supports_unicode(output_file),
+        color_support=file_supports_color(output_file),
     )
 
     try:
