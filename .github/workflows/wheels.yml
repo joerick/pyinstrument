@@ -22,10 +22,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-12]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         archs: [auto]
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             archs: aarch64
 
     steps:
@@ -41,7 +41,7 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.20
+        uses: joerick/cibuildwheel@v2.21
         env:
           CIBW_SKIP: pp*
           CIBW_ARCHS: ${{matrix.archs}}
