@@ -38,12 +38,14 @@ class StackSamplerSubscriber:
         bound_to_async_context: bool,
         async_state: AsyncState | None,
         use_timing_thread: bool | None = None,
+        child_threads: bool | None = None
     ) -> None:
         self.target = target
         self.desired_interval = desired_interval
         self.use_timing_thread = use_timing_thread
         self.bound_to_async_context = bound_to_async_context
         self.async_state = async_state
+        self.child_threads = child_threads
 
 
 active_profiler_context_var: ContextVar[object | None] = ContextVar(
@@ -56,6 +58,7 @@ class StackSampler:
 
     subscribers: list[StackSamplerSubscriber]
     current_sampling_interval: float | None
+    current_child_threads: bool | None
     last_profile_time: float
     timer_func: Callable[[], float] | None
     has_warned_about_timing_overhead: bool
@@ -63,6 +66,7 @@ class StackSampler:
     def __init__(self) -> None:
         self.subscribers = []
         self.current_sampling_interval = None
+        self.current_child_threads = None
         self.last_profile_time = 0.0
         self.timer_func = None
         self.has_warned_about_timing_overhead = False
@@ -74,6 +78,7 @@ class StackSampler:
         desired_interval: float,
         use_timing_thread: bool | None = None,
         use_async_context: bool,
+        child_threads: bool | None = None
     ):
         if use_async_context:
             if active_profiler_context_var.get() is not None:
@@ -89,6 +94,7 @@ class StackSampler:
                 use_timing_thread=use_timing_thread,
                 bound_to_async_context=use_async_context,
                 async_state=AsyncState("in_context") if use_async_context else None,
+                child_threads=child_threads
             )
         )
         self._update()
@@ -121,15 +127,25 @@ class StackSampler:
             raise ValueError(
                 f"Profiler requested different timing thread preferences from a profiler that is already running."
             )
-
         use_timing_thread = next(iter(timing_thread_preferences), False)
 
-        if self.current_sampling_interval != min_subscribers_interval:
+        child_thread_preferences = set(
+            s.child_threads for s in self.subscribers if s.child_threads is not None
+        )
+        if len(child_thread_preferences) > 1:
+            raise ValueError(
+                f"Profiler requested different child thread preferences from a profiler that is already running."
+            )
+        child_threads = next(iter(child_thread_preferences), False)
+
+        if (self.current_sampling_interval != min_subscribers_interval or
+                self.current_child_threads != child_threads):
             self._start_sampling(
-                interval=min_subscribers_interval, use_timing_thread=use_timing_thread
+                interval=min_subscribers_interval, use_timing_thread=use_timing_thread,
+                child_threads=child_threads
             )
 
-    def _start_sampling(self, interval: float, use_timing_thread: bool):
+    def _start_sampling(self, interval: float, use_timing_thread: bool, child_threads: bool):
         if use_timing_thread and self.timer_func is not None:
             raise ValueError(
                 f"Profiler requested to use the timing thread but this stack sampler is already using a custom timer function."
@@ -151,20 +167,28 @@ class StackSampler:
         self._check_timing_overhead(interval=interval, timer_type=timer_type)
 
         self.current_sampling_interval = interval
+        self.current_child_threads = child_threads
         if self.last_profile_time == 0.0:
             self.last_profile_time = self._timer()
 
-        setstatprofile(
-            target=self._sample,
-            interval=interval,
-            context_var=active_profiler_context_var,
-            timer_type=timer_type,
-            timer_func=self.timer_func,
-        )
+        def _call_setstatprofile(*argv):
+            setstatprofile(
+                target=self._sample,
+                interval=interval,
+                context_var=active_profiler_context_var,
+                timer_type=timer_type,
+                timer_func=self.timer_func,
+            )
+        _call_setstatprofile()
+        if child_threads:
+            threading.setprofile(_call_setstatprofile)
 
     def _stop_sampling(self):
         setstatprofile(None)
+        if self.current_child_threads:
+            threading.setprofile(None)
         self.current_sampling_interval = None
+        self.current_child_threads = None
         self.last_profile_time = 0.0
 
     def _sample(self, frame: types.FrameType, event: str, arg: Any):
