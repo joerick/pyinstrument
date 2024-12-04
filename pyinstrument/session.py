@@ -25,6 +25,7 @@ class Session:
         self,
         frame_records: list[FrameRecordType],
         start_time: float,
+        thread_start_times: Dict[str, float],
         duration: float,
         min_interval: float,
         max_interval: float,
@@ -43,6 +44,7 @@ class Session:
         """
         self.frame_records = frame_records
         self.start_time = start_time
+        self.thread_start_times = thread_start_times
         self.duration = duration
         self.min_interval = min_interval
         self.max_interval = max_interval
@@ -77,6 +79,7 @@ class Session:
     def to_json(self, include_frame_records: bool = True):
         result: dict[str, Any] = {
             "start_time": self.start_time,
+            "thread_start_times": self.thread_start_times,
             "duration": self.duration,
             "min_interval": self.min_interval,
             "max_interval": self.max_interval,

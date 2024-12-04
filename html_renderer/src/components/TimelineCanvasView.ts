@@ -90,7 +90,6 @@ export default class TimelineCanvasView extends CanvasView {
         this.maxDepth = []
         this.maxY = 0
         for (const thread_id of Object.keys(rootFrames)) {
-            console.log("srf", thread_id)
             let rootFrame = rootFrames[thread_id]
             this._collectFrames(rootFrame, thread_id, 0)
             this.maxY += this.maxDepth[thread_id] + 1
@@ -101,7 +100,6 @@ export default class TimelineCanvasView extends CanvasView {
 
     _collectFrames(frame: Frame, thread_id: string, depth: number) {
         if (!this.frames.hasOwnProperty(thread_id)) {
-            console.log("cfnt", thread_id)
             this.frames[thread_id] = []
             this.maxDepth[thread_id] = 0
         }
@@ -216,7 +214,6 @@ export default class TimelineCanvasView extends CanvasView {
         // draw frames
         let depthOffset = 0
         for (const thread_id of Object.keys(this.frames)) {
-            console.log("draw", thread_id)
             for (const frame of this.frames[thread_id]) {
                 this.drawFrame(ctx, frame, depthOffset)
             }

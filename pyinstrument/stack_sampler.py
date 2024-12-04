@@ -7,7 +7,8 @@ import threading
 import timeit
 import types
 from contextvars import ContextVar
-from typing import Any, Callable, List, NamedTuple, Optional
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
 
 from pyinstrument.low_level.stat_profile import (
     get_frame_info,
@@ -24,7 +25,15 @@ from pyinstrument.util import format_float_with_sig_figs, strtobool, unwrap
 
 thread_locals = threading.local()
 
-StackSamplerSubscriberTarget = Callable[[List[str], float, Optional["AsyncState"]], None]
+SubscriberCallstackFn = Callable[[List[str], float, Optional["AsyncState"]], None]
+SubscriberEventFn = Callable[[str, str, float], None]
+
+
+@dataclass
+class StackSamplerSubscriberTarget:
+    call_stack: SubscriberCallstackFn
+    event: SubscriberEventFn
+
 
 IGNORE_OVERHEAD_WARNING = strtobool(os.environ.get("PYINSTRUMENT_IGNORE_OVERHEAD_WARNING", "0"))
 
@@ -59,7 +68,8 @@ class StackSampler:
     subscribers: list[StackSamplerSubscriber]
     current_sampling_interval: float | None
     current_child_threads: bool | None
-    last_profile_time: float
+    last_profile_time: Dict[str, float]
+    first_profile_time: float | None
     timer_func: Callable[[], float] | None
     has_warned_about_timing_overhead: bool
 
@@ -67,7 +77,8 @@ class StackSampler:
         self.subscribers = []
         self.current_sampling_interval = None
         self.current_child_threads = None
-        self.last_profile_time = 0.0
+        self.last_profile_time = {}
+        self.first_profile_time = None
         self.timer_func = None
         self.has_warned_about_timing_overhead = False
 
@@ -168,8 +179,8 @@ class StackSampler:
 
         self.current_sampling_interval = interval
         self.current_child_threads = child_threads
-        if self.last_profile_time == 0.0:
-            self.last_profile_time = self._timer()
+        if self.first_profile_time is None:
+            self.first_profile_time = self._timer()
 
         def _call_setstatprofile(*argv):
             setstatprofile(
@@ -179,7 +190,15 @@ class StackSampler:
                 timer_type=timer_type,
                 timer_func=self.timer_func,
             )
+            thread_id = get_thread_id()
+            if thread_id not in self.last_profile_time:
+                self.last_profile_time[get_thread_id()] = self._timer()
+            for subscriber in self.subscribers:
+                subscriber.target.event(
+                    'thread_start', thread_id, self._timer())
+
         _call_setstatprofile()
+
         if child_threads:
             threading.setprofile(_call_setstatprofile)
 
@@ -189,7 +208,7 @@ class StackSampler:
             threading.setprofile(None)
         self.current_sampling_interval = None
         self.current_child_threads = None
-        self.last_profile_time = 0.0
+        self.last_profile_time = {}
 
     def _sample(self, frame: types.FrameType, event: str, arg: Any):
         if event == "context_changed":
@@ -213,14 +232,19 @@ class StackSampler:
                     subscriber.async_state = AsyncState("in_context")
         else:
             now = self._timer()
-            time_since_last_sample = now - self.last_profile_time
+            thread_id = get_thread_id()
+            last_time = (self.last_profile_time[thread_id]
+                         if thread_id in self.last_profile_time
+                         else self.first_profile_time)
+            time_since_last_sample = now - last_time
 
             call_stack = build_call_stack(frame, event, arg)
 
             for subscriber in self.subscribers:
-                subscriber.target(call_stack, time_since_last_sample, subscriber.async_state)
+                subscriber.target.call_stack(
+                    call_stack, time_since_last_sample, subscriber.async_state)
 
-            self.last_profile_time = now
+            self.last_profile_time[thread_id] = now
 
     def _timer(self):
         if self.timer_func:
@@ -303,6 +327,11 @@ def get_stack_sampler() -> StackSampler:
     return thread_locals.stack_sampler
 
 
+def get_thread_id() -> str:
+    thread = threading.current_thread()
+    return "%s\x00%s\x00%i" % (thread.name, "<thread>", thread.ident)
+
+
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
     call_stack: list[str] = []
 
@@ -324,9 +353,7 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
         call_stack.append(get_frame_info(frame))
         frame = frame.f_back
 
-    thread = threading.current_thread()
-    thread_identifier = "%s\x00%s\x00%i" % (thread.name, "<thread>", thread.ident)
-    call_stack.append(thread_identifier)
+    call_stack.append(get_thread_id())
 
     # we iterated from the leaf to the root, we actually want the call stack
     # starting at the root, so reverse this array

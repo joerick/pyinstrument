@@ -56,7 +56,7 @@ export default class Frame {
     ) {
         this.identifier = data.identifier
         this._identifierParts = this.identifier.split(IDENTIFIER_SEP)
-        this.startTime = data.startTime ?? 0
+        this.startTime = data.startTime ?? context.threadStartTime(data.thread_id)
         this.time = data.time ?? 0
         this.attributes = data.attributes ?? {}
         this.context = context
@@ -233,4 +233,5 @@ export default class Frame {
 interface FrameContext {
     shortenPath(path: string): string
     sysPrefixes: string[]
+    threadStartTime(thread_id: string): number
 }

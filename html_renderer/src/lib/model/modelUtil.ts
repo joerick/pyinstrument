@@ -1,9 +1,9 @@
 import type Frame from "./Frame"
 import type { Processor, ProcessorFunction, ProcessorOptions } from "./processors"
 
-export function applyProcessors(rootFrames: Frame[] | null,
+export function applyProcessors(rootFrames: {[thread_id: string]: Frame} | null,
                                 processors: ProcessorFunction[], options: ProcessorOptions) {
-    let frames: Frame[] | null = rootFrames
+    let frames: {[thread_id: string]: Frame} | null = rootFrames
     if (frames != null) {
         for (const thread_id of Object.keys(rootFrames)) {
             let frame = rootFrames[thread_id]

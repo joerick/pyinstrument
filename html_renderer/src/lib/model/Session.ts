@@ -3,18 +3,20 @@ import Frame from "./Frame";
 
 export default class Session {
     startTime: number;
+    threadStartTimes: {[thread_id: string]: number};
     duration: number;
     minInterval: number;
     maxInterval: number;
     sampleCount: number;
     target_description: string;
     cpuTime: number;
-    rootFrames: Frame[];
+    rootFrames: {[thread_id: string]: Frame};
     sysPath: string;
     sysPrefixes: string[];
 
     constructor(data: SessionData) {
         this.startTime = data.session.start_time;
+        this.threadStartTimes = data.session.thread_start_times;
         this.duration = data.session.duration;
         this.minInterval = data.session.min_interval;
         this.maxInterval = data.session.max_interval;
@@ -23,7 +25,7 @@ export default class Session {
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
         this.sysPrefixes = data.session.sys_prefixes
-        this.rootFrames = []
+        this.rootFrames = {}
         for (const thread_id of Object.keys(data.frame_trees)) {
             console.log("thread_id", thread_id)
             this.rootFrames[thread_id] = new Frame(data.frame_trees[thread_id], this)
@@ -50,6 +52,13 @@ export default class Session {
 
         this._shortenPathCache[path] = result
         return result
+    }
+
+    threadStartTime(thread_id: string): number {
+        if (this.threadStartTimes.hasOwnProperty(thread_id)) {
+            return this.threadStartTimes[thread_id]
+        }
+        return 0
     }
 }
 

@@ -1,6 +1,7 @@
 export interface SessionData {
     session: {
         start_time: number;
+        thread_start_times: {[thread_id: string] : number};
         duration: number;
         min_interval: number;
         max_interval: number;
