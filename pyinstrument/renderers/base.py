@@ -112,7 +112,6 @@ class FrameRenderer(Renderer):
         frames = root_frames
         if frames is not None:
             for thread_id, frame in frames.items():
-                print(thread_id, frame)
                 for processor in self.processors:
                     frame = processor(frame, options=self.processor_options)
                 frames[thread_id] = frame

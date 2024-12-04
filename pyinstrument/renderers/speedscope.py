@@ -207,6 +207,7 @@ class SpeedscopeRenderer(FrameRenderer):
         return events_array
 
     def render(self, session: Session):
+        # FIXME: this is known broken with threads
         frame = self.preprocess(session.root_frame())
 
         id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))

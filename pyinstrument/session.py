@@ -96,7 +96,6 @@ class Session:
 
         return result
 
-    #FIXME: start time is per thread
     @staticmethod
     def from_json(json_dict: dict[str, Any]):
         return Session(
@@ -148,7 +147,7 @@ class Session:
     def current_sys_prefixes() -> list[str]:
         return [sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix]
 
-    # FIXME: remove
+    # FIXME: remove after converting all to this
     def root_frame(self, trim_stem: bool = True) -> Frame | None:
         return None
 
