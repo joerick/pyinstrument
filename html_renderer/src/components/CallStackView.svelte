@@ -75,13 +75,17 @@
     }
   });
 
-  let rootFrame: Frame|null
-  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)
+  let rootFrames: Frame[]|null
+  let clonedFrames: Frame[]|null = []
+  for (const thread_id of Object.keys(session.rootFrames)) {
+    clonedFrames[thread_id] = session.rootFrames[thread_id].cloneDeep()
+  }
+  $: rootFrames = applyProcessors(clonedFrames, $config.processors, $config.options)
 </script>
 
 <div class="call-stack-view" bind:this={element}>
   <div class="scroll-inner" bind:this={scrollInnerElement}>
-    {#if !rootFrame}
+    {#if !rootFrames}
       <div class="margins">
         <div class="error">
           All frames were filtered out.
@@ -89,7 +93,17 @@
       </div>
     {:else}
       <div class="call-stack-margins">
-        <FrameView frame={rootFrame} rootFrame={rootFrame} />
+        {#each Object.entries(rootFrames) as [threadId, rootFrame]}
+          {#if !rootFrame}
+            <div class="margins">
+              <div class="error">
+                All frames were filtered out.
+              </div>
+            </div>
+          {:else}
+            <FrameView frame={rootFrame} rootFrame={rootFrame} />
+          {/if}
+        {/each}
       </div>
     {/if}
   </div>
