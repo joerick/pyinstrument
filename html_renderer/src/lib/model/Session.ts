@@ -27,7 +27,6 @@ export default class Session {
         this.sysPrefixes = data.session.sys_prefixes
         this.rootFrames = {}
         for (const thread_id of Object.keys(data.frame_trees)) {
-            console.log("thread_id", thread_id)
             this.rootFrames[thread_id] = new Frame(data.frame_trees[thread_id], this)
         }
     }
