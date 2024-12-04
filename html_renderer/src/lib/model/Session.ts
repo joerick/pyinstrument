@@ -9,7 +9,7 @@ export default class Session {
     sampleCount: number;
     target_description: string;
     cpuTime: number;
-    rootFrame: Frame;
+    rootFrames: Frame[];
     sysPath: string;
     sysPrefixes: string[];
 
@@ -23,7 +23,11 @@ export default class Session {
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
         this.sysPrefixes = data.session.sys_prefixes
-        this.rootFrame = new Frame(data.frame_tree, this)
+        this.rootFrames = []
+        for (const thread_id of Object.keys(data.frame_trees)) {
+            console.log("thread_id", thread_id)
+            this.rootFrames[thread_id] = new Frame(data.frame_trees[thread_id], this)
+        }
     }
 
     _shortenPathCache: {[path: string]: string} = {}

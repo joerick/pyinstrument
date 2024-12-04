@@ -26,11 +26,16 @@ export interface TimelineFrame {
     className: string
     filePathShort: string | null
 }
+
+interface TimelineFrameMap {
+    [thread_id: string]: TimelineFrame[]
+}
+
 export default class TimelineCanvasView extends CanvasView {
     zoom: number = 1 // pixels per second
     startT: number = 0 // seconds
     yOffset: number = 0 // pixels
-    frames: TimelineFrame[] = []
+    frames: TimelineFrameMap = {}  // first index is per thread_id
     isZoomedIn: boolean = false
 
     tooltipContainer: HTMLElement
@@ -75,20 +80,32 @@ export default class TimelineCanvasView extends CanvasView {
         super.destroy()
     }
 
-    _rootFrame: Frame | null = null
-    maxDepth = 0
-    setRootFrame(rootFrame: Frame) {
-        this._rootFrame = rootFrame
-        this.frames = []
+    _rootFrames: Frame[] | null = null
+    maxDepth: int[] = []
+    maxY: int = 0
+    setRootFrames(rootFrames: Frame[]) {
+        this._rootFrames = rootFrames
+        this.frames = {}
         this._frameMaxT = undefined
-        this.maxDepth = 0
-        this._collectFrames(rootFrame, 0)
+        this.maxDepth = []
+        this.maxY = 0
+        for (const thread_id of Object.keys(rootFrames)) {
+            console.log("srf", thread_id)
+            let rootFrame = rootFrames[thread_id]
+            this._collectFrames(rootFrame, thread_id, 0)
+            this.maxY += this.maxDepth[thread_id] + 1
+        }
         this.fitContents()
         this.setNeedsRedraw()
     }
 
-    _collectFrames(frame: Frame, depth: number) {
-        this.frames.push({
+    _collectFrames(frame: Frame, thread_id: string, depth: number) {
+        if (!this.frames.hasOwnProperty(thread_id)) {
+            console.log("cfnt", thread_id)
+            this.frames[thread_id] = []
+            this.maxDepth[thread_id] = 0
+        }
+        this.frames[thread_id].push({
             frame,
             depth,
             isApplicationCode: frame.isApplicationCode,
@@ -96,11 +113,11 @@ export default class TimelineCanvasView extends CanvasView {
             className: frame.className,
             filePathShort: frame.filePathShort,
         })
-        this.maxDepth = Math.max(this.maxDepth, depth)
+        this.maxDepth[thread_id] = Math.max(this.maxDepth[thread_id], depth)
         for (const child of frame.children) {
             if (child.identifier !== SELF_TIME_FRAME_IDENTIFIER) {
                 // we don't render self time frames
-                this._collectFrames(child, depth + 1)
+                this._collectFrames(child, thread_id, depth + 1)
             }
         }
     }
@@ -114,7 +131,7 @@ export default class TimelineCanvasView extends CanvasView {
                 name: this.frameName(timelineFrame),
                 time: timelineFrame.frame.time,
                 selfTime: this.frameSelfTime(timelineFrame),
-                totalTime: this._rootFrame?.time ?? 1e-12,
+                totalTime: this._rootFrames[timelineFrame.frame.thread_id]?.time ?? 1e-12,
                 location: `${timelineFrame.filePathShort}:${timelineFrame.frame.lineNo}`,
                 locationColor: this.colorForFrame(timelineFrame),
             }
@@ -197,8 +214,13 @@ export default class TimelineCanvasView extends CanvasView {
         this.drawAxes(ctx)
 
         // draw frames
-        for (const frame of this.frames) {
-            this.drawFrame(ctx, frame)
+        let depthOffset = 0
+        for (const thread_id of Object.keys(this.frames)) {
+            console.log("draw", thread_id)
+            for (const frame of this.frames[thread_id]) {
+                this.drawFrame(ctx, frame, depthOffset)
+            }
+            depthOffset += 1 + this.maxDepth[thread_id]
         }
 
         ctx.globalAlpha = 1
@@ -286,8 +308,8 @@ export default class TimelineCanvasView extends CanvasView {
         }
     }
 
-    drawFrame(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame) {
-        const { x, y, w, h } = this.frameDims(timelineFrame)
+    drawFrame(ctx: CanvasRenderingContext2D, timelineFrame: TimelineFrame, depthOffset: int) {
+        const { x, y, w, h } = this.frameDims(timelineFrame, depthOffset)
         const endX = x + w
         if (endX < 0 || x > this.width) {
             // offscreen
@@ -340,10 +362,12 @@ export default class TimelineCanvasView extends CanvasView {
     _assignLibraryOrder() {
         const librariesTotalTime: Record<string, number> = {}
 
-        for (const timelineFrame of this.frames) {
-            const frame = timelineFrame.frame
-            const library = frame.library ?? ''
-            librariesTotalTime[library] = (librariesTotalTime[library] || 0) + timelineFrame.frame.time
+        for (const thread_id of Object.keys(this.frames)) {
+            for (const timelineFrame of this.frames[thread_id]) {
+                const frame = timelineFrame.frame
+                const library = frame.library ?? ''
+                librariesTotalTime[library] = (librariesTotalTime[library] || 0) + timelineFrame.frame.time
+            }
         }
 
         const libraries = Object.keys(librariesTotalTime)
@@ -405,13 +429,17 @@ export default class TimelineCanvasView extends CanvasView {
     _frameMaxT: number|undefined
     get frameMaxT() {
         if (this._frameMaxT === undefined) {
-            this._frameMaxT = this.frames.reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0)
+            this._frameMaxT = 0
+            for (const thread_id of Object.keys(this.frames)) {
+                this._frameMaxT = Math.max(this._frameMaxT,
+                                           this.frames[thread_id].reduce((max, frame) => Math.max(max, frame.frame.startTime + frame.frame.time), 0))
+            }
         }
         return this._frameMaxT
     }
 
     get maxYOffset() {
-        return Math.max(0, (this.maxDepth+1) * FRAME_PITCH + Y_MARGIN*2 + Y_FRAME_INSET - this.height)
+        return Math.max(0, (this.maxY+1) * FRAME_PITCH + Y_MARGIN*2 + Y_FRAME_INSET - this.height)
     }
 
     get minZoom() {
@@ -450,16 +478,16 @@ export default class TimelineCanvasView extends CanvasView {
             this.startT = maxStartT
         }
 
-        if (this.yOffset < 0) {
-            this.yOffset = 0
-        }
+        //if (this.yOffset < 0) {
+        //    this.yOffset = 0
+        //}
         if (this.yOffset > this.maxYOffset) {
             this.yOffset = this.maxYOffset
         }
     }
 
-    frameDims(timelineFrame: TimelineFrame): { x: number; y: number; w: number; h: number } {
-        const y = timelineFrame.depth * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET - this.yOffset
+    frameDims(timelineFrame: TimelineFrame, depthOffset: int): { x: number; y: number; w: number; h: number } {
+        const y = (depthOffset + timelineFrame.depth) * FRAME_PITCH + Y_MARGIN + Y_FRAME_INSET - this.yOffset
         const h = FRAME_HEIGHT
         let x = this.xForT(timelineFrame.frame.startTime)
         const endX = this.xForT(timelineFrame.frame.startTime + timelineFrame.frame.time)
@@ -507,10 +535,12 @@ export default class TimelineCanvasView extends CanvasView {
     }
 
     hitTest(loc: {x: number, y: number}): TimelineFrame | null {
-        for (const frame of this.frames) {
-            const { x: frameX, y: frameY, w, h } = this.frameDims(frame)
-            if (loc.x >= frameX && loc.x <= frameX + w && loc.y >= frameY && loc.y <= frameY + h) {
-                return frame
+        for (const thread_id of Object.keys(this.frames)) {
+            for (const frame of this.frames[thread_id]) {
+                const { x: frameX, y: frameY, w, h } = this.frameDims(frame)
+                if (loc.x >= frameX && loc.x <= frameX + w && loc.y >= frameY && loc.y <= frameY + h) {
+                    return frame
+                }
             }
         }
         return null

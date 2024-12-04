@@ -28,8 +28,20 @@
   link.href = `https://fonts.googleapis.com/css?family=Source+Code+Pro:400,600|Source+Sans+Pro:400,600&display=swap`;
   document.head.appendChild(link);
 
-  const rootFrame = session.rootFrame;
-  const duration = rootFrame?.time.toLocaleString(undefined, {maximumSignificantDigits: 3});
+  const rootFrames = session.rootFrames;
+  let maxTime = 0;
+  if (rootFrames != null) {
+    for (const thread_id of Object.keys(rootFrames)) {
+      const rootFrame = rootFrames[thread_id];
+      if (rootFrame != null) {
+        const t = rootFrame.time;
+        if (t > maxTime) {
+          maxTime = t;
+        }
+      }
+    }
+  }
+  const duration = maxTime.toLocaleString(undefined, {maximumSignificantDigits: 3});
   let name
   // let name = rootFrame?.function;
   // if (name == '<module>') {
@@ -53,7 +65,7 @@
     <Header session={session} />
   </div>
   <div class="body">
-    {#if !session.rootFrame}
+    {#if !session.rootFrames}
       <div class="margins">
         <div class="spacer" style="height: 20px;"></div>
         <div class="error">

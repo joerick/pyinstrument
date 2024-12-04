@@ -30,13 +30,15 @@ class ActiveProfilerSession:
         start_call_stack: list[str],
         target_description: str,
         interval: float,
+        child_threads: bool
     ) -> None:
         self.start_time = start_time
         self.start_process_time = start_process_time
         self.start_call_stack = start_call_stack
         self.frame_records = []
         self.target_description = target_description
-        self.interval = interval
+        self.interval = interval,
+        self.child_threads = child_threads
 
 
 AsyncMode = LiteralStr["enabled", "disabled", "strict"]
@@ -52,12 +54,14 @@ class Profiler:
     _interval: float
     _async_mode: AsyncMode
     use_timing_thread: bool | None
+    child_threads: bool | None
 
     def __init__(
         self,
         interval: float = 0.001,
         async_mode: AsyncMode = "enabled",
         use_timing_thread: bool | None = None,
+        child_threads: bool | None = None
     ):
         """
         Note the profiling will not start until :func:`start` is called.
@@ -73,6 +77,7 @@ class Profiler:
         self._active_session = None
         self._async_mode = async_mode
         self.use_timing_thread = use_timing_thread
+        self.child_threads = child_threads
 
     @property
     def interval(self) -> float:
@@ -152,6 +157,7 @@ class Profiler:
                 start_call_stack=build_call_stack(caller_frame, "initial", None),
                 target_description=target_description,
                 interval=self.interval,
+                child_threads=self.child_threads if self.child_threads is not None else False
             )
 
             use_async_context = self.async_mode != "disabled"
@@ -160,6 +166,7 @@ class Profiler:
                 desired_interval=self.interval,
                 use_async_context=use_async_context,
                 use_timing_thread=self.use_timing_thread,
+                child_threads=self.child_threads
             )
         except:
             self._active_session = None

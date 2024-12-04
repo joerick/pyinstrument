@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Any, List
+from typing import Dict, Any, List
 
 from pyinstrument import processors
 from pyinstrument.frame import Frame
@@ -108,11 +108,15 @@ class FrameRenderer(Renderer):
         """
         raise NotImplementedError()
 
-    def preprocess(self, root_frame: Frame | None) -> Frame | None:
-        frame = root_frame
-        for processor in self.processors:
-            frame = processor(frame, options=self.processor_options)
-        return frame
+    def preprocess(self, root_frames: Dict[str, Frame | None] | None) -> Dict[str, Frame | None] | None:
+        frames = root_frames
+        if frames is not None:
+            for thread_id, frame in frames.items():
+                print(thread_id, frame)
+                for processor in self.processors:
+                    frame = processor(frame, options=self.processor_options)
+                frames[thread_id] = frame
+        return frames
 
     def render(self, session: Session) -> str:
         """

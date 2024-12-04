@@ -6,6 +6,7 @@ import tempfile
 import urllib.parse
 import warnings
 import webbrowser
+from typing import Callable, cast
 from pathlib import Path
 
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
@@ -119,9 +120,22 @@ class JSONForHTMLRenderer(FrameRenderer):
         return []
 
     def render(self, session: Session) -> str:
+        encode_str = cast(Callable[[str], str], json.encoder.encode_basestring)  # type: ignore
         session_json = session.to_json(include_frame_records=False)
         session_json_str = json.dumps(session_json)
-        root_frame = session.root_frame()
-        root_frame = self.preprocess(root_frame)
-        frame_tree_json_str = root_frame.to_json_str() if root_frame else "null"
-        return '{"session": %s, "frame_tree": %s}' % (session_json_str, frame_tree_json_str)
+        root_frames = session.root_frames()
+        root_frames = self.preprocess(root_frames)
+        if root_frames is not None:
+            frame_trees_json_str = ''
+            keys = root_frames.keys()
+            key_count = 0
+            for thread_id in keys:
+                root_frame = root_frames[thread_id]
+                frame_tree_json_str = root_frame.to_json_str() if root_frame else "null"
+                frame_trees_json_str += ' %s : %s%s ' % (encode_str(thread_id), frame_tree_json_str,
+                                                       ',' if key_count < len(keys) - 1 else '')
+                key_count += 1
+            return '{"session": %s, "frame_trees": {%s}}' % (session_json_str, frame_trees_json_str)
+        else:
+            return '{"session": %s, "frame_trees": %s}' % (session_json_str, "null")
+

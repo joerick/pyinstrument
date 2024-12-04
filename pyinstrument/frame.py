@@ -54,6 +54,7 @@ class Frame:
     Object that represents a stack frame in the parsed tree
     """
 
+    thread_id: str
     parent: Frame | None
     group: FrameGroup | None
     time: float
@@ -68,12 +69,14 @@ class Frame:
 
     def __init__(
         self,
+        thread_id: str,
         identifier_or_frame_info: str = "",
         children: Sequence[Frame] | None = None,
         time: float = 0,
         context: FrameContext | None = None,
     ):
         identifier = frame_info_get_identifier(identifier_or_frame_info)
+        self.thread_id = thread_id
         self.identifier = identifier
         self.parent = None
         self.time = 0.0
@@ -120,11 +123,6 @@ class Frame:
         self._context = context
         for child in self._children:
             child.set_context(context)
-
-    @staticmethod
-    def new_subclass_with_frame_info(frame_info: str) -> Frame:
-        # TODO remove me
-        return Frame(identifier_or_frame_info=frame_info)
 
     @property
     def proportion_of_parent(self) -> float:
@@ -332,7 +330,8 @@ class Frame:
                 child.self_check(recursive=True)
 
     def __repr__(self):
-        return "Frame(identifier=%s, time=%f, len(children)=%d), group=%r" % (
+        return "Frame(thread_id=%s, identifier=%s, time=%f, len(children)=%d), group=%r" % (
+            self.thread_id,
             self.identifier,
             self.time,
             len(self.children),
@@ -346,6 +345,7 @@ class Frame:
         encode_str = typing.cast(Callable[[str], str], json.encoder.encode_basestring)  # type: ignore
 
         property_decls: list[str] = []
+        property_decls.append('"thread_id": %s' % encode_str(self.thread_id))
         property_decls.append('"identifier": %s' % encode_str(self.identifier))
         property_decls.append('"time": %f' % self.time)
         property_decls.append('"attributes": %s' % json.dumps(self.attributes))

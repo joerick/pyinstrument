@@ -11,10 +11,11 @@ export interface SessionData {
         sys_path: string;
         sys_prefixes: string[];
     };
-    frame_tree: FrameData;
+    frame_trees: FrameData[];
 }
 
 export interface FrameData {
+    thread_id: string;
     identifier: string;
     time: number;
     attributes: {[name: string]: number};
