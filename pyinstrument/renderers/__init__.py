@@ -5,3 +5,14 @@ from pyinstrument.renderers.jsonrenderer import JSONRenderer
 from pyinstrument.renderers.pstatsrenderer import PstatsRenderer
 from pyinstrument.renderers.session import SessionRenderer
 from pyinstrument.renderers.speedscope import SpeedscopeRenderer
+
+__all__ = [
+    "ConsoleRenderer",
+    "FrameRenderer",
+    "HTMLRenderer",
+    "JSONRenderer",
+    "PstatsRenderer",
+    "Renderer",
+    "SessionRenderer",
+    "SpeedscopeRenderer",
+]
