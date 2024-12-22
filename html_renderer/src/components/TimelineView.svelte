@@ -19,8 +19,12 @@
       return {processors, options}
     })
 
-  let rootFrame: Frame|null
-  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)
+  let rootFrames: Frame[]|null
+  let clonedFrames: Frame[]|null = []
+  for (const thread_id of Object.keys(session.rootFrames)) {
+    clonedFrames[thread_id] = session.rootFrames[thread_id].cloneDeep()
+  }
+  $: rootFrames = applyProcessors(clonedFrames, $config.processors, $config.options)
 
   let rootElement: HTMLDivElement|null = null
   let timelineCanvasView: TimelineCanvasView|null = null
@@ -32,8 +36,8 @@
     timelineCanvasView?.destroy()
   })
 
-  $: if (rootFrame && timelineCanvasView) {
-    timelineCanvasView.setRootFrame(rootFrame)
+  $: if (rootFrames && timelineCanvasView) {
+    timelineCanvasView.setRootFrames(rootFrames)
   }
 </script>
 

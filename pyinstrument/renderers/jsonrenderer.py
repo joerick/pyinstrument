@@ -63,7 +63,7 @@ class JSONRenderer(FrameRenderer):
         return "{%s}" % ",".join(property_decls)
 
     def render(self, session: Session):
-        frame = self.preprocess(session.root_frame())
+        frames = self.preprocess(session.root_frames())
 
         property_decls: list[str] = []
         property_decls.append('"start_time": %f' % session.start_time)
@@ -71,7 +71,8 @@ class JSONRenderer(FrameRenderer):
         property_decls.append('"sample_count": %d' % session.sample_count)
         property_decls.append('"target_description": %s' % encode_str(session.target_description))
         property_decls.append('"cpu_time": %f' % session.cpu_time)
-        property_decls.append('"root_frame": %s' % self.render_frame(frame))
+        property_decls.append('"root_frames": {%s}' % ','.join(
+            self.render_frame(frame) for frame in frames))
 
         return "{%s}\n" % ",".join(property_decls)
 
