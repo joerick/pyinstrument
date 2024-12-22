@@ -229,6 +229,8 @@ app is the name of your FastAPI application instance.
 Make sure you configure a setting to only make this available when required.
 
 ```python
+from fastapi import Request
+from fastapi.responses import HTMLResponse
 from pyinstrument import Profiler
 
 
@@ -239,7 +241,7 @@ if PROFILING:
     async def profile_request(request: Request, call_next):
         profiling = request.query_params.get("profile", False)
         if profiling:
-            profiler = Profiler(interval=settings.profiling_interval, async_mode="enabled")
+            profiler = Profiler()
             profiler.start()
             await call_next(request)
             profiler.stop()
@@ -344,7 +346,6 @@ app = Litestar(
 ```
 
 To invoke, make any request to your application and it will return the HTML result from pyinstrument instead of your application's response.
-
 
 ## Profile Pytest tests
 
