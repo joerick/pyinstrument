@@ -9,7 +9,7 @@ import runpy
 import shutil
 import sys
 import time
-from typing import Any, List, TextIO, cast
+from typing import Any, List, Optional, TextIO, Tuple, cast
 
 import pyinstrument
 from pyinstrument import Profiler, renderers
@@ -412,9 +412,41 @@ def main():
 def compute_render_options(
     options: CommandLineOptions, renderer_class: type[renderers.Renderer], output_file: TextIO
 ) -> dict[str, Any]:
+    """
+    Given a list of CommandLineOoptionsCompute the rendering options compute the
+    rendering options for the given renderer.
+
+    Raises if there is an error parsing the options.
+
+    """
+
+    unicode_support: bool = file_supports_unicode(output_file)
+    color_support: bool = file_supports_color(output_file)
+
+    error, render_options = _compute_render_options(
+        options, renderer_class, unicode_support, color_support
+    )
+    if error is not None:
+        raise OptionsParseError(error)
+    assert render_options is not None
+    return render_options
+
+
+def _compute_render_options(
+    options: CommandLineOptions,
+    renderer_class: type[renderers.Renderer],
+    unicode_support: bool,
+    color_support: bool,
+) -> Tuple[Optional[str], Optional[dict[str, Any]]]:
+    """
+    Similar as compute_render_options, but return a tuple (error message, data)
+    if there is an error; this will let us reuse _compute_render_options in magics.
+
+    output_file, has been replaced by unicode_support:bool, color_support:bool
+    """
     # parse show/hide options
     if options.hide_fnmatch is not None and options.hide_regex is not None:
-        raise OptionsParseError("You can‘t specify both --hide and --hide-regex")
+        return ("You can‘t specify both --hide and --hide-regex", None)
 
     hide_regex: str | None
     show_regex: str | None
@@ -429,7 +461,7 @@ def compute_render_options(
         options.show_all,
     ]
     if show_options_used.count(True) > 1:
-        raise OptionsParseError("You can only specify one of --show, --show-regex and --show-all")
+        return ("You can only specify one of --show, --show-regex and --show-all", None)
 
     if options.show_fnmatch is not None:
         show_regex = fnmatch.translate(options.show_fnmatch)
@@ -449,8 +481,8 @@ def compute_render_options(
     if issubclass(renderer_class, renderers.ConsoleRenderer):
         unicode_override = options.unicode is not None
         color_override = options.color is not None
-        unicode: Any = options.unicode if unicode_override else file_supports_unicode(output_file)
-        color: Any = options.color if color_override else file_supports_color(output_file)
+        unicode: Any = options.unicode if unicode_override else unicode_support
+        color: Any = options.color if color_override else color_support
 
         render_options.update({"unicode": unicode, "color": color})
 
@@ -478,7 +510,7 @@ def compute_render_options(
 
                 keypath.set_value_at_keypath(render_options, key, parsed_value)
 
-    return render_options
+    return None, render_options
 
 
 class OptionsParseError(Exception):
