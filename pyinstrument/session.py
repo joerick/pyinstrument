@@ -101,6 +101,7 @@ class Session:
         return Session(
             frame_records=json_dict["frame_records"],
             start_time=json_dict["start_time"],
+            thread_start_times=json_dict["thread_start_times"],
             min_interval=json_dict.get("min_interval", 0.001),
             max_interval=json_dict.get("max_interval", 0.001),
             duration=json_dict["duration"],
@@ -130,6 +131,7 @@ class Session:
         return Session(
             frame_records=session1.frame_records + session2.frame_records,
             start_time=session1.start_time,
+            thread_start_times=session1.thread_start_times | session2.thread_start_times,
             min_interval=min(session1.min_interval, session2.min_interval),
             max_interval=max(session1.max_interval, session2.max_interval),
             duration=session1.duration + session2.duration,
