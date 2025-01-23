@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 from pyinstrument.frame import (
     DUMMY_ROOT_FRAME_IDENTIFIER,
@@ -23,54 +23,65 @@ class IdentifierDoesntMatchException(ValueError):
 
 def build_frame_tree(
     frame_records: Sequence[FrameRecordType], context: FrameContext
-) -> Frame | None:
+) -> Dict[str, Frame | None] | None:
     if len(frame_records) == 0:
         return None
 
-    root_frame = Frame(identifier_or_frame_info=DUMMY_ROOT_FRAME_IDENTIFIER, context=context)
-
     # put the root frame at the bottom of the stack
-    frame_stack: list[Frame] = [root_frame]
+    root_frames: Dict[str, Frame] = {}
+    frame_stacks: Dict[str, list[Frame]] = {}
 
     for frame_info_stack, time in frame_records:
         stack_depth = 0
-        root_frame.record_time_from_frame_info(DUMMY_ROOT_FRAME_IDENTIFIER, time)
+
+        thread_id = frame_info_get_identifier(frame_info_stack[0])
+
+        if thread_id not in root_frames:
+            thread_root = Frame(
+                thread_id=thread_id,
+                identifier_or_frame_info=DUMMY_ROOT_FRAME_IDENTIFIER, context=context)
+            root_frames[thread_id] = thread_root
+            frame_stacks[thread_id] = [thread_root]
+
+        root_frames[thread_id].record_time_from_frame_info(DUMMY_ROOT_FRAME_IDENTIFIER, time)
 
         for stack_depth, frame_info in enumerate(frame_info_stack, start=1):
             frame_identifier = frame_info_get_identifier(frame_info)
             try:
-                frame = frame_stack[stack_depth]
+                frame = frame_stacks[thread_id][stack_depth]
                 if frame.identifier != frame_identifier:
                     # trim any frames after and including this one, and make a new frame
-                    del frame_stack[stack_depth:]
+                    del frame_stacks[thread_id][stack_depth:]
                     raise IdentifierDoesntMatchException()
             except (IndexError, IdentifierDoesntMatchException):
                 # create a new frame
-                parent = frame_stack[stack_depth - 1]
-                frame = Frame(identifier_or_frame_info=frame_info)
+                parent = frame_stacks[thread_id][stack_depth - 1]
+                frame = Frame(thread_id=thread_id, identifier_or_frame_info=frame_info)
                 parent.add_child(frame)
 
-                assert len(frame_stack) == stack_depth
-                frame_stack.append(frame)
+                assert len(frame_stacks[thread_id]) == stack_depth
+                frame_stacks[thread_id].append(frame)
 
             frame.record_time_from_frame_info(frame_info=frame_info, time=time)
 
         # trim any extra frames
-        del frame_stack[stack_depth + 1 :]
+        del frame_stacks[thread_id][stack_depth + 1:]
 
-        final_frame = frame_stack[-1]
+        final_frame = frame_stacks[thread_id][-1]
 
         if not final_frame.is_synthetic_leaf:
             # record the self-time
             final_frame.add_child(
-                Frame(identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time)
+                Frame(thread_id=thread_id,
+                      identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time)
             )
 
-    if len(root_frame.children) == 1:
-        root_frame = root_frame.children[0]
-        root_frame.remove_from_parent()
+    for thread_id, root_frame in root_frames.items():
+        if len(root_frames[thread_id].children) == 1:
+            root_frames[thread_id] = root_frame.children[0]
+            root_frames[thread_id].remove_from_parent()
 
-    return root_frame
+    return root_frames
 
 
 def delete_frame_from_tree(

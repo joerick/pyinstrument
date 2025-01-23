@@ -7,13 +7,15 @@ import time
 import types
 from pathlib import Path
 from time import process_time
-from typing import IO, Any
+from typing import IO, Any, Dict
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
 from pyinstrument.renderers.console import FlatTimeMode
 from pyinstrument.session import Session
-from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
+from pyinstrument.stack_sampler import (AsyncState, StackSampler,
+                                        StackSamplerSubscriberTarget, build_call_stack,
+                                        get_stack_sampler,)
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
@@ -22,6 +24,8 @@ from pyinstrument.util import file_supports_color, file_supports_unicode
 
 class ActiveProfilerSession:
     frame_records: list[tuple[list[str], float]]
+    thread_start_times: Dict[str, float]
+    first_start_time: float
 
     def __init__(
         self,
@@ -30,13 +34,21 @@ class ActiveProfilerSession:
         start_call_stack: list[str],
         target_description: str,
         interval: float,
+        child_threads: bool
     ) -> None:
         self.start_time = start_time
+        self.thread_start_times = {}
         self.start_process_time = start_process_time
         self.start_call_stack = start_call_stack
         self.frame_records = []
         self.target_description = target_description
-        self.interval = interval
+        self.interval = interval,
+        self.child_threads = child_threads
+
+    def record_thread_start(self, thread_id: str, time: float) -> None:
+        if not self.thread_start_times:
+            self.first_start_time = time
+        self.thread_start_times[thread_id] = time - self.first_start_time
 
 
 AsyncMode = LiteralStr["enabled", "disabled", "strict"]
@@ -52,12 +64,15 @@ class Profiler:
     _interval: float
     _async_mode: AsyncMode
     use_timing_thread: bool | None
+    child_threads: bool | None
+    _subscriber_target: StackSamplerSubscriberTarget
 
     def __init__(
         self,
         interval: float = 0.001,
         async_mode: AsyncMode = "enabled",
         use_timing_thread: bool | None = None,
+        child_threads: bool | None = None
     ):
         """
         Note the profiling will not start until :func:`start` is called.
@@ -73,6 +88,11 @@ class Profiler:
         self._active_session = None
         self._async_mode = async_mode
         self.use_timing_thread = use_timing_thread
+        self.child_threads = child_threads
+        self._subscriber_target = StackSamplerSubscriberTarget(
+            call_stack=self._sampler_saw_call_stack,
+            event=self._sampler_state_changed
+        )
 
     @property
     def interval(self) -> float:
@@ -152,14 +172,16 @@ class Profiler:
                 start_call_stack=build_call_stack(caller_frame, "initial", None),
                 target_description=target_description,
                 interval=self.interval,
+                child_threads=self.child_threads if self.child_threads is not None else False
             )
 
             use_async_context = self.async_mode != "disabled"
             get_stack_sampler().subscribe(
-                self._sampler_saw_call_stack,
+                self._subscriber_target,
                 desired_interval=self.interval,
                 use_async_context=use_async_context,
                 use_timing_thread=self.use_timing_thread,
+                child_threads=self.child_threads
             )
         except:
             self._active_session = None
@@ -176,7 +198,7 @@ class Profiler:
             raise RuntimeError("This profiler is not currently running.")
 
         try:
-            get_stack_sampler().unsubscribe(self._sampler_saw_call_stack)
+            get_stack_sampler().unsubscribe(self._subscriber_target)
         except StackSampler.SubscriberNotFound:
             raise RuntimeError(
                 "Failed to stop profiling. Make sure that you start/stop profiling on the same thread."
@@ -190,6 +212,7 @@ class Profiler:
         session = Session(
             frame_records=active_session.frame_records,
             start_time=active_session.start_time,
+            thread_start_times=active_session.thread_start_times,
             duration=time.time() - active_session.start_time,
             min_interval=active_session.interval,
             max_interval=active_session.interval,
@@ -245,6 +268,19 @@ class Profiler:
 
     def __exit__(self, *args: Any):
         self.stop()
+
+    # pylint: disable=W0613
+    def _sampler_state_changed(
+        self,
+        event: str,
+        thread_id: str,
+            time: float):
+        if not self._active_session:
+            raise RuntimeError(
+                "Received a state change without an active session. Please file an issue on pyinstrument Github describing how you made this happen!"
+            )
+        if event == 'thread_start':
+            self._active_session.record_thread_start(thread_id, time)
 
     # pylint: disable=W0613
     def _sampler_saw_call_stack(
