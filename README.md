@@ -54,6 +54,14 @@ Known issues
 Changelog
 ---------
 
+### v5.0.1
+
+_23 January 2025_
+
+-   Adds a Django option to customise the filename of saved profile runs (#339)
+-   Improve the FastAPI integration docs (#355)
+-   Include more options in the IPython magic (#350)
+
 ### v5.0.0
 
 _11 October 2024_
