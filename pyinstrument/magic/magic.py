@@ -14,9 +14,12 @@ from IPython.core.magic_arguments import argument, magic_arguments, parse_argstr
 from IPython.display import IFrame, display
 
 from pyinstrument import Profiler, renderers
+from pyinstrument.__main__ import compute_render_options
 from pyinstrument.frame import Frame
 from pyinstrument.frame_ops import delete_frame_from_tree
 from pyinstrument.processors import ProcessorOptions
+from pyinstrument.renderers.console import ConsoleRenderer
+from pyinstrument.renderers.html import HTMLRenderer
 
 _active_profiler = None
 
@@ -77,6 +80,43 @@ class PyinstrumentMagic(Magics):
 
     @magic_arguments()
     @argument(
+        "-p",
+        "--render-option",
+        dest="render_options",
+        action="append",
+        metavar="RENDER_OPTION",
+        type=str,
+        help=(
+            "options to pass to the renderer, in the format 'flag_name' or 'option_name=option_value'. "
+            "For example, to set the option 'time', pass '-p time=percent_of_total'. To pass multiple "
+            "options, use the -p option multiple times. You can set processor options using dot-syntax, "
+            "like '-p processor_options.filter_threshold=0'. option_value is parsed as a JSON value or "
+            "a string."
+        ),
+    )
+    @argument(
+        "--show-regex",
+        dest="show_regex",
+        action="store",
+        metavar="REGEX",
+        help=(
+            "regex matching the file paths whose frames to always show. "
+            "Useful if --show doesn't give enough control."
+        ),
+    )
+    @argument(
+        "--show",
+        dest="show_fnmatch",
+        action="store",
+        metavar="EXPR",
+        help=(
+            "glob-style pattern matching the file paths whose frames to "
+            "show, regardless of --hide or --hide-regex. For example, use "
+            "--show '*/<library>/*' to show frames within a library that "
+            "would otherwise be hidden."
+        ),
+    )
+    @argument(
         "--interval",
         type=float,
         default=0.001,
@@ -110,6 +150,26 @@ class PyinstrumentMagic(Magics):
         nargs="*",
         help="When used as a line magic, the code to profile",
     )
+    @argument(
+        "--hide",
+        dest="hide_fnmatch",
+        action="store",
+        metavar="EXPR",
+        help=(
+            "glob-style pattern matching the file paths whose frames to hide. Defaults to "
+            "hiding non-application code"
+        ),
+    )
+    @argument(
+        "--hide-regex",
+        dest="hide_regex",
+        action="store",
+        metavar="REGEX",
+        help=(
+            "regex matching the file paths whose frames to hide. Useful if --hide doesn't give "
+            "enough control."
+        ),
+    )
     @no_var_expand
     @line_cell_magic
     def pyinstrument(self, line, cell=None):
@@ -126,6 +186,12 @@ class PyinstrumentMagic(Magics):
         """
         global _active_profiler
         args = parse_argstring(self.pyinstrument, line)
+
+        # 2024, always override this  for now in IPython,
+        # we can make an option later if necessary
+        args.unicode = True
+        args.color = True
+
         ip = get_ipython()
 
         if not ip:
@@ -175,10 +241,15 @@ class PyinstrumentMagic(Magics):
             )
             return
 
-        html_renderer = renderers.HTMLRenderer(
-            show_all=args.show_all,
-            timeline=args.timeline,
+        html_config = compute_render_options(
+            args, renderer_class=HTMLRenderer, unicode_support=True, color_support=True
         )
+
+        text_config = compute_render_options(
+            args, renderer_class=HTMLRenderer, unicode_support=True, color_support=True
+        )
+
+        html_renderer = renderers.HTMLRenderer(show_all=args.show_all, timeline=args.timeline)
         html_renderer.preprocessors.append(strip_ipython_frames_processor)
         html_str = _active_profiler.output(html_renderer)
         as_iframe = IFrame(
@@ -188,10 +259,7 @@ class PyinstrumentMagic(Magics):
             extras=['style="resize: vertical"', f'srcdoc="{html.escape(html_str)}"'],
         )
 
-        text_renderer = renderers.ConsoleRenderer(
-            timeline=args.timeline,
-            show_all=args.show_all,
-        )
+        text_renderer = renderers.ConsoleRenderer(**text_config)
         text_renderer.processors.append(strip_ipython_frames_processor)
 
         as_text = _active_profiler.output(text_renderer)
