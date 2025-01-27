@@ -82,9 +82,8 @@ def file_is_a_tty(file_obj: IO[AnyStr]) -> bool:
 
 
 def unwrap(string: str) -> str:
-    string = string.replace("\n", " ")
-    string = re.sub(r"\s+", " ", string)
-    return string.strip()
+    parts = string.split()
+    return " ".join(parts)
 
 
 def format_float_with_sig_figs(value: float, sig_figs: int = 3, trim_zeroes=False) -> str:
