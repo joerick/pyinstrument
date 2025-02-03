@@ -317,18 +317,22 @@ class Frame:
         Checks that the frame is valid.
         """
         if self.identifier in SYNTHETIC_LEAF_IDENTIFIERS:
-            assert len(self._children) == 0
-            # leaf frames have time that isn't attributable to their
-            # children, so we don't check that.
+            assert (
+                not self._children
+            )  # `len(self._children) == 0` is equivalent to `not self._children`
             return
 
-        calculated_time = sum(child.time for child in self.children) + self.absorbed_time
+        children = self.children  # Access the property once to avoid repetitive lookups
+        calculated_time = self.absorbed_time
+        for child in children:
+            calculated_time += child.time
+
         assert math.isclose(
             calculated_time, self.time
-        ), f"Frame time mismatch, should be {calculated_time}, was {self.time}, {self.children}"
+        ), f"Frame time mismatch, should be {calculated_time}, was {self.time}, {children}"
 
         if recursive:
-            for child in self.children:
+            for child in children:
                 child.self_check(recursive=True)
 
     def __repr__(self):
