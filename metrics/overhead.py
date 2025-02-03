@@ -13,7 +13,7 @@ django.conf.settings.configure(
         {
             "BACKEND": "django.template.backends.django.DjangoTemplates",
             "DIRS": [
-                "./examples/django_example/django_example/templates",
+                "./examples/demo_scripts/django_example/django_example/templates",
             ],
         }
     ],
