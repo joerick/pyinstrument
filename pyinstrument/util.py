@@ -72,9 +72,7 @@ def file_supports_unicode(file_obj: IO[AnyStr]) -> bool:
     if not encoding:
         return False
 
-    codec_info = codecs.lookup(encoding)
-
-    return "utf" in codec_info.name
+    return "utf" in encoding.lower()
 
 
 def file_is_a_tty(file_obj: IO[AnyStr]) -> bool:
