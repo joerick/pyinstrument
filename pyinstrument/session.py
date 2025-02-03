@@ -4,7 +4,7 @@ import json
 import os
 import sys
 from collections import deque
-from typing import Any
+from typing import Dict, Any
 
 from pyinstrument.frame import Frame
 from pyinstrument.frame_info import frame_info_get_identifier
@@ -25,6 +25,7 @@ class Session:
         self,
         frame_records: list[FrameRecordType],
         start_time: float,
+        thread_start_times: Dict[str, float],
         duration: float,
         min_interval: float,
         max_interval: float,
@@ -43,6 +44,7 @@ class Session:
         """
         self.frame_records = frame_records
         self.start_time = start_time
+        self.thread_start_times = thread_start_times
         self.duration = duration
         self.min_interval = min_interval
         self.max_interval = max_interval
@@ -77,6 +79,7 @@ class Session:
     def to_json(self, include_frame_records: bool = True):
         result: dict[str, Any] = {
             "start_time": self.start_time,
+            "thread_start_times": self.thread_start_times,
             "duration": self.duration,
             "min_interval": self.min_interval,
             "max_interval": self.max_interval,
@@ -98,6 +101,7 @@ class Session:
         return Session(
             frame_records=json_dict["frame_records"],
             start_time=json_dict["start_time"],
+            thread_start_times=json_dict["thread_start_times"],
             min_interval=json_dict.get("min_interval", 0.001),
             max_interval=json_dict.get("max_interval", 0.001),
             duration=json_dict["duration"],
@@ -127,6 +131,7 @@ class Session:
         return Session(
             frame_records=session1.frame_records + session2.frame_records,
             start_time=session1.start_time,
+            thread_start_times=session1.thread_start_times | session2.thread_start_times,
             min_interval=min(session1.min_interval, session2.min_interval),
             max_interval=max(session1.max_interval, session2.max_interval),
             duration=session1.duration + session2.duration,
@@ -144,7 +149,11 @@ class Session:
     def current_sys_prefixes() -> list[str]:
         return [sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix]
 
+    # FIXME: remove after converting all to this
     def root_frame(self, trim_stem: bool = True) -> Frame | None:
+        return None
+
+    def root_frames(self, trim_stem: bool = True) -> Dict[str, Frame | None] | None:
         """
         Parses the internal frame records and returns a tree of :class:`Frame`
         objects. This object can be rendered using a :class:`Renderer`
@@ -152,15 +161,18 @@ class Session:
 
         :rtype: A :class:`Frame` object, or None if the session is empty.
         """
-        root_frame = build_frame_tree(self.frame_records, context=self)
+        root_frames = build_frame_tree(self.frame_records, context=self)
 
-        if root_frame is None:
-            return None
+        if root_frames is not None:
+            for thread_id, root_frame in root_frames.items():
+                if root_frame is None:
+                    return None
 
-        if trim_stem:
-            root_frame = self._trim_stem(root_frame)
+                if trim_stem:
+                    root_frame = self._trim_stem(root_frame)
+                    root_frames[thread_id] = root_frame
 
-        return root_frame
+        return root_frames
 
     def _trim_stem(self, frame: Frame):
         # trim the start of the tree before any branches.
