@@ -109,9 +109,10 @@ def main():
         action="store",
         type="string",
         help=(
-            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', 'pstats', "
-            "or python import path to a renderer class. Defaults to the appropriate format "
-            "for the extension if OUTFILE is given, otherwise, defaults to 'text'."
+            "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', "
+            "'pyisession', 'pstats', or python import path to a renderer class. Defaults to "
+            "the appropriate format for the extension if OUTFILE is given, otherwise, defaults "
+            "to 'text'."
         ),
         default=None,
     )
@@ -242,10 +243,10 @@ def main():
         type=float,
         help=(
             "Minimum time, in seconds, between each stack sample. Smaller values "
-            "allow resolving shorter duration function calls but conversely incur a "
+            "allow resolving shorter duration function calls but incur a "
             "greater runtime and memory consumption overhead. For longer running "
-            "scripts, setting a larger interval can help control the rate at which "
-            "the memory required to store the stack samples increases."
+            "scripts, setting a larger interval reduces the memory consumption "
+            "required to store the stack samples."
         ),
         default=0.001,
     )
@@ -542,7 +543,7 @@ def get_renderer_class(options: CommandLineOptions) -> type[renderers.Renderer]:
         return renderers.JSONRenderer
     elif renderer == "speedscope":
         return renderers.SpeedscopeRenderer
-    elif renderer == "session":
+    elif renderer == "pyisession" or renderer == "session":  # session is the old name
         return renderers.SessionRenderer
     elif renderer == "pstats":
         return renderers.PstatsRenderer
