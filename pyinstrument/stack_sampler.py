@@ -274,9 +274,13 @@ def get_stack_sampler() -> StackSampler:
     """
     Gets the stack sampler for the current thread, creating it if necessary
     """
-    if not hasattr(thread_locals, "stack_sampler"):
-        thread_locals.stack_sampler = StackSampler()
-    return thread_locals.stack_sampler
+    try:
+        return thread_locals.stack_sampler
+    except AttributeError:
+        # Attribute 'stack_sampler' doesn't exist in thread_locals, create it
+        stack_sampler = StackSampler()
+        thread_locals.stack_sampler = stack_sampler
+        return stack_sampler
 
 
 def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
