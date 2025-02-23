@@ -63,18 +63,19 @@ class ConsoleRenderer(FrameRenderer):
     def render(self, session: Session) -> str:
         result = self.render_preamble(session)
 
-        frame = self.preprocess(session.root_frame())
+        frames = self.preprocess(session.root_frames())
         indent = ".  " if self.short_mode else ""
 
-        if frame is None:
+        if frames is None:
             result += f"{indent}No samples were recorded.\n"
         else:
-            self.root_frame = frame
+            self.root_frames = frames
 
-            if self.flat:
-                result += self.render_frame_flat(self.root_frame, indent=indent)
-            else:
-                result += self.render_frame(self.root_frame, indent=indent, child_indent=indent)
+            for thread_id, root_frame in frames.items():
+                if self.flat:
+                    result += self.render_frame_flat(root_frame, indent=indent)
+                else:
+                    result += self.render_frame(root_frame, indent=indent, child_indent=indent)
 
         result += f"{indent}\n"
 
@@ -126,7 +127,7 @@ class ConsoleRenderer(FrameRenderer):
         assert frame.group
         return (
             frame.group.root == frame
-            or frame.total_self_time > 0.2 * self.root_frame.time
+            or frame.total_self_time > 0.2 * self.root_frames[frame.thread_id].time
             or frame in frame.group.exit_frames
         )
 
@@ -222,7 +223,7 @@ class ConsoleRenderer(FrameRenderer):
         if not self.show_all:
             # remove nodes that represent less than 0.1% of the total time
             id_time_pairs = [
-                pair for pair in id_time_pairs if pair[1] / self.root_frame.time > 0.001
+                pair for pair in id_time_pairs if pair[1] / self.root_frames[frame.thread_id].time > 0.001
             ]
 
         result = ""
@@ -235,7 +236,7 @@ class ConsoleRenderer(FrameRenderer):
 
     def frame_description(self, frame: Frame, *, override_time: float | None = None) -> str:
         time = override_time if override_time is not None else frame.time
-        time_color = self._ansi_color_for_time(time)
+        time_color = self._ansi_color_for_time(frame.thread_id, time)
 
         if self.time == "percent_of_total":
             time_str = f"{self.frame_proportion_of_total_time(time) * 100:.1f}%"
@@ -260,13 +261,13 @@ class ConsoleRenderer(FrameRenderer):
 
         return f"{value_str} {function_str}  {code_position_str}"
 
-    def frame_proportion_of_total_time(self, time: float) -> float:
-        if self.root_frame.time == 0:
+    def frame_proportion_of_total_time(self, thread_id: str, time: float) -> float:
+        if self.root_frames[thread_id].time == 0:
             return 1
-        return time / self.root_frame.time
+        return time / self.root_frames[thread_id].time
 
-    def _ansi_color_for_time(self, time: float) -> str:
-        proportion_of_total = self.frame_proportion_of_total_time(time)
+    def _ansi_color_for_time(self, thread_id: str, time: float) -> str:
+        proportion_of_total = self.frame_proportion_of_total_time(thread_id, time)
 
         if proportion_of_total > 0.6:
             return self.colors.red
