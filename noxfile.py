@@ -18,14 +18,14 @@ def test(session):
 def docs(session):
     session.env["UV_PRERELEASE"] = "allow"
     session.install("-e", ".[docs]")
-    session.run("make", "-C", "docs", "html")
+    session.run("make", "-C", "docs", "clean", "html")
 
 
 @nox.session(default=False)
 def livedocs(session):
     session.env["UV_PRERELEASE"] = "allow"
     session.install("-e", ".[docs]")
-    session.run("make", "-C", "docs", "livehtml")
+    session.run("make", "-C", "docs", "clean", "livehtml")
 
 
 @nox.session(default=False, python=False)
