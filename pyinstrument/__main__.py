@@ -242,10 +242,10 @@ def main():
         type=float,
         help=(
             "Minimum time, in seconds, between each stack sample. Smaller values "
-            "allow resolving shorter duration function calls but conversely incur a "
+            "allow resolving shorter duration function calls but incur a "
             "greater runtime and memory consumption overhead. For longer running "
-            "scripts, setting a larger interval can help control the rate at which "
-            "the memory required to store the stack samples increases."
+            "scripts, setting a larger interval reduces the memory consumption "
+            "required to store the stack samples."
         ),
         default=0.001,
     )
