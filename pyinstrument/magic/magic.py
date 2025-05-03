@@ -6,6 +6,8 @@ import threading
 import urllib.parse
 from ast import parse
 from textwrap import dedent
+import sys
+from signal import SIGINT
 
 import IPython
 from IPython import get_ipython  # type: ignore
@@ -240,6 +242,9 @@ class PyinstrumentMagic(Magics):
                 raw=True,
             )
             return
+
+        if isinstance(cell_result.error_in_exec, KeyboardInterrupt):
+            sys.exit(SIGINT)
 
         html_config = compute_render_options(
             args, renderer_class=HTMLRenderer, unicode_support=True, color_support=True
