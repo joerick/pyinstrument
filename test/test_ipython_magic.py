@@ -1,6 +1,9 @@
 from test.fake_time_util import fake_time
-
+import signal
 import pytest
+import sys
+from time import sleep
+from threading import Thread
 
 # note: IPython should be imported within each test. Importing it in our tests
 # seems to cause problems with subsequent tests.
@@ -76,6 +79,33 @@ def test_magic_no_variable_expansion(ip, capsys):
     assert "hello {len('world')}" in captured.out
     assert "hello 5" not in captured.out
 
+@pytest.mark.ipythonmagic
+def test_pyinstrument_handles_sigint(ip):
+    exit_called_with_sigint = False
+
+    # Mock sys.exit
+    original_exit = sys.exit
+
+    def mock_exit(code=0):
+        nonlocal exit_called_with_sigint
+        if code == signal.SIGINT:
+            exit_called_with_sigint = True
+            raise KeyboardInterrupt("Mocked SIGINT exit")
+        original_exit(code)
+
+    sys.exit = mock_exit
+
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            thread = Thread(target=_interrupt_after_1s)
+            thread.start()
+            ip.run_cell_magic("pyinstrument", "", "from time import sleep; sleep(2)")
+            thread.join()
+
+        assert exit_called_with_sigint, "%%pyinstrument did not call sys.exit(SIGINT) when interrupted"
+
+    finally:
+        sys.exit = original_exit
 
 # Utils #
 
@@ -86,6 +116,9 @@ def session_ip():
 
     yield start_ipython()
 
+def _interrupt_after_1s():
+    sleep(1)
+    signal.raise_signal(signal.SIGINT)
 
 @pytest.fixture(scope="function")
 def ip(session_ip):
