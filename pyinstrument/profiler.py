@@ -8,6 +8,7 @@ import types
 from pathlib import Path
 from time import process_time
 from typing import IO, Any
+from typing_extensions import TypeAlias
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
@@ -39,7 +40,7 @@ class ActiveProfilerSession:
         self.interval = interval
 
 
-AsyncMode = LiteralStr["enabled", "disabled", "strict"]
+AsyncMode: TypeAlias = LiteralStr["enabled", "disabled", "strict"]
 
 
 class Profiler:
