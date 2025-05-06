@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import html
+import sys
 import threading
 import urllib.parse
 from ast import parse
-from textwrap import dedent
-import sys
 from signal import SIGINT
+from textwrap import dedent
 
 import IPython
 from IPython import get_ipython  # type: ignore
