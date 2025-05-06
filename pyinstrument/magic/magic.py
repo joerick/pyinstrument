@@ -243,7 +243,11 @@ class PyinstrumentMagic(Magics):
             )
             return
 
+        # If a KeyboardInterrupt occurred during the magic execution,
+        # send a SIGINT signal to prevent further executions.
         if isinstance(cell_result.error_in_exec, KeyboardInterrupt):
+            # The traceback is already shown during the cell execution above, so we
+            # don't re-raise the exception.
             sys.exit(SIGINT)
 
         html_config = compute_render_options(
