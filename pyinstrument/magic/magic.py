@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import html
-import sys
 import threading
 import urllib.parse
 from ast import parse
-from signal import SIGINT
 from textwrap import dedent
 
 import IPython
@@ -248,7 +246,7 @@ class PyinstrumentMagic(Magics):
             return
 
         # If a KeyboardInterrupt occurred during the magic execution,
-        # send a SIGINT signal to prevent further executions.
+        # raise an exception to prevent further executions.
         if isinstance(cell_result.error_in_exec, KeyboardInterrupt):
             # The traceback is already shown during the cell execution above, so we
             # don't re-raise the exception directly.

@@ -1,5 +1,4 @@
 import signal
-import sys
 from test.fake_time_util import fake_time
 from threading import Thread
 from time import sleep
