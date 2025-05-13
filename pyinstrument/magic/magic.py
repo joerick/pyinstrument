@@ -42,6 +42,10 @@ def _get_active_profiler():
     return _active_profiler
 
 
+class InterruptSilently(Exception):
+    """Exception used to interrupt execution without showing traceback"""
+
+
 @magics_class
 class PyinstrumentMagic(Magics):
     def __init__(self, shell):
@@ -247,8 +251,19 @@ class PyinstrumentMagic(Magics):
         # send a SIGINT signal to prevent further executions.
         if isinstance(cell_result.error_in_exec, KeyboardInterrupt):
             # The traceback is already shown during the cell execution above, so we
-            # don't re-raise the exception.
-            sys.exit(SIGINT)
+            # don't re-raise the exception directly.
+            old_custom_tb = ip.CustomTB
+            old_custom_exceptions = ip.custom_exceptions
+
+            def _silent_exception_handler(self, etype, value, tb, tb_offset=None):
+                # restore the original handlers
+                ip.CustomTB = old_custom_tb
+                ip.custom_exceptions = old_custom_exceptions
+                # swallow the InterruptSilently entirely
+
+            # install our silent handler
+            ip.set_custom_exc((InterruptSilently,), _silent_exception_handler)
+            raise InterruptSilently()
 
         html_config = compute_render_options(
             args, renderer_class=HTMLRenderer, unicode_support=True, color_support=True
