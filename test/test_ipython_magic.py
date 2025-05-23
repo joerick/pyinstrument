@@ -1,6 +1,12 @@
+import signal
+import textwrap
 from test.fake_time_util import fake_time
+from threading import Thread
+from time import sleep
 
 import pytest
+
+from pyinstrument.magic.magic import InterruptSilently
 
 # note: IPython should be imported within each test. Importing it in our tests
 # seems to cause problems with subsequent tests.
@@ -77,6 +83,40 @@ def test_magic_no_variable_expansion(ip, capsys):
     assert "hello 5" not in captured.out
 
 
+@pytest.mark.ipythonmagic
+def test_pyinstrument_handles_interrupt_silently(ip, capsys):
+    thread = Thread(target=_interrupt_after_1s)
+    thread.start()
+    # expect our custom exception to bubble up
+    with pytest.raises(InterruptSilently):
+        ip.run_cell_magic("pyinstrument", "", "from time import sleep; sleep(2)")
+
+    thread.join()
+    # nothing should have hit stderr
+    _, err = capsys.readouterr()
+    assert err.strip() == ""
+
+
+@pytest.mark.ipythonmagic
+def test_async_cell_with_pyinstrument(ip, capsys):
+    ip.run_cell_magic(
+        "pyinstrument",
+        line="--async_mode=enabled",
+        cell=textwrap.dedent(
+            """
+            import asyncio
+            async def function_a():
+                await asyncio.sleep(0.1)
+                return 42
+            a = await function_a()
+            print("a:", a)
+            """
+        ),
+    )
+    stdout, stderr = capsys.readouterr()
+    assert "a: 42" in stdout
+
+
 # Utils #
 
 
@@ -85,6 +125,11 @@ def session_ip():
     from IPython.testing.globalipapp import start_ipython
 
     yield start_ipython()
+
+
+def _interrupt_after_1s():
+    sleep(1)
+    signal.raise_signal(signal.SIGINT)
 
 
 @pytest.fixture(scope="function")
