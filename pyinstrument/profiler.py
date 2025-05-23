@@ -14,7 +14,7 @@ from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDEN
 from pyinstrument.renderers.console import FlatTimeMode
 from pyinstrument.session import Session
 from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
-from pyinstrument.typing import LiteralStr
+from pyinstrument.typing import LiteralStr, TypeAlias
 from pyinstrument.util import file_supports_color, file_supports_unicode
 
 # pyright: strict
@@ -39,7 +39,7 @@ class ActiveProfilerSession:
         self.interval = interval
 
 
-AsyncMode = LiteralStr["enabled", "disabled", "strict"]
+AsyncMode: TypeAlias = LiteralStr["enabled", "disabled", "strict"]
 
 
 class Profiler:

@@ -22,29 +22,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        archs: [auto]
-        include:
-          - os: ubuntu-latest
-            archs: aarch64
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up QEMU
         if: ${{ matrix.archs == 'aarch64' }}
         uses: docker/setup-qemu-action@v3
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.22
+        uses: joerick/cibuildwheel@v3.0.0b1
         env:
           CIBW_SKIP: pp*
-          CIBW_ARCHS: ${{matrix.archs}}
           CIBW_ARCHS_MACOS: auto universal2
 
       - uses: actions/upload-artifact@v4
@@ -56,9 +51,9 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: '3.8'

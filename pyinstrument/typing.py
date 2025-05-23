@@ -2,11 +2,8 @@ import os
 from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
-    import typing_extensions
-
-    LiteralStr = typing_extensions.Literal
-    assert_never = typing_extensions.assert_never
-    Unpack = typing_extensions.Unpack
+    from typing_extensions import Literal as LiteralStr
+    from typing_extensions import TypeAlias, Unpack, assert_never
 else:
     # a type, that when subscripted, returns `str`.
     class _LiteralStr:
@@ -19,8 +16,9 @@ else:
         raise ValueError(value)
 
     Unpack = Any
+    TypeAlias = Any
 
 
 PathOrStr = Union[str, "os.PathLike[str]"]
 
-__all__ = ["PathOrStr", "LiteralStr", "assert_never", "Unpack"]
+__all__ = ["PathOrStr", "LiteralStr", "assert_never", "Unpack", "TypeAlias"]
