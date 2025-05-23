@@ -1,4 +1,5 @@
 import signal
+import textwrap
 from test.fake_time_util import fake_time
 from threading import Thread
 from time import sleep
@@ -94,6 +95,26 @@ def test_pyinstrument_handles_interrupt_silently(ip, capsys):
     # nothing should have hit stderr
     _, err = capsys.readouterr()
     assert err.strip() == ""
+
+
+@pytest.mark.ipythonmagic
+def test_async_cell_with_pyinstrument(ip, capsys):
+    ip.run_cell_magic(
+        "pyinstrument",
+        line="--async_mode=enabled",
+        cell=textwrap.dedent(
+            """
+            import asyncio
+            async def function_a():
+                await asyncio.sleep(0.1)
+                return 42
+            a = await function_a()
+            print("a:", a)
+            """
+        ),
+    )
+    stdout, stderr = capsys.readouterr()
+    assert "a: 42" in stdout
 
 
 # Utils #

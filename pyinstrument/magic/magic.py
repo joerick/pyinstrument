@@ -305,7 +305,7 @@ class PyinstrumentMagic(Magics):
             asyncio.set_event_loop(loop)
             coro = ip.run_cell_async(code)
             future = asyncio.run_coroutine_threadsafe(coro, loop)
-            return future.result().result
+            return future.result()
         finally:
             loop.call_soon_threadsafe(loop.stop)
             asyncio.set_event_loop(old_loop)
