@@ -22,11 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        archs: [auto]
-        include:
-          - os: ubuntu-latest
-            archs: aarch64
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
 
     steps:
       - uses: actions/checkout@v4
@@ -41,10 +37,9 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.22
+        uses: joerick/cibuildwheel@v3.0.0b1
         env:
           CIBW_SKIP: pp*
-          CIBW_ARCHS: ${{matrix.archs}}
           CIBW_ARCHS_MACOS: auto universal2
 
       - uses: actions/upload-artifact@v4
@@ -58,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5.6.0
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: '3.8'
