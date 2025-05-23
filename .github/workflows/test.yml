@@ -13,11 +13,11 @@ jobs:
         # Checkout pull request HEAD commit instead of merge commit
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
     - name: Install Python deps
       run: |
         pip install -r requirements-dev.txt
-    - uses: pre-commit/action@v2.0.3
+    - uses: pre-commit/action@v3.0.1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
