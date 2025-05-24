@@ -9,7 +9,7 @@ export default class Session {
     sampleCount: number;
     target_description: string;
     cpuTime: number;
-    rootFrame: Frame;
+    rootFrame: Frame|null;
     sysPath: string;
     sysPrefixes: string[];
 
@@ -23,7 +23,7 @@ export default class Session {
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
         this.sysPrefixes = data.session.sys_prefixes
-        this.rootFrame = new Frame(data.frame_tree, this)
+        this.rootFrame = data.frame_tree ? new Frame(data.frame_tree, this) : null
     }
 
     _shortenPathCache: {[path: string]: string} = {}

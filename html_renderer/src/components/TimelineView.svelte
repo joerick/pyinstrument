@@ -20,7 +20,7 @@
     })
 
   let rootFrame: Frame|null
-  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)
+  $: rootFrame = applyProcessors(session.rootFrame?.cloneDeep() ?? null, $config.processors, $config.options)
 
   let rootElement: HTMLDivElement|null = null
   let timelineCanvasView: TimelineCanvasView|null = null
