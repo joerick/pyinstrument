@@ -6,8 +6,6 @@ from time import sleep
 
 import pytest
 
-from pyinstrument.magic.magic import InterruptSilently
-
 # note: IPython should be imported within each test. Importing it in our tests
 # seems to cause problems with subsequent tests.
 
@@ -85,6 +83,8 @@ def test_magic_no_variable_expansion(ip, capsys):
 
 @pytest.mark.ipythonmagic
 def test_pyinstrument_handles_interrupt_silently(ip, capsys):
+    from pyinstrument.magic.magic import InterruptSilently
+
     thread = Thread(target=_interrupt_after_1s)
     thread.start()
     # expect our custom exception to bubble up
