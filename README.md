@@ -54,6 +54,13 @@ Known issues
 Changelog
 ---------
 
+### v5.0.2
+
+_24 May 2025_
+
+-   Fix a bug that caused jupyter notebooks to continue to run after a profiled cell was interrupted with Ctrl-C (#373)
+-   Fix a type annotation issue when using mypy and import pyinstrument (#373)
+
 ### v5.0.1
 
 _23 January 2025_
