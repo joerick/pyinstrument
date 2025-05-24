@@ -76,7 +76,7 @@
   });
 
   let rootFrame: Frame|null
-  $: rootFrame = applyProcessors(session.rootFrame.cloneDeep(), $config.processors, $config.options)
+  $: rootFrame = applyProcessors(session.rootFrame?.cloneDeep() ?? null, $config.processors, $config.options)
 </script>
 
 <div class="call-stack-view" bind:this={element}>

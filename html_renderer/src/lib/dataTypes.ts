@@ -11,7 +11,7 @@ export interface SessionData {
         sys_path: string;
         sys_prefixes: string[];
     };
-    frame_tree: FrameData;
+    frame_tree: FrameData|null;
 }
 
 export interface FrameData {
