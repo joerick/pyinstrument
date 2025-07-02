@@ -54,6 +54,12 @@ Known issues
 Changelog
 ---------
 
+### v5.0.3
+
+_2 July 2025_
+
+-   Fix a bug where the HTML renderer would crash when the profile is empty (#377)
+
 ### v5.0.2
 
 _24 May 2025_
