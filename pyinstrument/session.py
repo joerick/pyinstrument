@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 from collections import deque
@@ -64,6 +65,10 @@ class Session:
         """
         with open(filename) as f:
             return Session.from_json(json.load(f))
+
+    @property
+    def precision(self) -> int:
+        return max(math.ceil(-math.log10(abs(self.min_interval))), 0)
 
     def save(self, filename: PathOrStr) -> None:
         """
