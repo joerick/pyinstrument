@@ -28,7 +28,7 @@ repos:
         -   --ignore-words-list=vas
 
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.373
+    rev: v1.1.403
     hooks:
     -   id: pyright
         additional_dependencies:
@@ -46,6 +46,7 @@ repos:
         -   types-requests
         -   falcon
         -   litestar
+        -   aiohttp
 
 
 -   repo: local

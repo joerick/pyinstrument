@@ -316,6 +316,49 @@ app = Litestar(
 
 To invoke, make any request to your application and it will return the HTML result from pyinstrument instead of your application's response.
 
+## Profile a web request in aiohttp.web
+
+You can use a simple middleware to profile aiohttp web server requests with
+Pyinstrument:
+
+```python
+from aiohttp import web
+from pyinstrument import Profiler
+
+@web.middleware
+async def profiler_middleware(request, handler):
+    with Profiler() as p:
+        await handler(request)
+    return web.Response(text=p.output_html(), content_type="text/html")
+
+app = web.Application(middlewares=(profiler_middleware,))
+```
+
+Pyinstrument's HTML output will be returned as response, showing the profiling
+result of each request.
+
+Make use of aiohttp.web development CLI feature to isolate configurations and
+make sure profiling is only enabled when needed:
+
+```python
+...
+
+def dev_app(argv):
+    app = web.Application(middlewares=(profiler_middleware,))
+    app.add_routes(routes)
+    return app # for development
+
+if __name__ == '__main__':
+    app = web.Application()
+    app.add_routes(routes)
+    web.run_app(...) # for deployment
+```
+
+```bash
+python3 -m aiohttp.web app:dev_app # develop with profiling and debug enabled
+python3 ./app.py # run app without profiling
+```
+
 ## Profile Pytest tests
 
 Pyinstrument can be invoked via the command-line to run pytest, giving you a
