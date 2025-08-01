@@ -54,6 +54,7 @@ class Session:
         self.sys_path = sys_path
         self.sys_prefixes = sys_prefixes
         self._short_file_path_cache = {}
+        self.precision = max(math.ceil(-math.log10(abs(self.min_interval))), 0)
 
     @staticmethod
     def load(filename: PathOrStr) -> Session:
@@ -65,10 +66,6 @@ class Session:
         """
         with open(filename) as f:
             return Session.from_json(json.load(f))
-
-    @property
-    def precision(self) -> int:
-        return max(math.ceil(-math.log10(abs(self.min_interval))), 0)
 
     def save(self, filename: PathOrStr) -> None:
         """
