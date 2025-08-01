@@ -233,4 +233,5 @@ export default class Frame {
 interface FrameContext {
     shortenPath(path: string): string
     sysPrefixes: string[]
+    precision: number
 }

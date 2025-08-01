@@ -6,6 +6,7 @@ export default class Session {
     duration: number;
     minInterval: number;
     maxInterval: number;
+    precision: number;
     sampleCount: number;
     target_description: string;
     cpuTime: number;
@@ -23,6 +24,7 @@ export default class Session {
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
         this.sysPrefixes = data.session.sys_prefixes
+        this.precision = Math.max(0, Math.ceil(-Math.log10(Math.abs(this.minInterval))))
         this.rootFrame = data.frame_tree ? new Frame(data.frame_tree, this) : null
     }
 

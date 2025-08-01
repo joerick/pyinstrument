@@ -91,8 +91,8 @@
   let formattedTime: string;
   $: if ($viewOptionsCallStack.timeFormat === "absolute") {
     formattedTime = frame.time.toLocaleString(undefined, {
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
+      minimumFractionDigits: frame.context.precision,
+      maximumFractionDigits: frame.context.precision,
     });
   } else if ($viewOptionsCallStack.timeFormat === "proportion") {
     formattedTime = `${(frameProportionOfTotal * 100).toLocaleString(
