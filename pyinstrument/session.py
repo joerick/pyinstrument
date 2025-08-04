@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import sys
 from collections import deque
@@ -54,7 +53,6 @@ class Session:
         self.sys_path = sys_path
         self.sys_prefixes = sys_prefixes
         self._short_file_path_cache = {}
-        self.precision = max(math.ceil(-math.log10(abs(self.min_interval))), 0)
 
     @staticmethod
     def load(filename: PathOrStr) -> Session:

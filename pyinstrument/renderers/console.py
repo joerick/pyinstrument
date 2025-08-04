@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 import textwrap
 import time
@@ -65,6 +66,7 @@ class ConsoleRenderer(FrameRenderer):
 
         frame = self.preprocess(session.root_frame())
         indent = ".  " if self.short_mode else ""
+        precision = math.ceil(-math.log10(min(max(1e-9, session.max_interval), 1)))
 
         if frame is None:
             result += f"{indent}No samples were recorded.\n"
@@ -72,10 +74,10 @@ class ConsoleRenderer(FrameRenderer):
             self.root_frame = frame
 
             if self.flat:
-                result += self.render_frame_flat(self.root_frame, precision=session.precision)
+                result += self.render_frame_flat(self.root_frame, precision=precision)
             else:
                 result += self.render_frame(
-                    self.root_frame, precision=session.precision, indent=indent, child_indent=indent
+                    self.root_frame, precision=precision, indent=indent, child_indent=indent
                 )
 
         result += f"{indent}\n"
