@@ -24,7 +24,7 @@ export default class Session {
         this.cpuTime = data.session.cpu_time;
         this.sysPath = data.session.sys_path;
         this.sysPrefixes = data.session.sys_prefixes
-        this.precision = Math.max(0, Math.ceil(-Math.log10(Math.abs(this.minInterval))))
+        this.precision = Math.ceil(-Math.log10(Math.min(Math.max(1e-9, this.maxInterval), 1))
         this.rootFrame = data.frame_tree ? new Frame(data.frame_tree, this) : null
     }
 

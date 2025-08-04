@@ -72,10 +72,10 @@ class ConsoleRenderer(FrameRenderer):
             self.root_frame = frame
 
             if self.flat:
-                result += self.render_frame_flat(self.root_frame, session.precision)
+                result += self.render_frame_flat(self.root_frame, precision=session.precision)
             else:
                 result += self.render_frame(
-                    self.root_frame, session.precision, indent=indent, child_indent=indent
+                    self.root_frame, precision=session.precision, indent=indent, child_indent=indent
                 )
 
         result += f"{indent}\n"
@@ -198,7 +198,7 @@ class ConsoleRenderer(FrameRenderer):
                     c_indent = child_indent + indents["└"]
                     cc_indent = child_indent + indents[" "]
                 result += self.render_frame(
-                    child, precision, indent=c_indent, child_indent=cc_indent
+                    child, precision=precision, indent=c_indent, child_indent=cc_indent
                 )
 
         return result
