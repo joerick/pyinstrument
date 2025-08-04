@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 import textwrap
 import time
@@ -65,6 +66,7 @@ class ConsoleRenderer(FrameRenderer):
 
         frame = self.preprocess(session.root_frame())
         indent = ".  " if self.short_mode else ""
+        precision = math.ceil(-math.log10(min(max(1e-9, session.max_interval), 1)))
 
         if frame is None:
             result += f"{indent}No samples were recorded.\n"
@@ -72,9 +74,11 @@ class ConsoleRenderer(FrameRenderer):
             self.root_frame = frame
 
             if self.flat:
-                result += self.render_frame_flat(self.root_frame, indent=indent)
+                result += self.render_frame_flat(self.root_frame, precision=precision)
             else:
-                result += self.render_frame(self.root_frame, indent=indent, child_indent=indent)
+                result += self.render_frame(
+                    self.root_frame, precision=precision, indent=indent, child_indent=indent
+                )
 
         result += f"{indent}\n"
 
@@ -157,9 +161,11 @@ class ConsoleRenderer(FrameRenderer):
                     libraries.append(library)
         return libraries
 
-    def render_frame(self, frame: Frame, indent: str = "", child_indent: str = "") -> str:
+    def render_frame(
+        self, frame: Frame, precision: int, indent: str = "", child_indent: str = ""
+    ) -> str:
         if self.should_render_frame(frame):
-            result = f"{indent}{self.frame_description(frame)}\n"
+            result = f"{indent}{self.frame_description(frame, precision=precision)}\n"
 
             if self.unicode:
                 indents = {"├": "├─ ", "│": "│  ", "└": "└─ ", " ": "   "}
@@ -193,11 +199,13 @@ class ConsoleRenderer(FrameRenderer):
                 else:
                     c_indent = child_indent + indents["└"]
                     cc_indent = child_indent + indents[" "]
-                result += self.render_frame(child, indent=c_indent, child_indent=cc_indent)
+                result += self.render_frame(
+                    child, precision=precision, indent=c_indent, child_indent=cc_indent
+                )
 
         return result
 
-    def render_frame_flat(self, frame: Frame, indent: str) -> str:
+    def render_frame_flat(self, frame: Frame, precision: int) -> str:
         def walk(frame: Frame):
             frame_id_to_time[frame.identifier] = (
                 frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
@@ -228,19 +236,23 @@ class ConsoleRenderer(FrameRenderer):
         result = ""
 
         for frame_id, self_time in id_time_pairs:
-            result += self.frame_description(frame_id_to_frame[frame_id], override_time=self_time)
+            result += self.frame_description(
+                frame_id_to_frame[frame_id], precision=precision, override_time=self_time
+            )
             result += "\n"
 
         return result
 
-    def frame_description(self, frame: Frame, *, override_time: float | None = None) -> str:
+    def frame_description(
+        self, frame: Frame, *, precision: int = 3, override_time: float | None = None
+    ) -> str:
         time = override_time if override_time is not None else frame.time
         time_color = self._ansi_color_for_time(time)
 
         if self.time == "percent_of_total":
             time_str = f"{self.frame_proportion_of_total_time(time) * 100:.1f}%"
         else:
-            time_str = f"{time:.3f}"
+            time_str = f"{time:.{precision}f}"
 
         value_str = f"{time_color}{time_str}{self.colors.end}"
 
