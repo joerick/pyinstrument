@@ -54,6 +54,14 @@ Known issues
 Changelog
 ---------
 
+### v5.1.0
+
+_10 August 2025_
+
+-   Precision of printed durations now adapts to the interval of the profile. This allows you to see more detail when the interval, and hides unnecessary detail when the interval is large. (#390)
+-   Adds an option to the Django middleware to customise the filename of saved profile runs using a callback (#393)
+-   Adds an aiohttp.web example to the documentation (#389)
+
 ### v5.0.3
 
 _2 July 2025_
