@@ -58,6 +58,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
     def process_response(self, request, response):
         if hasattr(request, "profiler"):
             profile_session = request.profiler.stop()
+            default_filename_template = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}"
 
             configured_renderer = getattr(settings, "PYINSTRUMENT_PROFILE_DIR_RENDERER", None)
             renderer = get_renderer(configured_renderer)
@@ -65,6 +66,12 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
             output = renderer.render(profile_session)
 
             profile_dir = getattr(settings, "PYINSTRUMENT_PROFILE_DIR", None)
+
+            filename_cb = getattr(settings, "PYINSTRUMENT_FILENAME_CALLBACK", None)
+
+            filename_template = getattr(
+                settings, "PYINSTRUMENT_FILENAME", default_filename_template
+            )
 
             # Limit the length of the file name (255 characters is the max limit on major current OS, but it is rather
             # high and the other parts (see line 36) are to be taken into account; so a hundred will be fine here).
@@ -75,13 +82,17 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                 path = path.replace("?", "_qs_")
 
             if profile_dir:
-                default_filename = "{total_time:.3f}s {path} {timestamp:.0f}.{ext}"
-                filename = getattr(settings, "PYINSTRUMENT_FILENAME", default_filename).format(
-                    total_time=profile_session.duration,
-                    path=path,
-                    timestamp=time.time(),
-                    ext=renderer.output_file_extension,
-                )
+                if filename_cb and callable(filename_cb):
+                    filename = filename_cb(request, profile_session, renderer)
+                    if not isinstance(filename, str):
+                        raise ValueError("Filename callback return value should be a string")
+                else:
+                    filename = filename_template.format(
+                        total_time=profile_session.duration,
+                        path=path,
+                        timestamp=time.time(),
+                        ext=renderer.output_file_extension,
+                    )
 
                 file_path = os.path.join(profile_dir, filename)
 

@@ -128,17 +128,42 @@ To profile Django web requests, add
 `pyinstrument.middleware.ProfilerMiddleware` to `MIDDLEWARE` in your
 `settings.py`.
 
+**Profile specific request**
+
 Once installed, add `?profile` to the end of a request URL to activate the
 profiler. Your request will run as normal, but instead of getting the response,
 you'll get pyinstrument's analysis of the request in a web page.
+
+**Save all requests to a directory**
 
 If you're writing an API, it's not easy to change the URL when you want to
 profile something. In this case, add  `PYINSTRUMENT_PROFILE_DIR = 'profiles'`
 to your `settings.py`. Pyinstrument will profile every request and save the
 HTML output to the folder `profiles` in your working directory.
 
+**Custom file name by string**
+
 You can further customize the filename by adding `PYINSTRUMENT_FILENAME` to
-`settings.py`, default values is `"{total_time:.3f}s {path} {timestamp:.0f}.{ext}"`.
+`settings.py`, default value is `"{total_time:.3f}s {path} {timestamp:.0f}.{ext}"`.
+
+**Custom file name by callback function**
+
+For more control you can provide a callback function by adding
+`PYINSTRUMENT_FILENAME_CALLBACK` to `settings.py`, that returns a filename as a string.
+
+```python
+def get_pyinstrument_filename(request, session, renderer):
+    path = request.get_full_path().replace("/", "_")[:100]
+    ext = renderer.output_file_extension
+    filename = f"{request.method}_{session.duration}{path}.{ext}"
+    return filename
+
+PYINSTRUMENT_FILENAME_CALLBACK = get_pyinstrument_filename
+```
+
+(This callback takes precedence over `PYINSTRUMENT_FILENAME`).
+
+**Control shown profiling page**
 
 If you want to show the profiling page depending on the request you can define
 `PYINSTRUMENT_SHOW_CALLBACK` as dotted path to a function used for determining
