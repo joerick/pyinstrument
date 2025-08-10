@@ -115,6 +115,7 @@ export default class TimelineCanvasView extends CanvasView {
                 time: timelineFrame.frame.time,
                 selfTime: this.frameSelfTime(timelineFrame),
                 totalTime: this._rootFrame?.time ?? 1e-12,
+                precision: this._rootFrame?.context.precision ?? 3,
                 location: `${timelineFrame.filePathShort}:${timelineFrame.frame.lineNo}`,
                 locationColor: this.colorForFrame(timelineFrame),
             }

@@ -6,6 +6,7 @@
     time: number
     selfTime: number
     totalTime: number
+    precision: number
     location: string
     locationColor: string
   }
@@ -48,7 +49,7 @@
 
   function formatTime(time: number) {
     const color = colorForFrameProportionOfTotal(time / f.totalTime)
-    return `<span style="color: ${color}">${time.toFixed(3)}</span>`
+    return `<span style="color: ${color}">${time.toFixed(f.precision)}</span>`
   }
 </script>
 
