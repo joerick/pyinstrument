@@ -148,7 +148,7 @@ You can further customize the filename by adding `PYINSTRUMENT_FILENAME` to
 
 **Custom file name by callback function**
 
-For more control you can provide a callback function by adding 
+For more control you can provide a callback function by adding
 `PYINSTRUMENT_FILENAME_CALLBACK` to `settings.py`, that returns a filename as a string.
 
 ```python

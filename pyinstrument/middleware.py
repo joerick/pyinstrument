@@ -69,7 +69,9 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
 
             filename_cb = getattr(settings, "PYINSTRUMENT_FILENAME_CALLBACK", None)
 
-            filename_template = getattr(settings, "PYINSTRUMENT_FILENAME", default_filename_template)
+            filename_template = getattr(
+                settings, "PYINSTRUMENT_FILENAME", default_filename_template
+            )
 
             # Limit the length of the file name (255 characters is the max limit on major current OS, but it is rather
             # high and the other parts (see line 36) are to be taken into account; so a hundred will be fine here).
@@ -83,9 +85,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                 if filename_cb and callable(filename_cb):
                     filename = filename_cb(request, profile_session, renderer)
                     if not isinstance(filename, str):
-                        raise ValueError(
-                            "Filename callback return value should be a string"
-                        )
+                        raise ValueError("Filename callback return value should be a string")
                 else:
                     filename = filename_template.format(
                         total_time=profile_session.duration,
