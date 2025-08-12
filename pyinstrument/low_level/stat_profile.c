@@ -66,7 +66,11 @@ static int ProfilerState_UpdateContextVar(ProfilerState *self) {
         return 0;
     }
 
-    if (old == new) return 1;
+    if (old == new) {
+        // The object is the same, so we don't need the new reference.
+        Py_DECREF(new);
+        return 1;
+    }
 
     self->last_context_var_value = new;
 
@@ -251,6 +255,9 @@ call_target(ProfilerState *pState, PyFrameObject *frame, int what, PyObject *arg
     return result;
 }
 
+/**
+ * Returns a new reference to a PyCodeObject for the given frame.
+ */
 static PyCodeObject *
 code_from_frame(PyFrameObject* frame)
 {
@@ -263,6 +270,10 @@ code_from_frame(PyFrameObject* frame)
 #endif
 }
 
+/**
+ * Returns a new reference to a PyTupleObject containing the names of the
+ * local variables.
+ */
 static PyObject *
 local_names_from_code(PyCodeObject *code)
 {
@@ -276,6 +287,10 @@ local_names_from_code(PyCodeObject *code)
 }
 
 #if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
+/**
+ * Returns a C-string containing the name of the class in the frame. The
+ * memory belongs to the type object, so it should not be freed.
+ */
 static const char *
 _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     PyObject *localsNames = PyCode_GetVarnames(code);
@@ -287,9 +302,9 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
     PyObject *firstArgName = PyTuple_GET_ITEM(localsNames, 0);
 
     if (firstArgName == NULL) {
+        Py_DECREF(localsNames);
         return NULL;
     }
-
 
     int has_self = PyUnicode_Compare(firstArgName, SELF_STRING) == 0;
     int has_cls = PyUnicode_Compare(firstArgName, CLS_STRING) == 0;
@@ -323,6 +338,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
         }
 
         result = _PyType_Name(self->ob_type);
+        Py_DECREF(self);
     }
     else if (has_cls && PyMapping_HasKey(locals, CLS_STRING)) {
         PyObject *cls = PyObject_GetItem(locals, CLS_STRING);
@@ -337,6 +353,7 @@ _get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
             PyTypeObject *type = (PyTypeObject *)cls;
             result = _PyType_Name(type);
         }
+        Py_DECREF(cls);
     }
 
     Py_DECREF(locals);
@@ -456,6 +473,7 @@ _get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
 
     if (!PySequence_Check(locals_names)) {
         // locals_names must be a sequence
+        Py_DECREF(locals_names);
         return 0;
     }
 
@@ -471,6 +489,9 @@ _get_tracebackhide(PyFrameObject *frame, PyCodeObject *code) {
     }
 }
 
+/**
+ * Returns a new reference to pyinstrument's frame info string for the given frame.
+ */
 static PyObject *
 _get_frame_info(PyFrameObject *frame) {
     PyCodeObject *code = code_from_frame(frame);
@@ -703,6 +724,10 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
         }
 
         pState = ProfilerState_New();
+        if (pState == NULL) { // Check if allocation failed
+            return NULL;
+        }
+
         ProfilerState_SetTarget(pState, target);
 
         // default interval is 1 ms
@@ -710,7 +735,7 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 
         int timer_type_int = _parse_timer_type(timer_type, TIMER_TYPE_WALLTIME);
         if (timer_type_int == -1) {
-            return NULL;
+            goto error;
         }
 
         if (timer_func == Py_None) {
@@ -719,12 +744,12 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
 
         if (timer_type_int == TIMER_TYPE_TIMER_FUNC && timer_func == NULL) {
             PyErr_SetString(PyExc_TypeError, "timer_func must be set if timer_type is 'timer_func'");
-            return NULL;
+            goto error;
         }
 
         if (timer_func && timer_type_int != TIMER_TYPE_TIMER_FUNC) {
             PyErr_SetString(PyExc_TypeError, "timer_type must be 'timer_func' if timer_func is set");
-            return NULL;
+            goto error;
         }
 
         if (timer_func) {
@@ -734,7 +759,7 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
             pState->timer_thread_subscription_id = pyi_timing_thread_subscribe(pState->interval);
             if (pState->timer_thread_subscription_id < 0) {
                 PyErr_Format(PyExc_RuntimeError, "failed to subscribe to timing thread: error %d", pState->timer_thread_subscription_id);
-                return NULL;
+                goto error;
             }
         } else if (timer_type_int == TIMER_TYPE_WALLTIME_COARSE) {
             pState->floatclock_type = PYI_FLOATCLOCK_MONOTONIC_COARSE;
@@ -750,17 +775,21 @@ setstatprofile(PyObject *m, PyObject *args, PyObject *kwds)
             pState->context_var = context_var;
 
             if (!ProfilerState_UpdateContextVar(pState)) {
-                return NULL;
+                goto error;
             }
         }
 
         PyEval_SetProfile(profile, (PyObject *)pState);
-        Py_DECREF(pState);
+        Py_DECREF(pState); // We've given a reference to SetProfile, so we release ours.
     } else {
         PyEval_SetProfile(NULL, NULL);
     }
 
     Py_RETURN_NONE;
+
+error:
+    Py_XDECREF(pState);
+    return NULL;
 }
 
 
