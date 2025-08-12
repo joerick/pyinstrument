@@ -54,6 +54,12 @@ Known issues
 Changelog
 ---------
 
+### v5.1.1
+
+_12 August 2025_
+
+-   Fix some memory leaks in the low-level C extension (#394)
+
 ### v5.1.0
 
 _10 August 2025_
