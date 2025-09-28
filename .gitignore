@@ -22,6 +22,7 @@ build
 # testing
 .cache
 .pytest_cache
+.coverage
 
 # editor
 *.code-workspace
