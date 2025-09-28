@@ -1,5 +1,6 @@
 from pyinstrument import Profiler
 
+# Profiler test
 def test_create_profiler():
     p = Profiler()
     assert p is not None
@@ -29,3 +30,4 @@ def test_output_text_contains_duration():
     p.stop()
     output = p.output_text()
     assert "Duration" in output or "duration" in output.lower()
+# Profiler test
