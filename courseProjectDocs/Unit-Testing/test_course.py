@@ -72,6 +72,7 @@ def test_empty_session_root_frame_is_none():
     prof.stop()
     assert prof.last_session.root_frame() is None
 
+# Frame Tests
 def test_add_child_to_parent():
     parent = Frame("parent")  
     child = Frame ("child")  

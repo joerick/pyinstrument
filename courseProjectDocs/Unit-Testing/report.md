@@ -24,7 +24,7 @@ These tests focus on ensuring the robustness of the pyinstrument package in less
 # Total test summary
 The overall test coverage has increased slightly to 75%, up from the previous 74%. This shows that these new tests touch a few additional lines of code that were previously untested. As all the tests passed, these added edge case tests show robustness around error handling and empty-state behavior.
 
-# Session Testing
+# Frame Testing
 These tests focus on ensuring the functionality of the ```Frame``` class:
 
 - Adding a Child to the Parent
@@ -34,17 +34,7 @@ These tests focus on ensuring the functionality of the ```Frame``` class:
 - Adding multiple children to parents
 
 # Total test summary
-The overall test coverage remains steady at 74% the same as before adding the 5 new tests. This means the new tests mainly reinforce existing code areas without expanding coverage to new paths of the codebase.
+After running these tests, the overall coverage increased to 83%. The new tests involved working with a class within pyinstrument, testing its basic functionalities to see if it's data can be reached. Overall the tests were successful, these tests go to show Frame's connectivity between points.
 
-The stable coverage shows a consistent level of testing quality although additional tests help improve reliability.
 
-The overall test coverage of the project remains around the 74% range, despite adding 5 more additional tests. With this we can conclude that the newer tests mainly reinforce existing code and not trying to make new ground with newer developments
 
-# Edge Case tests
-These tests focus on ensuring the robustness of the pyinstrument package with it's base functions. THese tets cover
-- Frame's range
-- Child and Parent Relations
-- References between classes
-
-# Total test summary
-The overall test coverage has made a small increase to 75%,  This shows that these new tests touch a few additional lines of code that were previously untested.
