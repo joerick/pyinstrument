@@ -37,8 +37,7 @@ The overall test coverage is still 75%. Mocks help improve test reliability and 
 
 ## RENDERER
 ### New Testing Segment
-I made new tests for the HTML Render component of the project to test its ability to produce reports with minimal values
-Specifically testing the components of save_html_report(), HTMLRenderer() and profiler.output()
+There are new tests for the HTML Render component of the project to test its ability to produce reports with minimal values. Specifically testing the components of save_html_report(), HTMLRenderer() and profiler.output()
 
 The rationale behind these tests is to document and examine the program's ability to render through data at a fixed rate to see where and what we can optimize.
 
