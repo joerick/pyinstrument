@@ -18,3 +18,33 @@ This allows to:
 
 ### Coverage Improvement Analysis
 The overall test coverage is still 75%. Mocks help improve test reliability and make it easier to test external calls. To increase coverage beyond this, more tests for other parts of the code are needed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## RENDERER
+### New Testing Segment
+I made new tests for the HTML Render component of the project to test its ability to produce reports with minimal values
+Specifically testing the components of save_html_report(), HTMLRenderer() and profiler.output()
+
+The rationale behind these tests is to document and examine the program's ability to render through data at a fixed rate to see where and what we can optimize.
+
+### Mocking Strategy    
+By using unittest's patch function, it was able to replace save_html_report
+This approach allows us to check if the HTML Reports go through, along with small amounts of data
+
+### Coverage Improvement Analysis
+The overall testing coverage is still 75%. In order for the number to improve, a wider array of tests for other parts and components are necessary
