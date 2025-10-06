@@ -217,6 +217,11 @@ creates the html output and returns that instead of the actual response.
 To profile call stacks in FastAPI, you can write a middleware extension for
 pyinstrument.
 
+```{caution}
+Only `async` path operation functions are profiled with this approach. Routes that are defined without `async def` are executed in a separate execution thread, and therefore not profiled by this approach.
+See [issue #257](https://github.com/joerick/pyinstrument/issues/257) and [FastAPI Concurrency and async / await](https://fastapi.tiangolo.com/async/) for more information.
+```
+
 Create an async function and decorate with `app.middleware('http')` where
 app is the name of your FastAPI application instance.
 
