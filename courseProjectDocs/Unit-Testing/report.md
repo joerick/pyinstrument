@@ -34,7 +34,7 @@ These tests focus on ensuring the functionality of the ```Frame``` class:
 - Adding multiple children to parents
 
 # Total test summary
-After running these tests, the overall coverage increased to 83%. The new tests involved working with a class within pyinstrument, testing its basic functionalities to see if it's data can be reached. Overall the tests were successful, these tests go to show Frame's connectivity between points.
+After running these tests, the overall coverage increased to %. The new tests involved working with a class within pyinstrument, testing its basic functionalities to see if it's data can be reached. Overall the tests were successful, these tests go to show Frame's connectivity between points.
 
 
 
