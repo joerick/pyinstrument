@@ -1,10 +1,11 @@
 from pyinstrument import Profiler
 from pyinstrument.renderers import HTMLRenderer
+import time
 
-def run_and_render_html():
+def sleepyRender_html():
     profiler = Profiler()
     profiler.start()
-    sum(range(1000))
+    time.sleep(1.5)
     profiler.stop()
 
     renderer = HTMLRenderer()
