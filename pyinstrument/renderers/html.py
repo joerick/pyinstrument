@@ -7,6 +7,7 @@ import urllib.parse
 import warnings
 import webbrowser
 from pathlib import Path
+from typing import Any
 
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
@@ -25,6 +26,8 @@ class HTMLRenderer(Renderer):
         self,
         show_all: bool = False,
         timeline: bool = False,
+        processors: ProcessorList | None = None,
+        processor_options: dict[str, Any] | None = None,
     ):
         super().__init__()
         if show_all:
@@ -39,13 +42,17 @@ class HTMLRenderer(Renderer):
                 DeprecationWarning,
                 stacklevel=3,
             )
-        # this is an undocumented option for use by the ipython magic, might
-        # be removed later
-        self.preprocessors: ProcessorList = []
+
+        # These settings are passed down to JSONForHTMLRenderer, and can be used to modify its output.
+        # E.g. they can be used to lower the size of the output file,
+        # by excluding function calls which take a small fraction of total time.
+        self.processors = processors or []
+        self.processor_options = processor_options or {}
 
     def render(self, session: Session):
         json_renderer = JSONForHTMLRenderer()
-        json_renderer.processors = self.preprocessors
+        json_renderer.processors = self.processors
+        json_renderer.processor_options = self.processor_options
         session_json = json_renderer.render(session)
 
         resources_dir = Path(__file__).parent / "html_resources"
