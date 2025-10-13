@@ -37,7 +37,7 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v3.2.0
+        uses: joerick/cibuildwheel@v3.2.1
         env:
           CIBW_SKIP: pp*
           CIBW_ARCHS_MACOS: auto universal2
