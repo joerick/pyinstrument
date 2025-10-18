@@ -82,6 +82,10 @@ class StackSampler:
                 )
             active_profiler_context_var.set(target)
 
+        existing_subscriber = next((s for s in self.subscribers if s.target == target), None)
+        if existing_subscriber is not None:
+            raise ValueError("This target is already subscribed to the stack sampler.")
+
         self.subscribers.append(
             StackSamplerSubscriber(
                 target=target,

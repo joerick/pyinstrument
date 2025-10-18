@@ -128,3 +128,16 @@ def test_multiple_contexts():
     assert sys.getprofile() is None
 
     assert len(sampler.subscribers) == 0
+
+
+def test_same_callback_twice_error():
+    sampler = stack_sampler.get_stack_sampler()
+
+    counter = SampleCounter()
+
+    sampler.subscribe(counter.sample, desired_interval=0.001, use_async_context=False)
+
+    with pytest.raises(ValueError):
+        sampler.subscribe(counter.sample, desired_interval=0.001, use_async_context=False)
+
+    sampler.unsubscribe(counter.sample)
