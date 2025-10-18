@@ -93,6 +93,7 @@ Therefore, rendering can be customised by changing the ``processors`` property. 
 .. autoclass:: pyinstrument.renderers.ConsoleRenderer
 
 .. autoclass:: pyinstrument.renderers.HTMLRenderer
+    :members: preprocessors, preprocessor_options
 
 .. autoclass:: pyinstrument.renderers.JSONRenderer
 

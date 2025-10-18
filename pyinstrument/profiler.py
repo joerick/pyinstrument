@@ -11,7 +11,6 @@ from typing import IO, Any
 
 from pyinstrument import renderers
 from pyinstrument.frame import AWAIT_FRAME_IDENTIFIER, OUT_OF_CONTEXT_FRAME_IDENTIFIER
-from pyinstrument.renderers.base import ProcessorList
 from pyinstrument.renderers.console import FlatTimeMode
 from pyinstrument.session import Session
 from pyinstrument.stack_sampler import AsyncState, StackSampler, build_call_stack, get_stack_sampler
@@ -362,18 +361,11 @@ class Profiler:
 
     def output_html(
         self,
-        processors: ProcessorList | None = None,
-        processor_options: dict[str, Any] | None = None,
     ) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
         """
-        return self.output(
-            renderer=renderers.HTMLRenderer(
-                processors=processors,
-                processor_options=processor_options,
-            )
-        )
+        return self.output(renderer=renderers.HTMLRenderer())
 
     def write_html(
         self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False
