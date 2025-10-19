@@ -145,6 +145,9 @@ class Profiler:
                     caller_frame.f_code.co_filename, caller_frame.f_lineno
                 )
 
+        if self.is_running:
+            raise ValueError("Profiler is already running.")
+
         try:
             self._active_session = ActiveProfilerSession(
                 start_time=time.time(),

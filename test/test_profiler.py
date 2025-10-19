@@ -396,3 +396,12 @@ def test_profiler_convenience_methods_have_all_options_available(
         assert (
             method_parameter.annotation == parameter.annotation
         ), f"Parameter {name} has a different annotation in Profiler.{profiler_method_name}. {parameter}"
+
+
+def test_profiler_raises_on_double_subscribe():
+    profiler = Profiler(async_mode="disabled")
+    profiler.start()
+    with pytest.raises(ValueError) as e:
+        profiler.start()
+    assert "Profiler is already running" in str(e.value)
+    profiler.stop()
