@@ -7,6 +7,7 @@ import urllib.parse
 import warnings
 import webbrowser
 from pathlib import Path
+from typing import Any
 
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
@@ -20,6 +21,20 @@ class HTMLRenderer(Renderer):
     """
 
     output_file_extension = "html"
+
+    preprocessors: ProcessorList
+    """
+    Preprocessors installed on this renderer. This property is similar to
+    :attr:`FrameRenderer.processors`, but all pyinstrument's processing is
+    done in the webapp, so these are only used to modify the JSON data sent to
+    the webapp. For example, you might want to use preprocessors to remove
+    unneeded frames from the data to reduce the size of the HTML file.
+    """
+
+    preprocessor_options: dict[str, Any]
+    """
+    Options to pass to the preprocessors, like :attr:`FrameRenderer.processor_options`.
+    """
 
     def __init__(
         self,
@@ -39,13 +54,18 @@ class HTMLRenderer(Renderer):
                 DeprecationWarning,
                 stacklevel=3,
             )
-        # this is an undocumented option for use by the ipython magic, might
-        # be removed later
-        self.preprocessors: ProcessorList = []
+
+        # These settings are passed down to JSONForHTMLRenderer, and can be
+        # used to modify its output. E.g. they can be used to lower the size
+        # of the output file, by excluding function calls which take a small
+        # fraction of total time.
+        self.preprocessors = []
+        self.preprocessor_options = {}
 
     def render(self, session: Session):
         json_renderer = JSONForHTMLRenderer()
         json_renderer.processors = self.preprocessors
+        json_renderer.processor_options = self.preprocessor_options
         session_json = json_renderer.render(session)
 
         resources_dir = Path(__file__).parent / "html_resources"
