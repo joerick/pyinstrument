@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import sys
 import time
+from unittest.mock import patch
 
 import pytest
 
 from pyinstrument import renderers
 from pyinstrument.profiler import Profiler
+from pyinstrument.session import Session
 
 from .fake_time_util import fake_time
 
@@ -90,3 +93,34 @@ def test_show_all_doesnt_crash(
 def test_console_renderer_flat_doesnt_crash(profiler_session, flat_time):
     renderer = renderers.ConsoleRenderer(flat=True, flat_time=flat_time)
     renderer.render(profiler_session)
+
+
+def test_html_renderer_resampling(capsys):
+    # create a session with more than 100,000 samples
+    frame_records = []
+    # first 100,000 frames have almost no time in them
+    frame_records += [("<module>\x00somemodule/__init__.py\x0012", 1e-9)] * 100_000
+    # last frame has some time in it
+    frame_records += [("a\x00b\x001", 1)]
+
+    session = Session(
+        duration=1.0001,
+        start_time=0,
+        frame_records=frame_records,
+        sample_count=len(frame_records),
+        min_interval=1e-9,
+        max_interval=1e-9,
+        start_call_stack=["<module>\x00somemodule/__init__.py\x0012"],
+        target_description="test",
+        cpu_time=1.0001,
+        sys_path=sys.path,
+        sys_prefixes=[],
+    )
+
+    renderer = renderers.HTMLRenderer()
+    with patch("pyinstrument.session.Session._resample_frame_records") as mock_resample:
+        renderer.render(session)
+
+    captured = capsys.readouterr()
+    assert "Resampled to" in captured.err
+    assert mock_resample.called
