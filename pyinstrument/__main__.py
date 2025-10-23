@@ -153,6 +153,20 @@ def main():
 
     parser.add_option(
         "",
+        "--target-description",
+        dest="target_description",
+        action="store",
+        type="string",
+        default="Program: {args}",
+        help=(
+            "description text to display in the report. The placeholder '{args}' may be used "
+            "to include the CLI arguments passed to the target script, including "
+            "the script name. Default: 'Program: {args}'"
+        ),
+    )
+
+    parser.add_option(
+        "",
         "--hide",
         dest="hide_fnmatch",
         action="store",
@@ -377,7 +391,10 @@ def main():
             use_timing_thread=options.use_timing_thread,
         )
 
-        profiler.start(target_description=f'Program: {" ".join(argv)}')
+        # TODO: better message in case of key error?
+        target_description = options.target_description.format(args=" ".join(argv))
+
+        profiler.start(target_description=target_description)
 
         try:
             sys.argv[:] = argv
@@ -639,6 +656,7 @@ class CommandLineOptions:
     output_html: bool
     outfile: str | None
     render_options: list[str] | None
+    target_description: str
 
     unicode: bool | None
     color: bool | None
