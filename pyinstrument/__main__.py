@@ -391,8 +391,16 @@ def main():
             use_timing_thread=options.use_timing_thread,
         )
 
-        # TODO: better message in case of key error?
-        target_description = options.target_description.format(args=" ".join(argv))
+        try:
+            target_description = options.target_description.format(args=" ".join(argv))
+        except KeyError as e:
+            parser.error(f"Unknown placeholder {e.args[0]!r} in --target-description")
+            # explicitly add exit() so that pyright doesn't complain, even
+            # though parser.error already exits with error code 2
+            exit(2)
+        except IndexError as e:
+            parser.error(f"Empty placeholder in --target-description")
+            exit(2)
 
         profiler.start(target_description=target_description)
 
