@@ -153,6 +153,20 @@ def main():
 
     parser.add_option(
         "",
+        "--target-description",
+        dest="target_description",
+        action="store",
+        type="string",
+        default="Program: {args}",
+        help=(
+            "description text to display in the report. The placeholder '{args}' may be used "
+            "to include the CLI arguments passed to the target script, including "
+            "the script name. Default: 'Program: {args}'"
+        ),
+    )
+
+    parser.add_option(
+        "",
         "--hide",
         dest="hide_fnmatch",
         action="store",
@@ -377,7 +391,18 @@ def main():
             use_timing_thread=options.use_timing_thread,
         )
 
-        profiler.start(target_description=f'Program: {" ".join(argv)}')
+        try:
+            target_description = options.target_description.format(args=" ".join(argv))
+        except KeyError as e:
+            parser.error(f"Unknown placeholder {e.args[0]!r} in --target-description")
+            # explicitly add exit() so that pyright doesn't complain, even
+            # though parser.error already exits with error code 2
+            exit(2)
+        except IndexError as e:
+            parser.error(f"Empty placeholder in --target-description")
+            exit(2)
+
+        profiler.start(target_description=target_description)
 
         try:
             sys.argv[:] = argv
@@ -639,6 +664,7 @@ class CommandLineOptions:
     output_html: bool
     outfile: str | None
     render_options: list[str] | None
+    target_description: str
 
     unicode: bool | None
     color: bool | None
