@@ -1,17 +1,17 @@
 {
     "exit_code_by_key": {
-        "pyinstrument.frame_info.x_parse_frame_info__mutmut_1": null,
-        "pyinstrument.frame_info.x_parse_frame_info__mutmut_2": null,
-        "pyinstrument.frame_info.x_parse_frame_info__mutmut_3": null,
-        "pyinstrument.frame_info.x_parse_frame_info__mutmut_4": null,
-        "pyinstrument.frame_info.x_parse_frame_info__mutmut_5": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_1": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_2": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_3": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_4": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_5": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_6": null,
-        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_7": null
+        "pyinstrument.frame_info.x_parse_frame_info__mutmut_1": 1,
+        "pyinstrument.frame_info.x_parse_frame_info__mutmut_2": 1,
+        "pyinstrument.frame_info.x_parse_frame_info__mutmut_3": 1,
+        "pyinstrument.frame_info.x_parse_frame_info__mutmut_4": 1,
+        "pyinstrument.frame_info.x_parse_frame_info__mutmut_5": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_1": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_2": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_3": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_4": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_5": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_6": 1,
+        "pyinstrument.frame_info.x_frame_info_get_identifier__mutmut_7": 1
     },
     "hash_by_function_name": {}
 }

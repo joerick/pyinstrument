@@ -1,21 +1,21 @@
 {
     "exit_code_by_key": {
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_1": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_2": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_3": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_4": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_5": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_6": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_7": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_8": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_9": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_10": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_11": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_12": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_13": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_14": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_15": null,
-        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_16": null
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_1": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_2": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_3": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_4": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_5": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_6": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_7": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_8": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_9": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_10": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_11": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_12": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_13": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_14": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_15": 33,
+        "pyinstrument.magic.magic.x_strip_ipython_frames_processor__mutmut_16": 33
     },
     "hash_by_function_name": {}
 }
