@@ -1,0 +1,22 @@
+{
+    "exit_code_by_key": {
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_1": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_2": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_3": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_4": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_5": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_6": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_7": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_8": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_9": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_10": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1__init____mutmut_11": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1preprocess__mutmut_1": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1preprocess__mutmut_2": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1preprocess__mutmut_3": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1preprocess__mutmut_4": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1preprocess__mutmut_5": null,
+        "pyinstrument.renderers.base.x\u01c1FrameRenderer\u01c1preprocess__mutmut_6": null
+    },
+    "hash_by_function_name": {}
+}

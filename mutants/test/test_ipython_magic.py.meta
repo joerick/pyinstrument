@@ -1,8 +1,8 @@
 {
     "exit_code_by_key": {
-        "test.test_ipython_magic.x__interrupt_after_1s__mutmut_1": 33,
-        "test.test_ipython_magic.x__interrupt_after_1s__mutmut_2": 33,
-        "test.test_ipython_magic.x__interrupt_after_1s__mutmut_3": 33
+        "test.test_ipython_magic.x__interrupt_after_1s__mutmut_1": null,
+        "test.test_ipython_magic.x__interrupt_after_1s__mutmut_2": null,
+        "test.test_ipython_magic.x__interrupt_after_1s__mutmut_3": null
     },
     "hash_by_function_name": {}
 }

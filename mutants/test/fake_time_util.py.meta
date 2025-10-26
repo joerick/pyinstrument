@@ -1,21 +1,21 @@
 {
     "exit_code_by_key": {
-        "test.fake_time_util.x\u01c1FakeClock\u01c1__init____mutmut_1": 33,
-        "test.fake_time_util.x\u01c1FakeClock\u01c1__init____mutmut_2": 33,
-        "test.fake_time_util.x\u01c1FakeClock\u01c1__init____mutmut_3": 33,
-        "test.fake_time_util.x\u01c1FakeClock\u01c1sleep__mutmut_1": 33,
-        "test.fake_time_util.x\u01c1FakeClock\u01c1sleep__mutmut_2": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1__init____mutmut_1": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1__init____mutmut_2": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1__init____mutmut_3": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1sleep__mutmut_1": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1sleep__mutmut_2": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_1": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_2": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_3": 33,
-        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_4": 33,
-        "test.fake_time_util.x\u01c1FakeClockTrio\u01c1__init____mutmut_1": 33,
-        "test.fake_time_util.x\u01c1FakeClockTrio\u01c1sleep__mutmut_1": 33
+        "test.fake_time_util.x\u01c1FakeClock\u01c1__init____mutmut_1": null,
+        "test.fake_time_util.x\u01c1FakeClock\u01c1__init____mutmut_2": null,
+        "test.fake_time_util.x\u01c1FakeClock\u01c1__init____mutmut_3": null,
+        "test.fake_time_util.x\u01c1FakeClock\u01c1sleep__mutmut_1": null,
+        "test.fake_time_util.x\u01c1FakeClock\u01c1sleep__mutmut_2": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1__init____mutmut_1": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1__init____mutmut_2": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1__init____mutmut_3": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1sleep__mutmut_1": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1sleep__mutmut_2": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_1": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_2": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_3": null,
+        "test.fake_time_util.x\u01c1FakeClockAsyncio\u01c1_virtual_select__mutmut_4": null,
+        "test.fake_time_util.x\u01c1FakeClockTrio\u01c1__init____mutmut_1": null,
+        "test.fake_time_util.x\u01c1FakeClockTrio\u01c1sleep__mutmut_1": null
     },
     "hash_by_function_name": {}
 }
