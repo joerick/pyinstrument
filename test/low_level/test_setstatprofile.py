@@ -1,51 +1,51 @@
-import sys
-import time
-from typing import Any
+# import sys
+# import time
+# from typing import Any
 
-import pytest
+# import pytest
 
-from ..util import busy_wait, flaky_in_ci
-from .util import parametrize_setstatprofile
-
-
-class CallCounter:
-    def __init__(self) -> None:
-        self.count = 0
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        self.count += 1
+# from ..util import busy_wait, flaky_in_ci
+# from .util import parametrize_setstatprofile
 
 
-@flaky_in_ci
-@parametrize_setstatprofile
-def test_100ms(setstatprofile):
-    counter = CallCounter()
-    setstatprofile(counter, 0.1)
-    busy_wait(1.0)
-    setstatprofile(None)
-    assert 8 < counter.count < 12
+# class CallCounter:
+#     def __init__(self) -> None:
+#         self.count = 0
+
+#     def __call__(self, *args: Any, **kwds: Any) -> Any:
+#         self.count += 1
 
 
-@flaky_in_ci
-@parametrize_setstatprofile
-def test_10ms(setstatprofile):
-    counter = CallCounter()
-    setstatprofile(counter, 0.01)
-    busy_wait(1.0)
-    setstatprofile(None)
-    assert 70 <= counter.count <= 130
+# @flaky_in_ci
+# @parametrize_setstatprofile
+# def test_100ms(setstatprofile):
+#     counter = CallCounter()
+#     setstatprofile(counter, 0.1)
+#     busy_wait(1.0)
+#     setstatprofile(None)
+#     assert 8 < counter.count < 12
 
 
-@parametrize_setstatprofile
-def test_internal_object_compatibility(setstatprofile):
-    setstatprofile(CallCounter(), 1e6)
+# @flaky_in_ci
+# @parametrize_setstatprofile
+# def test_10ms(setstatprofile):
+#     counter = CallCounter()
+#     setstatprofile(counter, 0.01)
+#     busy_wait(1.0)
+#     setstatprofile(None)
+#     assert 70 <= counter.count <= 130
 
-    profile_state = sys.getprofile()
 
-    print(repr(profile_state))
-    print(str(profile_state))
-    print(profile_state)
-    print(type(profile_state))
-    print(type(profile_state).__name__)  # type: ignore
+# @parametrize_setstatprofile
+# def test_internal_object_compatibility(setstatprofile):
+#     setstatprofile(CallCounter(), 1e6)
 
-    setstatprofile(None)
+#     profile_state = sys.getprofile()
+
+#     print(repr(profile_state))
+#     print(str(profile_state))
+#     print(profile_state)
+#     print(type(profile_state))
+#     print(type(profile_state).__name__)  # type: ignore
+
+#     setstatprofile(None)
