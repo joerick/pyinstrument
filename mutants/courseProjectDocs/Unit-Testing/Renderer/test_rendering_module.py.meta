@@ -1,0 +1,20 @@
+{
+    "exit_code_by_key": {
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_save_html_called_once__mutmut_1": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_save_html_called_once__mutmut_2": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_save_html_called_once__mutmut_3": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_save_html_called_once__mutmut_4": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_save_html_called_once__mutmut_5": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_1": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_2": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_3": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_4": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_5": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_6": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_7": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_8": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_9": 33,
+        "courseProjectDocs.Unit-Testing.Renderer.test_rendering_module.x_test_saved_content_is_html__mutmut_10": 33
+    },
+    "hash_by_function_name": {}
+}

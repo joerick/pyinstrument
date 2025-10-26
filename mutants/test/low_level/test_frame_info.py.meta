@@ -1,0 +1,25 @@
+{
+    "exit_code_by_key": {
+        "test.low_level.test_frame_info.x\u01c1AClass\u01c1get_frame_info_for_a_method__mutmut_1": 33,
+        "test.low_level.test_frame_info.x\u01c1AClass\u01c1get_frame_info_for_a_method__mutmut_2": 33,
+        "test.low_level.test_frame_info.x\u01c1AClass\u01c1get_frame_info_with_cell_variable__mutmut_1": 33,
+        "test.low_level.test_frame_info.x\u01c1AClass\u01c1get_frame_info_with_cell_variable__mutmut_2": 33,
+        "test.low_level.test_frame_info.x_test_frame_info__mutmut_1": 33,
+        "test.low_level.test_frame_info.x_test_frame_info__mutmut_2": 33,
+        "test.low_level.test_frame_info.x_test_frame_info__mutmut_3": 33,
+        "test.low_level.test_frame_info.x_test_frame_info__mutmut_4": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_true__mutmut_1": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_true__mutmut_2": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_true__mutmut_3": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_true__mutmut_4": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_true__mutmut_5": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_true__mutmut_6": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_false__mutmut_1": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_false__mutmut_2": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_false__mutmut_3": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_false__mutmut_4": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_false__mutmut_5": 33,
+        "test.low_level.test_frame_info.x_test_frame_info_hide_false__mutmut_6": 33
+    },
+    "hash_by_function_name": {}
+}

@@ -1,0 +1,10 @@
+{
+    "exit_code_by_key": {
+        "test.low_level.test_custom_timer.x\u01c1CallCounter\u01c1__init____mutmut_1": 33,
+        "test.low_level.test_custom_timer.x\u01c1CallCounter\u01c1__init____mutmut_2": 33,
+        "test.low_level.test_custom_timer.x\u01c1CallCounter\u01c1__call____mutmut_1": 33,
+        "test.low_level.test_custom_timer.x\u01c1CallCounter\u01c1__call____mutmut_2": 33,
+        "test.low_level.test_custom_timer.x\u01c1CallCounter\u01c1__call____mutmut_3": 33
+    },
+    "hash_by_function_name": {}
+}

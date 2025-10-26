@@ -1,0 +1,26 @@
+{
+    "exit_code_by_key": {
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_1": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_2": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_3": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_4": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_5": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_6": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_7": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_8": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_9": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_10": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_11": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_12": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_13": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_14": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_15": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_16": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_17": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_18": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_19": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_20": 33,
+        "test.test_threading.x_test_profiler_access_from_multiple_threads__mutmut_21": 33
+    },
+    "hash_by_function_name": {}
+}
