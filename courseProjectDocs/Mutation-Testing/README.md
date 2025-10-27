@@ -26,3 +26,10 @@ pytest
 ```
 mutmut run
 ```
+
+We are going to describe the three symbols from left to right:
+- 410 mutants killed - This means that our tests caught and failed these mutants.
+- 376 survived mutants - These passed all tests, which mean that we need stronger and more specific tests to kill these mutants
+- 3 timeouts - These tests took too long with these mutants; possibly long running or stuck code
+
+![Mutation testing stats](mutation_stats.png)
