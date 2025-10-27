@@ -19,13 +19,17 @@ def test_shorten_path_equal_depth_prefers_first():
         sys_prefixes=[],           
     )
 
+    joker = "fakest/path/ever.py" 
+
     s._short_file_path_cache.clear()
 
     
-    candidate1 = os.path.join("folder", "file.py")
+    candidate1 = os.path.join(joker, "file.py")
     candidate2 = os.path.join("src", "file.py")
 
     result1 = s.shorten_path(candidate1)
     result2 = s.shorten_path(candidate2)
 
     assert result2 == result1
+  
+
