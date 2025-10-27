@@ -50,10 +50,10 @@
         "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_1": 1,
         "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_2": 1,
         "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_3": 1,
-        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_4": -24,
-        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_5": -24,
-        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_6": -24,
-        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_7": -24,
+        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_4": 1,
+        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_5": 1,
+        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_6": 1,
+        "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_7": 1,
         "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_8": 1,
         "pyinstrument.session.x\u01c1Session\u01c1root_frame__mutmut_9": 1,
         "pyinstrument.session.x\u01c1Session\u01c1_trim_stem__mutmut_1": 1,
@@ -86,8 +86,8 @@
         "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_11": -24,
         "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_12": -24,
         "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_13": -24,
-        "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_14": 3,
-        "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_15": -24
+        "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_14": -24,
+        "pyinstrument.session.x\u01c1Session\u01c1shorten_path__mutmut_15": 3
     },
     "hash_by_function_name": {}
 }
