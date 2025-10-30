@@ -190,6 +190,8 @@ A simple setup to profile a Flask application is the following:
 
 ```python
 from flask import Flask, g, make_response, request
+from pyinstrument import Profiler
+
 app = Flask(__name__)
 
 @app.before_request
