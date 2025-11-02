@@ -23,6 +23,7 @@ build
 .cache
 .pytest_cache
 .coverage
+mutants/
 
 # editor
 *.code-workspace

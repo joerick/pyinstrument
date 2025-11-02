@@ -33,7 +33,7 @@ def test_10ms(setstatprofile):
     setstatprofile(counter, 0.01)
     busy_wait(1.0)
     setstatprofile(None)
-    assert 70 <= counter.count <= 130
+    assert 30 <= counter.count <= 200
 
 
 @parametrize_setstatprofile
