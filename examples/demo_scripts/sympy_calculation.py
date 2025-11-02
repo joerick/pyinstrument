@@ -15,7 +15,7 @@ def do_thing():
         "b": 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B,
     }
     k = FF(field)
-    expr = sympify(f"3*b - b3", evaluate=False)
+    expr = sympify("3*b - b3", evaluate=False)
     for curve_param, value in params.items():
         expr = expr.subs(curve_param, k(value))
     param = str(expr.free_symbols.pop())

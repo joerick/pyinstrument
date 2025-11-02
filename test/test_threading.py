@@ -1,6 +1,5 @@
 import threading
 import time
-from test.fake_time_util import fake_time
 
 import pytest
 

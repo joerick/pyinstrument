@@ -9,7 +9,6 @@ a parallel stack containing both C and Python frames. But for now, this is
 fine.
 """
 
-import sys
 import time
 
 import numpy as np

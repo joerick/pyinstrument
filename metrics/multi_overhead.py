@@ -2,7 +2,6 @@ import cProfile
 import profile
 import re
 import sys
-import time
 from timeit import Timer
 
 import django.conf
@@ -96,7 +95,7 @@ for profiler_tuple in profilers:
     sys.stdout.write(f"{profiler_tuple[0]:>24}")
     sys.stdout.flush()
     for test_tuple in tests:
-        time = min(profiler_tuple[1](test_tuple[1], test_tuple[2])) * 10
-        sys.stdout.write(f"{time:>24.2f}")
+        elapsed_time  = min(profiler_tuple[1](test_tuple[1], test_tuple[2])) * 10
+        sys.stdout.write(f"{elapsed_time :>24.2f}")
         sys.stdout.flush()
     sys.stdout.write("\n")

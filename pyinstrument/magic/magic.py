@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import html
 import threading
-import urllib.parse
 from ast import parse
 from textwrap import dedent
 
@@ -18,7 +17,6 @@ from pyinstrument.__main__ import compute_render_options
 from pyinstrument.frame import Frame
 from pyinstrument.frame_ops import delete_frame_from_tree
 from pyinstrument.processors import ProcessorOptions
-from pyinstrument.renderers.console import ConsoleRenderer
 from pyinstrument.renderers.html import HTMLRenderer
 
 _active_profiler = None

@@ -7,7 +7,6 @@ def save_profile_to_db(profile):
 def run_and_save_profile():
     profiler = Profiler()
     profiler.start()
-    total = sum(range(1000))
     profiler.stop()
     save_profile_to_db(profiler.output_text())
 

@@ -1,5 +1,4 @@
 from pyinstrument.session import Session
-import os
 
 def test_shorten_path_returns_string_when_sys_path_empty():
     s = Session.__new__(Session)

@@ -1,10 +1,10 @@
+import pyinstrument
 import os
 import pprint
 import sys
 import time
 
 pprint.pprint(sys.path)
-import pyinstrument
 
 
 @pyinstrument.profile()
@@ -24,7 +24,7 @@ def main():
                     py_file_count += 1
                     try:
                         py_file_size += os.stat(file_path).st_size
-                    except:
+                    except OSError:
                         pass
 
     print("There are {} python files on your system.".format(py_file_count))

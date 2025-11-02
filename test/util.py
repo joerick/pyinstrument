@@ -1,14 +1,12 @@
-import asyncio
 import os
 import sys
 import time
-from typing import Callable, Generator, Generic, Iterable, Iterator, NoReturn, Optional, TypeVar
+from typing import Callable, Generator, Iterator, NoReturn, Optional, TypeVar
 
 from flaky import flaky
 
 from pyinstrument import stack_sampler
 from pyinstrument.frame import SYNTHETIC_LEAF_IDENTIFIERS, Frame
-from pyinstrument.profiler import Profiler
 from pyinstrument.session import Session
 
 if "CI" in os.environ:

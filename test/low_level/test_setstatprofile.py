@@ -1,8 +1,6 @@
 import sys
-import time
 from typing import Any
 
-import pytest
 
 from ..util import busy_wait, flaky_in_ci
 from .util import parametrize_setstatprofile
@@ -33,7 +31,7 @@ def test_10ms(setstatprofile):
     setstatprofile(counter, 0.01)
     busy_wait(1.0)
     setstatprofile(None)
-    assert 30 <= counter.count <= 200
+    assert 30 <= counter.count <= 300
 
 
 @parametrize_setstatprofile

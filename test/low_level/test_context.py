@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import contextvars
-import time
-from typing import Any
 
 import pytest
 

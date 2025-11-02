@@ -119,7 +119,7 @@ class StackSampler:
         )
         if len(timing_thread_preferences) > 1:
             raise ValueError(
-                f"Profiler requested different timing thread preferences from a profiler that is already running."
+                "Profiler requested different timing thread preferences from a profiler that is already running."
             )
 
         use_timing_thread = next(iter(timing_thread_preferences), False)
@@ -132,7 +132,7 @@ class StackSampler:
     def _start_sampling(self, interval: float, use_timing_thread: bool):
         if use_timing_thread and self.timer_func is not None:
             raise ValueError(
-                f"Profiler requested to use the timing thread but this stack sampler is already using a custom timer function."
+                "Profiler requested to use the timing thread but this stack sampler is already using a custom timer function."
             )
 
         timer_type: TimerType
@@ -229,7 +229,7 @@ class StackSampler:
                 )
 
                 message_parts.append(
-                    f"""
+                    """
                     You might want to try the timing thread option, which can
                     be enabled using --use-timing-thread at the command line,
                     or by setting the use_timing_thread parameter in the
@@ -253,7 +253,7 @@ class StackSampler:
                     )
 
                 message_parts.append(
-                    f"""
+                    """
                     If you want to suppress this warning, you can set the
                     environment variable PYINSTRUMENT_IGNORE_OVERHEAD_WARNING
                     to '1'.

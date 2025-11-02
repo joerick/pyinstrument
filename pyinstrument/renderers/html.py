@@ -29,13 +29,13 @@ class HTMLRenderer(Renderer):
         super().__init__()
         if show_all:
             warnings.warn(
-                f"the show_all option is deprecated on the HTML renderer, and has no effect. Use the view options in the webpage instead.",
+                "the show_all option is deprecated on the HTML renderer, and has no effect. Use the view options in the webpage instead.",
                 DeprecationWarning,
                 stacklevel=3,
             )
         if timeline:
             warnings.warn(
-                f"timeline is deprecated on the HTML renderer, and has no effect. Use the timeline view in the webpage instead.",
+                "timeline is deprecated on the HTML renderer, and has no effect. Use the timeline view in the webpage instead.",
                 DeprecationWarning,
                 stacklevel=3,
             )

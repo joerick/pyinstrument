@@ -1,20 +1,16 @@
-import asyncio
 import dataclasses
 import inspect
 import json
 import time
 from functools import partial
 from test.fake_time_util import fake_time
-from typing import Generator, Optional
 
 import pytest
 
 from pyinstrument import Profiler, renderers
-from pyinstrument.frame import Frame
 from pyinstrument.renderers.speedscope import SpeedscopeEvent, SpeedscopeEventType, SpeedscopeFrame
-from pyinstrument.session import Session
 
-from .util import assert_never, busy_wait, flaky_in_ci
+from .util import busy_wait, flaky_in_ci
 
 # Utilities #
 

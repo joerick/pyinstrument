@@ -1,5 +1,4 @@
 import cProfile
-import profile
 from timeit import Timer
 
 import django.conf
@@ -26,7 +25,8 @@ def test_func_template():
 
 
 t = Timer(stmt=test_func_template)
-test_func = lambda: t.repeat(number=4000)
+def test_func():
+    return t.repeat(number=4000)
 
 # base
 base_timings = test_func()

@@ -4,7 +4,7 @@ import contextvars
 import sys
 import timeit
 import types
-from typing import Any, Callable, List, Optional, Type
+from typing import Any, Callable
 
 from pyinstrument.low_level.pyi_timing_thread_python import (
     pyi_timing_thread_get_time,

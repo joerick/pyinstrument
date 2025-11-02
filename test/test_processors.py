@@ -1,5 +1,3 @@
-import os
-import sys
 from test.util import calculate_frame_tree_times, dummy_session
 
 from pytest import approx
