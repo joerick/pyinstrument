@@ -364,31 +364,44 @@ class Profiler:
 
     def output_html(
         self,
+        resample_interval: float | None = None,
     ) -> str:
         """
         Return the profile output as HTML, as rendered by :class:`HTMLRenderer`
+
+        See :class:`renderers.HTMLRenderer` for parameter description.
         """
-        return self.output(renderer=renderers.HTMLRenderer())
+        return self.output(renderer=renderers.HTMLRenderer(resample_interval=resample_interval))
 
     def write_html(
-        self, path: str | os.PathLike[str], timeline: bool = False, show_all: bool = False
+        self,
+        path: str | os.PathLike[str],
+        timeline: bool = False,
+        show_all: bool = False,
+        resample_interval: float | None = None,
     ):
         """
         Writes the profile output as HTML to a file, as rendered by :class:`HTMLRenderer`
         """
         file = Path(path)
         file.write_text(
-            self.output(renderer=renderers.HTMLRenderer(timeline=timeline, show_all=show_all)),
+            self.output(
+                renderer=renderers.HTMLRenderer(
+                    timeline=timeline, show_all=show_all, resample_interval=resample_interval
+                )
+            ),
             encoding="utf-8",
         )
 
-    def open_in_browser(self, timeline: bool = False):
+    def open_in_browser(self, timeline: bool = False, resample_interval: float | None = None):
         """
         Opens the last profile session in your web browser.
         """
         session = self._get_last_session_or_fail()
 
-        return renderers.HTMLRenderer(timeline=timeline).open_in_browser(session)
+        return renderers.HTMLRenderer(
+            timeline=timeline, resample_interval=resample_interval
+        ).open_in_browser(session)
 
     def output(self, renderer: renderers.Renderer) -> str:
         """
