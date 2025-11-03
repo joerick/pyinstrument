@@ -319,7 +319,7 @@ def test_state_management():
     profiler.start()
 
     assert profiler.last_session is None
-    assert profiler.is_running == True
+    assert profiler.is_running
 
     busy_wait(0.1)
 
