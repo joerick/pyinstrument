@@ -25,9 +25,12 @@ Solution: Converted the lambda into a normal function using def test_func():
 - E722 - Bare except
 Solution: Replaced except with except OSError to catch only file related errors
 
+- E731 - Do not assign a `lambda` expression, use a `def`
+Solution: rewrote `show_pyinstrument` as a `def`
+
 * Simple issues were fixed with ```ruff check . --fix```
 
 ## Group contributions
 - Jose: Set up the static analysis tool Ruff, fixes simple issues using ```ruff check . --fix``` which reduced the total number of issues from 77 to 35 and manually addressed other remaning errors. The most notable fixes were E731 and E722
 - Ursula:
-- Michael:
+- Michael: Tackled another bug within E731, changing the formatting of ```show_pyinstrument``` as a function, in lines 41-46. 
