@@ -1,4 +1,3 @@
-import io
 import os
 import sys
 import time
@@ -15,7 +14,6 @@ try:
     from django.utils.deprecation import MiddlewareMixin
 except ImportError:
     MiddlewareMixin = object
-
 
 def get_renderer(path) -> Renderer:
     """Return the renderer instance."""
@@ -44,7 +42,8 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
         elif callable(func_or_path):
             show_pyinstrument = func_or_path
         else:
-            show_pyinstrument = lambda request: True
+            def show_pyinstrument(request):
+                return True
 
         if (
             show_pyinstrument(request)
