@@ -18,11 +18,25 @@ The test succeeded without defects confirming correct integration of the profile
 ### Bug Reports
 No bugs or defects were identified during this integration test
 
-## Test integration Ursula
+## Integration Test for Profiler and HTML Renderer
 ### Test Design Summary
+This integration test validated the interaction between the Profiler core module that is responsible for managing the profiling lifecycle and collecting call stack samples, and the HTMLRenderer module, which formats profiling data into a human-readable HTML report. The goal was to confirm that profiling data captured during execution can be correctly rendered into an HTML output without errors or data loss.
+
 ### Test Data Preparation
+The test data consisted of a simple synchronous workload function defined inside the test that computed the sum of integers from 0 to 200. This workload served as the profiled code segment to verify that performance samples were properly collected and rendered.
+
 ### Execution and Results
+The test was executed using pytest. The profiler was started before invoking the workload and stopped immediately afterward. The recorded session was passed to the HTMLRenderer for conversion to HTML output. Assertions confirmed that:
+- The workload function returned the correct numerical result
+- The renderer produced a valid HTML string containing expected markup
+- The rendered output referenced the profiled function name, confirming proper data capture and formatting
+- The test completed successfully with no assertion failures, demonstrating that the profiler and renderer modules integrated correctly for synchronous profiling scenarios
+
 ### Bug Reports
+No bugs or defects were identified during this integration test
+
+### References
+ChatGPT was used for help with markup phrasing and code cleanup assistance
 
 ## Test integration Michael
 ### Test Design Summary
@@ -32,5 +46,5 @@ No bugs or defects were identified during this integration test
 
 ## Group Contributions
 - Jose: Implementation of test integration profiler
-- Ursula:
+- Ursula: Did the test profiler and html
 - Michael:
