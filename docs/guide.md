@@ -184,6 +184,10 @@ Default value is `pyinstrument.renderers.HTMLRenderer`. The supported renderers 
 `pyinstrument.renderers.JSONRenderer`, `pyinstrument.renderers.HTMLRenderer`,
 `pyinstrument.renderers.SpeedscopeRenderer`.
 
+**Set a custom interval**
+
+You can configure the sampling interval using setting's variable `PYINSTRUMENT_INTERVAL`. Default value is 0.001.
+
 ## Profile a web request in Flask
 
 A simple setup to profile a Flask application is the following:
