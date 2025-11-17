@@ -1,9 +1,9 @@
 import json
 
 try:
-    from urllib.request import urlopen
+    from urllib.request import Request, urlopen
 except ImportError:
-    from urllib2 import urlopen  # type: ignore
+    from urllib2 import Request, urlopen  # type: ignore
 
 import collections
 import operator
@@ -13,7 +13,9 @@ WIKIPEDIA_ARTICLE_API_URL = "https://en.wikipedia.org/w/api.php?action=query&tit
 
 
 def download():
-    return urlopen(WIKIPEDIA_ARTICLE_API_URL).read()
+    headers = {"User-Agent": "pyinstrument demo script"}
+    req = Request(WIKIPEDIA_ARTICLE_API_URL, headers=headers)
+    return urlopen(req).read()
 
 
 def parse(json_data):
