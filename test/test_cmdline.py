@@ -277,6 +277,68 @@ class TestCommandLine:
         assert function_name == "<module>"
         assert "busy_wait.py" in location
 
+    def test_target_description(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        output = subprocess.check_output(
+            [
+                *pyinstrument_invocation,
+                "--target-description",
+                "'foobar'",
+                str(busy_wait_py),
+            ]
+        )
+
+        assert "foobar" in str(output)
+
+    def test_target_description_format(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        output = subprocess.check_output(
+            [
+                *pyinstrument_invocation,
+                "--target-description",
+                "'foobar {args}'",
+                str(busy_wait_py),
+            ]
+        )
+
+        assert f"foobar {busy_wait_py}" in str(output)
+
+    def test_target_description_format_errors(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        result = subprocess.run(
+            [
+                *pyinstrument_invocation,
+                "--target-description",
+                "''{foo}'",
+                str(busy_wait_py),
+            ],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+
+        assert f"Unknown placeholder 'foo'" in str(result.stderr)
+        assert result.returncode == 2
+
+        result = subprocess.run(
+            [
+                *pyinstrument_invocation,
+                "--target-description",
+                "''{}'",
+                str(busy_wait_py),
+            ],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+
+        assert f"Empty placeholder" in str(result.stderr)
+        assert result.returncode == 2
+
     def test_binary_output(self, pyinstrument_invocation, tmp_path: Path):
         busy_wait_py = tmp_path / "busy_wait.py"
         busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
