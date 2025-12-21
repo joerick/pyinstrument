@@ -61,3 +61,4 @@ def custom_show_pyinstrument(request):
 
 
 PYINSTRUMENT_SHOW_CALLBACK = "%s.custom_show_pyinstrument" % __name__
+PYINSTRUMENT_INTERVAL = 0.001

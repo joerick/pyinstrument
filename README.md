@@ -565,7 +565,7 @@ To setup a dev environment:
 
 To get some sample output:
 
-    pyinstrument examples/wikipedia_article_word_count.py
+    pyinstrument examples/demo_scripts/wikipedia_article_word_count.py
 
 To run the tests:
 

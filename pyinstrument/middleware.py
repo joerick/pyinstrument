@@ -50,7 +50,8 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
             show_pyinstrument(request)
             and getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET
         ) or profile_dir:
-            profiler = Profiler()
+            interval: float = getattr(settings, "PYINSTRUMENT_INTERVAL", 0.001)
+            profiler = Profiler(interval=interval)
             profiler.start()
 
             request.profiler = profiler
