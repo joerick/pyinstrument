@@ -4,7 +4,7 @@ import json
 import os
 import sys
 from collections import deque
-from typing import Any
+from typing import Any, Sequence
 
 from pyinstrument.frame import Frame
 from pyinstrument.frame_info import frame_info_get_identifier
@@ -213,3 +213,45 @@ class Session:
         self._short_file_path_cache[path] = result
 
         return result
+
+    @staticmethod
+    def _resample_frame_records(
+        frame_records: Sequence[FrameRecordType], interval: float
+    ) -> list[FrameRecordType]:
+        """
+        Resample frame records to a given interval. Discards samples as needed.
+        """
+        result: list[FrameRecordType] = []
+        accumulated_time = 0.0
+
+        for frame_info_stack, time in frame_records:
+            accumulated_time += time
+
+            if accumulated_time >= interval:
+                result.append((frame_info_stack, accumulated_time))
+                accumulated_time = accumulated_time % interval
+
+        return result
+
+    def resample(self, interval: float) -> Session:
+        """
+        Returns a new Session object with frame records resampled to the given interval.
+
+        :param interval: The desired sampling interval in seconds.
+        :rtype: Session
+        """
+        new_frame_records = self._resample_frame_records(self.frame_records, interval)
+
+        return Session(
+            frame_records=new_frame_records,
+            start_time=self.start_time,
+            duration=self.duration,
+            min_interval=interval,
+            max_interval=interval,
+            sample_count=len(new_frame_records),
+            start_call_stack=self.start_call_stack,
+            target_description=self.target_description,
+            cpu_time=self.cpu_time,
+            sys_path=self.sys_path,
+            sys_prefixes=self.sys_prefixes,
+        )
