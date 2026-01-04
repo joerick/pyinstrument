@@ -133,7 +133,7 @@ _2 August 2024_
 
 _1 August 2024_
 
--   Adds a new, convenient API for [profiling chunks of Python code](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-specific-chunk-of-code)! You can now profile simply using a `with` block, or a function/method decorator. This will profile the code and print a short readout into the terminal. (#327)
+-   Adds a new, convenient API for [profiling chunks of Python code](https://pyinstrument.readthedocs.io/en/stable/guide.html#profile-a-specific-chunk-of-code)! You can now profile simply using a `with` block, or a function/method decorator. This will profile the code and print a short readout into the terminal. (#327)
 -   Adds new, lower overhead timing options. Pyinstrument calls timers on every Python function call, which is fine on systems with fast timing available, but it adds significant overhead on systems that require a syscall for each, such as some Docker environments. Pyinstrument will now detect slow timers present a warning with two choices. You can enable a 'timing thread', which offloads the timing workload from the profiled thread, or, if you're happy with lower resolution, you can opt to use a 'coarse' timer, which is provided on some Linux systems. (#273)
 -   Alt-click rows in the HTML output to collapse/expand the whole tree (#325)
 -   Adds a `flat` argument to the console output, to present a flat list of functions (#294)
@@ -145,7 +145,7 @@ _1 August 2024_
 _26 January 2024_
 
 -   Fixes a bug with the pstats renderer, where additional frames could be seen in the output. (#287)
--   Adds `show_all` option to [Profiler.output_html](https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.output_html)
+-   Adds `show_all` option to [Profiler.output_html](https://pyinstrument.readthedocs.io/en/stable/reference.html#pyinstrument.Profiler.output_html)
 
 ### v4.6.1
 
@@ -158,7 +158,7 @@ _8 November 2023_
 _12 October 2023_
 
 -   Adds a feature `-c`, which allows profiling code directly from the command line, like `python -c`. (#271)
--   Adds a convenience method [`Profiler.write_html`](https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.write_html), for writing HTML output to a file directly. (#266)
+-   Adds a convenience method [`Profiler.write_html`](https://pyinstrument.readthedocs.io/en/stable/reference.html#pyinstrument.Profiler.write_html), for writing HTML output to a file directly. (#266)
 
 ### v4.5.3
 
@@ -246,7 +246,7 @@ _21 August 2022_
     HTML renderer. Or if you do
     `pyinstrument -o profile.pyisession myscript.py`, it will save a raw
     session object.
--   Adds [usage examples for FastAPI and pytest](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi) to the documentation.
+-   Adds [usage examples for FastAPI and pytest](https://pyinstrument.readthedocs.io/en/stable/guide.html#profile-a-web-request-in-fastapi) to the documentation.
 -   Fixes a bug causing NotImplementedError when using `async_mode=strict`.
 -   Adds support for Python 3.11
 
@@ -344,8 +344,8 @@ _21 August 2022_
 
 -   Pyinstrument has a [documentation site], including full Python API docs!
 
-[async profiling documentation]: https://pyinstrument.readthedocs.io/en/latest/how-it-works.html#async-profiling
-[Profiler.async_mode]: https://pyinstrument.readthedocs.io/en/latest/reference.html#pyinstrument.Profiler.async_mode
+[async profiling documentation]: https://pyinstrument.readthedocs.io/en/stable/how-it-works.html#async-profiling
+[Profiler.async_mode]: https://pyinstrument.readthedocs.io/en/stable/reference.html#pyinstrument.Profiler.async_mode
 [documentation site]: https://pyinstrument.readthedocs.io
 
 ### v3.4.2
