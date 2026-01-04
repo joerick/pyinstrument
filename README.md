@@ -54,6 +54,16 @@ Known issues
 Changelog
 ---------
 
+### v5.1.2
+
+_4 January 2026_
+
+-   Adds the ability to customize description using CLI option `--target-description` (#408)
+-   You can set the interval for the Django middleware using the PYINSTRUMENT_INTERVAL option (#416)
+-   HTMLRenderer can now run preprocessors on the input, to manipulate the call tree before writing to HTML (#403)
+-   Fix a bug where mismatched start/stops can produce "call stack without an active session" errors (#406)
+-   Limit sample count for the HTML renderer to ensure the browser can load the sample (#407)
+
 ### v5.1.1
 
 _12 August 2025_
