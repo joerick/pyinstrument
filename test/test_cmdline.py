@@ -375,3 +375,77 @@ class TestCommandLine:
         )
 
         assert retcode == 1
+
+    def test_multiple_outfiles(self, pyinstrument_invocation, tmp_path: Path):
+        txt_file = tmp_path / "output.txt"
+        html_file = tmp_path / "output.html"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "-o", str(txt_file),
+                "-o", str(html_file),
+                "-c", "import time; time.sleep(0.01)",
+            ],
+        )
+
+        assert txt_file.exists()
+        assert html_file.exists()
+
+        txt_content = txt_file.read_text()
+        html_content = html_file.read_text()
+
+        # text output should contain the pyinstrument banner
+        assert "pyinstrument" in txt_content.lower() or "Recorded" in txt_content
+        # html output should be HTML
+        assert "<!DOCTYPE html>" in html_content
+
+    def test_single_outfile(self, pyinstrument_invocation, tmp_path: Path):
+        txt_file = tmp_path / "output.txt"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "-o", str(txt_file),
+                "-c", "import time; time.sleep(0.01)",
+            ],
+        )
+
+        assert txt_file.exists()
+        txt_content = txt_file.read_text()
+        assert len(txt_content) > 0
+
+    def test_multiple_outfiles_with_explicit_renderer(self, pyinstrument_invocation, tmp_path: Path):
+        file1 = tmp_path / "out1.dat"
+        file2 = tmp_path / "out2.dat"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "-r", "json",
+                "-o", str(file1),
+                "-o", str(file2),
+                "-c", "import time; time.sleep(0.01)",
+            ],
+        )
+
+        import json
+
+        # both files should contain valid JSON
+        for f in [file1, file2]:
+            data = json.loads(f.read_text())
+            assert isinstance(data, dict)
+
+    def test_multiple_outfiles_unrecognized_extension_errors(self, pyinstrument_invocation, tmp_path: Path):
+        result = subprocess.run(
+            [
+                *pyinstrument_invocation,
+                "-o", str(tmp_path / "output.xyz"),
+                "-c", "import time; time.sleep(0.01)",
+            ],
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        assert result.returncode == 2
+        assert "Can't determine renderer" in result.stderr
