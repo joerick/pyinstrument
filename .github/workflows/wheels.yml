@@ -2,7 +2,7 @@ name: Build wheels
 
 on:
   push:
-    branches: [ main ]
+    branches:
     tags:
       - v*
 
@@ -37,7 +37,7 @@ jobs:
           python-version: '3.8'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v3.3.1
+        uses: joerick/cibuildwheel@31a81df7ebfd84ae5c23dc536e255811aa25b630
         env:
           CIBW_SKIP: pp*
           CIBW_ARCHS_MACOS: auto universal2
