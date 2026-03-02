@@ -7,6 +7,7 @@ import glob
 import os
 import subprocess
 import sys
+import textwrap
 import urllib.parse
 from pathlib import Path
 
@@ -153,6 +154,19 @@ def bump_version() -> None:
     )
 
     print("Done.")
+    print(
+        textwrap.dedent(
+            f"""
+            Next, push the changes and the new tag:
+
+                git push origin main v{new_version}
+
+            and create the release on GitHub.
+
+                http://github.com/joerick/pyinstrument/releases/new?tag=v{new_version}
+            """
+        )
+    )
 
 
 if __name__ == "__main__":
