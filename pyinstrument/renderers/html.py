@@ -8,7 +8,7 @@ import urllib.parse
 import warnings
 import webbrowser
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pyinstrument.renderers.base import FrameRenderer, ProcessorList, Renderer
 from pyinstrument.session import Session
@@ -43,11 +43,15 @@ class HTMLRenderer(Renderer):
         resample_interval: float | None = None,
         show_all: bool = False,
         timeline: bool = False,
+        theme: Literal["dark", "light"] = "dark",
     ):
         """
         :param resample_interval: Controls how the renderer deals with very large sessions. The typically struggles with sessions of more than 100,000 samples. If the session has more samples than this number, it will be automatically resampled to a coarser interval. You can control this interval with this parameter. If None (the default), the interval will be chosen automatically. Setting this to 0 disables resampling.
         """
         super().__init__()
+        if theme not in ("dark", "light"):
+            raise ValueError("theme must be 'dark' or 'light'")
+
         if show_all:
             warnings.warn(
                 f"the show_all option is deprecated on the HTML renderer, and has no effect. Use the view options in the webpage instead.",
@@ -62,6 +66,7 @@ class HTMLRenderer(Renderer):
             )
 
         self.resample_interval = resample_interval
+        self.theme = theme
 
         # These settings are passed down to JSONForHTMLRenderer, and can be
         # used to modify its output. E.g. they can be used to lower the size
@@ -119,7 +124,7 @@ class HTMLRenderer(Renderer):
                 <style>{css}</style>
 
                 <script>
-                    const sessionData = {session_json};
+                    const sessionData = {...{session_json}, theme: {json.dumps(self.theme)}};
                     pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData);
                 </script>
             </body>
