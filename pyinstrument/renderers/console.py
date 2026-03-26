@@ -33,6 +33,7 @@ class ConsoleRenderer(FrameRenderer):
         unicode: bool = False,
         color: bool = False,
         flat: bool = False,
+        show_top: bool = False,
         time: LiteralStr["seconds", "percent_of_total"] = "seconds",
         flat_time: FlatTimeMode = "self",
         short_mode: bool = False,
@@ -41,6 +42,7 @@ class ConsoleRenderer(FrameRenderer):
         :param unicode: Use unicode, like box-drawing characters in the output.
         :param color: Enable color support, using ANSI color sequences.
         :param flat: Display a flat profile instead of a call graph.
+        :param show_top: Display an aggregated top-functions table.
         :param time: How to display the duration of each frame - ``'seconds'`` or ``'percent_of_total'``
         :param flat_time: Show ``'self'`` time or ``'total'`` time (including children) in flat profile.
         :param short_mode: Display a short version of the output.
@@ -52,12 +54,16 @@ class ConsoleRenderer(FrameRenderer):
         self.unicode = unicode
         self.color = color
         self.flat = flat
+        self.show_top = show_top
         self.time = time
         self.flat_time = flat_time
         self.short_mode = short_mode
 
         if self.flat and self.timeline:
             raise Renderer.MisconfigurationError("Cannot use timeline and flat options together.")
+
+        if self.flat and self.show_top:
+            raise Renderer.MisconfigurationError("Cannot use flat and show_top options together.")
 
         self.colors = self.colors_enabled if color else self.colors_disabled
 
@@ -73,7 +79,9 @@ class ConsoleRenderer(FrameRenderer):
         else:
             self.root_frame = frame
 
-            if self.flat:
+            if self.show_top:
+                result += self.render_top_summary(self.root_frame, precision=precision, indent=indent)
+            elif self.flat:
                 result += self.render_frame_flat(self.root_frame, precision=precision)
             else:
                 result += self.render_frame(
@@ -160,6 +168,49 @@ class ConsoleRenderer(FrameRenderer):
                 if library and library not in libraries:
                     libraries.append(library)
         return libraries
+
+    def render_top_summary(self, frame: Frame, precision: int, indent: str = "") -> str:
+        aggregated: Dict[Tuple[str, str], Dict[str, float]] = {}
+        frames = [frame]
+
+        while frames:
+            current = frames.pop()
+            function = current.function or "<unknown>"
+            location = current.code_position_short or ""
+            key = (function, location)
+
+            if key not in aggregated:
+                aggregated[key] = {"self_time": 0.0, "total_time": 0.0}
+
+            aggregated[key]["self_time"] += current.total_self_time
+            aggregated[key]["total_time"] += current.time
+
+            frames.extend(current.children)
+
+        sorted_rows = sorted(
+            aggregated.items(), key=lambda item: (item[1]["total_time"], item[1]["self_time"]), reverse=True
+        )
+
+        if not sorted_rows:
+            return f"{indent}No samples were recorded.\n"
+
+        header = f"{indent}{'Self':>10}  {'Total':>10}  Function"
+        lines = [header]
+
+        for (function, location), times in sorted_rows:
+            self_time = self._format_top_time(times["self_time"], frame.time, precision)
+            total_time = self._format_top_time(times["total_time"], frame.time, precision)
+            label = function if not location else f"{function} ({location})"
+            lines.append(f"{indent}{self_time:>10}  {total_time:>10}  {label}")
+
+        return "\n".join(lines) + "\n"
+
+    def _format_top_time(self, value: float, total: float, precision: int) -> str:
+        if self.time == "percent_of_total":
+            if total <= 0:
+                return "0.0%"
+            return f"{(100 * value / total):.{precision}f}%"
+        return f"{value:.{precision}f}s"
 
     def render_frame(
         self, frame: Frame, precision: int, indent: str = "", child_indent: str = ""
