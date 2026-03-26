@@ -44,17 +44,20 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
         elif callable(func_or_path):
             show_pyinstrument = func_or_path
         else:
-            show_pyinstrument = lambda request: True
+            show_pyinstrument = lambda request: False
 
-        if (
+        show_pyinstrument_for_request = (
             show_pyinstrument(request)
             and getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET
-        ) or profile_dir:
+        )
+
+        if show_pyinstrument_for_request or profile_dir:
             interval: float = getattr(settings, "PYINSTRUMENT_INTERVAL", 0.001)
             profiler = Profiler(interval=interval)
             profiler.start()
 
             request.profiler = profiler
+            request._pyinstrument_show_output = show_pyinstrument_for_request
 
     def process_response(self, request, response):
         if hasattr(request, "profiler"):
@@ -103,7 +106,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(output)
 
-            if getattr(settings, "PYINSTRUMENT_URL_ARGUMENT", "profile") in request.GET:
+            if getattr(request, "_pyinstrument_show_output", False):
                 if isinstance(renderer, HTMLRenderer):
                     return HttpResponse(output)  # type: ignore
                 else:
