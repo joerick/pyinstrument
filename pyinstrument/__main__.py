@@ -64,7 +64,6 @@ def main():
     )
 
     parser.add_option(
-        "",
         "--load-prev",
         dest="load_prev",
         action="store",
@@ -74,7 +73,6 @@ def main():
 
     parser.add_option(
         "-m",
-        "",
         dest="module",
         action="callback",
         callback=store_and_consume_remaining,
@@ -83,7 +81,6 @@ def main():
     )
     parser.add_option(
         "-c",
-        "",
         dest="program",
         action="callback",
         callback=store_and_consume_remaining,
@@ -91,7 +88,6 @@ def main():
         help="program passed in as string, like 'python -c \"...\"'",
     )
     parser.add_option(
-        "",
         "--from-path",
         dest="from_path",
         action="store_true",
@@ -134,7 +130,6 @@ def main():
     )
 
     parser.add_option(
-        "",
         "--html",
         dest="output_html",
         action="store_true",
@@ -152,7 +147,6 @@ def main():
     )
 
     parser.add_option(
-        "",
         "--target-description",
         dest="target_description",
         action="store",
@@ -166,7 +160,6 @@ def main():
     )
 
     parser.add_option(
-        "",
         "--hide",
         dest="hide_fnmatch",
         action="store",
@@ -177,7 +170,6 @@ def main():
         ),
     )
     parser.add_option(
-        "",
         "--hide-regex",
         dest="hide_regex",
         action="store",
@@ -189,7 +181,6 @@ def main():
     )
 
     parser.add_option(
-        "",
         "--show",
         dest="show_fnmatch",
         action="store",
