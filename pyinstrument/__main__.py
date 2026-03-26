@@ -103,6 +103,15 @@ def main():
     )
 
     parser.add_option(
+        "",
+        "--theme",
+        dest="theme",
+        action="store",
+        default="dark",
+        help="set HTML theme: dark or light",
+    )
+
+    parser.add_option(
         "-r",
         "--renderer",
         dest="renderer",
@@ -281,7 +290,10 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    options, args = parser.parse_args()  # type: ignore
+    options, args = parser.parse_args()
+
+    if options.theme not in ("dark", "light"):
+        parser.error("--theme must be 'dark' or 'light'")  # type: ignore
 
     # make command line options type-checked
     options = cast(CommandLineOptions, options)
