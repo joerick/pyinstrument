@@ -1,0 +1,58 @@
+name: C Coverage
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  c-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install dependencies
+        run: pip install -e ".[test]" gcovr
+
+      - name: Rebuild C extension with coverage instrumentation
+        env:
+          CFLAGS: "-O0 -g --coverage"
+          LDFLAGS: "--coverage"
+        run: python setup.py build_ext --inplace --force
+
+      - name: Run module 4 coverage tests
+        run: pytest hw_tests/module4_async_generation -q
+
+      - name: Print C coverage summary
+        run: >
+          gcovr
+          --root .
+          --filter 'pyinstrument/low_level/.*\.c'
+          --txt
+          --print-summary
+
+      - name: Generate C coverage reports
+        run: >
+          gcovr
+          --root .
+          --filter 'pyinstrument/low_level/.*\.c'
+          --html-details c-coverage.html
+          --xml c-coverage.xml
+
+      - name: Upload C coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-coverage-reports
+          path: |
+            c-coverage.html
+            c-coverage.*.html
+            c-coverage.xml
