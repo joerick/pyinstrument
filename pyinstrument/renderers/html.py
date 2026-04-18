@@ -70,7 +70,7 @@ class HTMLRenderer(Renderer):
         self.preprocessors = []
         self.preprocessor_options = {}
 
-    def render(self, session: Session):
+    def render(self, session: Session) -> str:
         if len(session.frame_records) > 100_000:
             original_session = session
             resample_interval = self.resample_interval
