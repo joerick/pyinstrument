@@ -10,12 +10,11 @@ from unittest.mock import patch
 import pytest
 
 from pyinstrument import processors, renderers
-from pyinstrument.frame import Frame, FrameGroup, SELF_TIME_FRAME_IDENTIFIER
-from pyinstrument.renderers.base import Renderer
-from pyinstrument.renderers.base import FrameRenderer
+from pyinstrument.frame import SELF_TIME_FRAME_IDENTIFIER, Frame, FrameGroup
+from pyinstrument.frame_ops import FrameRecordType
+from pyinstrument.renderers.base import FrameRenderer, Renderer
 from pyinstrument.renderers.html import JSONForHTMLRenderer
 from pyinstrument.renderers.speedscope import SpeedscopeEncoder, SpeedscopeEventType
-from pyinstrument.frame_ops import FrameRecordType
 
 from .conftest import calculate_frame_tree_times, dummy_session, self_time_frame
 
@@ -84,7 +83,10 @@ def test_console_renderer_short_mode_and_unicode_group_rendering():
     )
     root = Frame(
         identifier_or_frame_info="<module>\x00D:/workspace/app.py\x001",
-        children=[group_root, Frame("cleanup\x00D:/workspace/app.py\x0040", children=[self_time_frame(0.2)])],
+        children=[
+            group_root,
+            Frame("cleanup\x00D:/workspace/app.py\x0040", children=[self_time_frame(0.2)]),
+        ],
         context=session,
     )
     calculate_frame_tree_times(root)
@@ -109,14 +111,20 @@ def test_console_renderer_hidden_group_child_and_misc_branches():
     session.sys_prefixes = ["env"]
 
     visible_exit = Frame("visible\x00D:/workspace/app.py\x0030", children=[self_time_frame(0.01)])
-    hidden_c = Frame("hidden_c\x00env/Lib/site-packages/pkg/c.py\x0025", children=[self_time_frame(0.01), visible_exit])
+    hidden_c = Frame(
+        "hidden_c\x00env/Lib/site-packages/pkg/c.py\x0025",
+        children=[self_time_frame(0.01), visible_exit],
+    )
     hidden_a = Frame(
         identifier_or_frame_info="hidden_a\x00env/Lib/site-packages/pkg/a.py\x0010",
         children=[Frame("hidden_b\x00env/Lib/site-packages/pkg/b.py\x0020", children=[hidden_c])],
     )
     root = Frame(
         "<module>\x00D:/workspace/app.py\x001",
-        children=[hidden_a, Frame("cleanup\x00D:/workspace/app.py\x0040", children=[self_time_frame(1.0)])],
+        children=[
+            hidden_a,
+            Frame("cleanup\x00D:/workspace/app.py\x0040", children=[self_time_frame(1.0)]),
+        ],
         context=session,
     )
     calculate_frame_tree_times(root)
@@ -139,8 +147,14 @@ def test_console_renderer_hidden_group_child_and_misc_branches():
     assert renderer._ansi_color_for_name(visible_exit) == (
         renderer.colors.bg_dark_blue_255 + renderer.colors.white_255
     )
-    assert renderer.frame_description(Frame(SELF_TIME_FRAME_IDENTIFIER, time=0.1), precision=3).endswith("  ")
-    classed = Frame("method\x00D:/workspace/app.py\x0040\x01cWidget", children=[self_time_frame(0.2)], context=session)
+    assert renderer.frame_description(
+        Frame(SELF_TIME_FRAME_IDENTIFIER, time=0.1), precision=3
+    ).endswith("  ")
+    classed = Frame(
+        "method\x00D:/workspace/app.py\x0040\x01cWidget",
+        children=[self_time_frame(0.2)],
+        context=session,
+    )
     calculate_frame_tree_times(classed)
     renderer.root_frame = classed
     assert "Widget.method" in renderer.frame_description(classed, precision=3)
@@ -152,7 +166,9 @@ def test_console_renderer_should_ignore_small_group():
     session.sys_prefixes = ["env"]
     group_root = Frame(
         "lib\x00env/Lib/site-packages/pkg/a.py\x001",
-        children=[Frame("leaf\x00env/Lib/site-packages/pkg/b.py\x002", children=[self_time_frame(0.01)])],
+        children=[
+            Frame("leaf\x00env/Lib/site-packages/pkg/b.py\x002", children=[self_time_frame(0.01)])
+        ],
     )
     root = Frame("<module>\x00D:/workspace/app.py\x001", children=[group_root], context=session)
     calculate_frame_tree_times(root)
@@ -352,11 +368,15 @@ def test_processors_core_mutation_branches():
         children=[
             Frame(
                 identifier_or_frame_info="import_bootstrap\x00../<frozen importlib._bootstrap>\x0010",
-                children=[Frame("inner\x00D:/workspace/real.py\x0020", children=[self_time_frame(0.1)])],
+                children=[
+                    Frame("inner\x00D:/workspace/real.py\x0020", children=[self_time_frame(0.1)])
+                ],
             ),
             Frame(
                 identifier_or_frame_info="hide_me\x00D:/workspace/hide.py\x0010\x01h1",
-                children=[Frame("visible\x00D:/workspace/real.py\x0020", children=[self_time_frame(0.1)])],
+                children=[
+                    Frame("visible\x00D:/workspace/real.py\x0020", children=[self_time_frame(0.1)])
+                ],
             ),
             Frame(
                 identifier_or_frame_info="repeat\x00D:/workspace/r.py\x0010",
@@ -381,7 +401,10 @@ def test_processors_core_mutation_branches():
     assert any(child.function == "inner" for child in root.children)
     assert any(child.function == "visible" for child in root.children)
     assert sum(1 for child in root.children if child.function == "repeat") == 1
-    assert any(child.identifier == SELF_TIME_FRAME_IDENTIFIER and child.time == pytest.approx(0.12) for child in root.children)
+    assert any(
+        child.identifier == SELF_TIME_FRAME_IDENTIFIER and child.time == pytest.approx(0.12)
+        for child in root.children
+    )
 
 
 def test_group_library_frames_show_rule_overrides_hide_rule():
@@ -465,7 +488,11 @@ def test_remove_irrelevant_nodes_zero_total_time_branch():
 
 def test_json_renderer_group_and_class_name_branches():
     session = dummy_session()
-    frame = Frame("method\x00D:/workspace/app.py\x0010\x01cWidget", children=[self_time_frame(0.2)], context=session)
+    frame = Frame(
+        "method\x00D:/workspace/app.py\x0010\x01cWidget",
+        children=[self_time_frame(0.2)],
+        context=session,
+    )
     calculate_frame_tree_times(frame)
     group = FrameGroup(frame)
     session.root_frame = lambda trim_stem=True: frame  # type: ignore[method-assign]
@@ -486,7 +513,9 @@ def test_pstats_renderer_none_and_existing_entry_branches():
 
     session = dummy_session()
     root = Frame("<module>\x00D:/workspace/app.py\x001", children=[], context=session)
-    child = Frame("main\x00D:/workspace/app.py\x0010", children=[self_time_frame(0.2)], context=session)
+    child = Frame(
+        "main\x00D:/workspace/app.py\x0010", children=[self_time_frame(0.2)], context=session
+    )
     root.add_child(child)
     calculate_frame_tree_times(root)
 
@@ -522,7 +551,9 @@ def test_speedscope_encoder_and_render_frame_extra_branches():
     assert renderer.render_frame(None) == []
 
     session = dummy_session()
-    frame = Frame("repeat\x00D:/workspace/app.py\x0010", children=[self_time_frame(0.2)], context=session)
+    frame = Frame(
+        "repeat\x00D:/workspace/app.py\x0010", children=[self_time_frame(0.2)], context=session
+    )
     calculate_frame_tree_times(frame)
 
     first = renderer.render_frame(frame)
@@ -559,7 +590,9 @@ def test_pstats_renderer_skips_synthetic_children_data_flow():
     session.root_frame = lambda trim_stem=True: root  # type: ignore[method-assign]
 
     output = renderers.PstatsRenderer(show_all=True).render(session)
-    stats = json.loads(json.dumps(list(marshal.loads(output.encode("utf-8", errors="surrogateescape")).keys())))
+    stats = json.loads(
+        json.dumps(list(marshal.loads(output.encode("utf-8", errors="surrogateescape")).keys()))
+    )
 
     flat_names = {item[2] for item in stats}
     assert "main" in flat_names

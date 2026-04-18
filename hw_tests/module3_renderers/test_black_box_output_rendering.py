@@ -38,7 +38,9 @@ def test_console_renderer_equivalence_classes_text_output(renderer_session):
         ("percent_of_total", "39.9%"),
     ],
 )
-def test_console_renderer_boundary_and_representation(renderer_session, time_mode, expected_fragment):
+def test_console_renderer_boundary_and_representation(
+    renderer_session, time_mode, expected_fragment
+):
     """
     黑盒-边界值:
     针对时间展示模式的边界输出进行验证。
