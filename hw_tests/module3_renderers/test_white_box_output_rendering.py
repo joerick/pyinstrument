@@ -95,7 +95,9 @@ def test_console_renderer_short_mode_and_unicode_group_rendering():
 
     assert "frames hidden" in output
     assert group_root.group is not None
-    assert "env" in renderer.group_description(group_root.group)
+    group_description = renderer.group_description(group_root.group)
+    assert "frames hidden" in group_description
+    assert any(token in group_description for token in ("env", "pkg"))
     assert "." * 53 in renderer.render(session)
 
 
