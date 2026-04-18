@@ -4,6 +4,7 @@ import json
 import marshal
 import warnings
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -14,6 +15,7 @@ from pyinstrument.renderers.base import Renderer
 from pyinstrument.renderers.base import FrameRenderer
 from pyinstrument.renderers.html import JSONForHTMLRenderer
 from pyinstrument.renderers.speedscope import SpeedscopeEncoder, SpeedscopeEventType
+from pyinstrument.frame_ops import FrameRecordType
 
 from .conftest import calculate_frame_tree_times, dummy_session, self_time_frame
 
@@ -206,7 +208,10 @@ def test_html_renderer_resample_interval_zero_skips_resampling(capsys):
     session.duration = 2.0
     session.sample_count = 100001
     session.start_call_stack = ["leaf\x00pkg/b.py\x002"]
-    session.frame_records = [("leaf\x00pkg/b.py\x002", 1e-6)] * 100001
+    session.frame_records = cast(
+        list[FrameRecordType],
+        [(["leaf\x00pkg/b.py\x002"], 1e-6)] * 100001,
+    )
 
     output = renderers.HTMLRenderer(resample_interval=0).render(session)
     captured = capsys.readouterr()
@@ -223,7 +228,10 @@ def test_html_renderer_resample_branch_coverage(capsys):
     session = dummy_session()
     session.duration = 1.0001
     session.sample_count = 100001
-    session.frame_records = [("<module>\x00pkg/a.py\x001", 1e-9)] * 100000 + [("leaf\x00pkg/b.py\x002", 1)]
+    session.frame_records = cast(
+        list[FrameRecordType],
+        [(["<module>\x00pkg/a.py\x001"], 1e-9)] * 100000 + [(["leaf\x00pkg/b.py\x002"], 1)],
+    )
     session.start_call_stack = ["leaf\x00pkg/b.py\x002"]
 
     output = renderers.HTMLRenderer().render(session)
@@ -238,15 +246,24 @@ def test_html_renderer_multiple_resample_iterations(capsys):
     session.duration = 10.0
     session.sample_count = 200000
     session.start_call_stack = ["leaf\x00pkg/b.py\x002"]
-    session.frame_records = [("leaf\x00pkg/b.py\x002", 1e-6)] * 200000
+    session.frame_records = cast(
+        list[FrameRecordType],
+        [(["leaf\x00pkg/b.py\x002"], 1e-6)] * 200000,
+    )
 
     huge = dummy_session()
     huge.start_call_stack = session.start_call_stack
-    huge.frame_records = [("leaf\x00pkg/b.py\x002", 1e-6)] * 150000
+    huge.frame_records = cast(
+        list[FrameRecordType],
+        [(["leaf\x00pkg/b.py\x002"], 1e-6)] * 150000,
+    )
     huge.duration = 10.0
     small = dummy_session()
     small.start_call_stack = session.start_call_stack
-    small.frame_records = [("leaf\x00pkg/b.py\x002", 1e-6)] * 50000
+    small.frame_records = cast(
+        list[FrameRecordType],
+        [(["leaf\x00pkg/b.py\x002"], 1e-6)] * 50000,
+    )
     small.duration = 10.0
 
     with patch.object(type(session), "resample", side_effect=[huge, small]) as mock_resample:

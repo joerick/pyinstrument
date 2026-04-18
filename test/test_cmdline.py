@@ -290,7 +290,7 @@ class TestCommandLine:
             ]
         )
 
-        assert "foobar" in str(output)
+        assert "foobar" in output.decode("utf-8", errors="replace")
 
     def test_target_description_format(self, pyinstrument_invocation, tmp_path: Path):
         busy_wait_py = tmp_path / "busy_wait.py"
@@ -305,7 +305,8 @@ class TestCommandLine:
             ]
         )
 
-        assert f"foobar {busy_wait_py}" in str(output)
+        decoded_output = output.decode("utf-8", errors="replace")
+        assert f"'foobar {busy_wait_py}'" in decoded_output
 
     def test_target_description_format_errors(self, pyinstrument_invocation, tmp_path: Path):
         busy_wait_py = tmp_path / "busy_wait.py"
