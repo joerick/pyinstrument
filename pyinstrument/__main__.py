@@ -611,9 +611,14 @@ def guess_renderer_from_outfile(outfile: str) -> str | None:
 def report_dir() -> str:
     data_dir = appdirs.user_data_dir("pyinstrument", "com.github.joerick")  # type: ignore
     report_dir = os.path.join(data_dir, "reports")
-    if not os.path.exists(report_dir):
-        os.makedirs(report_dir)
-    return report_dir
+    try:
+        if not os.path.exists(report_dir):
+            os.makedirs(report_dir)
+        return report_dir
+    except PermissionError:
+        fallback_dir = os.path.join(os.getcwd(), ".pyinstrument_reports")
+        os.makedirs(fallback_dir, exist_ok=True)
+        return fallback_dir
 
 
 def load_report_from_temp_storage(identifier: str) -> Session:

@@ -22,6 +22,8 @@ build
 # testing
 .cache
 .pytest_cache
+pytest-cache-files-*
+module2_trace/
 
 # editor
 *.code-workspace
