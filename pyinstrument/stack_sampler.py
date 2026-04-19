@@ -9,22 +9,12 @@ import types
 from contextvars import ContextVar
 from typing import Any, Callable, List, NamedTuple, Optional
 
-try:
-    from pyinstrument.low_level.stat_profile import (
-        get_frame_info,
-        measure_timing_overhead,
-        setstatprofile,
-        walltime_coarse_resolution,
-    )
-except ModuleNotFoundError:
-    from pyinstrument.low_level.stat_profile_python import get_frame_info, setstatprofile
-
-    def measure_timing_overhead() -> dict[TimerType, float]:
-        # The Python fallback doesn't expose platform timing measurements.
-        return {}
-
-    def walltime_coarse_resolution() -> float | None:
-        return None
+from pyinstrument.low_level.stat_profile import (
+    get_frame_info,
+    measure_timing_overhead,
+    setstatprofile,
+    walltime_coarse_resolution,
+)
 from pyinstrument.low_level.types import TimerType
 from pyinstrument.typing import LiteralStr
 from pyinstrument.util import format_float_with_sig_figs, strtobool, unwrap

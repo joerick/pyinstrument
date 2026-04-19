@@ -1,1 +1,0 @@
-{"start_time": 1710000000, "duration": 0.1, "min_interval": 0.001, "max_interval": 0.001, "sample_count": 1, "start_call_stack": ["root"], "target_description": "dummy", "cpu_time": 0.05, "sys_path": ["project", "site-packages"], "sys_prefixes": ["prefix"], "frame_records": [[["root"], 0.1]]}
