@@ -302,10 +302,11 @@ class TestCommandLine:
                 "--target-description",
                 "'foobar {args}'",
                 str(busy_wait_py),
-            ]
+            ],
+            text=True,
         )
 
-        assert f"foobar {busy_wait_py}" in str(output)
+        assert f"foobar {busy_wait_py}" in output
 
     def test_target_description_format_errors(self, pyinstrument_invocation, tmp_path: Path):
         busy_wait_py = tmp_path / "busy_wait.py"
