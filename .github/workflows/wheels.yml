@@ -29,7 +29,7 @@ jobs:
 
       - name: Set up QEMU
         if: ${{ matrix.archs == 'aarch64' }}
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - uses: actions/setup-python@v5
         name: Install Python
