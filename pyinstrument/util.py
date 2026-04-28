@@ -36,22 +36,6 @@ def deprecated(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
     return func(*args, **kwargs)
 
 
-def deprecated_option(option_name: str, message: str = "") -> Any:
-    """Marks an option as deprecated."""
-
-    def caller(func, *args, **kwargs):
-        if option_name in kwargs:
-            warnings.warn(
-                f"{option_name} is deprecated. {message}",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-
-        return func(*args, **kwargs)
-
-    return decorator(caller)
-
-
 def file_supports_color(file_obj: IO[AnyStr]) -> bool:
     """
     Returns True if the running system's terminal supports color.
