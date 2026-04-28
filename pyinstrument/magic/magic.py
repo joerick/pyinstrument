@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import html
 import threading
-import urllib.parse
 from ast import parse
 from textwrap import dedent
 
@@ -262,10 +261,6 @@ class PyinstrumentMagic(Magics):
             # install our silent handler
             ip.set_custom_exc((InterruptSilently,), _silent_exception_handler)
             raise InterruptSilently()
-
-        html_config = compute_render_options(
-            args, renderer_class=HTMLRenderer, unicode_support=True, color_support=True
-        )
 
         text_config = compute_render_options(
             args, renderer_class=HTMLRenderer, unicode_support=True, color_support=True

@@ -3,11 +3,9 @@ from typing import List, Tuple
 # pyright: strict
 
 
-IDENTIFIER_SEP = "\x00"
 ATTRIBUTES_SEP = "\x01"
 
 ATTRIBUTE_MARKER_CLASS_NAME = "c"
-ATTRIBUTE_MARKER_LINE_NUMBER = "l"
 ATTRIBUTE_MARKER_TRACEBACKHIDE = "h"
 
 

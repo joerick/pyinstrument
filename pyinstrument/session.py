@@ -14,12 +14,6 @@ from pyinstrument.typing import PathOrStr
 # pyright: strict
 
 
-ASSERTION_MESSAGE = (
-    "Please raise an issue at https://github.com/joerick/pyinstrument/issues and "
-    "let me know how you caused this error!"
-)
-
-
 class Session:
     def __init__(
         self,
