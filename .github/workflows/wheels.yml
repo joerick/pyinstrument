@@ -37,7 +37,7 @@ jobs:
           python-version: '3.12'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.0.0rc1
+        uses: pypa/cibuildwheel@v4.0.0rc2
         env:
           CIBW_ENABLE: graalpy
           CIBW_ARCHS_MACOS: auto universal2
@@ -67,7 +67,7 @@ jobs:
           python-version: '3.12'
 
       - name: Build prerelease wheels
-        uses: pypa/cibuildwheel@v4.0.0rc1
+        uses: pypa/cibuildwheel@v4.0.0rc2
         env:
           CIBW_ENABLE: cpython-prerelease
           CIBW_BUILD: cp315-*
