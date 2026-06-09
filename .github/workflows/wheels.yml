@@ -34,17 +34,48 @@ jobs:
       - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.12'
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.0.0
         env:
-          CIBW_SKIP: pp*
+          CIBW_ENABLE: graalpy
           CIBW_ARCHS_MACOS: auto universal2
 
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
+
+  build_wheels_prerelease:
+    name: Build prerelease wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: ${{ matrix.archs == 'aarch64' }}
+        uses: docker/setup-qemu-action@v4
+
+      - uses: actions/setup-python@v5
+        name: Install Python
+        with:
+          python-version: '3.12'
+
+      - name: Build prerelease wheels
+        uses: pypa/cibuildwheel@v4.0.0rc2
+        env:
+          CIBW_ENABLE: cpython-prerelease
+          CIBW_BUILD: cp315-*
+          CIBW_ARCHS_MACOS: auto universal2
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prerelease-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -56,13 +87,13 @@ jobs:
       - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.12'
 
       - name: Check manifest
         run: pipx run check-manifest
 
       - name: Build sdist
-        run: python setup.py sdist
+        run: pipx run build --sdist
 
       - uses: actions/upload-artifact@v4
         with:
