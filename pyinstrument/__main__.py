@@ -99,7 +99,7 @@ def main():
     )
 
     parser.add_option(
-        "-o", "--outfile", dest="outfile", action="store", help="save to <outfile>", default=None
+        "-o", "--outfile", dest="outfile", action="append", help="save to <outfile> (can be specified multiple times)", default=None
     )
 
     parser.add_option(
@@ -307,38 +307,40 @@ def main():
     if options.from_path and sys.platform == "win32":
         parser.error("--from-path is not supported on Windows")
 
-    renderer_class = get_renderer_class(options)
-
-    # open the output file
-
     if options.outfile:
-        f = open(
-            options.outfile,
-            "w",
-            encoding="utf-8",
-            errors="surrogateescape",
-            newline="" if renderer_class.output_is_binary else None,
-        )
-        should_close_f_after_writing = True
+        if options.renderer is None and not options.output_html:
+            for outfile in options.outfile:
+                if guess_renderer_from_outfile(outfile) is None:
+                    parser.error(
+                        f"Can't determine renderer for {outfile!r}. "
+                        "Use a recognizable extension or specify -r."
+                    )
+                    exit(1)
+
+        for outfile in options.outfile:
+            try:
+                get_renderer_class_for_outfile(outfile, options)
+            except OptionsParseError as e:
+                parser.error(e.args[0])
+                exit(1)
     else:
+        renderer_class = get_renderer_class_for_outfile(None, options)
+
         f = sys.stdout
-        should_close_f_after_writing = False
+
+        try:
+            renderer = create_renderer(renderer_class, options, output_file=f)
+        except OptionsParseError as e:
+            parser.error(e.args[0])
+            exit(1)
+
+        if renderer.output_is_binary and file_is_a_tty(f):
+            parser.error(
+                "Can't write binary output to a terminal. Redirect to a file or use --outfile."
+            )
+            exit(1)
 
     inner_exception = None
-
-    # create the renderer
-
-    try:
-        renderer = create_renderer(renderer_class, options, output_file=f)
-    except OptionsParseError as e:
-        parser.error(e.args[0])
-        exit(1)
-
-    if renderer.output_is_binary and not options.outfile and file_is_a_tty(f):
-        parser.error(
-            "Can't write binary output to a terminal. Redirect to a file or use --outfile."
-        )
-        exit(1)
 
     # get the session - execute code or load from disk
 
@@ -414,20 +416,38 @@ def main():
 
         session = profiler.stop()
 
-    if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
-        # don't write HTML to a TTY, open in browser instead
-        output_filename = renderer.open_in_browser(session)
-        print("stdout is a terminal, so saved profile output to %s" % output_filename)
+    if options.outfile:
+        # Write output to each outfile
+        for outfile in options.outfile:
+            rc = get_renderer_class_for_outfile(outfile, options)
+            f = open(
+                outfile,
+                "w",
+                encoding="utf-8",
+                errors="surrogateescape",
+                newline="" if rc.output_is_binary else None,
+            )
+            try:
+                r = create_renderer(rc, options, output_file=f)
+                f.write(r.render(session))
+            except OptionsParseError as e:
+                parser.error(e.args[0])
+                exit(1)
+            finally:
+                f.close()
     else:
-        f.write(renderer.render(session))
-        if should_close_f_after_writing:
-            f.close()
+        if isinstance(renderer, renderers.HTMLRenderer) and file_is_a_tty(f):
+            # don't write HTML to a TTY, open in browser instead
+            output_filename = renderer.open_in_browser(session)
+            print("stdout is a terminal, so saved profile output to %s" % output_filename)
+        else:
+            f.write(renderer.render(session))
 
-    if isinstance(renderer, renderers.ConsoleRenderer) and not options.outfile:
-        _, report_identifier = save_report_to_temp_storage(session)
-        print("To view this report with different options, run:")
-        print("    pyinstrument --load-prev %s [options]" % report_identifier)
-        print("")
+        if isinstance(renderer, renderers.ConsoleRenderer):
+            _, report_identifier = save_report_to_temp_storage(session)
+            print("To view this report with different options, run:")
+            print("    pyinstrument --load-prev %s [options]" % report_identifier)
+            print("")
 
     if inner_exception:
         # If the script raised an exception, re-raise it now to resume
@@ -548,14 +568,14 @@ def create_renderer(
         )
 
 
-def get_renderer_class(options: CommandLineOptions) -> type[renderers.Renderer]:
+def get_renderer_class_for_outfile(outfile: str | None, options: CommandLineOptions) -> type[renderers.Renderer]:
     renderer = options.renderer
 
     if options.output_html:
         renderer = "html"
 
-    if renderer is None and options.outfile:
-        renderer = guess_renderer_from_outfile(options.outfile)
+    if renderer is None and outfile:
+        renderer = guess_renderer_from_outfile(outfile)
 
     if renderer is None:
         renderer = "text"
@@ -662,7 +682,7 @@ class CommandLineOptions:
     show_regex: str | None
     show_all: bool
     output_html: bool
-    outfile: str | None
+    outfile: list[str] | None
     render_options: list[str] | None
     target_description: str
 
