@@ -27,7 +27,7 @@ setup(
     author_email="joerick@mac.com",
     url="https://github.com/joerick/pyinstrument",
     keywords=["profiling", "profile", "profiler", "cpu", "time", "sampling"],
-    install_requires=[],
+    install_requires=["platformdirs"],
     extras_require={
         "test": [
             "pytest",
