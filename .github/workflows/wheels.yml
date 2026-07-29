@@ -25,9 +25,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         name: Install Python
         with:
           python-version: '3.12'
@@ -38,7 +38,7 @@ jobs:
           CIBW_ENABLE: graalpy
           CIBW_ARCHS_MACOS: auto universal2
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
@@ -51,9 +51,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         name: Install Python
         with:
           python-version: '3.12'
@@ -65,7 +65,7 @@ jobs:
           CIBW_BUILD: cp315-*
           CIBW_ARCHS_MACOS: auto universal2
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: prerelease-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
@@ -74,9 +74,9 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         name: Install Python
         with:
           python-version: '3.12'
@@ -87,7 +87,7 @@ jobs:
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -105,7 +105,7 @@ jobs:
       attestations: write
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           # unpacks all CIBW artifacts into dist/
           pattern: cibw-*

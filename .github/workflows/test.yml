@@ -8,12 +8,12 @@ jobs:
   prek:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         # Checkout pull request HEAD commit instead of merge commit
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
     - name: Install Python deps
       run: |
         pip install -r requirements-dev.txt
@@ -32,10 +32,10 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
