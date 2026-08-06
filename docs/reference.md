@@ -12,6 +12,21 @@ print a profile report to the console.
 ```{program-output} pyinstrument --help
 ```
 
+### Output file (`-o`/`--outfile`)
+
+The `-o`/`--outfile` flag saves the profiling output to a file. The renderer
+is automatically inferred from the file extension (e.g. `.html` for HTML,
+`.json` for JSON, `.txt` for console text), unless `-r` is explicitly set.
+
+You can specify `-o` multiple times to generate multiple output formats in a
+single run:
+
+    pyinstrument -o profile.txt -o profile.html script.py
+
+When multiple output files are specified, each file's renderer is determined
+independently from its extension. If `-r` is also provided, it applies to all
+output files that don't have a recognized extension.
+
 ## Python API
 
 The Python API is also available, for calling pyinstrument directly from
