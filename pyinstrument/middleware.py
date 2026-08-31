@@ -34,6 +34,20 @@ def get_renderer(path) -> Renderer:
         return HTMLRenderer()
 
 
+def get_csp_nonce():
+    """Return the configured CSP nonce, if any."""
+    nonce_callback = getattr(settings, "PYINSTRUMENT_CSP_NONCE", None)
+    if nonce_callback is None:
+        return None
+    if not callable(nonce_callback):
+        raise ValueError("PYINSTRUMENT_CSP_NONCE should be a callable")
+
+    nonce = nonce_callback()
+    if not isinstance(nonce, str):
+        raise ValueError("PYINSTRUMENT_CSP_NONCE callback return value should be a string")
+    return nonce
+
+
 class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
     def process_request(self, request):
         profile_dir = getattr(settings, "PYINSTRUMENT_PROFILE_DIR", None)
@@ -62,6 +76,8 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
 
             configured_renderer = getattr(settings, "PYINSTRUMENT_PROFILE_DIR_RENDERER", None)
             renderer = get_renderer(configured_renderer)
+            if isinstance(renderer, HTMLRenderer):
+                renderer.csp_nonce = get_csp_nonce()
 
             output = renderer.render(profile_session)
 
@@ -107,6 +123,7 @@ class ProfilerMiddleware(MiddlewareMixin):  # type: ignore
                     return HttpResponse(output)  # type: ignore
                 else:
                     renderer = HTMLRenderer()
+                    renderer.csp_nonce = get_csp_nonce()
                     output = renderer.render(profile_session)
                     return HttpResponse(output)  # type: ignore
             else:

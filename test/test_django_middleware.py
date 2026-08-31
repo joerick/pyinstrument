@@ -3,6 +3,7 @@ import pytest
 django = pytest.importorskip("django")
 
 from django.conf import settings  # noqa: E402
+from django.http import HttpResponse  # noqa: E402
 from django.test import RequestFactory  # noqa: E402
 
 
@@ -52,3 +53,28 @@ def test_profile_dir_still_profiles_when_callback_allows(tmp_path):
             assert hasattr(request, "profiler")
         finally:
             stop_profiler(request)
+
+
+def test_csp_nonce_is_applied_to_profile_scripts():
+    from django.test import override_settings
+
+    nonce_calls = 0
+
+    def get_nonce():
+        nonlocal nonce_calls
+        nonce_calls += 1
+        return 'nonce&"value'
+
+    with override_settings(PYINSTRUMENT_CSP_NONCE=get_nonce):
+        request = RequestFactory().get("/?profile")
+        middleware = make_middleware()
+        try:
+            middleware.process_request(request)
+            response = middleware.process_response(request, HttpResponse())
+        except Exception:
+            stop_profiler(request)
+            raise
+
+    output = response.content.decode()
+    assert nonce_calls == 1
+    assert output.count('<script nonce="nonce&amp;&quot;value">') == 2
