@@ -223,13 +223,20 @@ class Session:
         """
         result: list[FrameRecordType] = []
         accumulated_time = 0.0
+        # Time carried across interval boundaries has already been recorded.
+        pending_time = 0.0
 
         for frame_info_stack, time in frame_records:
             accumulated_time += time
+            pending_time += time
 
             if accumulated_time >= interval:
-                result.append((frame_info_stack, accumulated_time))
+                result.append((frame_info_stack, pending_time))
+                pending_time = 0.0
                 accumulated_time = accumulated_time % interval
+
+        if pending_time:
+            result.append((frame_records[-1][0], pending_time))
 
         return result
 
