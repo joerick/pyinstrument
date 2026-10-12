@@ -89,6 +89,29 @@ def test_show_all_doesnt_crash(
     renderer.render(profiler_session)
 
 
+def test_speedscope_renderer_reused_with_same_session(profiler_session):
+    renderer = renderers.SpeedscopeRenderer()
+    first_output = renderer.render(profiler_session)
+    assert renderer.render(profiler_session) == first_output
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_speedscope_renderer_reused_with_different_session(profiler_session, empty):
+    session_data = profiler_session.to_json()
+    session_data.update(
+        frame_records=[] if empty else [(["other\x00other.py\x001"], 0.25)],
+        start_call_stack=[],
+        duration=0 if empty else 0.25,
+        sample_count=0 if empty else 1,
+        cpu_time=0 if empty else 0.25,
+    )
+    next_session = Session.from_json(session_data)
+
+    renderer = renderers.SpeedscopeRenderer()
+    renderer.render(profiler_session)
+    assert renderer.render(next_session) == renderers.SpeedscopeRenderer().render(next_session)
+
+
 @pytest.mark.parametrize("flat_time", ["self", "total"])
 def test_console_renderer_flat_doesnt_crash(profiler_session, flat_time):
     renderer = renderers.ConsoleRenderer(flat=True, flat_time=flat_time)

@@ -207,6 +207,8 @@ class SpeedscopeRenderer(FrameRenderer):
         return events_array
 
     def render(self, session: Session):
+        self._event_time = 0.0
+        self._frame_to_index.clear()
         frame = self.preprocess(session.root_frame())
 
         id_: str = time.strftime("%Y-%m-%dT%H-%M-%S", time.localtime(session.start_time))
