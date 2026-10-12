@@ -220,23 +220,18 @@ class Session:
     ) -> list[FrameRecordType]:
         """
         Resample frame records to a given interval. Discards samples as needed.
+        Durations are rounded down to whole intervals, carrying the remainder
+        forward. A final partial interval is discarded.
         """
         result: list[FrameRecordType] = []
         accumulated_time = 0.0
-        # Time carried across interval boundaries has already been recorded.
-        pending_time = 0.0
 
         for frame_info_stack, time in frame_records:
             accumulated_time += time
-            pending_time += time
 
             if accumulated_time >= interval:
-                result.append((frame_info_stack, pending_time))
-                pending_time = 0.0
+                result.append((frame_info_stack, accumulated_time - accumulated_time % interval))
                 accumulated_time = accumulated_time % interval
-
-        if pending_time:
-            result.append((frame_records[-1][0], pending_time))
 
         return result
 
