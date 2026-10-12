@@ -4,6 +4,7 @@ import contextvars
 import sys
 import timeit
 import types
+from inspect import CO_NEWLOCALS
 from typing import Any, Callable, List, Optional, Type
 
 from pyinstrument.low_level.pyi_timing_thread_python import (
@@ -114,22 +115,30 @@ def setstatprofile(
 
 
 def get_frame_info(frame: types.FrameType) -> str:
+    code = frame.f_code
     frame_info = "%s\x00%s\x00%i" % (
-        frame.f_code.co_name,
-        frame.f_code.co_filename,
-        frame.f_code.co_firstlineno,
+        code.co_name,
+        code.co_filename,
+        code.co_firstlineno,
     )
 
     class_name = None
-    # try to find self argument for methods
-    self = frame.f_locals.get("self", None)
-    if self and hasattr(self, "__class__") and hasattr(self.__class__, "__qualname__"):
-        class_name = self.__class__.__qualname__
+    if sys.version_info >= (3, 11):
+        if code.co_flags & CO_NEWLOCALS and "." in code.co_qualname:
+            prefix, _, _ = code.co_qualname.rpartition(".")
+            # A nested function's enclosing scope is not a class.
+            if prefix and not prefix.endswith(".<locals>"):
+                class_name = prefix
     else:
-        # also try to find cls argument for class methods
-        cls = frame.f_locals.get("cls", None)
-        if cls and hasattr(cls, "__qualname__"):
-            class_name = cls.__qualname__
+        # try to find self argument for methods
+        self = frame.f_locals.get("self", None)
+        if self and hasattr(self, "__class__") and hasattr(self.__class__, "__qualname__"):
+            class_name = self.__class__.__qualname__
+        else:
+            # also try to find cls argument for class methods
+            cls = frame.f_locals.get("cls", None)
+            if cls and hasattr(cls, "__qualname__"):
+                class_name = cls.__qualname__
 
     frame_hidden = "__tracebackhide__" in frame.f_locals
 
