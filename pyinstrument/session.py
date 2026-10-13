@@ -220,12 +220,12 @@ class Session:
     ) -> list[FrameRecordType]:
         """
         Resample frame records to a given interval. Discards samples as needed.
-        Durations are rounded down to whole intervals, carrying the remainder
-        forward. A final partial interval is discarded.
         """
         result: list[FrameRecordType] = []
         accumulated_time = 0.0
 
+        # Durations are rounded down to whole intervals, carrying the remainder
+        # forward. A final partial interval is discarded.
         for frame_info_stack, time in frame_records:
             accumulated_time += time
 
