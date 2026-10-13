@@ -25,9 +25,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-        # also add an aarch64 test, just one python version
+        # also add aarch64 tests, just one python version each
         include:
           - os: ubuntu-24.04-arm
+            python-version: "3.14"
+          - os: windows-11-arm
             python-version: "3.14"
       fail-fast: false
 
