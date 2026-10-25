@@ -27,6 +27,11 @@ Here are the options you can use:
 **Protip:** `-r html` will give you a interactive profile report as HTML - you
 can really explore this way!
 
+You can also specify `-o` multiple times to generate multiple output formats in
+a single run. Each outfile infers its renderer from the file extension:
+
+    pyinstrument -o profile.txt -o profile.html script.py
+
 ## Profile a Python CLI command
 
 For profiling an installed Python script via the
