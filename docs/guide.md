@@ -191,6 +191,20 @@ Default value is `pyinstrument.renderers.HTMLRenderer`. The supported renderers 
 
 You can configure the sampling interval using setting's variable `PYINSTRUMENT_INTERVAL`. Default value is 0.001.
 
+**Use a Content Security Policy nonce**
+
+If your site's Content Security Policy disallows inline scripts, set
+`PYINSTRUMENT_CSP_NONCE` to a callback that returns the nonce for the current
+response. Pyinstrument calls the callback once and adds the returned value to
+every inline script in the profiling page.
+
+```python
+PYINSTRUMENT_CSP_NONCE = get_current_csp_nonce
+```
+
+The same nonce must be allowed by the response's `Content-Security-Policy`
+header. Pyinstrument does not generate the nonce or modify the policy header.
+
 ## Profile a web request in Flask
 
 A simple setup to profile a Flask application is the following:
