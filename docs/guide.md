@@ -27,6 +27,14 @@ Here are the options you can use:
 **Protip:** `-r html` will give you a interactive profile report as HTML - you
 can really explore this way!
 
+In the HTML report's **Timeline** view, use **Find function** to highlight
+every matching bar. Search matches the displayed function or class name
+without regard to case; for module frames, it matches the displayed file
+path. The match count includes bars outside the current viewport. Search
+keeps the timeline's zoom and position, so you can pan or zoom while the
+matches remain highlighted. Use **Clear** or press Escape in the search
+field to restore the usual colors.
+
 ## Profile a Python CLI command
 
 For profiling an installed Python script via the
