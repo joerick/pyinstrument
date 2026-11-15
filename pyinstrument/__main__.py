@@ -9,6 +9,7 @@ import runpy
 import shutil
 import sys
 import time
+from types import ModuleType
 from typing import Any, List, TextIO, cast
 
 import pyinstrument
@@ -349,6 +350,7 @@ def main():
         session = Session.load(options.load)
     else:
         # we are running some code
+        main_module = None
         if options.module is not None:
             if not (sys.path[0] and os.path.samefile(sys.path[0], ".")):
                 # when called with '-m', search the cwd for that module
@@ -360,7 +362,8 @@ def main():
         elif options.program is not None:
             argv = ["-c", *options.program.remaining_args]
             code = options.program.value
-            globs = {"__name__": "__main__"}
+            main_module = ModuleType("__main__")
+            globs = main_module.__dict__
             # set the first path entry to '' to match behaviour of python -c
             sys.path[0] = ""
         else:
@@ -381,6 +384,7 @@ def main():
             globs = {"run_path": runpy.run_path, "progname": progname}
 
         old_argv = sys.argv.copy()
+        old_main_module = sys.modules["__main__"]
 
         # there is no point using async mode for command line invocation,
         # because it will always be capturing the whole program, we never want
@@ -407,11 +411,16 @@ def main():
 
         try:
             sys.argv[:] = argv
+            if main_module is not None:
+                # Match runpy's temporary module so imports and pickle see the program's globals.
+                sys.modules["__main__"] = main_module
             exec(code, globs, None)
         except (SystemExit, KeyboardInterrupt) as e:
             inner_exception = e
         finally:
             sys.argv[:] = old_argv
+            if main_module is not None:
+                sys.modules["__main__"] = old_main_module
 
         session = profiler.stop()
 
