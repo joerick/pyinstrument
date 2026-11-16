@@ -61,6 +61,7 @@ class StackSampler:
     has_warned_about_timing_overhead: bool
 
     def __init__(self) -> None:
+        self.thread = threading.current_thread()
         self.subscribers = []
         self.current_sampling_interval = None
         self.last_profile_time = 0.0
@@ -192,7 +193,7 @@ class StackSampler:
             for subscriber in self.subscribers:
                 if subscriber.target == old:
                     assert subscriber.bound_to_async_context
-                    full_stack = build_call_stack(frame, event, arg)
+                    full_stack = build_call_stack(frame, event, arg, thread=self.thread)
                     if coroutine_stack:
                         full_stack.extend(reversed(coroutine_stack))
                         subscriber.async_state = AsyncState(
@@ -209,7 +210,7 @@ class StackSampler:
             now = self._timer()
             time_since_last_sample = now - self.last_profile_time
 
-            call_stack = build_call_stack(frame, event, arg)
+            call_stack = build_call_stack(frame, event, arg, thread=self.thread)
 
             for subscriber in self.subscribers:
                 subscriber.target(call_stack, time_since_last_sample, subscriber.async_state)
@@ -302,7 +303,13 @@ def get_stack_sampler() -> StackSampler:
         return stack_sampler
 
 
-def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> list[str]:
+def build_call_stack(
+    frame: types.FrameType | None,
+    event: str,
+    arg: Any,
+    *,
+    thread: threading.Thread | None = None,
+) -> list[str]:
     call_stack: list[str] = []
 
     if event == "call":
@@ -323,7 +330,10 @@ def build_call_stack(frame: types.FrameType | None, event: str, arg: Any) -> lis
         call_stack.append(get_frame_info(frame))
         frame = frame.f_back
 
-    thread = threading.current_thread()
+    # Calling current_thread() during gevent's monkey-patching can register a dummy
+    # thread and prevent gevent from fixing import locks. Samplers pass their owner.
+    if thread is None:
+        thread = threading.current_thread()
     thread_identifier = "%s\x00%s\x00%i" % (thread.name, "<thread>", thread.ident)
     call_stack.append(thread_identifier)
 
