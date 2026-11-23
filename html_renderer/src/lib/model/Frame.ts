@@ -102,7 +102,7 @@ export default class Frame {
         if (options.after) {
             const reversed = frames.slice()
             reversed.reverse()
-            frames.forEach(f => this.addChild(f, options))
+            reversed.forEach(f => this.addChild(f, options))
         } else {
             frames.forEach(f => this.addChild(f, options))
         }
