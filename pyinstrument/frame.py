@@ -130,6 +130,17 @@ class Frame:
             self.parent._children.remove(self)
             self.parent = None
 
+    def remove_children(self, frames: Sequence[Frame]):
+        """
+        Removes several child frames in one pass, nulling their parent links.
+        Faster than calling remove_from_parent on each when there are many.
+        """
+        assert all(frame.parent is self for frame in frames)
+        removing = set(frames)
+        self._children = [c for c in self._children if c not in removing]
+        for frame in frames:
+            frame.parent = None
+
     @property
     def context(self):
         if not self._context:

@@ -388,3 +388,15 @@ def test_group_library_frames_processor(monkeypatch):
     assert group_root.children[0].children[0] in group.frames
     assert group_root.children[0].children[0] in group.exit_frames
     assert group_root.children[0].children[0].children[0] not in group.frames
+
+
+def test_frame_remove_children():
+    parent = Frame(identifier_or_frame_info="parent\x00file.py\x001")
+    a, b, c = (Frame(identifier_or_frame_info=f"{n}\x00file.py\x001") for n in "abc")
+    parent.add_children([a, b, c])
+
+    parent.remove_children([a, c])
+
+    assert parent.children == (b,)
+    assert a.parent is None and c.parent is None
+    assert b.parent is parent

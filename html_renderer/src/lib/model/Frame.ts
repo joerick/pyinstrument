@@ -132,6 +132,19 @@ export default class Frame {
         }
     }
 
+    /**
+     * Removes several child frames in one pass, nulling their parent links.
+     * Faster than calling removeFromParent on each when there are many.
+     */
+    removeChildren(frames: readonly Frame[]) {
+        if (frames.some(f => f.parent !== this)) {
+            throw new Error("All frames must be children of this frame.")
+        }
+        const removing = new Set(frames)
+        this._children = this._children.filter(c => !removing.has(c))
+        frames.forEach(f => { f.parent = null })
+    }
+
     getAttributes(marker: string): {data: string, time: number}[] {
         const keys = Object.keys(this.attributes).filter(k => k.startsWith(marker))
         return keys.map(k => (

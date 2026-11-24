@@ -2,7 +2,7 @@ import { maxBy } from "../utils";
 import type Frame from "./Frame";
 import { SELF_TIME_FRAME_IDENTIFIER } from "./Frame";
 import FrameGroup from "./FrameGroup";
-import { combineFrames, deleteFrameFromTree } from './frameOps'
+import { combineRepeatedChildren, deleteFrameFromTree } from './frameOps'
 
 export interface ProcessorOptions {
     filterThreshold?: number // used by remove_irrelevant_nodes
@@ -107,16 +107,7 @@ export function aggregate_repeated_calls(frame: Frame | null, options: Processor
         return null;
     }
 
-    const childrenByIdentifier: Record<string, Frame> = {};
-
-    for (const child of frame.children.slice()) {
-        if (childrenByIdentifier[child.identifier]) {
-            const aggregateFrame = childrenByIdentifier[child.identifier];
-            combineFrames(child, aggregateFrame);
-        } else {
-            childrenByIdentifier[child.identifier] = child;
-        }
-    }
+    combineRepeatedChildren(frame);
 
     frame.children.forEach(child => aggregate_repeated_calls(child, options));
     frame._children.sort((a, b) => b.time - a.time);

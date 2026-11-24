@@ -13,7 +13,7 @@ import re
 from typing import Any, Callable, Dict, Union
 
 from pyinstrument.frame import SELF_TIME_FRAME_IDENTIFIER, Frame, FrameGroup
-from pyinstrument.frame_ops import combine_frames, delete_frame_from_tree
+from pyinstrument.frame_ops import combine_repeated_children, delete_frame_from_tree
 
 # pyright: strict
 
@@ -68,18 +68,7 @@ def aggregate_repeated_calls(frame: Frame | None, options: ProcessorOptions) -> 
     if frame is None:
         return None
 
-    children_by_identifier: dict[str, Frame] = {}
-
-    # iterate over a copy of the children since it's going to mutate while we're iterating
-    for child in frame.children:
-        if child.identifier in children_by_identifier:
-            aggregate_frame = children_by_identifier[child.identifier]
-
-            # combine child into aggregate frame, removing it from the tree
-            combine_frames(child, into=aggregate_frame)
-        else:
-            # never seen this identifier before. It becomes the aggregate frame.
-            children_by_identifier[child.identifier] = child
+    combine_repeated_children(frame)
 
     # recurse into the children
     for child in frame.children:

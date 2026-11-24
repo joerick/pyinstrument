@@ -1,4 +1,4 @@
-import { deleteFrameFromTree } from "./frameOps";
+import { combineRepeatedChildren, deleteFrameFromTree } from "./frameOps";
 import { describe, it, expect } from "vitest";
 import Frame, { SELF_TIME_FRAME_IDENTIFIER } from "./Frame";
 import { remove_importlib, remove_tracebackhide } from "./processors";
@@ -81,5 +81,23 @@ describe("removing hidden frames", () => {
     expect(root.children.map(frame => frame.identifier)).toEqual(["before", "first", "second", "after"]);
     expect(root.children.map(frame => frame.startTime)).toEqual([0, 1, 2, 3]);
     expect(root.children.every(frame => frame.parent === root)).toBe(true);
+  });
+});
+
+describe("combineRepeatedChildren", () => {
+  it("should combine children with the same identifier into the first", () => {
+    const parent = new Frame({ identifier: "parent" }, context);
+    const a1 = new Frame({ identifier: "a", time: 1, children: [{ identifier: "x", time: 1 }] }, context);
+    const b = new Frame({ identifier: "b", time: 2 }, context);
+    const a2 = new Frame({ identifier: "a", time: 3, children: [{ identifier: "y", time: 3 }] }, context);
+    parent.addChildren([a1, b, a2]);
+
+    combineRepeatedChildren(parent);
+
+    expect(parent.children).toEqual([a1, b]);
+    expect(a1.time).toBe(4);
+    expect(a1.children.map(c => c.identifier)).toEqual(["x", "y"]);
+    expect(a1.children.every(c => c.parent === a1)).toBe(true);
+    expect(a2.parent).toBeNull();
   });
 });
