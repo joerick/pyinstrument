@@ -31,11 +31,18 @@ class PstatsRenderer(FrameRenderer):
     def frame_key(self, frame: Frame) -> FrameKey:
         return (frame.file_path or "", frame.line_no or 0, frame.function)
 
-    def render_frame(self, frame: Frame | None, stats: StatsDict) -> None:
+    def render_frame(
+        self, frame: Frame | None, stats: StatsDict, keys_on_stack: set[FrameKey] | None = None
+    ) -> None:
         if frame is None:
             return
 
+        if keys_on_stack is None:
+            keys_on_stack = set()
+
         key = self.frame_key(frame)
+        # like cProfile, a recursive call's time is already in the outer call's cumtime
+        is_recursive = key in keys_on_stack
 
         if key not in stats:
             # create a new entry
@@ -51,7 +58,8 @@ class PstatsRenderer(FrameRenderer):
 
         # update the total time and cumulative time
         total_time += frame.total_self_time
-        cumulative_time += frame.time
+        if not is_recursive:
+            cumulative_time += frame.time
 
         if frame.parent:
             parent_key = self.frame_key(frame.parent)
@@ -70,9 +78,13 @@ class PstatsRenderer(FrameRenderer):
 
         stats[key] = (call_time, number_calls, total_time, cumulative_time, callers)
 
+        if not is_recursive:
+            keys_on_stack.add(key)
         for child in frame.children:
             if not child.is_synthetic:
-                self.render_frame(child, stats)
+                self.render_frame(child, stats, keys_on_stack)
+        if not is_recursive:
+            keys_on_stack.remove(key)
 
     def render(self, session: Session):
         frame = self.preprocess(session.root_frame())
