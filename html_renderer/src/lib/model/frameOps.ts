@@ -30,30 +30,38 @@ export function deleteFrameFromTree(frame: Frame, options: {replaceWith: 'childr
 }
 
 /**
- * Combines two frames into one. The frames must have the same parent.
- *
- * @param frame The frame to remove.
- * @param into The frame to combine into.
+ * Combines the children of `frame` that share an identifier into the first of
+ * them, removing the others from the tree.
  */
-export function combineFrames(frame: Frame, into: Frame): void {
-    if (frame.parent !== into.parent) {
-        throw new Error("Both frames must have the same parent.");
+export function combineRepeatedChildren(frame: Frame): void {
+    const firstByIdentifier = new Map<string, Frame>();
+    const repeats: Frame[] = [];
+
+    for (const child of frame.children.slice()) {
+        const into = firstByIdentifier.get(child.identifier);
+        if (!into) {
+            firstByIdentifier.set(child.identifier, child);
+            continue;
+        }
+
+        into.absorbedTime += child.absorbedTime;
+        into.time += child.time;
+
+        Object.entries(child.attributes).forEach(([attribute, time]) => {
+            if (into.attributes[attribute] !== undefined) {
+                into.attributes[attribute] += time;
+            } else {
+                into.attributes[attribute] = time;
+            }
+        });
+
+        into.addChildren(child.children);
+        repeats.push(child);
     }
 
-    into.absorbedTime += frame.absorbedTime;
-    into.time += frame.time;
-
-    Object.entries(frame.attributes).forEach(([attribute, time]) => {
-        if (into.attributes[attribute] !== undefined) {
-            into.attributes[attribute] += time;
-        } else {
-            into.attributes[attribute] = time;
-        }
-    });
-
-    into.addChildren(frame.children);
-    frame.removeFromParent();
-    removeFrameFromGroups(frame, false);
+    // one pass over the children, removing them one by one is quadratic
+    frame.removeChildren(repeats);
+    repeats.forEach(repeat => removeFrameFromGroups(repeat, false));
 }
 
 /**
