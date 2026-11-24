@@ -43,6 +43,26 @@ SYNTHETIC_LEAF_IDENTIFIERS = frozenset(
 )
 
 
+def _path_is_inside(path: str, directory: str) -> bool:
+    """
+    Return True if ``path`` is ``directory`` itself or a file within it.
+
+    The comparison is purely lexical (no filesystem access), but uses path
+    component boundaries rather than a plain prefix match, so a sibling
+    directory such as ``/tmp/env-project`` is not treated as inside
+    ``/tmp/env``. Both ``/`` and ``\\`` are accepted as separators so that
+    profiles saved on one platform can be rendered on another.
+    """
+    if not path.startswith(directory):
+        return False
+    if len(path) == len(directory):
+        return True
+    if directory.endswith("/") or directory.endswith("\\"):
+        return True
+    next_char = path[len(directory)]
+    return next_char == "/" or next_char == "\\"
+
+
 class FrameContext(typing.Protocol):
     def shorten_path(self, path: str) -> str: ...
     @property
@@ -187,7 +207,7 @@ class Frame:
         if not file_path:
             return False
 
-        if any(file_path.startswith(p) for p in self.context.sys_prefixes):
+        if any(_path_is_inside(file_path, p) for p in self.context.sys_prefixes):
             # lives in python install dir or virtualenv
             return False
 

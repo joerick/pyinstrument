@@ -36,6 +36,22 @@ const ATTRIBUTE_MARKER_CLASS_NAME = "c"
 const ATTRIBUTE_MARKER_LINE_NUMBER = "l"
 const ATTRIBUTE_MARKER_TRACEBACKHIDE = "h"
 
+/**
+ * Return true if `path` is `directory` itself, or a file within it.
+ *
+ * Purely lexical (no filesystem access), but respects path component
+ * boundaries so that a sibling directory like `/tmp/env-project` is not
+ * treated as inside `/tmp/env`. Both `/` and `\` are accepted as separators
+ * because profiles saved on one platform can be rendered on another.
+ */
+export function pathIsInside(path: string, directory: string): boolean {
+    if (!path.startsWith(directory)) return false;
+    if (path.length === directory.length) return true;
+    if (directory.endsWith("/") || directory.endsWith("\\")) return true;
+    const nextChar = path[directory.length];
+    return nextChar === "/" || nextChar === "\\";
+}
+
 export default class Frame {
     uuid: string = randomId()
     identifier: string
@@ -181,7 +197,7 @@ export default class Frame {
         }
 
         const prefixes = this.context.sysPrefixes
-        if (prefixes.some(path => filePath.startsWith(path))) {
+        if (prefixes.some(prefix => pathIsInside(filePath, prefix))) {
             // this code lives in the Python installation dir or a virtualenv
             return false;
         }
