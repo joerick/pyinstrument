@@ -31,7 +31,6 @@ def build_frame_tree(
 
     # put the root frame at the bottom of the stack
     frame_stack: list[Frame] = [root_frame]
-    last_self_time_frame: Frame | None = None
 
     for frame_info_stack, time in frame_records:
         stack_depth = 0
@@ -64,13 +63,14 @@ def build_frame_tree(
         if not final_frame.is_synthetic_leaf:
             # record the self-time. If the previous sample ended in this same
             # frame, extend its self-time frame rather than adding one per sample.
-            if last_self_time_frame is not None and last_self_time_frame.parent is final_frame:
-                last_self_time_frame.time += time
+            # (_children, because .children copies the list on every sample)
+            children = final_frame._children  # type: ignore # noqa
+            if children and children[-1].identifier == SELF_TIME_FRAME_IDENTIFIER:
+                children[-1].time += time
             else:
-                last_self_time_frame = Frame(
-                    identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time
+                final_frame.add_child(
+                    Frame(identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time)
                 )
-                final_frame.add_child(last_self_time_frame)
 
     if len(root_frame.children) == 1:
         root_frame = root_frame.children[0]
