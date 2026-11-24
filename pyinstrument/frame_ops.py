@@ -117,29 +117,35 @@ def delete_frame_from_tree(
     remove_frame_from_groups(frame, recursive=True)
 
 
-def combine_frames(frame: Frame, into: Frame):
+def combine_repeated_children(frame: Frame):
     """
-    Combine two frames into one. The frames must have the same parent.
-
-    The caller must remove ``frame`` from the parent afterwards. That's left
-    to the caller so many siblings can be removed in one pass.
-
-    :param frame: the frame to merge
-    :param into: the frame to combine into
+    Combines the children of ``frame`` that share an identifier into the first
+    of them, removing the others from the tree.
     """
-    assert frame.parent is into.parent
+    first_by_identifier: dict[str, Frame] = {}
+    repeats: list[Frame] = []
 
-    into.absorbed_time += frame.absorbed_time
-    into.time += frame.time
+    for child in frame.children:
+        into = first_by_identifier.setdefault(child.identifier, child)
+        if into is child:
+            continue
 
-    for attribute, time in frame.attributes.items():
-        try:
-            into.attributes[attribute] += time
-        except KeyError:
-            into.attributes[attribute] = time
+        into.absorbed_time += child.absorbed_time
+        into.time += child.time
 
-    into.add_children(frame.children)
-    remove_frame_from_groups(frame, recursive=False)
+        for attribute, time in child.attributes.items():
+            try:
+                into.attributes[attribute] += time
+            except KeyError:
+                into.attributes[attribute] = time
+
+        into.add_children(child.children)
+        repeats.append(child)
+
+    # one pass over the children, removing them one by one is quadratic
+    frame.remove_children(repeats)
+    for repeat in repeats:
+        remove_frame_from_groups(repeat, recursive=False)
 
 
 def remove_frame_from_groups(frame: Frame, recursive: bool):
