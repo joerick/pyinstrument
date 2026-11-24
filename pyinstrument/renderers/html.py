@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import codecs
+import html
 import json
 import sys
 import tempfile
@@ -37,6 +38,11 @@ class HTMLRenderer(Renderer):
     Options to pass to the preprocessors, like :attr:`FrameRenderer.processor_options`.
     """
 
+    csp_nonce: str | None
+    """
+    A nonce to add to inline script elements in the rendered HTML.
+    """
+
     def __init__(
         self,
         *,
@@ -62,6 +68,7 @@ class HTMLRenderer(Renderer):
             )
 
         self.resample_interval = resample_interval
+        self.csp_nonce = None
 
         # These settings are passed down to JSONForHTMLRenderer, and can be
         # used to modify its output. E.g. they can be used to lower the size
@@ -106,6 +113,11 @@ class HTMLRenderer(Renderer):
 
         js = js_file.read_text(encoding="utf-8")
         css = css_file.read_text(encoding="utf-8")
+        nonce_attribute = (
+            f' nonce="{html.escape(self.csp_nonce, quote=True)}"'
+            if self.csp_nonce is not None
+            else ""
+        )
 
         page = f"""<!DOCTYPE html>
             <html>
@@ -115,10 +127,10 @@ class HTMLRenderer(Renderer):
             <body>
                 <div id="app"></div>
 
-                <script>{js}</script>
+                <script{nonce_attribute}>{js}</script>
                 <style>{css}</style>
 
-                <script>
+                <script{nonce_attribute}>
                     const sessionData = {session_json};
                     pyinstrumentHTMLRenderer.render(document.getElementById('app'), sessionData);
                 </script>
