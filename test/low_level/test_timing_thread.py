@@ -3,7 +3,10 @@ import os
 import sys
 import time
 
+import pytest
+
 import pyinstrument.low_level.stat_profile as native_module
+from pyinstrument.low_level import pyi_timing_thread_python
 
 from ..util import busy_wait, flaky_in_ci
 
@@ -108,3 +111,20 @@ def test_max_subscribers():
         while subscription_ids:
             subscription_id = subscription_ids.pop()
             pyi_timing_thread_unsubscribe(subscription_id)
+
+
+@flaky_in_ci
+@pytest.mark.parametrize("impl", [lib, pyi_timing_thread_python], ids=["c", "python"])
+def test_first_subscription_interval(impl):
+    # the first subscription starts the thread, which should use the
+    # subscription's interval from the start, rather than the 1s default.
+    subscription_id = impl.pyi_timing_thread_subscribe(0.001)
+    try:
+        time_a = impl.pyi_timing_thread_get_time()
+        time.sleep(WAIT_TIME)
+        time_b = impl.pyi_timing_thread_get_time()
+        assert time_b > time_a
+        time.sleep(WAIT_TIME)
+        assert impl.pyi_timing_thread_get_time() > time_b
+    finally:
+        impl.pyi_timing_thread_unsubscribe(subscription_id)

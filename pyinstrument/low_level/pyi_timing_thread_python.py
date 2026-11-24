@@ -39,19 +39,21 @@ def pyi_timing_thread_subscribe(desired_interval: float):
     global thread_alive, thread_should_exit, current_time
 
     with subscriber_lock:
-        if not thread_alive:
-            update_lock.acquire()
-            thread_should_exit = False
-            threading.Thread(target=timing_thread).start()
-            thread_alive = True
-            current_time = time.perf_counter()
-
         ids = [sub.id for sub in subscribers]
         new_id = 0
         while new_id in ids:
             new_id += 1
 
         subscribers.append(Subscription(desired_interval, new_id))
+
+        if not thread_alive:
+            # Start the thread only after the subscription is added, so that
+            # it reads the right interval.
+            update_lock.acquire()
+            thread_should_exit = False
+            threading.Thread(target=timing_thread).start()
+            thread_alive = True
+            current_time = time.perf_counter()
 
         update_lock.release()
         update_lock.acquire()

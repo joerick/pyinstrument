@@ -4,7 +4,7 @@ import math
 import re
 import textwrap
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 import pyinstrument
 from pyinstrument import processors
@@ -207,19 +207,28 @@ class ConsoleRenderer(FrameRenderer):
 
     def render_frame_flat(self, frame: Frame, precision: int) -> str:
         def walk(frame: Frame):
-            frame_id_to_time[frame.identifier] = (
-                frame_id_to_time.get(frame.identifier, 0) + frame.total_self_time
-                if self.flat_time == "self"
-                else frame.time
-            )
+            identifier = frame.identifier
+            # in total mode, a recursive call is already covered by its outer call
+            already_counted = identifier in identifiers_on_stack
 
-            frame_id_to_frame[frame.identifier] = frame
+            if self.flat_time == "self":
+                time = frame.total_self_time
+            else:
+                time = 0 if already_counted else frame.time
 
+            frame_id_to_time[identifier] = frame_id_to_time.get(identifier, 0) + time
+            frame_id_to_frame[identifier] = frame
+
+            if not already_counted:
+                identifiers_on_stack.add(identifier)
             for child in frame.children:
                 walk(child)
+            if not already_counted:
+                identifiers_on_stack.remove(identifier)
 
         frame_id_to_time: Dict[str, float] = {}
         frame_id_to_frame: Dict[str, Frame] = {}
+        identifiers_on_stack: Set[str] = set()
 
         walk(frame)
 

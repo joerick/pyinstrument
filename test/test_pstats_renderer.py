@@ -8,6 +8,7 @@ import pytest
 
 from pyinstrument import Profiler
 from pyinstrument.renderers import PstatsRenderer
+from pyinstrument.session import Session
 from test.fake_time_util import FakeClock, fake_time
 
 
@@ -128,3 +129,34 @@ def test_sum_of_tottime(tmp_path):
         fid.write(pstats_data.encode(encoding="utf-8", errors="surrogateescape"))
     stats: Any = Stats(str(fname))
     assert stats.total_tt == pytest.approx(2)
+
+
+def test_recursive_cumtime(tmp_path):
+    def frame(name: str) -> str:
+        return f"{name}\x00/app/main.py\x001"
+
+    root = frame("<module>")
+    session = Session(
+        frame_records=[([root, frame("walk"), frame("walk"), frame("walk")], 1.0)],
+        start_time=0,
+        duration=1.0,
+        min_interval=0.001,
+        max_interval=0.001,
+        sample_count=1,
+        start_call_stack=[root],
+        target_description="test",
+        cpu_time=1.0,
+        sys_path=["/app"],
+        sys_prefixes=[],
+    )
+
+    pstats_data = PstatsRenderer().render(session)
+    fname = tmp_path / "test.pstats"
+    with open(fname, "wb") as fid:
+        fid.write(pstats_data.encode(encoding="utf-8", errors="surrogateescape"))
+    stats: Any = Stats(str(fname))
+
+    _, _, tottime, cumtime, _ = stats.stats[("/app/main.py", 1, "walk")]
+    assert tottime == pytest.approx(1.0)
+    # the profile is one second long, the recursion must not count it three times
+    assert cumtime == pytest.approx(1.0)
