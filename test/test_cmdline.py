@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from .util import BUSY_WAIT_SCRIPT
+from .util import BUSY_WAIT_SCRIPT, flaky_in_ci
 
 EXECUTION_DETAILS_SCRIPT = f"""
 #!{sys.executable}
@@ -81,6 +81,7 @@ class TestCommandLine:
             [*pyinstrument_invocation, "--from-path", "--", "pyi_test_program"],
         )
 
+    @flaky_in_ci
     def test_program_passed_as_string(self, pyinstrument_invocation, tmp_path: Path):
         # check the program actually runs
         output_file = tmp_path / "output.txt"

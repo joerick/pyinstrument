@@ -46,10 +46,6 @@ Known issues
 - Profiling code inside a Docker container can cause some strange results,
   because the gettimeofday syscall that pyinstrument uses is slow in that
   environment. See [#83](https://github.com/joerick/pyinstrument/issues/83)
-- When using `pyinstrument script.py` where `script.py` contains a class
-  serialized with `pickle`, you might encounter errors because the
-  serialisation machinery doesn't know where `__main__` is. [See this issue
-  for workarounds](https://github.com/joerick/pyinstrument/issues/109#issuecomment-722276263)
 
 Changelog
 ---------
