@@ -224,11 +224,13 @@ class Session:
         result: list[FrameRecordType] = []
         accumulated_time = 0.0
 
+        # Durations are rounded down to whole intervals, carrying the remainder
+        # forward. A final partial interval is discarded.
         for frame_info_stack, time in frame_records:
             accumulated_time += time
 
             if accumulated_time >= interval:
-                result.append((frame_info_stack, accumulated_time))
+                result.append((frame_info_stack, accumulated_time - accumulated_time % interval))
                 accumulated_time = accumulated_time % interval
 
         return result
