@@ -115,7 +115,10 @@ def combine_frames(frame: Frame, into: Frame):
     """
     Combine two frames into one. The frames must have the same parent.
 
-    :param frame: the frame to remove
+    The caller must remove ``frame`` from the parent afterwards. That's left
+    to the caller so many siblings can be removed in one pass.
+
+    :param frame: the frame to merge
     :param into: the frame to combine into
     """
     assert frame.parent is into.parent
@@ -130,7 +133,6 @@ def combine_frames(frame: Frame, into: Frame):
             into.attributes[attribute] = time
 
     into.add_children(frame.children)
-    frame.remove_from_parent()
     remove_frame_from_groups(frame, recursive=False)
 
 

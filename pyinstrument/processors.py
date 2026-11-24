@@ -70,16 +70,19 @@ def aggregate_repeated_calls(frame: Frame | None, options: ProcessorOptions) -> 
 
     children_by_identifier: dict[str, Frame] = {}
 
-    # iterate over a copy of the children since it's going to mutate while we're iterating
     for child in frame.children:
         if child.identifier in children_by_identifier:
             aggregate_frame = children_by_identifier[child.identifier]
 
-            # combine child into aggregate frame, removing it from the tree
+            # combine child into aggregate frame, it's removed from the tree below
             combine_frames(child, into=aggregate_frame)
+            child.parent = None
         else:
             # never seen this identifier before. It becomes the aggregate frame.
             children_by_identifier[child.identifier] = child
+
+    # drop the combined frames in one go, removing them one by one is quadratic
+    frame._children = list(children_by_identifier.values())  # type: ignore # noqa
 
     # recurse into the children
     for child in frame.children:
