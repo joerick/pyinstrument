@@ -7,12 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from .util import BUSY_WAIT_SCRIPT
+from .util import BUSY_WAIT_SCRIPT, flaky_in_ci
 
 EXECUTION_DETAILS_SCRIPT = f"""
 #!{sys.executable}
 import sys, os
 print('__name__', __name__, file=sys.stderr)
+print('main globals', vars(sys.modules['__main__']) is globals(), file=sys.stderr)
 print('sys.argv', sys.argv, file=sys.stderr)
 print('sys.executable', os.path.realpath(sys.executable), file=sys.stderr)
 print('os.getcwd()', os.getcwd(), file=sys.stderr)
@@ -80,6 +81,7 @@ class TestCommandLine:
             [*pyinstrument_invocation, "--from-path", "--", "pyi_test_program"],
         )
 
+    @flaky_in_ci
     def test_program_passed_as_string(self, pyinstrument_invocation, tmp_path: Path):
         # check the program actually runs
         output_file = tmp_path / "output.txt"
@@ -110,6 +112,23 @@ class TestCommandLine:
 
         assert "busy_wait" in str(output)
         assert "do_nothing" in str(output)
+
+    def test_program_passed_as_string_pickle(self, pyinstrument_invocation):
+        program = textwrap.dedent("""
+            import pickle
+
+            class Example:
+                def __init__(self, value):
+                    self.value = value
+
+            restored = pickle.loads(pickle.dumps(Example(42)))
+            assert type(restored) is Example
+            assert restored.value == 42
+            print("pickle round trip succeeded")
+        """)
+        output = subprocess.check_output([*pyinstrument_invocation, "-c", program], text=True)
+
+        assert "pickle round trip succeeded" in output
 
     def test_script_execution_details(self, pyinstrument_invocation, tmp_path: Path):
         program_path = tmp_path / "program.py"

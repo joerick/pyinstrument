@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,29 @@ class FakeRenderer(FrameRenderer):
 
     def render(self, session) -> str:
         return ""
+
+
+@pytest.mark.parametrize("exit_code", [None, 7])
+def test_program_restores_main_module(monkeypatch: pytest.MonkeyPatch, exit_code):
+    original_main = sys.modules["__main__"]
+    original_namespace = original_main.__dict__.copy()
+    program = "command_value = 42"
+    if exit_code is not None:
+        program += f"\nraise SystemExit({exit_code})"
+    argv = ["pyinstrument", "-r", "test.test_cmdline_main.FakeRenderer", "-c", program]
+    monkeypatch.setattr(sys, "argv", argv.copy())
+    monkeypatch.setattr(sys, "path", sys.path.copy())
+
+    if exit_code is None:
+        main()
+    else:
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == exit_code
+
+    assert sys.modules["__main__"] is original_main
+    assert original_main.__dict__ == original_namespace
+    assert sys.argv == argv
 
 
 def test_renderer_option(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
