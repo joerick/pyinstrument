@@ -43,33 +43,6 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
-  build_wheels_prerelease:
-    name: Build prerelease wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
-        name: Install Python
-        with:
-          python-version: '3.12'
-
-      - name: Build prerelease wheels
-        uses: pypa/cibuildwheel@v4.3.5
-        env:
-          CIBW_ENABLE: cpython-prerelease
-          CIBW_BUILD: cp315-*
-          CIBW_ARCHS_MACOS: auto universal2
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: prerelease-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./wheelhouse/*.whl
-
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
