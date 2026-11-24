@@ -61,10 +61,16 @@ def build_frame_tree(
         final_frame = frame_stack[-1]
 
         if not final_frame.is_synthetic_leaf:
-            # record the self-time
-            final_frame.add_child(
-                Frame(identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time)
-            )
+            # record the self-time. If the previous sample ended in this same
+            # frame, extend its self-time frame rather than adding one per sample.
+            # (_children, because .children copies the list on every sample)
+            children = final_frame._children  # type: ignore # noqa
+            if children and children[-1].identifier == SELF_TIME_FRAME_IDENTIFIER:
+                children[-1].time += time
+            else:
+                final_frame.add_child(
+                    Frame(identifier_or_frame_info=SELF_TIME_FRAME_IDENTIFIER, time=time)
+                )
 
     if len(root_frame.children) == 1:
         root_frame = root_frame.children[0]

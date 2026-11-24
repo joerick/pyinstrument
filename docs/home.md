@@ -1,6 +1,7 @@
 ---
-html_meta:
-    title: Home
+myst:
+    html_meta:
+        title: Home
 hide-toc:
 ---
 
