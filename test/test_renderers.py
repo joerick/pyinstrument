@@ -118,6 +118,42 @@ def test_console_renderer_flat_doesnt_crash(profiler_session, flat_time):
     renderer.render(profiler_session)
 
 
+def test_console_renderer_flat_total_time():
+    def frame(name: str) -> str:
+        return f"{name}\x00/app/main.py\x00{len(name)}"
+
+    root = frame("<module>")
+    session = Session(
+        frame_records=[
+            ([root, frame("a"), frame("shared")], 1.0),
+            ([root, frame("b"), frame("shared")], 2.0),
+            ([root, frame("recurse"), frame("recurse"), frame("recurse")], 1.0),
+        ],
+        start_time=0,
+        duration=4.0,
+        min_interval=0.001,
+        max_interval=0.001,
+        sample_count=3,
+        start_call_stack=[root],
+        target_description="test",
+        cpu_time=4.0,
+        sys_path=["/app"],
+        sys_prefixes=[],
+    )
+
+    output = renderers.ConsoleRenderer(
+        flat=True, flat_time="total", unicode=False, color=False, show_all=True
+    ).render(session)
+    times = {
+        line.split()[1]: float(line.split()[0]) for line in output.splitlines() if "main.py" in line
+    }
+
+    # called from two places, so both calls count
+    assert times["shared"] == pytest.approx(3.0)
+    # recursive calls are inside the outermost one, so don't count again
+    assert times["recurse"] == pytest.approx(1.0)
+
+
 def test_html_renderer_resampling(capsys):
     # create a session with more than 100,000 samples
     frame_records = []
