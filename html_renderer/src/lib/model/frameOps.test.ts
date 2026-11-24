@@ -1,8 +1,9 @@
 import { deleteFrameFromTree } from "./frameOps";
 import { describe, it, expect } from "vitest";
 import Frame, { SELF_TIME_FRAME_IDENTIFIER } from "./Frame";
+import { remove_importlib, remove_tracebackhide } from "./processors";
 
-const context = {shortenPath: (a:string) => a};
+const context = {shortenPath: (a:string) => a, sysPrefixes: [], precision: 0.001};
 
 describe("deleteFrameFromTree", () => {
   it("should replace the frame with its children", () => {
@@ -10,15 +11,21 @@ describe("deleteFrameFromTree", () => {
     const frame = new Frame({ identifier: "frame" }, context);
     const child1 = new Frame({ identifier: "child1" }, context);
     const child2 = new Frame({ identifier: "child2" }, context);
+    const before = new Frame({ identifier: "before" }, context);
+    const after = new Frame({ identifier: "after" }, context);
     frame.addChild(child1);
     frame.addChild(child2);
+    parent.addChild(before);
     parent.addChild(frame);
+    parent.addChild(after);
 
     deleteFrameFromTree(frame, { replaceWith: "children" });
 
-    expect(parent.children).toContain(child1);
-    expect(parent.children).toContain(child2);
-    expect(parent.children).not.toContain(frame);
+    expect(parent.children).toEqual([before, child1, child2, after]);
+    expect(child1.parent).toBe(parent);
+    expect(child2.parent).toBe(parent);
+    expect(frame.children).toEqual([]);
+    expect(frame.parent).toBeNull();
   });
 
   it("should add a self-time frame as a replacement", () => {
@@ -48,5 +55,31 @@ describe("deleteFrameFromTree", () => {
     expect(() => {
       deleteFrameFromTree(frame, { replaceWith: "children" });
     }).toThrowError("Cannot delete the root frame");
+  });
+});
+
+describe("removing hidden frames", () => {
+  it.each([
+    ["importlib", remove_importlib, "load\x00<frozen importlib._bootstrap>\x001", {}],
+    ["tracebackhide", remove_tracebackhide, "hidden", {h1: 2}],
+  ] as const)("preserves child order and timing when removing %s", (_name, processor, identifier, attributes) => {
+    const root = new Frame({
+      identifier: "root",
+      time: 4,
+      children: [
+        {identifier: "before", time: 1},
+        {identifier, time: 2, attributes, children: [
+          {identifier: "first", time: 1},
+          {identifier: "second", time: 1},
+        ]},
+        {identifier: "after", time: 1},
+      ],
+    }, context);
+
+    processor(root, {});
+
+    expect(root.children.map(frame => frame.identifier)).toEqual(["before", "first", "second", "after"]);
+    expect(root.children.map(frame => frame.startTime)).toEqual([0, 1, 2, 3]);
+    expect(root.children.every(frame => frame.parent === root)).toBe(true);
   });
 });
