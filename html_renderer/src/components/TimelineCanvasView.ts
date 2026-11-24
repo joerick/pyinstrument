@@ -6,6 +6,7 @@ import TimelineCanvasViewTooltip, { estimateWidth, type TooltipFrameInfo } from 
 import type { ComponentProps } from 'svelte';
 
 const BACKGROUND_COLOR = '#212325'
+const SEARCH_MATCH_COLOR = '#cf35e8'
 
 const FRAME_PITCH = 18
 const FRAME_HEIGHT = 17
@@ -32,6 +33,22 @@ export default class TimelineCanvasView extends CanvasView {
     yOffset: number = 0 // pixels
     frames: TimelineFrame[] = []
     isZoomedIn: boolean = false
+    searchQuery: string = ''
+    matchingFrames = new Set<TimelineFrame>()
+
+    setSearchQuery(query: string): number {
+        this.searchQuery = query.trim().toLowerCase()
+        this.matchingFrames.clear()
+        if (this.searchQuery) {
+            for (const frame of this.frames) {
+                if (this.frameName(frame).toLowerCase().includes(this.searchQuery)) {
+                    this.matchingFrames.add(frame)
+                }
+            }
+        }
+        this.setNeedsRedraw()
+        return this.matchingFrames.size
+    }
 
     tooltipContainer: HTMLElement
     tooltipComponent: TimelineCanvasViewTooltip | null = null
@@ -83,6 +100,7 @@ export default class TimelineCanvasView extends CanvasView {
         this._frameMaxT = undefined
         this.maxDepth = 0
         this._collectFrames(rootFrame, 0)
+        this.setSearchQuery(this.searchQuery)
         this.fitContents()
         this.setNeedsRedraw()
     }
@@ -295,8 +313,11 @@ export default class TimelineCanvasView extends CanvasView {
             return
         }
 
-        ctx.fillStyle = this.colorForFrame(timelineFrame)
-        ctx.globalAlpha = timelineFrame.isApplicationCode ? 1 : 0.5
+        const searchMatch = this.matchingFrames.has(timelineFrame)
+        ctx.fillStyle = searchMatch ? SEARCH_MATCH_COLOR : this.colorForFrame(timelineFrame)
+        ctx.globalAlpha = this.searchQuery
+            ? (searchMatch ? 1 : 0.18)
+            : (timelineFrame.isApplicationCode ? 1 : 0.5)
 
         if (w < 2) {
             // fast path
