@@ -25,8 +25,19 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-        # also add an aarch64 test, just one python version
+        # setup-python has no 3.8/3.9 builds for ubuntu-latest (26.04), so
+        # test those on 24.04 instead
+        exclude:
+          - os: ubuntu-latest
+            python-version: "3.8"
+          - os: ubuntu-latest
+            python-version: "3.9"
         include:
+          - os: ubuntu-24.04
+            python-version: "3.8"
+          - os: ubuntu-24.04
+            python-version: "3.9"
+          # also add an aarch64 test, just one python version
           - os: ubuntu-24.04-arm
             python-version: "3.14"
       fail-fast: false
