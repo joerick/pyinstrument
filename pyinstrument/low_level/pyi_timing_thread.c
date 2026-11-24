@@ -64,16 +64,6 @@ int pyi_timing_thread_subscribe(double desiredInterval) {
 
     PyThread_acquire_lock(subscriber_lock, WAIT_LOCK);
 
-    if (!thread_alive) {
-        PyThread_acquire_lock(update_lock, WAIT_LOCK);  // Initially hold the lock
-        thread_should_exit = 0;
-        PyThread_start_new_thread(timing_thread, NULL);
-        thread_alive = 1;
-
-        // initialise the current_time in case it's read immediately
-        current_time = pyi_floatclock(PYI_FLOATCLOCK_DEFAULT);
-    }
-
     int new_id = 0;
 
     // find an unused ID
@@ -99,6 +89,18 @@ int pyi_timing_thread_subscribe(double desiredInterval) {
     subscribers[index].id = new_id;
     subscribers[index].interval = desiredInterval;
     subscriber_count++;
+
+    if (!thread_alive) {
+        // Start the thread only after the subscription is added, so that it
+        // reads the right interval.
+        PyThread_acquire_lock(update_lock, WAIT_LOCK);  // Initially hold the lock
+        thread_should_exit = 0;
+        PyThread_start_new_thread(timing_thread, NULL);
+        thread_alive = 1;
+
+        // initialise the current_time in case it's read immediately
+        current_time = pyi_floatclock(PYI_FLOATCLOCK_DEFAULT);
+    }
 
     // signal a possible change in the interval
     PyThread_release_lock(update_lock);
