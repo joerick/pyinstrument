@@ -128,15 +128,26 @@ def test_console_renderer_flat_total_time():
             ([root, frame("a"), frame("shared")], 1.0),
             ([root, frame("b"), frame("shared")], 2.0),
             ([root, frame("recurse"), frame("recurse"), frame("recurse")], 1.0),
+            (
+                [
+                    root,
+                    frame("func_a"),
+                    frame("func_b"),
+                    frame("func_a"),
+                    frame("func_b"),
+                    frame("do_work"),
+                ],
+                1.0,
+            ),
         ],
         start_time=0,
-        duration=4.0,
+        duration=5.0,
         min_interval=0.001,
         max_interval=0.001,
-        sample_count=3,
+        sample_count=4,
         start_call_stack=[root],
         target_description="test",
-        cpu_time=4.0,
+        cpu_time=5.0,
         sys_path=["/app"],
         sys_prefixes=[],
     )
@@ -152,6 +163,10 @@ def test_console_renderer_flat_total_time():
     assert times["shared"] == pytest.approx(3.0)
     # recursive calls are inside the outermost one, so don't count again
     assert times["recurse"] == pytest.approx(1.0)
+    # same with other frames in between the recursive calls
+    assert times["func_a"] == pytest.approx(1.0)
+    assert times["func_b"] == pytest.approx(1.0)
+    assert times["do_work"] == pytest.approx(1.0)
 
 
 def test_html_renderer_resampling(capsys):

@@ -209,21 +209,21 @@ class ConsoleRenderer(FrameRenderer):
         def walk(frame: Frame):
             identifier = frame.identifier
             # in total mode, a recursive call is already covered by its outer call
-            on_stack = identifier in identifiers_on_stack
+            already_counted = identifier in identifiers_on_stack
 
             if self.flat_time == "self":
                 time = frame.total_self_time
             else:
-                time = 0 if on_stack else frame.time
+                time = 0 if already_counted else frame.time
 
             frame_id_to_time[identifier] = frame_id_to_time.get(identifier, 0) + time
             frame_id_to_frame[identifier] = frame
 
-            if not on_stack:
+            if not already_counted:
                 identifiers_on_stack.add(identifier)
             for child in frame.children:
                 walk(child)
-            if not on_stack:
+            if not already_counted:
                 identifiers_on_stack.remove(identifier)
 
         frame_id_to_time: Dict[str, float] = {}
