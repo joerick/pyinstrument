@@ -30,6 +30,7 @@ pyi_timing_thread_unsubscribe.restype = ctypes.c_int
 
 PYI_TIMING_THREAD_UNKNOWN_ERROR = -1
 PYI_TIMING_THREAD_TOO_MANY_SUBSCRIBERS = -2
+PYI_TIMING_THREAD_NOT_SUBSCRIBED = -3
 
 
 if sys.platform == "win32":
@@ -128,3 +129,11 @@ def test_first_subscription_interval(impl):
         assert impl.pyi_timing_thread_get_time() > time_b
     finally:
         impl.pyi_timing_thread_unsubscribe(subscription_id)
+
+
+def test_duplicate_unsubscribe():
+    subscription_id = pyi_timing_thread_subscribe(0.001)
+    assert pyi_timing_thread_unsubscribe(subscription_id) == 0
+    time.sleep(WAIT_TIME)
+    assert pyi_timing_thread_unsubscribe(subscription_id) == PYI_TIMING_THREAD_NOT_SUBSCRIBED
+    assert pyi_timing_thread_get_interval() == -1
