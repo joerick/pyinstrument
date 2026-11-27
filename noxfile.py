@@ -12,7 +12,7 @@ def lint(session):
     session.run("prek", "run", "--all-files")
 
 
-@nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"])
+@nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"])
 def test(session):
     session.env["UV_PRERELEASE"] = "allow"
     session.install("-e", ".[test]", "setuptools")

@@ -125,8 +125,9 @@ int pyi_timing_thread_unsubscribe(int id) {
         }
     }
 
-    // if the last subscriber was removed, stop the thread
-    if (subscriber_count == 0) {
+    // Only stop when this call removed the last subscriber. Repeated
+    // unsubscribe calls must not release an already-unlocked update_lock.
+    if (removals > 0 && subscriber_count == 0) {
         thread_should_exit = 1;
         PyThread_release_lock(update_lock);
         thread_alive = 0;
