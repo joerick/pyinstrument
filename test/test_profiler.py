@@ -2,6 +2,7 @@ import asyncio
 import dataclasses
 import inspect
 import json
+import sys
 import time
 from functools import partial
 from typing import Generator, Optional
@@ -156,11 +157,36 @@ def test_class_methods():
     # |  `- 0.500 FakeClock.sleep  test/fake_time_util.py:19
     # |- 0.250 ClassWithMethods.long_class_method  test/test_profiler.py:36
     # |  `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
-    # `- 0.250 long_static_method  test/test_profiler.py:32
+    # `- 0.250 ClassWithMethods.long_static_method  test/test_profiler.py:32
     #    `- 0.250 FakeClock.sleep  test/fake_time_util.py:19
     assert text_output.count("0.500 ClassWithMethods.long_method") == 1
     assert text_output.count("0.250 ClassWithMethods.long_class_method") == 1
-    assert text_output.count("0.250 long_static_method") == 1
+    if sys.version_info >= (3, 11):
+        assert text_output.count("0.250 ClassWithMethods.long_static_method") == 1
+    else:
+        assert text_output.count("0.250 long_static_method") == 1
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires code.co_qualname")
+def test_inherited_class_methods():
+    class ChildA(ClassWithMethods):
+        pass
+
+    class ChildB(ClassWithMethods):
+        pass
+
+    profiler = Profiler()
+    with fake_time():
+        with profiler:
+            for obj in [ChildA(), ChildB()]:
+                obj.long_method()
+                obj.long_class_method()
+
+    text_output = profiler.output_text()
+    assert text_output.count("0.500 ClassWithMethods.long_method") == 1
+    assert text_output.count("0.500 ClassWithMethods.long_class_method") == 1
+    assert "ChildA" not in text_output
+    assert "ChildB" not in text_output
 
 
 def test_context_manager():

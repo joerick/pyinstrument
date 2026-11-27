@@ -190,6 +190,9 @@ static PyObject *whatstrings[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NUL
 static PyObject *SELF_STRING = NULL;
 static PyObject *CLS_STRING = NULL;
 static PyObject *TRACEBACKHIDE_STRING = NULL;
+#if PY_VERSION_HEX >= 0x030b0000
+static PyObject *LOCALS_SUFFIX_STRING = NULL;
+#endif
 
 #define TIMER_TYPE_WALLTIME 0
 #define TIMER_TYPE_WALLTIME_THREAD 1
@@ -227,6 +230,11 @@ stat_profile_init(void)
 
     CLS_STRING = PyUnicode_InternFromString("cls");
     if (CLS_STRING == NULL) return -1;
+
+#if PY_VERSION_HEX >= 0x030b0000
+    LOCALS_SUFFIX_STRING = PyUnicode_InternFromString(".<locals>");
+    if (LOCALS_SUFFIX_STRING == NULL) return -1;
+#endif
 
     TRACEBACKHIDE_STRING = PyUnicode_InternFromString("__tracebackhide__");
     if (TRACEBACKHIDE_STRING == NULL) return -1;
@@ -287,16 +295,43 @@ local_names_from_code(PyCodeObject *code)
 #endif
 }
 
+#if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
+/**
+ * Returns a new reference to the statically defined class name in the frame,
+ * or NULL when the frame does not represent a method.
+ */
+static PyObject *
+_get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
+    // Class bodies also have qualified names, but are not method calls.
+    if (!(code->co_flags & CO_NEWLOCALS)) {
+        return NULL;
+    }
+
+    PyObject *qualname = code->co_qualname;
+    Py_ssize_t last_dot = PyUnicode_FindChar(
+        qualname, '.', 0, PyUnicode_GET_LENGTH(qualname), -1
+    );
+    if (last_dot <= 0) {
+        return NULL;
+    }
+
+    // A nested function's enclosing scope is not a class.
+    int is_local = PyUnicode_Tailmatch(qualname, LOCALS_SUFFIX_STRING, 0, last_dot, 1);
+    if (is_local != 0) {
+        return NULL;
+    }
+
+    return PyUnicode_Substring(qualname, 0, last_dot);
+}
+
+#else
+
 /**
  * Returns a new reference to the qualified name of a type.
  */
 static PyObject *
 _get_type_qualname(PyTypeObject *type) {
-#if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
-    PyObject *qualname = PyType_GetQualName(type);
-#else
     PyObject *qualname = PyObject_GetAttrString((PyObject *)type, "__qualname__");
-#endif
     if (qualname == NULL) {
         return NULL;
     }
@@ -307,86 +342,6 @@ _get_type_qualname(PyTypeObject *type) {
     }
     return qualname;
 }
-
-#if PY_VERSION_HEX >= 0x030b0000 // Python 3.11.0
-/**
- * Returns a new reference to the qualified name of the class in the frame,
- * or NULL when the frame does not represent a method.
- */
-static PyObject *
-_get_class_name_of_frame(PyFrameObject *frame, PyCodeObject *code) {
-    PyObject *localsNames = PyCode_GetVarnames(code);
-
-    if (localsNames == NULL) {
-        return NULL;
-    }
-
-    if (PyTuple_GET_SIZE(localsNames) == 0) {
-        Py_DECREF(localsNames);
-        return NULL;
-    }
-
-    PyObject *firstArgName = PyTuple_GET_ITEM(localsNames, 0);
-
-    if (firstArgName == NULL) {
-        Py_DECREF(localsNames);
-        return NULL;
-    }
-
-    int has_self = PyUnicode_Compare(firstArgName, SELF_STRING) == 0;
-    int has_cls = PyUnicode_Compare(firstArgName, CLS_STRING) == 0;
-
-    Py_DECREF(localsNames);
-
-    if (!has_self && !has_cls) {
-        // PyFrame_GetLocals is expensive and changes the frame, so we don't
-        // want to call it unless we have to.
-        return NULL;
-    }
-
-    PyObject *result = NULL;
-
-    PyObject *locals = PyFrame_GetLocals(frame);
-
-    if (locals == NULL || !PyMapping_Check(locals)) {
-        Py_XDECREF(locals);
-        return NULL;
-    }
-
-    // we still have to check the locals has the key, because it could have
-    // been "del'd"
-    if (has_self && PyMapping_HasKey(locals, SELF_STRING)) {
-        PyObject *self = PyObject_GetItem(locals, SELF_STRING);
-
-        if (!self) {
-            PyErr_Clear();
-            Py_DECREF(locals);
-            return NULL;
-        }
-
-        result = _get_type_qualname(Py_TYPE(self));
-        Py_DECREF(self);
-    }
-    else if (has_cls && PyMapping_HasKey(locals, CLS_STRING)) {
-        PyObject *cls = PyObject_GetItem(locals, CLS_STRING);
-
-        if (!cls) {
-            PyErr_Clear();
-            Py_DECREF(locals);
-            return NULL;
-        }
-
-        if (PyType_Check(cls)) {
-            result = _get_type_qualname((PyTypeObject *)cls);
-        }
-        Py_DECREF(cls);
-    }
-
-    Py_DECREF(locals);
-    return result;
-}
-
-#else
 
 static PyObject *
 _get_first_arg_from_cell_variables(PyFrameObject *frame, PyCodeObject *code) {

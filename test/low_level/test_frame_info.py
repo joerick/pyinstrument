@@ -1,4 +1,5 @@
 import inspect
+import sys
 
 import pytest
 
@@ -113,3 +114,101 @@ def test_frame_info_with_classes(test_function, del_local):
     py_frame_info = test_function(stat_profile_python.get_frame_info, del_local=del_local)
 
     assert c_frame_info == py_frame_info
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires code.co_qualname")
+@pytest.mark.parametrize(
+    "getter", [stat_profile_c.get_frame_info, stat_profile_python.get_frame_info]
+)
+@pytest.mark.parametrize("del_local", [True, False])
+@pytest.mark.parametrize(
+    "method",
+    [
+        nested_instance.get_frame_info_for_a_method,
+        OuterClass.InnerClass.get_frame_info_for_a_class_method,
+        nested_instance.get_frame_info_with_cell_variable,
+        OuterClass.InnerClass.get_frame_info_for_a_class_method_where_cls_is_reassigned,
+    ],
+)
+def test_inherited_method_uses_defining_class(getter, del_local, method):
+    info = method(getter, del_local)
+    assert "\x01cAClass\x01" in info
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires code.co_qualname")
+@pytest.mark.parametrize(
+    "getter", [stat_profile_c.get_frame_info, stat_profile_python.get_frame_info]
+)
+def test_qualified_class_names(getter):
+    class Outer:
+        class Inner甲:
+            @staticmethod
+            def method():
+                return inspect.currentframe()
+
+    class Child(Outer.Inner甲):
+        pass
+
+    frame = Child.method()
+    assert frame
+    assert "\x01ctest_qualified_class_names.<locals>.Outer.Inner甲\x01" in getter(frame)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires code.co_qualname")
+@pytest.mark.parametrize(
+    "getter", [stat_profile_c.get_frame_info, stat_profile_python.get_frame_info]
+)
+def test_nested_function_has_no_class_name(getter):
+    def inner(self):
+        return inspect.currentframe()
+
+    frame = inner(instance)
+    assert frame
+    assert "\x01c" not in getter(frame)
+
+
+@pytest.mark.parametrize(
+    "getter", [stat_profile_c.get_frame_info, stat_profile_python.get_frame_info]
+)
+def test_class_body_has_no_class_name(getter):
+    class Outer:
+        class Inner:
+            frame = inspect.currentframe()
+
+    assert Outer.Inner.frame
+    assert "\x01c" not in getter(Outer.Inner.frame)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires code.co_qualname")
+@pytest.mark.parametrize(
+    "getter", [stat_profile_c.get_frame_info, stat_profile_python.get_frame_info]
+)
+def test_metaclass_method_uses_defining_class(getter):
+    class Meta(type):
+        def method(cls):
+            return inspect.currentframe()
+
+    class Target(metaclass=Meta):
+        pass
+
+    frame = Target.method()
+    assert frame
+    assert "\x01ctest_metaclass_method_uses_defining_class.<locals>.Meta\x01" in getter(frame)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires code.co_qualname")
+@pytest.mark.parametrize(
+    "getter", [stat_profile_c.get_frame_info, stat_profile_python.get_frame_info]
+)
+def test_function_inside_method_has_no_class_name(getter):
+    class Example:
+        def method(self):
+            def inner():
+                if self:
+                    return inspect.currentframe()
+
+            return inner()
+
+    frame = Example().method()
+    assert frame
+    assert "\x01c" not in getter(frame)
