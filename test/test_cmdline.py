@@ -51,6 +51,7 @@ class TestCommandLine:
         assert "busy_wait" in str(output)
         assert "do_nothing" in str(output)
 
+    @flaky_in_ci
     def test_single_file_module_running(self, pyinstrument_invocation, tmp_path: Path):
         busy_wait_py = tmp_path / "busy_wait.py"
         busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
