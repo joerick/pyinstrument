@@ -75,6 +75,15 @@ def main():
     )
 
     parser.add_option(
+        "",
+        "--list-recent",
+        dest="list_recent",
+        action="store_true",
+        default=False,
+        help="list recent profile sessions saved for --load-prev",
+    )
+
+    parser.add_option(
         "-m",
         "",
         dest="module",
@@ -293,6 +302,7 @@ def main():
     session_options_used = [
         options.load is not None,
         options.load_prev is not None,
+        options.list_recent,
         options.module is not None,
         options.program is not None,
         len(args) > 0,
@@ -301,7 +311,13 @@ def main():
         parser.print_help()
         sys.exit(2)
     if session_options_used.count(True) > 1:
-        parser.error("You can only specify one of --load, --load-prev, -m, or script arguments")
+        parser.error(
+            "You can only specify one of --load, --load-prev, --list-recent, -m, -c, or script arguments"
+        )
+
+    if options.list_recent:
+        list_recent_reports()
+        return
 
     if options.module is not None and options.from_path:
         parser.error("The options -m and --from-path are mutually exclusive.")
@@ -655,6 +671,40 @@ def save_report_to_temp_storage(session: Session):
     return path, identifier
 
 
+def list_recent_reports() -> None:
+    """
+    Prints a summary of recent profile sessions saved for --load-prev.
+    """
+    previous_reports = glob.glob(os.path.join(report_dir(), "*.pyisession"))
+    previous_reports.sort(reverse=True)
+
+    entries: list[tuple[str, Session]] = []
+    for report_file in previous_reports:
+        identifier = os.path.splitext(os.path.basename(report_file))[0]
+        try:
+            session = Session.load(report_file)
+        except (OSError, ValueError, KeyError):
+            continue
+        entries.append((identifier, session))
+
+    if not entries:
+        print("No recent profile sessions found.")
+        return
+
+    for identifier, session in entries:
+        recorded = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(session.start_time))
+        print(
+            f"{identifier}  Recorded: {recorded}  "
+            f"Duration: {session.duration:<8.3f}  "
+            f"Samples: {session.sample_count:<6}  "
+            f"{session.target_description}"
+        )
+
+    print("")
+    print("To view a report, run:")
+    print("    pyinstrument --load-prev <identifier> [options]")
+
+
 class CommandLineOptions:
     """
     A type that codifies the `options` variable.
@@ -664,6 +714,7 @@ class CommandLineOptions:
     program: ValueWithRemainingArgs | None
     load: str | None
     load_prev: str | None
+    list_recent: bool
     from_path: str | None
     hide_fnmatch: str | None
     show_fnmatch: str | None

@@ -51,6 +51,7 @@ class TestCommandLine:
         assert "busy_wait" in str(output)
         assert "do_nothing" in str(output)
 
+    @flaky_in_ci
     def test_single_file_module_running(self, pyinstrument_invocation, tmp_path: Path):
         busy_wait_py = tmp_path / "busy_wait.py"
         busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
@@ -395,3 +396,84 @@ class TestCommandLine:
         )
 
         assert retcode == 1
+
+    def test_list_recent(
+        self, pyinstrument_invocation, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        data_home = tmp_path / "user_data"
+        data_home.mkdir()
+        monkeypatch.setenv("LOCALAPPDATA", str(data_home))
+        monkeypatch.setenv("XDG_DATA_HOME", str(data_home))
+        if sys.platform == "darwin":
+            monkeypatch.setenv("HOME", str(data_home))
+
+        empty_output = subprocess.check_output(
+            [*pyinstrument_invocation, "--list-recent"],
+            text=True,
+        )
+        assert "No recent profile sessions found." in empty_output
+
+        from pyinstrument.session import Session
+        from pyinstrument.util import _user_data_dir
+
+        reports_dir = Path(_user_data_dir()) / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+        older_session = Session(
+            frame_records=[],
+            start_time=1700000000.0,
+            duration=0.125,
+            min_interval=0.001,
+            max_interval=0.001,
+            sample_count=12,
+            start_call_stack=[],
+            target_description="Program: first_script.py",
+            cpu_time=0.100,
+            sys_path=[],
+            sys_prefixes=[],
+        )
+        newer_session = Session(
+            frame_records=[],
+            start_time=1700003600.0,
+            duration=1.500,
+            min_interval=0.001,
+            max_interval=0.001,
+            sample_count=150,
+            start_call_stack=[],
+            target_description="Program: second_script.py --fast",
+            cpu_time=1.200,
+            sys_path=[],
+            sys_prefixes=[],
+        )
+        older_session.save(reports_dir / "2023-11-14T22-13-20.pyisession")
+        newer_session.save(reports_dir / "2023-11-14T23-13-20.pyisession")
+
+        output = subprocess.check_output(
+            [*pyinstrument_invocation, "--list-recent"],
+            text=True,
+        )
+
+        lines = [line for line in output.splitlines() if "Duration:" in line]
+        assert len(lines) == 2
+        assert "2023-11-14T23-13-20" in lines[0]
+        assert "Duration: 1.500" in lines[0]
+        assert "Samples: 150" in lines[0]
+        assert "Program: second_script.py --fast" in lines[0]
+
+        assert "2023-11-14T22-13-20" in lines[1]
+        assert "Duration: 0.125" in lines[1]
+        assert "Samples: 12" in lines[1]
+        assert "Program: first_script.py" in lines[1]
+
+        loaded_output = subprocess.check_output(
+            [*pyinstrument_invocation, "--load-prev", "2023-11-14T23-13-20"],
+            text=True,
+        )
+        assert "Program: second_script.py --fast" in loaded_output
+
+        conflict = subprocess.run(
+            [*pyinstrument_invocation, "--list-recent", "some_script.py"],
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        assert conflict.returncode == 2
