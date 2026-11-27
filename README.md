@@ -50,6 +50,22 @@ Known issues
 Changelog
 ---------
 
+### v5.1.4
+
+_27 November 2026_
+
+-    Fix incorrect totals in flat console output when using `flat_time="total"`. Time is now summed across call sites without double-counting recursive calls (#478).
+-    Fix inflated cumulative times for recursive functions in pstats output (#479).
+-    Fix Speedscope output when reusing a renderer for multiple profiles, so each report starts with a fresh event clock and frame table (#466).
+-    Fix double-counting of carried remainders when resampling profiles. Resampled durations now use whole intervals, omitting the final partial interval (#467).
+-    Fix `pyinstrument -c` so command-defined classes can be pickled and `import __main__` sees the command’s globals (#470).
+-    Fix application code being incorrectly hidden as library code when its directory shares a textual prefix with a Python installation or virtualenv directory (#476).
+-    Fix child frames appearing in the wrong order in HTML reports when intervening frames are hidden (#474).
+-    Improve rendering performance for densely sampled profiles and profiles containing many repeated calls (#480, #481).
+-    Fix timing-thread startup ordering, which could delay the first samples, and a duplicate-unsubscribe crash exposed by Python 3.15 (#473, #484).
+-    Improve async IPython cell compatibility and event-loop cleanup, harden native profiler error handling and sampler startup recovery, and preserve qualified names for nested classes (#454).
+-    Expand CI coverage to Python 3.15, and update build tooling and dependencies (#454, #456, #460, #475, #484).
+
 ### v5.1.3
 
 _29 July 2026_
