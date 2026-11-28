@@ -1,3 +1,6 @@
+import subprocess
+import sys
+import textwrap
 import threading
 import time
 
@@ -7,6 +10,56 @@ from pyinstrument import Profiler
 from test.fake_time_util import fake_time
 
 from .util import do_nothing
+
+
+def test_sampling_does_not_register_dummy_threads():
+    # gevent can change get_ident before updating threading's registry. Keep
+    # that temporary inconsistency isolated from the test runner's threads.
+    code = textwrap.dedent(
+        """
+        import threading
+        import time
+        from pyinstrument import Profiler
+
+        before = threading.enumerate()
+        original_get_ident = threading.get_ident
+        profiler = Profiler()
+        profiler.start()
+        try:
+            threading.get_ident = lambda: -1
+            for _ in range(5):
+                time.sleep(0.01)
+        finally:
+            threading.get_ident = original_get_ident
+            profiler.stop()
+
+        assert profiler.last_session is not None
+        assert profiler.last_session.frame_records
+        assert threading.enumerate() == before, "Sampling registered a dummy thread"
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_sampling_uses_updated_thread_name():
+    thread = threading.current_thread()
+    original_name = thread.name
+    profiler = Profiler()
+    try:
+        profiler.start()
+        thread.name = "renamed-profiled-thread"
+        time.sleep(0.05)
+        session = profiler.stop()
+    finally:
+        thread.name = original_name
+
+    assert any(
+        stack[0].startswith("renamed-profiled-thread\x00<thread>\x00")
+        for stack, _ in session.frame_records
+    )
 
 
 def test_profiler_access_from_multiple_threads():
