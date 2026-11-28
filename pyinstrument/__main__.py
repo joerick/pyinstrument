@@ -100,23 +100,56 @@ def main():
         help="(POSIX only) instead of the working directory, look for scriptfile in the PATH environment variable",
     )
 
+    def store_renderer(
+        option: optparse.Option, opt: str, value: str, parser: optparse.OptionParser
+    ):
+        values = cast(CommandLineOptions, parser.values)
+        if values.renderers is None:
+            values.renderers = []
+        values.renderers.append(value)
+
+    def store_outfile(option: optparse.Option, opt: str, value: str, parser: optparse.OptionParser):
+        values = cast(CommandLineOptions, parser.values)
+        # remember which --renderer came before this outfile, so that several
+        # renderers can each apply to the outfiles that follow them
+        renderer_index = len(values.renderers or []) - 1
+        if values.outfiles is None:
+            values.outfiles = []
+        values.outfiles.append(OutfileOption(path=value, renderer_index=renderer_index))
+
     parser.add_option(
-        "-o", "--outfile", dest="outfile", action="store", help="save to <outfile>", default=None
+        "-o",
+        "--outfile",
+        dest="outfiles",
+        action="callback",
+        callback=store_outfile,
+        type="string",
+        metavar="OUTFILE",
+        help=(
+            "save the report to OUTFILE. Unless --renderer is given, the format is chosen "
+            "from the file extension: '.txt' (text), '.html' or '.htm' (html), '.json' (json), "
+            "'.speedscope.json' (speedscope), '.pyisession' (pyisession) or '.pstats' (pstats). "
+            "Other extensions are saved as text. Pass this option more than once to save "
+            "several reports from a single run, e.g. '-o profile.html -o profile.txt'."
+        ),
     )
 
     parser.add_option(
         "-r",
         "--renderer",
-        dest="renderer",
-        action="store",
+        dest="renderers",
+        action="callback",
+        callback=store_renderer,
         type="string",
+        metavar="RENDERER",
         help=(
             "how the report should be rendered. One of: 'text', 'html', 'json', 'speedscope', "
             "'pyisession', 'pstats', or python import path to a renderer class. Defaults to "
             "the appropriate format for the extension if OUTFILE is given, otherwise, defaults "
-            "to 'text'."
+            "to 'text'. A single --renderer applies to every OUTFILE. When given more than "
+            "once, each --renderer applies to the OUTFILEs that follow it, e.g. "
+            "'-r text -o profile.log -r json -o profile.data'."
         ),
-        default=None,
     )
 
     parser.add_option(
@@ -309,38 +342,43 @@ def main():
     if options.from_path and sys.platform == "win32":
         parser.error("--from-path is not supported on Windows")
 
-    renderer_class = get_renderer_class(options)
-
-    # open the output file
-
-    if options.outfile:
-        f = open(
-            options.outfile,
-            "w",
-            encoding="utf-8",
-            errors="surrogateescape",
-            newline="" if renderer_class.output_is_binary else None,
-        )
-        should_close_f_after_writing = True
-    else:
-        f = sys.stdout
-        should_close_f_after_writing = False
-
-    inner_exception = None
-
-    # create the renderer
-
     try:
-        renderer = create_renderer(renderer_class, options, output_file=f)
+        outputs = get_outputs(options)
     except OptionsParseError as e:
         parser.error(e.args[0])
         exit(1)
 
-    if renderer.output_is_binary and not options.outfile and file_is_a_tty(f):
-        parser.error(
-            "Can't write binary output to a terminal. Redirect to a file or use --outfile."
-        )
-        exit(1)
+    # open the output files and create a renderer for each
+
+    reports: list[tuple[renderers.Renderer, TextIO, str | None]] = []
+
+    for renderer_class, outfile in outputs:
+        if outfile:
+            f = open(
+                outfile,
+                "w",
+                encoding="utf-8",
+                errors="surrogateescape",
+                newline="" if renderer_class.output_is_binary else None,
+            )
+        else:
+            f = sys.stdout
+
+        try:
+            renderer = create_renderer(renderer_class, options, output_file=f)
+        except OptionsParseError as e:
+            parser.error(e.args[0])
+            exit(1)
+
+        if renderer.output_is_binary and not outfile and file_is_a_tty(f):
+            parser.error(
+                "Can't write binary output to a terminal. Redirect to a file or use --outfile."
+            )
+            exit(1)
+
+        reports.append((renderer, f, outfile))
+
+    inner_exception = None
 
     # get the session - execute code or load from disk
 
@@ -424,20 +462,21 @@ def main():
 
         session = profiler.stop()
 
-    if isinstance(renderer, renderers.HTMLRenderer) and not options.outfile and file_is_a_tty(f):
-        # don't write HTML to a TTY, open in browser instead
-        output_filename = renderer.open_in_browser(session)
-        print("stdout is a terminal, so saved profile output to %s" % output_filename)
-    else:
-        f.write(renderer.render(session))
-        if should_close_f_after_writing:
-            f.close()
+    for renderer, f, outfile in reports:
+        if isinstance(renderer, renderers.HTMLRenderer) and not outfile and file_is_a_tty(f):
+            # don't write HTML to a TTY, open in browser instead
+            output_filename = renderer.open_in_browser(session)
+            print("stdout is a terminal, so saved profile output to %s" % output_filename)
+        else:
+            f.write(renderer.render(session))
+            if outfile:
+                f.close()
 
-    if isinstance(renderer, renderers.ConsoleRenderer) and not options.outfile:
-        _, report_identifier = save_report_to_temp_storage(session)
-        print("To view this report with different options, run:")
-        print("    pyinstrument --load-prev %s [options]" % report_identifier)
-        print("")
+        if isinstance(renderer, renderers.ConsoleRenderer) and not outfile:
+            _, report_identifier = save_report_to_temp_storage(session)
+            print("To view this report with different options, run:")
+            print("    pyinstrument --load-prev %s [options]" % report_identifier)
+            print("")
 
     if inner_exception:
         # If the script raised an exception, re-raise it now to resume
@@ -558,15 +597,51 @@ def create_renderer(
         )
 
 
-def get_renderer_class(options: CommandLineOptions) -> type[renderers.Renderer]:
-    renderer = options.renderer
+def get_outputs(options: CommandLineOptions) -> list[tuple[type[renderers.Renderer], str | None]]:
+    """
+    Works out which reports to write, as a list of (renderer class, outfile)
+    pairs. The outfile is None when the report goes to stdout.
+    """
+    renderer_names = options.renderers or []
+    outfiles = options.outfiles or []
 
     if options.output_html:
-        renderer = "html"
+        # deprecated --html flag overrides any --renderer
+        renderer_names = ["html"]
+        outfiles = [OutfileOption(path=o.path, renderer_index=0) for o in outfiles]
 
-    if renderer is None and options.outfile:
-        renderer = guess_renderer_from_outfile(options.outfile)
+    if len(renderer_names) > 1:
+        used_renderer_indexes = {outfile.renderer_index for outfile in outfiles}
+        for index, renderer in enumerate(renderer_names):
+            if index not in used_renderer_indexes:
+                raise OptionsParseError(
+                    f"--renderer {renderer!r} isn't followed by an --outfile. When --renderer "
+                    "is given more than once, each one applies to the --outfile options after it."
+                )
 
+    if not outfiles:
+        return [(get_renderer_class(renderer_names[0] if renderer_names else None), None)]
+
+    outputs: list[tuple[type[renderers.Renderer], str | None]] = []
+
+    for outfile in outfiles:
+        if len(renderer_names) == 1:
+            # a single --renderer applies to every outfile, wherever it was given
+            renderer = renderer_names[0]
+        elif outfile.renderer_index >= 0:
+            renderer = renderer_names[outfile.renderer_index]
+        else:
+            renderer = None
+
+        if renderer is None:
+            renderer = guess_renderer_from_outfile(outfile.path)
+
+        outputs.append((get_renderer_class(renderer), outfile.path))
+
+    return outputs
+
+
+def get_renderer_class(renderer: str | None) -> type[renderers.Renderer]:
     if renderer is None:
         renderer = "text"
 
@@ -671,16 +746,24 @@ class CommandLineOptions:
     show_regex: str | None
     show_all: bool
     output_html: bool
-    outfile: str | None
+    outfiles: list[OutfileOption] | None
     render_options: list[str] | None
     target_description: str
 
     unicode: bool | None
     color: bool | None
-    renderer: str | None
+    renderers: list[str] | None
     timeline: bool
     interval: float
     use_timing_thread: bool | None
+
+
+class OutfileOption:
+    def __init__(self, path: str, renderer_index: int):
+        self.path = path
+        # index into CommandLineOptions.renderers of the last --renderer given
+        # before this outfile, or -1 if there wasn't one
+        self.renderer_index = renderer_index
 
 
 class ValueWithRemainingArgs:

@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -382,6 +383,120 @@ class TestCommandLine:
 
         stats = pstats.Stats(str(output_file))
         assert stats
+
+    def test_multiple_outfiles(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        html_file = tmp_path / "profile.html"
+        text_file = tmp_path / "profile.txt"
+        session_file = tmp_path / "profile.pyisession"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "-o",
+                str(html_file),
+                "-o",
+                str(text_file),
+                f"--outfile={session_file}",
+                str(busy_wait_py),
+            ],
+        )
+
+        # each outfile gets the format that matches its extension
+        assert "<html" in html_file.read_text()
+        text_output = text_file.read_text()
+        assert "busy_wait" in text_output
+        assert "<html" not in text_output
+
+        from pyinstrument.session import Session
+
+        Session.load(session_file)
+
+    def test_single_renderer_applies_to_all_outfiles(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        html_file = tmp_path / "profile.html"
+        text_file = tmp_path / "profile.txt"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "-o",
+                str(html_file),
+                "-r",
+                "json",
+                "-o",
+                str(text_file),
+                str(busy_wait_py),
+            ],
+        )
+
+        assert "root_frame" in json.loads(html_file.read_text())
+        assert "root_frame" in json.loads(text_file.read_text())
+
+    def test_multiple_renderers(self, pyinstrument_invocation, tmp_path: Path):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        guessed_file = tmp_path / "guessed.html"
+        text_file_1 = tmp_path / "profile1.log"
+        text_file_2 = tmp_path / "profile2.log"
+        json_file = tmp_path / "profile.data"
+
+        subprocess.check_call(
+            [
+                *pyinstrument_invocation,
+                "-o",
+                str(guessed_file),
+                "-r",
+                "text",
+                "-o",
+                str(text_file_1),
+                "-o",
+                str(text_file_2),
+                "--renderer=json",
+                "-o",
+                str(json_file),
+                str(busy_wait_py),
+            ],
+        )
+
+        # an outfile before the first --renderer still uses its extension
+        assert "<html" in guessed_file.read_text()
+        assert "busy_wait" in text_file_1.read_text()
+        assert "busy_wait" in text_file_2.read_text()
+        assert "root_frame" in json.loads(json_file.read_text())
+
+    @pytest.mark.parametrize(
+        "output_args",
+        [
+            ["-r", "text", "-r", "json"],
+            ["-r", "text", "-r", "json", "-o", "profile.json"],
+            ["-r", "text", "-o", "profile.txt", "-r", "json"],
+        ],
+    )
+    def test_multiple_renderers_need_an_outfile_each(
+        self, pyinstrument_invocation, tmp_path: Path, output_args
+    ):
+        busy_wait_py = tmp_path / "busy_wait.py"
+        busy_wait_py.write_text(BUSY_WAIT_SCRIPT)
+
+        result = subprocess.run(
+            [*pyinstrument_invocation, *output_args, str(busy_wait_py)],
+            cwd=tmp_path,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        assert result.returncode == 2
+        assert "--renderer" in result.stderr
+        assert "--outfile" in result.stderr
+        # nothing is written when the options are invalid
+        assert not (tmp_path / "profile.json").exists()
+        assert not (tmp_path / "profile.txt").exists()
 
     def test_program_exit_code(self, pyinstrument_invocation, tmp_path: Path):
         exit_1_py = tmp_path / "exit_1.py"

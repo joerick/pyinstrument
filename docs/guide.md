@@ -27,6 +27,11 @@ Here are the options you can use:
 **Protip:** `-r html` will give you a interactive profile report as HTML - you
 can really explore this way!
 
+To save more than one report from a single run, pass `-o` several times. Each
+file gets the format that matches its extension, so
+`pyinstrument -o profile.html -o profile.txt myscript.py` writes both an HTML
+and a text report.
+
 ## Profile a Python CLI command
 
 For profiling an installed Python script via the
